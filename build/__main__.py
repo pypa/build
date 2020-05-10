@@ -35,6 +35,7 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--outdir', '-o', metavar=out,
                         type=str, default=out,
                         help='output directory')
+    sys.argv[0] = 'python -m build'
     args = parser.parse_args()
 
     distributions = []
