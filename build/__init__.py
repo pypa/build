@@ -45,7 +45,7 @@ class ProjectBuilder(object):
             raise BuildException('Missing backend definition in project file')
 
         try:
-            importlib.import_module(self._backend)
+            importlib.import_module(self._backend.split(':')[0])
         except ImportError:
             raise BuildException("Backend '{}' is not available".format(self._backend))
 
