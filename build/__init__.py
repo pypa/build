@@ -15,11 +15,15 @@ import toml
 
 
 class BuildException(Exception):
-    pass
+    '''
+    Exception raised by ProjectBuilder
+    '''
 
 
 class BuildBackendException(Exception):
-    pass
+    '''
+    Exception raised when the backend fails
+    '''
 
 
 class ProjectBuilder(object):
