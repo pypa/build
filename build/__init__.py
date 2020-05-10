@@ -29,7 +29,7 @@ class ProjectBuilder(object):
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
         if not os.path.isfile(spec_file):
-            raise BuildException(f'Missing project file: {spec_file}')
+            raise BuildException('Missing project file: {}'.format(spec_file))
 
         with open(spec_file) as f:
             self._spec = toml.load(f)
@@ -43,7 +43,7 @@ class ProjectBuilder(object):
         try:
             importlib.import_module(self._backend)
         except ImportError:
-            raise BuildException(f"Backend '{self._backend}' is not available")
+            raise BuildException("Backend '{}' is not available".format(self._backend))
 
         self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
                                                      backend_path=self._build_system.get('backend-path'))
@@ -52,7 +52,7 @@ class ProjectBuilder(object):
         '''
         Returns a set of the missing dependencies
         '''
-        get_requires = getattr(self.hook, f'get_requires_for_build_{distribution}')
+        get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
 
         dependencies = set()
 
@@ -61,7 +61,7 @@ class ProjectBuilder(object):
         except pep517.wrappers.BackendUnavailable as e:
             raise e
         except Exception as e:  # noqa: E722
-            raise BuildBackendException(f'Backend operation failed: {e}')
+            raise BuildBackendException('Backend operation failed: {}'.format(e))
 
         missing = []
         for dep in dependencies:
@@ -76,9 +76,9 @@ class ProjectBuilder(object):
         '''
         Builds a distribution
         '''
-        build = getattr(self.hook, f'build_{distribution}')
+        build = getattr(self.hook, 'build_{}'.format(distribution))
 
         try:
             build(outdir)
         except Exception as e:  # noqa: E722
-            raise BuildBackendException(f'Backend operation failed: {e}')
+            raise BuildBackendException('Backend operation failed: {}'.format(e))

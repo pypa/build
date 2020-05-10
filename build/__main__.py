@@ -12,7 +12,7 @@ def _error(msg, code=1):  # type: (str, int) -> None
     prefix = 'ERROR'
     if sys.stdout.isatty():
         prefix = '\33[91m' + prefix + '\33[0m'
-    print(prefix, msg)
+    print('{} {}'.format(prefix, msg))
     exit(code)
 
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':  # noqa: C901
         for dist in distributions:
             missing = builder.check_depencencies(dist)
             if missing:
-                _error(f'Missing dependencies: {" ".join(missing)}')
+                _error('Missing dependencies: {}'.format(' '.join(missing)))
 
             builder.build(dist, args.outdir)
     except BuildException as e:
