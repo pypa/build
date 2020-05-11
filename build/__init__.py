@@ -10,6 +10,7 @@ import importlib_metadata
 import os
 import platform
 import re
+import sys
 
 from typing import Callable, List
 
@@ -82,9 +83,36 @@ class VersionChecker(object):
 
         name = fields[0]
 
-        if env:
-            if name == 'python_version':
+        if env:  # https://www.python.org/dev/peps/pep-0508/#environment-markers
+            if name == 'os_name':
+                version = os.name
+            elif name == 'sys_platform':
+                version = sys.platform
+            elif name == 'platform_machine':
+                version = platform.machine()
+            elif name == 'platform_python_implementation':
+                version = platform.python_implementation()
+            elif name == 'platform_release':
+                version = platform.release()
+            elif name == 'platform_system':
+                version = platform.system()
+            elif name == 'platform_version':
+                version == platform.version()
+            elif name == 'python_version':
                 version = '.'.join(platform.python_version_tuple()[:2])
+            elif name == 'python_full_version':
+                version = platform.python_version()
+            elif name == 'implementation_name':
+                version = sys.implementation.name
+            elif name == 'implementation_version':
+                if hasattr(sys, 'implementation'):
+                    info = sys.implementation.version
+                    version = '{0.major}.{0.minor}.{0.micro}'.format(info)
+                    kind = info.releaselevel
+                    if kind != 'final':
+                        version += kind[0] + str(info.serial)
+                else:
+                    version = '0'
             else:
                 raise BuildException('Invalid environment marker: {}'.format(name))
         else:
