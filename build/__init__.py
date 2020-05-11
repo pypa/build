@@ -85,14 +85,7 @@ class VersionChecker(object):
         if not fields or len(fields) % 2 == 0:  # ['something', '>=']
             raise BuildException('Invalid dependency string: {}'.format(requirement_string))
 
-        explode_extras = re.compile('(\\[.*\\])')
-        name_exploded = [part for part in explode_extras.split(fields[0]) if part]
-        name = name_exploded[0]
-        extras = []
-        if len(name_exploded) == 2:
-            extras = name_exploded[1].strip(' []').replace(' ', '').split(',')
-        elif len(name_exploded) > 2:
-            raise BuildException('Invalid dependency name: {}'.format(fields[0].strip()))
+        name = fields[0].strip()
 
         if env:  # https://www.python.org/dev/peps/pep-0508/#environment-markers
             if name == 'os_name':
@@ -127,6 +120,14 @@ class VersionChecker(object):
             else:
                 raise BuildException('Invalid environment marker: {}'.format(name))
         else:
+            explode_extras = re.compile('(\\[.*\\])')
+            name_exploded = [part for part in explode_extras.split(name) if part]
+            name = name_exploded[0]
+            extras = []
+            if len(name_exploded) == 2:
+                extras = name_exploded[1].strip(' []').replace(' ', '').split(',')
+            elif len(name_exploded) > 2:
+                raise BuildException('Invalid dependency name: {}'.format(name))
             try:
                 version = importlib_metadata.version(name)
                 metadata = importlib_metadata.metadata(name)
