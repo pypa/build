@@ -6,11 +6,15 @@ python-build - A simple, correct PEP517 package builder
 __version__ = '0.0.1'
 
 import importlib
-import importlib_metadata
 import os
 import platform
 import re
 import sys
+
+try:
+    from importlib import metadata as importlib_metadata
+except ImportError:
+    import importlib_metadata  # type: ignore
 
 from typing import Callable, List
 
