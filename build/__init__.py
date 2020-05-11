@@ -71,7 +71,7 @@ class VersionChecker(object):
         reqs = requirement_string.split(';')
 
         if len(reqs) > 1:
-            for req in reqs[:0:-1]:  # loop over conditions in reverse
+            for req in reqs[1:]:  # loop over environment markers
                 if not cls.check_version(req, env=True):
                     return True
 
