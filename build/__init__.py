@@ -119,14 +119,14 @@ class VersionChecker(object):
                     version = '0'
             else:
                 raise BuildException('Invalid environment marker: {}'.format(name))
-        else:
+        else:  # normal python package
             explode_extras = re.compile('(\\[.*\\])')
-            name_exploded = [part for part in explode_extras.split(name) if part]
+            name_exploded = [part for part in explode_extras.split(name) if part]  # 'rquests[security,socks]' -> ['requests', '[security,socks]']
             name = name_exploded[0]
             extras = []
             if len(name_exploded) == 2:
-                extras = name_exploded[1].strip(' []').replace(' ', '').split(',')
-            elif len(name_exploded) > 2:
+                extras = name_exploded[1].strip(' []').replace(' ', '').split(',')  # ['security' 'socks']
+            elif len(name_exploded) > 2:  # ['requests', '[security,socks]', '[something,invalid]']
                 raise BuildException('Invalid dependency name: {}'.format(name))
             try:
                 version = importlib_metadata.version(name)
