@@ -56,7 +56,7 @@ class ProjectBuilder(object):
                                                      backend_path=self._build_system.get('backend-path'))
 
     @classmethod
-    def check_version(cls, requirement_string):  # type: (str) -> bool  # noqa: 901
+    def check_version(cls, requirement_string, env=False):  # type: (str, bool) -> bool  # noqa: 901
         ops = {
             '<=': 'le',
             '>=': 'ge',
@@ -70,7 +70,7 @@ class ProjectBuilder(object):
 
         if len(reqs) > 1:
             for req in reqs[:0:-1]:  # loop over conditions in reverse
-                if not cls.check_version(req):
+                if not cls.check_version(req, env=True):
                     return True
 
         explode_req = re.compile('({})'.format('|'.join(ops.keys())))
@@ -79,8 +79,9 @@ class ProjectBuilder(object):
         if not fields or len(fields) % 2 == 0:  # ['something', '>=']
             raise BuildException('Invalid dependency string: {}'.format(requirement_string))
 
-        if fields[0] == 'python':
-            version = [str(v) for v in sys.version_info[:3]]
+        if env:
+            if fields[0] == 'python':
+                version = [str(v) for v in sys.version_info[:3]]
         else:
             try:
                 version = importlib_metadata.version(fields[0]).split('.')
