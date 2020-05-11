@@ -11,6 +11,7 @@ description-file = "README.md"
 requires = [
     "toml",
     "pep517",
+    "importlib_metadata;python<'3.8'",
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
