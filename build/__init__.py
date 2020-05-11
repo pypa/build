@@ -63,14 +63,7 @@ class VersionChecker(object):
 
     @classmethod
     def check_version(cls, requirement_string, env=False):  # type: (str, bool) -> bool  # noqa: 901
-        ops = {
-            '<=': 'le',
-            '>=': 'ge',
-            '<': 'lt',
-            '>': 'gt',
-            '==': 'eq',
-            '!=': 'ne',
-        }
+        ops = ['===', '~=', '<=', '>=', '<', '>', '==', '!=']
 
         reqs = requirement_string.split(';')
 
@@ -79,7 +72,7 @@ class VersionChecker(object):
                 if not cls.check_version(req, env=True):
                     return True
 
-        explode_req = re.compile('({})'.format('|'.join(ops.keys())))
+        explode_req = re.compile('({})'.format('|'.join(ops)))
         fields = explode_req.split(re.sub('[ \'"]', '', reqs[0].strip()))  # ['something, '>=', '0.3']
 
         if not fields or len(fields) % 2 == 0:  # ['something', '>=']
