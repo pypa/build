@@ -6,17 +6,19 @@ python-build - A simple, correct PEP517 package builder
 __version__ = '0.0.1'
 
 import importlib
+import itertools
 import os
 import platform
 import re
 import sys
+import typing
 
 try:
     from importlib import metadata as importlib_metadata
 except ImportError:
     import importlib_metadata  # type: ignore
 
-from typing import Callable, List
+from typing import Iterable, List, Union
 
 import pep517.wrappers
 import toml
@@ -34,32 +36,227 @@ class BuildBackendException(Exception):
     '''
 
 
+class VersionUnwrapper(object):
+    def __init__(self, version_string):  # type: (str) -> None  # noqa: C901
+        '''
+        :param version_string: normalized version string
+        '''
+        self._version_string = version_string
+        self._version = typing.cast(
+            List[Union[int, str]],
+            re.sub('([0-9])(a|b|rc|dev)([0-9])', r'\1.\2\3', version_string).split('.')
+        )
+
+        self._check_len = len(self._version)
+        self._alpha = False
+        self._beta = False
+        self._candidate = False
+        self._post = False
+        self._dev = False
+        self._local = False
+
+        for i, part in enumerate(self._version):
+            try:
+                self._version[i] = int(part)
+            except ValueError:
+                assert isinstance(part, str)
+                if part == '*':
+                    self._check_len = i if i < self._check_len else self._check_len
+                elif part.startswith('a'):
+                    self._alpha = True
+                elif part.startswith('b'):
+                    self._beta = True
+                elif part.startswith('rc'):
+                    self._candidate = True
+                elif part.startswith('post'):
+                    self._post = True
+                elif part.startswith('dev'):
+                    self._dev = True
+                elif re.match(r'[0-9]+\+[a-zA-Z]+', part):
+                    self._local = True
+                else:
+                    raise BuildException('Invalid version string: {}'.format(version_string))
+
+    def __str__(self):  # type: () -> str
+        return self._version_string
+
+    def __iter__(self):  # type: () -> Iterable[Union[int, str]]
+        return typing.cast(Iterable[Union[int, str]], iter(self._version))
+
+    @property
+    def alpha(self):  # type: () -> bool
+        return self._alpha
+
+    @property
+    def beta(self):  # type: () -> bool
+        return self._beta
+
+    @property
+    def candidate(self):  # type: () -> bool
+        return self._candidate
+
+    @property
+    def pre(self):  # type: () -> bool
+        return self._alpha or self._beta or self._candidate
+
+    @property
+    def post(self):  # type: () -> bool
+        return self._post
+
+    @property
+    def dev(self):  # type: () -> bool
+        return self._dev
+
+    @property
+    def local(self):  # type: () -> bool
+        return self._local
+
+    @classmethod
+    def op(cls, operation, current, base):  # type: (str, VersionUnwrapper, VersionUnwrapper) -> bool  # noqa: C901
+        if sys.version_info < (3,):
+            zip_longest = itertools.izip_longest
+        else:
+            zip_longest = itertools.zip_longest
+        special_regex = re.compile(r'^([a-zA-Z]*)([0-9]+)')  # 'dev10' -> 'dev' '10'
+
+        # https://www.python.org/dev/peps/pep-0440/#version-specifiers
+        if operation == '==':
+            for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
+                if isinstance(b, str) and b == '*':
+                    return True
+                else:
+                    if a != b:
+                        return False
+            return True
+
+        if operation == '>=':
+            if base.local or current.local:
+                raise BuildException('Invalid operation on local version: {} (in {} {} {})'.format(
+                                     operation, current, operation, base))
+            for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
+                if isinstance(b, str) and b == '*':
+                    return True
+                special_a, num_a = special_regex.match(str(a)).groups()  # type: ignore
+                special_b, num_b = special_regex.match(str(b)).groups()  # type: ignore
+                if bool(special_a) ^ bool(special_b):  # one of them is special (alpha, beta, candidate, etc.)
+                    return bool(special_a)
+                if special_a != special_b:
+                    return False
+                if num_a == num_b:
+                    continue
+                return int(num_a) >= int(num_b)
+            return True
+
+        if operation == '<=':
+            if base.local or current.local:
+                raise BuildException('Invalid operation on local version: {} (in {} {} {})'.format(
+                                     operation, current, operation, base))
+            for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
+                if isinstance(b, str) and b == '*':
+                    return True
+                special_a, num_a = special_regex.match(str(a)).groups()  # type: ignore
+                special_b, num_b = special_regex.match(str(b)).groups()  # type: ignore
+                if bool(special_a) ^ bool(special_b):  # one of them is special (alpha, beta, candidate, etc.)
+                    return bool(special_b)
+                if special_a != special_b:
+                    return False
+                if not int(num_a) <= int(num_b):
+                    return False
+            return True
+
+        if operation == '>':
+            if base.local or base.pre or base.post or base.dev or current.local or current.pre or current.post or current.dev:
+                raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
+                                     operation, current, operation, base))
+            last = False
+            for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
+                if isinstance(b, str) and b == '*':
+                    return last
+                last = int(a) > int(b)
+                if last:
+                    return True
+            return False
+
+        if operation == '<':
+            if base.local or base.pre or base.post or base.dev or current.local or current.pre or current.post or current.dev:
+                raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
+                                     operation, current, operation, base))
+            last = False
+            for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
+                if isinstance(b, str) and b == '*':
+                    return last
+                last = int(a) < int(b)
+                if last:
+                    return True
+            return False
+
+        elif operation == '!=':
+            return not cls.op('==', current, base)
+
+        elif operation == '===':
+            return list(base) == list(current)  # type: ignore
+
+        elif operation == '~=':
+            if base.local or current.local:
+                raise BuildException('Invalid operation on local version: {} (in {} {} {})'.format(
+                                     operation, current, operation, base))
+            arb_ver = list(base)  # type: ignore
+            if len(arb_ver) <= 1 or arb_ver[1] == '*':
+                raise BuildException("Invalid operation '{}' against value '{}'".format(operation, base))
+            arb_ver[-1] = '*'
+            return (
+                cls.op('>=', current, base) and
+                cls.op('==', current, VersionUnwrapper('.'.join([str(part) for part in arb_ver])))
+            )
+
+        else:
+            raise BuildException('Invalid operation: {}'.format(operation))
+
+
 class VersionChecker(object):
     @classmethod
-    def _compare_version_strings(cls, val1, val2, operation):  # type: (str, str, str) -> bool
-        ops = {
-            '<=': 'le',
-            '>=': 'ge',
-            '<': 'lt',
-            '>': 'gt',
-            '==': 'eq',
-            '!=': 'ne',
-        }
+    def normalize_version(cls, version):  # type: (str) -> str
+        '''
+        Normalizes version strings
 
-        # TODO: validate
-        v1 = val1.split('.')
-        v2 = val2.split('.')
+        It follows the PEP440 specification
+        https://www.python.org/dev/peps/pep-0440/#normalization
+        '''
+        # > All ascii letters should be interpreted case insensitively within a version and the normal form is lowercase
+        version = version.strip().lower()
 
-        length = len(val1) if len(val1) < len(val2) else len(val2)
+        # > In order to support the common version notation of v1.0 versions may be preceded by a single literal v character.
+        # > This character MUST be ignored for all purposes and should be omitted from all normalized forms of the version.
+        version = re.sub('^v', '', version)
 
-        v1 = v1[:length]
-        v2 = v2[:length]
+        # > This means that an integer version of 00 would normalize to 0 while 09000 would normalize to 9000.
+        version = re.sub(r'(^|\.)(0+)([0-9])', r'\1\3', version)
 
-        try:
-            op = getattr(v1, '__{}__'.format(ops[operation]))  # type: Callable[[List[str]], bool]
-            return op(v2)
-        except (AttributeError, KeyError, TypeError):
-            raise BuildException("Operation '{}' (from '{} {} {}') not supported".format(operation, val1, operation, val2))
+        # > {Pre,Post, Development} releases should allow a ., -, or _ separator between the release segment and the
+        # > {pre,post,development} release segment.
+        version = re.sub(r'([0-9])(\.|-|_)(a|b|c|rc|r|alpha|beta|pre|preview|post|rev|dev)', r'\1\3', version)
+
+        # > Pre-releases allow the additional spellings of alpha, beta, c, pre, and preview
+        # > for a, b, rc, rc, and rc respectively.
+        version = re.sub(r'(\.[0-9]+)alpha([0-9]+|$|\.)', r'\1a\2', version)
+        version = re.sub(r'(\.[0-9]+)beta([0-9]+|$|\.)', r'\1b\2', version)
+        version = re.sub(r'(\.[0-9]+)(c|pre|preview)([0-9]+|$|\.)', r'\1rc\3', version)
+
+        # > Post-releases allow the additional spellings of rev and r.
+        version = re.sub(r'(\.[0-9]+|\.)(r|rev)([0-9]+|$|\.)', r'\1post\3', version)
+
+        # > The normal form of this is with the . separator.
+        version = re.sub(r'(\.[0-9]+)post([0-9]+|$|\.)', r'\1.post\2', version)
+
+        # > {Pre,Post,Development} releases allow omitting the numeral in which case it is implicitly assumed to be 0.
+        version = re.sub(r'(a|b|rc|post|dev)($|\.)', r'\g<1>0\2',
+                         version)  # we use the \g<n> notation because \10 will evaluate to group 10
+
+        # > With a local version, in addition to the use of . as a separator of segments,
+        # > the use of - and _ is also acceptable.
+        version = re.sub(r'(\+[a-zA-Z]+)(-|_)([0-9]+)', r'\1.\3', version)
+
+        return version
 
     @classmethod
     def check_version(cls, requirement_string, env=False):  # type: (str, bool) -> bool  # noqa: 901
@@ -67,7 +264,7 @@ class VersionChecker(object):
 
         reqs = requirement_string.split(';')
 
-        if len(reqs) > 1:
+        if not env and len(reqs) > 1:
             for req in reqs[1:]:  # loop over environment markers
                 if not cls.check_version(req, env=True):
                     return True
@@ -99,10 +296,10 @@ class VersionChecker(object):
                 version = '.'.join(platform.python_version_tuple()[:2])
             elif name == 'python_full_version':
                 version = platform.python_version()
-            elif name == 'implementation_name':
+            elif name == 'implementation_name' and sys.version_info >= (3,):
                 version = sys.implementation.name
             elif name == 'implementation_version':
-                if hasattr(sys, 'implementation'):
+                if hasattr(sys, 'implementation') and sys.version_info >= (3,):
                     info = sys.implementation.version
                     version = '{0.major}.{0.minor}.{0.micro}'.format(info)
                     kind = info.releaselevel
@@ -114,7 +311,8 @@ class VersionChecker(object):
                 raise BuildException('Invalid environment marker: {}'.format(name))
         else:  # normal python package
             explode_extras = re.compile('(\\[.*\\])')
-            name_exploded = [part for part in explode_extras.split(name) if part]  # 'rquests[security,socks]' -> ['requests', '[security,socks]']
+            # name_exploded: 'requests[security,socks]' -> ['requests', '[security,socks]']
+            name_exploded = [part for part in explode_extras.split(name) if part]
             name = name_exploded[0]
             extras = []
             if len(name_exploded) == 2:
@@ -135,7 +333,8 @@ class VersionChecker(object):
 
         i = 1
         while i < len(fields):
-            cls._compare_version_strings(version, fields[i + 1], fields[i])
+            if not VersionUnwrapper.op(fields[i], VersionUnwrapper(version), VersionUnwrapper(fields[i + 1].strip(' ,'))):
+                return False
             i += 2
 
         return True
