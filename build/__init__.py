@@ -262,6 +262,10 @@ class VersionChecker(object):
         # > the use of - and _ is also acceptable.
         version = re.sub(r'(\+[a-zA-Z]+)(-|_)([0-9]+)', r'\1.\3', version)
 
+        # >Post releases allow omitting the post signifier all together.
+        # > When using this form the separator MUST be - and no other form is allowed.
+        version = re.sub(r'-([0-9]+)', r'.post\1', version)
+
         return version
 
     @classmethod
