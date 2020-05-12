@@ -42,6 +42,16 @@ class VersionUnwrapper(object):
         :param version_string: normalized version string
         '''
         self._version_string = version_string
+
+        self._epoch = 0
+        epoch_arr = version_string.split('!')
+        if len(epoch_arr) == 2:
+            version_string = epoch_arr[1]
+            try:
+                self._epoch = int(epoch_arr[0])
+            except ValueError:
+                raise BuildException('Invalid epoch: {}'.format(epoch_arr[0]))
+
         self._version = typing.cast(
             List[Union[int, str]],
             re.sub('([0-9])(a|b|rc|dev)([0-9])', r'\1.\2\3', version_string).split('.')
@@ -80,8 +90,11 @@ class VersionUnwrapper(object):
     def __str__(self):  # type: () -> str
         return self._version_string
 
+    def __repr__(self):  # type: () -> str
+        return 'VersionUnwrapper({})'.format(self._version_string)
+
     def __iter__(self):  # type: () -> Iterable[Union[int, str]]
-        return typing.cast(Iterable[Union[int, str]], iter(self._version))
+        return typing.cast(Iterable[Union[int, str]], iter([self.epoch] + self._version))
 
     def cmp(self, operation, val):
         return self.op(operation, self, val)
@@ -113,6 +126,10 @@ class VersionUnwrapper(object):
     @property
     def local(self):  # type: () -> bool
         return self._local
+
+    @property
+    def epoch(self):  # type: () -> int
+        return self._epoch
 
     @classmethod
     def op(cls, operation, current, base):  # type: (str, VersionUnwrapper, VersionUnwrapper) -> bool  # noqa: C901
@@ -171,12 +188,13 @@ class VersionUnwrapper(object):
             if base.local or base.pre or base.post or base.dev or current.local or current.pre or current.post or current.dev:
                 raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
-            last = False
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
                 if isinstance(b, str) and b == '*':
-                    return last
-                last = int(a) > int(b)
-                if last:
+                    return False
+                a, b = int(a), int(b)
+                if a < b:
+                    return False
+                if a > b:
                     return True
             return False
 
@@ -184,12 +202,13 @@ class VersionUnwrapper(object):
             if base.local or base.pre or base.post or base.dev or current.local or current.pre or current.post or current.dev:
                 raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
-            last = False
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
                 if isinstance(b, str) and b == '*':
-                    return last
-                last = int(a) < int(b)
-                if last:
+                    return False
+                a, b = int(a), int(b)
+                if a > b:
+                    return False
+                if a < b:
                     return True
             return False
 
@@ -197,13 +216,13 @@ class VersionUnwrapper(object):
             return not cls.op('==', current, base)
 
         elif operation == '===':
-            return list(base) == list(current)  # type: ignore
+            return str(base) == str(current)  # type: ignore
 
         elif operation == '~=':
             if base.local or current.local:
                 raise BuildException('Invalid operation on local version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
-            arb_ver = list(base)  # type: ignore
+            arb_ver = list(base)[1:]  # type: ignore
             if len(arb_ver) <= 1 or arb_ver[1] == '*':
                 raise BuildException("Invalid operation '{}' against value '{}'".format(operation, base))
             arb_ver[-1] = '*'

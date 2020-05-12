@@ -244,10 +244,14 @@ def test_version_compare():
     assert a.cmp('==', VersionUnwrapper('1.1')) is False
     assert a.cmp('==', VersionUnwrapper('1.1.post1')) is True
     assert a.cmp('==', VersionUnwrapper('1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('0!1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('1!1.1.*')) is False
 
     assert a.cmp('!=', VersionUnwrapper('1.1')) is True
     assert a.cmp('!=', VersionUnwrapper('1.1.post1')) is False
     assert a.cmp('!=', VersionUnwrapper('1.1.*')) is False
+    assert a.cmp('!=', VersionUnwrapper('0!1.1.*')) is False
+    assert a.cmp('!=', VersionUnwrapper('1!1.1.*')) is True
 
     assert a.cmp('>=', VersionUnwrapper('2.1.post1')) is False
     assert a.cmp('>=', VersionUnwrapper('2.1')) is False
@@ -255,6 +259,8 @@ def test_version_compare():
     assert a.cmp('>=', VersionUnwrapper('1.1')) is True
     assert a.cmp('>=', VersionUnwrapper('0.1.post1')) is True
     assert a.cmp('>=', VersionUnwrapper('0.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1!0.1.post1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1!0.1')) is False
 
     assert a.cmp('>=', VersionUnwrapper('1.1a1')) is False
     assert a.cmp('>=', VersionUnwrapper('1.1')) is True
@@ -266,6 +272,8 @@ def test_version_compare():
     assert a.cmp('==', VersionUnwrapper('1.1')) is False
     assert a.cmp('==', VersionUnwrapper('1.1a1')) is True
     assert a.cmp('==', VersionUnwrapper('1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('0!1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('1!1.1.*')) is False
 
     assert a.cmp('!=', VersionUnwrapper('1.1')) is True
     assert a.cmp('!=', VersionUnwrapper('1.1a1')) is False
@@ -284,6 +292,8 @@ def test_version_compare():
     assert a.cmp('==', VersionUnwrapper('1.1a1')) is False
     assert a.cmp('==', VersionUnwrapper('1.1.post1')) is False
     assert a.cmp('==', VersionUnwrapper('1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('0!1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('1!1.1.*')) is False
 
     assert a.cmp('!=', VersionUnwrapper('1.1')) is False
     assert a.cmp('!=', VersionUnwrapper('1.1.0')) is False
@@ -304,6 +314,8 @@ def test_version_compare():
     assert a.cmp('===', VersionUnwrapper('1.1.post0')) is False
     assert a.cmp('===', VersionUnwrapper('1.1.dev0')) is False
     assert a.cmp('===', VersionUnwrapper('1.1+foo')) is False
+    assert a.cmp('===', VersionUnwrapper('0!1.1')) is False
+    assert a.cmp('===', VersionUnwrapper('1!1.1')) is False
 
     assert a.cmp('>=', VersionUnwrapper('2.1')) is False
     assert a.cmp('>=', VersionUnwrapper('2.1.0')) is False
@@ -319,6 +331,8 @@ def test_version_compare():
     assert a.cmp('>=', VersionUnwrapper('1.1rc1')) is False
     assert a.cmp('>=', VersionUnwrapper('1.1.post1')) is False
     assert a.cmp('>=', VersionUnwrapper('1.1.dev1')) is False
+    assert a.cmp('>=', VersionUnwrapper('0!1.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1!1.1')) is False
 
     with pytest.raises(BuildException):
         a.cmp('>=', VersionUnwrapper('1.1+foo'))
@@ -339,6 +353,9 @@ def test_version_compare():
     assert a.cmp('<=', VersionUnwrapper('1.1rc1')) is True
     assert a.cmp('<=', VersionUnwrapper('1.1.post1')) is True
     assert a.cmp('<=', VersionUnwrapper('1.1.dev1')) is True
+    assert a.cmp('<=', VersionUnwrapper('0!1.1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1!1.1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1!2.1')) is True
 
     with pytest.raises(BuildException):
         a.cmp('<=', VersionUnwrapper('1.1+foo'))
@@ -354,6 +371,11 @@ def test_version_compare():
     assert a.cmp('>', VersionUnwrapper('2.*')) is False
     assert a.cmp('>', VersionUnwrapper('1.*')) is False
     assert a.cmp('>', VersionUnwrapper('0.*')) is True
+    assert a.cmp('>', VersionUnwrapper('0!0.1')) is True
+    assert a.cmp('>', VersionUnwrapper('0!1.1')) is False
+    assert a.cmp('>', VersionUnwrapper('1!0.1')) is False
+    assert a.cmp('>', VersionUnwrapper('1!1.1')) is False
+    assert a.cmp('>', VersionUnwrapper('1!2.1')) is False
 
     with pytest.raises(BuildException):
         a.cmp('>', VersionUnwrapper('1.1a1'))
@@ -394,6 +416,13 @@ def test_version_compare():
         a.cmp('<', VersionUnwrapper('1.1+foo'))
     with pytest.raises(BuildException):
         a.cmp('<', VersionUnwrapper('0.1+foo'))
+
+    a = VersionUnwrapper('1!1.1')
+
+    assert a.cmp('==', VersionUnwrapper('1.1')) is False
+    assert a.cmp('==', VersionUnwrapper('1.1.0')) is False
+    assert a.cmp('==', VersionUnwrapper('1!1.1')) is True
+    assert a.cmp('==', VersionUnwrapper('1!1.1.0')) is True
 
 
 def test_version_requirements():
