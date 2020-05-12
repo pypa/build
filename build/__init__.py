@@ -185,7 +185,12 @@ class VersionUnwrapper(object):
             return True
 
         if operation == '>':
-            if base.local or base.pre or base.post or base.dev or current.local or current.pre or current.post or current.dev:
+            if (
+                current.local and not base.local or
+                current.pre and not base.pre or
+                current.post and not base.post or
+                current.dev and not base.dev
+            ):
                 raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
@@ -199,7 +204,12 @@ class VersionUnwrapper(object):
             return False
 
         if operation == '<':
-            if base.local or base.pre or base.post or base.dev or current.local or current.pre or current.post or current.dev:
+            if (
+                current.local and not base.local or
+                current.pre and not base.pre or
+                current.post and not base.post or
+                current.dev and not base.dev
+            ):
                 raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
