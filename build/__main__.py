@@ -35,6 +35,9 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--outdir', '-o', metavar=out,
                         type=str, default=out,
                         help='output directory')
+    parser.add_argument('--skip-dependencies', '-x',
+                        action='store_true',
+                        help='does not check for the depencies')
     sys.argv[0] = 'python -m build'
     args = parser.parse_args()
 
@@ -53,9 +56,10 @@ if __name__ == '__main__':  # noqa: C901
         builder = ProjectBuilder(args.srcdir)
 
         for dist in distributions:
-            missing = builder.check_depencencies(dist)
-            if missing:
-                _error('Missing dependencies: {}'.format(' '.join(missing)))
+            if not args.skip_dependencies:
+                missing = builder.check_depencencies(dist)
+                if missing:
+                    _error('Missing dependencies: {}'.format(' '.join(missing)))
 
             builder.build(dist, args.outdir)
     except BuildException as e:
