@@ -248,6 +248,9 @@ class VersionChecker(object):
         # > The normal form of this is with the . separator.
         version = re.sub(r'(\.[0-9]+)post([0-9]+|$|\.)', r'\1.post\2', version)
 
+        # > The developmental release segment consists of the string .dev, followed by a non-negative integer value.
+        version = re.sub(r'(\.[0-9]+)dev([0-9]+|$|\.)', r'\1.dev\2', version)
+
         # > {Pre,Post,Development} releases allow omitting the numeral in which case it is implicitly assumed to be 0.
         version = re.sub(r'(a|b|rc|post|dev)($|\.)', r'\g<1>0\2',
                          version)  # we use the \g<n> notation because \10 will evaluate to group 10
