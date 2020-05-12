@@ -154,7 +154,7 @@ class VersionUnwrapper(object):
                 raise BuildException('Invalid operation on local version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
-                if isinstance(b, str) and b == '*':
+                if b == '*':
                     return True
                 special_a, num_a = special_regex.match(str(a)).groups()  # type: ignore
                 special_b, num_b = special_regex.match(str(b)).groups()  # type: ignore
@@ -172,7 +172,7 @@ class VersionUnwrapper(object):
                 raise BuildException('Invalid operation on local version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
-                if isinstance(b, str) and b == '*':
+                if b == '*':
                     return True
                 special_a, num_a = special_regex.match(str(a)).groups()  # type: ignore
                 special_b, num_b = special_regex.match(str(b)).groups()  # type: ignore
@@ -189,7 +189,7 @@ class VersionUnwrapper(object):
                 raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
-                if isinstance(b, str) and b == '*':
+                if b == '*':
                     return False
                 a, b = int(a), int(b)
                 if a < b:
@@ -203,7 +203,7 @@ class VersionUnwrapper(object):
                 raise BuildException('Invalid operation on local or pre-release version: {} (in {} {} {})'.format(
                                      operation, current, operation, base))
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
-                if isinstance(b, str) and b == '*':
+                if b == '*':
                     return False
                 a, b = int(a), int(b)
                 if a > b:
