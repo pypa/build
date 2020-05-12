@@ -83,6 +83,9 @@ class VersionUnwrapper(object):
     def __iter__(self):  # type: () -> Iterable[Union[int, str]]
         return typing.cast(Iterable[Union[int, str]], iter(self._version))
 
+    def cmp(self, operation, val):
+        return self.op(operation, self, val)
+
     @property
     def alpha(self):  # type: () -> bool
         return self._alpha

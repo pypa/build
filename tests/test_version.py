@@ -114,165 +114,166 @@ def test_version_compare():
     b = VersionUnwrapper('1.1')
     c = VersionUnwrapper('1.1.1')
 
-    assert VersionUnwrapper.op('==', a, a) is True
-    assert VersionUnwrapper.op('==', b, b) is True
-    assert VersionUnwrapper.op('==', c, c) is True
+    assert a.cmp('==', a) is True
+    assert b.cmp('==', b) is True
+    assert c.cmp('==', c) is True
 
     a = VersionUnwrapper('1.1.post1')
 
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1')) is False
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.post1')) is True
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1')) is False
+    assert a.cmp('==', VersionUnwrapper('1.1.post1')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1.*')) is True
 
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.post1')) is False
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.*')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('!=', VersionUnwrapper('1.1.post1')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1.*')) is False
 
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('2.1.post1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('2.1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1.post1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1.post1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('2.1.post1')) is False
+    assert a.cmp('>=', VersionUnwrapper('2.1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1.post1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1.post1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1')) is True
 
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1a1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1a1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1.1a1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1a1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1')) is True
 
     a = VersionUnwrapper('1.1a1')
 
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1')) is False
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1a1')) is True
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1')) is False
+    assert a.cmp('==', VersionUnwrapper('1.1a1')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1.*')) is True
 
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1a1')) is False
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.*')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('!=', VersionUnwrapper('1.1a1')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1.*')) is False
 
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1a1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1a1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1.1a1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1a1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1')) is True
 
     a = VersionUnwrapper('1.1')
 
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.0')) is True
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.dev1')) is False
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1a1')) is False
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.post1')) is False
-    assert VersionUnwrapper.op('==', a, VersionUnwrapper('1.1.*')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1.0')) is True
+    assert a.cmp('==', VersionUnwrapper('1.1.dev1')) is False
+    assert a.cmp('==', VersionUnwrapper('1.1a1')) is False
+    assert a.cmp('==', VersionUnwrapper('1.1.post1')) is False
+    assert a.cmp('==', VersionUnwrapper('1.1.*')) is True
 
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1')) is False
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.0')) is False
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.dev1')) is True
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1a1')) is True
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.post1')) is True
-    assert VersionUnwrapper.op('!=', a, VersionUnwrapper('1.1.*')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1.0')) is False
+    assert a.cmp('!=', VersionUnwrapper('1.1.dev1')) is True
+    assert a.cmp('!=', VersionUnwrapper('1.1a1')) is True
+    assert a.cmp('!=', VersionUnwrapper('1.1.post1')) is True
+    assert a.cmp('!=', VersionUnwrapper('1.1.*')) is False
 
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.0.0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.0a0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.0b0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.0rc0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.a0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.b0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.rc0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.post0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1.dev0')) is False
-    assert VersionUnwrapper.op('===', a, VersionUnwrapper('1.1+foo')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1')) is True
+    assert a.cmp('===', VersionUnwrapper('1.1.0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.0.0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.0a0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.0b0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.0rc0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.a0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.b0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.rc0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.post0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1.dev0')) is False
+    assert a.cmp('===', VersionUnwrapper('1.1+foo')) is False
 
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('2.1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('2.1.0')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1.0')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1.0')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('2.*')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.*')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('0.*')) is True
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1a1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1b1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1rc1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1.post1')) is False
-    assert VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1.dev1')) is False
-
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>=', a, VersionUnwrapper('1.1+foo'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>=', a, VersionUnwrapper('0.1+foo'))
-
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('0.1')) is False
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('0.1.0')) is False
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1.0')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('2.1')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('2.1.0')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('2.*')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.*')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('0.*')) is False
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1a1')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1b1')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1rc1')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1.post1')) is True
-    assert VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1.dev1')) is True
+    assert a.cmp('>=', VersionUnwrapper('2.1')) is False
+    assert a.cmp('>=', VersionUnwrapper('2.1.0')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('1.1.0')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.1.0')) is True
+    assert a.cmp('>=', VersionUnwrapper('2.*')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.*')) is True
+    assert a.cmp('>=', VersionUnwrapper('0.*')) is True
+    assert a.cmp('>=', VersionUnwrapper('1.1a1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1b1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1rc1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1.post1')) is False
+    assert a.cmp('>=', VersionUnwrapper('1.1.dev1')) is False
 
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<=', a, VersionUnwrapper('1.1+foo'))
+        a.cmp('>=', VersionUnwrapper('1.1+foo'))
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<=', a, VersionUnwrapper('0.1+foo'))
+        a.cmp('>=', VersionUnwrapper('0.1+foo'))
 
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('2.1')) is False
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('2.1.0')) is False
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('1.1')) is False
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('1.1.0')) is False
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('0.1')) is True
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('0.1.0')) is True
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('2.*')) is False
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('1.*')) is False
-    assert VersionUnwrapper.op('>', a, VersionUnwrapper('0.*')) is True
-
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('1.1a1'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('1.1b1'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('1.1rc1'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('1.1.post1'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('1.1.dev1'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('1.1+foo'))
-    with pytest.raises(BuildException):
-        VersionUnwrapper.op('>', a, VersionUnwrapper('0.1+foo'))
-
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('0.1')) is False
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('0.1.0')) is False
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('1.1')) is False
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('1.1.0')) is False
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('2.1')) is True
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('2.1.0')) is True
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('2.*')) is True
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('1.*')) is False
-    assert VersionUnwrapper.op('<', a, VersionUnwrapper('0.*')) is False
+    assert a.cmp('<=', VersionUnwrapper('0.1')) is False
+    assert a.cmp('<=', VersionUnwrapper('0.1.0')) is False
+    assert a.cmp('<=', VersionUnwrapper('1.1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1.1.0')) is True
+    assert a.cmp('<=', VersionUnwrapper('2.1')) is True
+    assert a.cmp('<=', VersionUnwrapper('2.1.0')) is True
+    assert a.cmp('<=', VersionUnwrapper('2.*')) is True
+    assert a.cmp('<=', VersionUnwrapper('1.*')) is True
+    assert a.cmp('<=', VersionUnwrapper('0.*')) is False
+    assert a.cmp('<=', VersionUnwrapper('1.1a1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1.1b1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1.1rc1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1.1.post1')) is True
+    assert a.cmp('<=', VersionUnwrapper('1.1.dev1')) is True
 
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('1.1a1'))
+        a.cmp('<=', VersionUnwrapper('1.1+foo'))
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('1.1b1'))
+        a.cmp('<=', VersionUnwrapper('0.1+foo'))
+
+    assert a.cmp('>', VersionUnwrapper('2.1')) is False
+    assert a.cmp('>', VersionUnwrapper('2.1.0')) is False
+    assert a.cmp('>', VersionUnwrapper('1.1')) is False
+    assert a.cmp('>', VersionUnwrapper('1.1.0')) is False
+    assert a.cmp('>', VersionUnwrapper('0.1')) is True
+    assert a.cmp('>', VersionUnwrapper('0.1.0')) is True
+    assert a.cmp('>', VersionUnwrapper('2.*')) is False
+    assert a.cmp('>', VersionUnwrapper('1.*')) is False
+    assert a.cmp('>', VersionUnwrapper('0.*')) is True
+
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('1.1rc1'))
+        a.cmp('>', VersionUnwrapper('1.1a1'))
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('1.1.post1'))
+        a.cmp('>', VersionUnwrapper('1.1b1'))
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('1.1.dev1'))
+        a.cmp('>', VersionUnwrapper('1.1rc1'))
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('1.1+foo'))
+        a.cmp('>', VersionUnwrapper('1.1.post1'))
     with pytest.raises(BuildException):
-        VersionUnwrapper.op('<', a, VersionUnwrapper('0.1+foo'))
+        a.cmp('>', VersionUnwrapper('1.1.dev1'))
+    with pytest.raises(BuildException):
+        a.cmp('>', VersionUnwrapper('1.1+foo'))
+    with pytest.raises(BuildException):
+        a.cmp('>', VersionUnwrapper('0.1+foo'))
+
+    assert a.cmp('<', VersionUnwrapper('0.1')) is False
+    assert a.cmp('<', VersionUnwrapper('0.1.0')) is False
+    assert a.cmp('<', VersionUnwrapper('1.1')) is False
+    assert a.cmp('<', VersionUnwrapper('1.1.0')) is False
+    assert a.cmp('<', VersionUnwrapper('2.1')) is True
+    assert a.cmp('<', VersionUnwrapper('2.1.0')) is True
+    assert a.cmp('<', VersionUnwrapper('2.*')) is True
+    assert a.cmp('<', VersionUnwrapper('1.*')) is False
+    assert a.cmp('<', VersionUnwrapper('0.*')) is False
+
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('1.1a1'))
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('1.1b1'))
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('1.1rc1'))
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('1.1.post1'))
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('1.1.dev1'))
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('1.1+foo'))
+    with pytest.raises(BuildException):
+        a.cmp('<', VersionUnwrapper('0.1+foo'))
+
 
 def test_version_requirements():
     assert VersionChecker.check_version('toml') is True
