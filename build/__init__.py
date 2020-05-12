@@ -52,10 +52,12 @@ class VersionUnwrapper(object):
             except ValueError:
                 raise BuildException('Invalid epoch: {}'.format(epoch_arr[0]))
 
-        self._version = typing.cast(
-            List[Union[int, str]],
-            re.sub('([0-9])(a|b|rc|dev)([0-9])', r'\1.\2\3', version_string).split('.')
-        )
+        version_split = re.sub('([0-9])(a|b|rc|dev)([0-9])', r'\1.\2\3', version_string).split('+')
+        self._version = typing.cast(List[Union[int, str]], version_split[0].split('.'))
+
+        self._local = ''
+        if len(version_split) > 1:
+            self._local = version_split[1]
 
         self._check_len = len(self._version)
         self._alpha = False
@@ -63,7 +65,6 @@ class VersionUnwrapper(object):
         self._candidate = False
         self._post = False
         self._dev = False
-        self._local = False
 
         for i, part in enumerate(self._version):
             try:
@@ -82,8 +83,6 @@ class VersionUnwrapper(object):
                     self._post = True
                 elif part.startswith('dev'):
                     self._dev = True
-                elif re.match(r'[0-9]+\+[a-zA-Z]+', part):
-                    self._local = True
                 else:
                     raise BuildException('Invalid version string: {}'.format(version_string))
 
@@ -124,7 +123,7 @@ class VersionUnwrapper(object):
         return self._dev
 
     @property
-    def local(self):  # type: () -> bool
+    def local(self):  # type: () -> str
         return self._local
 
     @property
@@ -142,11 +141,12 @@ class VersionUnwrapper(object):
         # https://www.python.org/dev/peps/pep-0440/#version-specifiers
         if operation == '==':
             for a, b in zip_longest(current, base, fillvalue=0):  # type: ignore
-                if isinstance(b, str) and b == '*':
+                if b == '*':
                     return True
-                else:
-                    if a != b:
-                        return False
+                elif a != b:
+                    return False
+            if base.local:
+                return current.local == base.local
             return True
 
         if operation == '>=':
