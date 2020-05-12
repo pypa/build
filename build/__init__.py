@@ -266,6 +266,10 @@ class VersionChecker(object):
         # > When using this form the separator MUST be - and no other form is allowed.
         version = re.sub(r'-([0-9]+)', r'.post\1', version)
 
+        # > If no explicit epoch is given, the implicit epoch is 0.
+        # the spec does not say that a 0 epoch should be removed from a normalized version but this seem to be the standard
+        version = re.sub(r'^0+!', '', version)
+
         return version
 
     @classmethod
