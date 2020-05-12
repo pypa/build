@@ -257,9 +257,9 @@ class VersionChecker(object):
 
         # > Pre-releases allow the additional spellings of alpha, beta, c, pre, and preview
         # > for a, b, rc, rc, and rc respectively.
-        version = re.sub(r'(\.[0-9]+)alpha([0-9]+|$|\.)', r'\1a\2', version)
-        version = re.sub(r'(\.[0-9]+)beta([0-9]+|$|\.)', r'\1b\2', version)
-        version = re.sub(r'(\.[0-9]+)(c|pre|preview)([0-9]+|$|\.)', r'\1rc\3', version)
+        version = re.sub(r'((^|\.)[0-9]+)alpha([0-9]+|$|\.)', r'\1a\3', version)
+        version = re.sub(r'((^|\.)[0-9]+)beta([0-9]+|$|\.)', r'\1b\3', version)
+        version = re.sub(r'((^|\.)[0-9]+)(c|pre|preview)([0-9]+|$|\.)', r'\1rc\4', version)
 
         # > Post-releases allow the additional spellings of rev and r.
         version = re.sub(r'(\.[0-9]+|\.)(r|rev)([0-9]+|$|\.)', r'\1post\3', version)
