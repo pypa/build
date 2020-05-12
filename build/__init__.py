@@ -232,9 +232,6 @@ class VersionChecker(object):
         # > This character MUST be ignored for all purposes and should be omitted from all normalized forms of the version.
         version = re.sub('^v', '', version)
 
-        # > This means that an integer version of 00 would normalize to 0 while 09000 would normalize to 9000.
-        version = re.sub(r'(^|\.)(0+)([0-9])', r'\1\3', version)
-
         # > {Pre,Post, Development} releases should allow a ., -, or _ separator between the release segment and the
         # > {pre,post,development} release segment.
         version = re.sub(r'([0-9])(\.|-|_)(a|b|c|rc|r|alpha|beta|pre|preview|post|rev|dev)', r'\1\3', version)
@@ -254,6 +251,9 @@ class VersionChecker(object):
         # > {Pre,Post,Development} releases allow omitting the numeral in which case it is implicitly assumed to be 0.
         version = re.sub(r'(a|b|rc|post|dev)($|\.)', r'\g<1>0\2',
                          version)  # we use the \g<n> notation because \10 will evaluate to group 10
+
+        # > This means that an integer version of 00 would normalize to 0 while 09000 would normalize to 9000.
+        version = re.sub(r'(^|\.|a|b|c|rc|post|dev)(0+)([0-9])', r'\1\3', version)
 
         # > With a local version, in addition to the use of . as a separator of segments,
         # > the use of - and _ is also acceptable.
