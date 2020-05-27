@@ -19,6 +19,7 @@ def _error(msg, code=1):  # type: (str, int) -> None
 if __name__ == '__main__':  # noqa: C901
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
+    sys.argv[0] = 'python -m build'
     parser = argparse.ArgumentParser()
     parser.add_argument('srcdir',
                         type=str, nargs='?', metavar=cwd, default=cwd,
@@ -38,7 +39,6 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--skip-dependencies', '-x',
                         action='store_true',
                         help='does not check for the depencies')
-    sys.argv[0] = 'python -m build'
     args = parser.parse_args()
 
     distributions = []
