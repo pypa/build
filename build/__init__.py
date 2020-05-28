@@ -7,6 +7,7 @@ __version__ = '0.0.1'
 
 import importlib
 import os
+import sys
 
 try:
     from importlib import metadata as importlib_metadata
@@ -18,6 +19,10 @@ from typing import List
 import packaging.requirements
 import pep517.wrappers
 import toml
+
+if sys.version_info < (3,):
+    FileNotFoundError = IOError
+    PermissionError = OSError
 
 
 class BuildException(Exception):
@@ -57,11 +62,13 @@ class ProjectBuilder(object):
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
-        if not os.path.isfile(spec_file):
-            raise BuildException('Missing project file: {}'.format(spec_file))
-
-        with open(spec_file) as f:
-            self._spec = toml.load(f)
+        try:
+            with open(spec_file) as f:
+                self._spec = toml.load(f)
+        except FileNotFoundError:
+            self._spec = {}
+        except PermissionError as e:
+            raise BuildException("{}: '{}' ".format(e.strerror, e.filename))
 
         try:
             self._build_system = self._spec['build-system']
