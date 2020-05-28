@@ -67,7 +67,13 @@ class ProjectBuilder(object):
             self._build_system = self._spec['build-system']
             self._backend = self._build_system['build-backend']
         except KeyError:
-            raise BuildException('Missing backend definition in project file')
+            self._build_system = {
+                'requires': [
+                    'setuptools >= 40.8.0',
+                    'wheel'
+                ]
+            }
+            self._backend = 'setuptools.build_meta:__legacy__'
 
         try:
             importlib.import_module(self._backend.split(':')[0])
