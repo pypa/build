@@ -9,10 +9,10 @@ import importlib
 import os
 import sys
 
-try:
+if sys.version_info >= (3, 8):
     from importlib import metadata as importlib_metadata
-except ImportError:
-    import importlib_metadata  # type: ignore
+else:
+    import importlib_metadata
 
 from typing import List
 
