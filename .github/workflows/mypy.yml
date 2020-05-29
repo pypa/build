@@ -1,0 +1,49 @@
+name: checks
+
+on: [push, pull_request]
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [2.7, 3.5, 3.6, 3.7, 3.8]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install mypy
+      run: |
+        pip install --upgrade pip
+        pip install mypy
+        mypy --version
+
+    - name: Install dependencies
+      run: pip install importlib_metadata packaging
+
+    - name: Run mypy
+      run: mypy --python-version ${{ matrix.python }} -p build
+
+
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install flake8
+      run: |
+        pip install --upgrade pip
+        pip install flake8
+        flake8 --version
+
+    - name: Run flake8
+      run: flake8 --show-source --statistics build
+
