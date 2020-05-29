@@ -37,8 +37,14 @@ class BuildBackendException(Exception):
     '''
 
 
-def check_version(requirement_string):  # type: (str) -> bool
+def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     req = packaging.requirements.Requirement(requirement_string)
+    env = {
+        'extra': extra
+    }
+
+    if req.marker and not req.marker.evaluate(env):
+        return True
 
     try:
         version = importlib_metadata.version(req.name)
