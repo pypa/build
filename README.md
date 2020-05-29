@@ -17,5 +17,5 @@ optional arguments:
   --outdir ./dist, -o ./dist
                         output directory
   --skip-dependencies, -x
-                        does not check for the depencies
+                        does not check for the dependencies
 ```
