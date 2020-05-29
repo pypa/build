@@ -24,9 +24,6 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('srcdir',
                         type=str, nargs='?', metavar=cwd, default=cwd,
                         help='source directory (defaults to current directory)')
-    parser.add_argument('--verbose', '-v',
-                        action='store_true',
-                        help='enable verbose output')
     parser.add_argument('--sdist', '-s',
                         action='store_true',
                         help='build a source package')
