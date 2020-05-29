@@ -16,7 +16,6 @@ except ImportError:
 
 from typing import List
 
-import packaging.requirements
 import pep517.wrappers
 import toml
 
@@ -38,6 +37,8 @@ class BuildBackendException(Exception):
 
 
 def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
+    import packaging.requirements
+
     req = packaging.requirements.Requirement(requirement_string)
     env = {
         'extra': extra
