@@ -8,7 +8,7 @@ except ImportError:
 
 setup(
     name='build',
-    version='0.0.1',
+    version='0.0.2',
     project_urls={'homepage': 'https://github.com/FFY00/python-build'},
     author='Filipe Laíns',
     author_email='lains@archlinux.org',
