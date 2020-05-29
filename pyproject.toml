@@ -1,21 +1,21 @@
 [build-system]
-requires = ["flit_core >=2,<3"]
-build-backend = "flit_core.buildapi"
+requires = ['flit_core >=2,<3']
+build-backend = 'flit_core.buildapi'
 
 [tool.flit.metadata]
-module = "build"
-author = "Filipe Laíns"
-author-email = "lains@archlinux.org"
-home-page = "https://github.com/FFY00/python-build"
-description-file = "README.md"
+module = 'build'
+author = 'Filipe Laíns'
+author-email = 'lains@archlinux.org'
+home-page = 'https://github.com/FFY00/python-build'
+description-file = 'README.md'
 requires = [
-    "toml",
-    "pep517",
-    "packaging",
-    "importlib_metadata;python_version<'3.8'",
+    'toml',
+    'pep517',
+    'packaging',
+    'importlib_metadata;python_version<"3.8"',
 ]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 2.7",
-    "Programming Language :: Python :: 3",
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
 ]
