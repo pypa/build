@@ -38,7 +38,7 @@ if __name__ == '__main__':  # noqa: C901
                         help='output directory')
     parser.add_argument('--skip-dependencies', '-x',
                         action='store_true',
-                        help='does not check for the depencies')
+                        help='does not check for the dependencies')
     args = parser.parse_args()
 
     distributions = []
