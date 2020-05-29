@@ -59,7 +59,7 @@ if __name__ == '__main__':  # noqa: C901
             if not args.skip_dependencies:
                 missing = builder.check_depencencies(dist)
                 if missing:
-                    _error('Missing dependencies: {}'.format(' '.join(missing)))
+                    _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
 
             builder.build(dist, args.outdir)
     except BuildException as e:
