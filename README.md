@@ -16,4 +16,6 @@ optional arguments:
   --wheel, -w           build a wheel
   --outdir ./dist, -o ./dist
                         output directory
+  --skip-dependencies, -x
+                        does not check for the depencies
 ```
