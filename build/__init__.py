@@ -46,8 +46,9 @@ def check_version(requirement_string):  # type: (str) -> bool
     except importlib_metadata.PackageNotFoundError:
         return False
 
+    metadata_extras = metadata.get_all('Provides-Extra') or []
     for extra in req.extras:
-        if extra not in metadata.get_all('Provides-Extra'):
+        if extra not in metadata_extras:
             return False
 
     if req.specifier:
