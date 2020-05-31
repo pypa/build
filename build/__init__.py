@@ -9,15 +9,18 @@ import importlib
 import os
 import sys
 
+# isort:maintain_block
 if sys.version_info >= (3, 8):
     from importlib import metadata as importlib_metadata
 else:
     import importlib_metadata
+# isort:end_maintain_block
 
-from typing import List
+from typing import List  # isort:skip # until isort 5.0.0
 
-import pep517.wrappers
-import toml
+import pep517.wrappers  # isort:skip # until isort 5.0.0
+import toml  # isort:skip # until isort 5.0.0
+
 
 if sys.version_info < (3,):
     FileNotFoundError = IOError

@@ -5,7 +5,7 @@ import os
 import sys
 import traceback
 
-from . import BuildException, BuildBackendException, ProjectBuilder
+from . import BuildBackendException, BuildException, ProjectBuilder
 
 
 def _error(msg, code=1):  # type: (str, int) -> None
