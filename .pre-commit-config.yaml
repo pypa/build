@@ -1,37 +1,36 @@
-# I don't want to pull several repos just to get a 5 line dead-simple config for each tool
-# I would like to be able to define local hooks in .pre-commit-hooks.yaml but that is not possible right now
-# See https://github.com/pre-commit/pre-commit/issues/1481
+hooks:
+  - &base
+    language: python
+    types: [python]
+    require_serial: true
+  - &mypy
+    id: mypy
+    name: mypy
+    entry: mypy
+    <<: *base
+  - &flake8
+    id: flake8
+    name: flake8
+    entry: flake8
+    <<: *base
+  - &isort
+    id: isort
+    name: isort
+    entry: isort
+    <<: *base
+
 repos:
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy
-        entry: mypy
-        language: python
-        types: [python]
-        require_serial: true
+      - <<: *mypy
         files: ^build/
-      - id: mypy
+      - <<: *mypy
         name: mypy (py2)
-        entry: mypy
-        language: python
-        types: [python]
-        require_serial: true
         files: ^build/
         args: ['--py2']
-      - id: flake8
-        name: flake8
-        entry: flake8
-        language: python
-        types: [python]
-        require_serial: true
+      - <<: *flake8
         files: ^build/
-      - id: isort
-        name: isort
-        entry: isort
-        language: python
-        types: [python]
-        require_serial: true
+      - <<: *isort
         files: ^build/
         args: ['--check-only', '--diff']
 
