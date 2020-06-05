@@ -9,13 +9,6 @@ import importlib
 import os
 import sys
 
-# isort:maintain_block
-if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata
-else:
-    import importlib_metadata
-# isort:end_maintain_block
-
 from typing import List  # isort:skip # until isort 5.0.0
 
 import pep517.wrappers  # isort:skip # until isort 5.0.0
@@ -41,6 +34,11 @@ class BuildBackendException(Exception):
 
 def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     import packaging.requirements
+
+    if sys.version_info >= (3, 8):
+        from importlib import metadata as importlib_metadata
+    else:
+        import importlib_metadata
 
     req = packaging.requirements.Requirement(requirement_string)
     env = {
