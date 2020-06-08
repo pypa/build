@@ -9,10 +9,10 @@ import importlib
 import os
 import sys
 
-from typing import List  # isort:skip # until isort 5.0.0
+from typing import List
 
-import pep517.wrappers  # isort:skip # until isort 5.0.0
-import toml  # isort:skip # until isort 5.0.0
+import pep517.wrappers
+import toml
 
 
 if sys.version_info < (3,):
