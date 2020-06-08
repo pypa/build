@@ -13,11 +13,18 @@ requires = [
     'pep517',
     'packaging',
     'importlib_metadata;python_version<"3.8"',
+    'typing;python_version<"3"',
 ]
 classifiers = [
     'License :: OSI Approved :: MIT License',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
+]
+
+[tool.flit.metadata.requires-extra]
+test = [
+    'pytest',
+    'pytest-cov',
 ]
 
 [tool.flit.scripts]

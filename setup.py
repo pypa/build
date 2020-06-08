@@ -26,5 +26,12 @@ setup(
         'pep517',
         'packaging',
         'importlib-metadata; python_version < "3.8"',
+        'typing;python_version<"3"',
     ],
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov'
+        ],
+    },
 )
