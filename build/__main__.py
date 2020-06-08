@@ -13,7 +13,7 @@ from . import BuildBackendException, BuildException, ProjectBuilder
 __all__ = ['build', 'main']
 
 
-def _error(msg, code=1):  # type: (str, int) -> None
+def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     prefix = 'ERROR'
     if sys.stdout.isatty():
         prefix = '\33[91m' + prefix + '\33[0m'
