@@ -5,6 +5,8 @@ import os
 import sys
 import traceback
 
+from typing import List
+
 from . import BuildBackendException, BuildException, ProjectBuilder
 
 
@@ -16,7 +18,28 @@ def _error(msg, code=1):  # type: (str, int) -> None
     exit(code)
 
 
-if __name__ == '__main__':  # noqa: C901
+def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str, str, List[str], bool) -> None
+    try:
+        builder = ProjectBuilder(srcdir)
+
+        for dist in distributions:
+            if not skip_dependencies:
+                missing = builder.check_depencencies(dist)
+                if missing:
+                    _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
+
+            builder.build(dist, outdir)
+    except BuildException as e:
+        _error(str(e))
+    except BuildBackendException as e:
+        if sys.version_info >= (3, 5):
+            print(traceback.format_exc(-1))
+        else:
+            print(traceback.format_exc())
+        _error(str(e))
+
+
+def main():  # type: () -> None
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
     sys.argv[0] = 'python -m build'
@@ -49,21 +72,8 @@ if __name__ == '__main__':  # noqa: C901
     if not distributions:
         distributions = ['sdist', 'wheel']
 
-    try:
-        builder = ProjectBuilder(args.srcdir)
+    build(args.srcdir, args.outdir, distributions, args.skip_dependencies)
 
-        for dist in distributions:
-            if not args.skip_dependencies:
-                missing = builder.check_depencencies(dist)
-                if missing:
-                    _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
 
-            builder.build(dist, args.outdir)
-    except BuildException as e:
-        _error(str(e))
-    except BuildBackendException as e:
-        if sys.version_info >= (3, 5):
-            print(traceback.format_exc(-1))
-        else:
-            print(traceback.format_exc())
-        _error(str(e))
+if __name__ == '__main__':
+    main()
