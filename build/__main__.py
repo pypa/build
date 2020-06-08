@@ -45,7 +45,6 @@ def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str
 def main():  # type: () -> None
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
-    sys.argv[0] = 'python -m build'
     parser = argparse.ArgumentParser()
     parser.add_argument('srcdir',
                         type=str, nargs='?', metavar=cwd, default=cwd,
@@ -79,4 +78,5 @@ def main():  # type: () -> None
 
 
 if __name__ == '__main__':
+    sys.argv[0] = 'python -m build'
     main()

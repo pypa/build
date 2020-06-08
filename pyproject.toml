@@ -19,3 +19,6 @@ classifiers = [
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
 ]
+
+[tool.flit.scripts]
+python-build = 'build.__main__:main'

@@ -18,6 +18,9 @@ setup(
         'Programming Language :: Python :: 3'
     ],
     packages=['build'],
+    entry_points={
+        'console_scripts': ['python-build=build.__main__:main'],
+    },
     install_requires=[
         'toml'
         'pep517',
