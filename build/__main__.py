@@ -42,7 +42,7 @@ def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str
         _error(str(e))
 
 
-def main():  # type: () -> None
+def main(cli_args):  # type: (List[str]) -> None
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
     parser = argparse.ArgumentParser()
@@ -61,7 +61,7 @@ def main():  # type: () -> None
     parser.add_argument('--skip-dependencies', '-x',
                         action='store_true',
                         help='does not check for the dependencies')
-    args = parser.parse_args()
+    args = parser.parse_args(cli_args)
 
     distributions = []
 
@@ -77,6 +77,6 @@ def main():  # type: () -> None
     build(args.srcdir, args.outdir, distributions, args.skip_dependencies)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     sys.argv[0] = 'python -m build'
-    main()
+    main(sys.argv)
