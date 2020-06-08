@@ -34,7 +34,7 @@ jobs:
       run: pip install toml pep517 packaging importlib_metadata
 
     - name: Install python2 dependencies
-      if: ${{ matrix.python }} == 2.7
+      if: ${{ matrix.python == 2.7 }}
       run: pip install typing
 
     - name: Run pytest
@@ -42,6 +42,6 @@ jobs:
 
     - name: Send coverage report
       uses: codecov/codecov-action@v1
-      if: ${{ matrix.python }} == 3.8
+      if: ${{ matrix.python == 3.8 }}
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
