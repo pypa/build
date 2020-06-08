@@ -55,7 +55,7 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
         return False
 
     for extra in req.extras:
-        if extra not in metadata.get_all('Provides-Extra') or []:
+        if extra not in (metadata.get_all('Provides-Extra') or []):
             return False
 
     if req.specifier:
