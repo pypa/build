@@ -80,15 +80,16 @@ class ProjectBuilder(object):
 
         try:
             self._build_system = self._spec['build-system']
-            self._backend = self._build_system['build-backend']
         except KeyError:
             self._build_system = {
+                'build-backend': 'setuptools.build_meta:__legacy__',
                 'requires': [
                     'setuptools >= 40.8.0',
                     'wheel'
                 ]
             }
-            self._backend = 'setuptools.build_meta:__legacy__'
+
+        self._backend = self._build_system['build-backend']
 
         try:
             importlib.import_module(self._backend.split(':')[0])
