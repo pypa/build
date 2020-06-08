@@ -18,6 +18,11 @@ hooks:
     name: isort
     entry: isort
     <<: *base
+  - &pytest
+    id: pytest
+    name: pytest
+    entry: pytest
+    <<: *base
 
 repos:
   - repo: local
@@ -33,4 +38,7 @@ repos:
       - <<: *isort
         files: ^build/
         args: ['--check-only', '--diff']
+      - <<: *pytest
+        files: ^tests/
+        args: ['--exitfirst']
 
