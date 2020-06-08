@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 
+import sys
 import os
 
 import pytest
@@ -27,3 +28,34 @@ def test_parse_args(mocker, cli_args, build_args):
 
     build.__main__.main(cli_args)
     build.__main__.build.assert_called_with(*build_args)
+
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')
+def test_build(mocker):
+    mocker.patch('importlib.import_module')
+    mocker.patch('build.ProjectBuilder.check_depencencies')
+    mocker.patch('build.ProjectBuilder.build')
+    mocker.patch('build.__main__._error')
+
+    build.ProjectBuilder.check_depencencies.side_effect = [[], ['something'], [], []]
+
+    # check_dependencies = []
+    build.__main__.build('.', '.', ['sdist'])
+    build.ProjectBuilder.build.assert_called()
+
+    # check_dependencies = ['something]
+    build.__main__.build('.', '.', ['sdist'])
+    build.__main__._error.assert_called()
+
+    build.ProjectBuilder.build.side_effect = [build.BuildException, build.BuildBackendException]
+    build.__main__._error.reset_mock()
+
+    # BuildException
+    build.__main__.build('.', '.', ['sdist'])
+    build.__main__._error.assert_called()
+
+    build.__main__._error.reset_mock()
+
+    # BuildBackendException
+    build.__main__.build('.', '.', ['sdist'])
+    build.__main__._error.assert_called()
