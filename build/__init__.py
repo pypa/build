@@ -15,7 +15,7 @@ import pep517.wrappers
 import toml
 
 
-if sys.version_info < (3,):
+if sys.version_info < (3,):  # pragma: no cover
     FileNotFoundError = IOError
     PermissionError = OSError
 
@@ -35,9 +35,9 @@ class BuildBackendException(Exception):
 def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     import packaging.requirements
 
-    if sys.version_info >= (3, 8):
+    if sys.version_info >= (3, 8):  # pragma: no cover
         from importlib import metadata as importlib_metadata
-    else:
+    else:  # pragma: no cover
         import importlib_metadata
 
     req = packaging.requirements.Requirement(requirement_string)

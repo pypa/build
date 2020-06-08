@@ -35,9 +35,9 @@ def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str
     except BuildException as e:
         _error(str(e))
     except BuildBackendException as e:
-        if sys.version_info >= (3, 5):
+        if sys.version_info >= (3, 5):  # pragma: no cover
             print(traceback.format_exc(-1))
-        else:
+        else:  # pragma: no cover
             print(traceback.format_exc())
         _error(str(e))
 
