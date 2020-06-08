@@ -10,6 +10,9 @@ from typing import List
 from . import BuildBackendException, BuildException, ProjectBuilder
 
 
+__all__ = ['build', 'main']
+
+
 def _error(msg, code=1):  # type: (str, int) -> None
     prefix = 'ERROR'
     if sys.stdout.isatty():
