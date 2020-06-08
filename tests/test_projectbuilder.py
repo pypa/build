@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import unicode_literals
+
 import sys
 
 import pytest
@@ -38,14 +40,20 @@ Provides-Extra: some_extra
         ('something[some_extra] == 2.0.0', '', False),
     ]
 )
-def test_check_version(mocker, requirement_string, extra, expected):
-    def from_name(name):
-        if name == 'something':
-            return importlib_metadata.Distribution()
-        raise importlib_metadata.PackageNotFoundError
+def test_check_version(requirement_string, extra, expected):
+    class MockDistribution(importlib_metadata.Distribution):
+        def read_text(self, filename):
+            return DUMMY_METADATA
 
-    mocker.patch('importlib_metadata.Distribution')
-    importlib_metadata.Distribution.from_name = from_name
-    importlib_metadata.Distribution.metadata = email_message_from_string(DUMMY_METADATA)
+        def locate_file(self, path):
+            return ''
+
+        @classmethod
+        def from_name(cls, name):
+            if name == 'something':
+                return cls()
+            raise importlib_metadata.PackageNotFoundError
+
+    importlib_metadata.Distribution = MockDistribution
 
     assert build.check_version(requirement_string) == expected
