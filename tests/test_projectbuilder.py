@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 
-import importlib
+import copy
 import sys
 
 import pep517.wrappers
@@ -106,3 +106,38 @@ def test_init(mocker):
     open_mock.side_effect = PermissionError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder('.')
+
+
+def test_check_dependencies(mocker):
+    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
+    mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
+    mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
+    mocker.patch('build.check_version')
+
+    builder = build.ProjectBuilder('.')
+
+    side_effects = [
+        [],
+        ['something'],
+        pep517.wrappers.BackendUnavailable,
+    ]
+
+    build.check_version.return_value = False
+    builder.hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
+    builder.hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
+
+    # requires = []
+    assert not builder.check_depencencies('sdist')
+    assert not builder.check_depencencies('wheel')
+
+    # requires = ['something']
+    assert builder.check_depencencies('sdist')
+    assert builder.check_depencencies('wheel')
+
+    # BackendUnavailable
+    with pytest.raises(build.BuildBackendException):
+        builder.check_depencencies('sdist')
+    with pytest.raises(build.BuildBackendException):
+        not builder.check_depencencies('wheel')
