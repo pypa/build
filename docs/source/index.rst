@@ -56,6 +56,25 @@ we will try to keep dependencies to a minimum, in order to try make
 bootstrapping easier.
 
 
+Difference from other tools
+===========================
+
+
+``setup.py sdist bdist_wheel``
+------------------------------
+
+``python-build`` is roughly the equivalent of ``setup.py sdist bdist_wheel`` but
+with :pep:`517` support.
+
+
+``python -m pep517.build``
+--------------------------
+
+``python -m pep517.build`` will invoke pip_ to install missing dependencies,
+``python-build`` is *stricly* a build tool, it does not do any sort of
+dependency management. If the dependencies are not met, the build will fail.
+
+
 Bootstrapping
 =============
 
