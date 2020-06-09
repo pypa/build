@@ -93,7 +93,7 @@ class ProjectBuilder(object):
 
         try:
             importlib.import_module(self._backend.split(':')[0])
-        except ImportError:
+        except ImportError:  # can't mock importlib.import_module  # pragma: no cover
             raise BuildException("Backend '{}' is not available".format(self._backend))
 
         self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
