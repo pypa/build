@@ -4,7 +4,7 @@ A simple, correct PEP517 package builder.
 
 ```sh
 $ python -m build -h
-usage: python -m build [-h] [--sdist] [--wheel] [--outdir ./dist] [.]
+usage: python -m build [-h] [--sdist] [--wheel] [--outdir ./dist] [--skip-dependencies] [.]
 
 positional arguments:
   .                     source directory (defaults to current directory)
