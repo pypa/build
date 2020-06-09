@@ -33,6 +33,10 @@ class BuildBackendException(Exception):
 
 
 def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
+    '''
+    :param requirement_string: Requirement string
+    :param extra: Extra (eg. test in myproject[test])
+    '''
     import packaging.requirements
 
     if sys.version_info >= (3, 8):  # pragma: no cover
@@ -66,6 +70,9 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
 
 class ProjectBuilder(object):
     def __init__(self, srcdir='.'):  # type: (str) -> None
+        '''
+        :param srcdir: Source directory
+        '''
         self.srcdir = srcdir
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
@@ -102,6 +109,8 @@ class ProjectBuilder(object):
     def check_depencencies(self, distribution):  # type: (str) -> List[str]
         '''
         Returns a set of the missing dependencies
+
+        :param distribution: Distribution to build (sdist or wheel)
         '''
         get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
 
@@ -122,6 +131,9 @@ class ProjectBuilder(object):
     def build(self, distribution, outdir):  # type: (str, str) -> None
         '''
         Builds a distribution
+
+        :param distribution: Distribution to build (sdist or wheel)
+        :param outdir: Outpur directory
         '''
         build = getattr(self.hook, 'build_{}'.format(distribution))
 

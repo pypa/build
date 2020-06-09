@@ -14,6 +14,12 @@ __all__ = ['build', 'main']
 
 
 def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
+    '''
+    Prints an error message and exits. Will color the output when writting to a TTY.
+
+    :param msg: Error message
+    :param code: Error code
+    '''
     prefix = 'ERROR'
     if sys.stdout.isatty():
         prefix = '\33[91m' + prefix + '\33[0m'
@@ -22,6 +28,14 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
 
 
 def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str, str, List[str], bool) -> None
+    '''
+    Runs the build process
+
+    :param srcdir: Source directory
+    :param outdir: Output directory
+    :param distributions: Distributions to build (sdist and/or wheel)
+    :param skip_dependencies: Do not perform the dependency check
+    '''
     try:
         builder = ProjectBuilder(srcdir)
 
@@ -43,6 +57,11 @@ def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str
 
 
 def main(cli_args):  # type: (List[str]) -> None
+    '''
+    Parses the CLI arguments and invokes the build process.
+
+    :param cli_args: CLI arguments
+    '''
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
     parser = argparse.ArgumentParser()
