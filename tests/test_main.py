@@ -8,6 +8,12 @@ import pytest
 import build.__main__
 
 
+if sys.version_info >= (3,):  # pragma: no cover
+    build_open_owner = 'builtins'
+else:  # pragma: no cover
+    build_open_owner = 'build'
+
+
 cwd = os.getcwd()
 out = os.path.join(cwd, 'dist')
 
@@ -32,6 +38,8 @@ def test_parse_args(mocker, cli_args, build_args):
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')
 def test_build(mocker):
+    open_mock = mocker.mock_open(read_data='')
+    mocker.patch('{}.open'.format(build_open_owner), open_mock)
     mocker.patch('importlib.import_module')
     mocker.patch('build.ProjectBuilder.check_depencencies')
     mocker.patch('build.ProjectBuilder.build')
