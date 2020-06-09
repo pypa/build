@@ -3,7 +3,7 @@
 '''
 python-build - A simple, correct PEP517 package builder
 '''
-__version__ = '0.0.3'
+__version__ = '0.0.3.1'
 
 import importlib
 import os
