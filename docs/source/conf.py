@@ -17,7 +17,7 @@ from pallets_sphinx_themes import ProjectLink
 
 import build
 
-sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 
 
 # -- Project information -----------------------------------------------------
