@@ -75,6 +75,16 @@ with :pep:`517` support.
 dependency management. If the dependencies are not met, the build will fail.
 
 
+Custom Behaviors
+================
+
+Fallback Backend
+----------------
+
+As recommended in :pep:`517`, if no backend is specified, ``python-build`` will
+fallback to ``setuptools.build_meta:__legacy__``.
+
+
 Bootstrapping
 =============
 
