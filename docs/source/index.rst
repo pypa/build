@@ -68,6 +68,7 @@ Compability
 
 ``python-build`` is verified to be compatible with the following Python
 versions:
+
 - 2.7
 - 3.5
 - 3.6
