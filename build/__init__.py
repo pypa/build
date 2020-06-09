@@ -109,8 +109,6 @@ class ProjectBuilder(object):
 
         try:
             dependencies.update(get_requires())
-        except pep517.wrappers.BackendUnavailable as e:
-            raise e
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
