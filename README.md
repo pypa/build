@@ -18,3 +18,5 @@ optional arguments:
   --skip-dependencies, -x
                         does not check for the dependencies
 ```
+
+See the [documentation](https://python-build.readthedocs.io/en/latest/) for more information.
