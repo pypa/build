@@ -141,3 +141,28 @@ def test_check_dependencies(mocker):
         builder.check_depencencies('sdist')
     with pytest.raises(build.BuildBackendException):
         not builder.check_depencencies('wheel')
+
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')
+def test_build(mocker):
+    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
+    mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    builder = build.ProjectBuilder('.')
+
+    builder.hook.build_sdist.side_effect = [None, Exception]
+    builder.hook.build_wheel.side_effect = [None, Exception]
+
+    builder.build('sdist', '.')
+    builder.hook.build_sdist.assert_called()
+
+    builder.build('wheel', '.')
+    builder.hook.build_wheel.assert_called()
+
+    with pytest.raises(build.BuildBackendException):
+        builder.build('sdist', '.')
+
+    with pytest.raises(build.BuildBackendException):
+        builder.build('wheel', '.')
