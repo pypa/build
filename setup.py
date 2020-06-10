@@ -7,7 +7,7 @@ except ImportError:
 
 
 setup(
-    name='build',
+    name='casei',
     version='0.0.3.1',
     project_urls={'homepage': 'https://github.com/FFY00/python-build'},
     author='Filipe Laíns',
@@ -17,9 +17,12 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3'
     ],
-    packages=['build'],
+    packages=[
+#        'build',
+        'casei',
+    ],
     entry_points={
-        'console_scripts': ['python-build=build.__main__:main'],
+        'console_scripts': ['casei=casei.__main__:main'],
     },
     install_requires=[
         'toml'

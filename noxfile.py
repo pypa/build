@@ -11,14 +11,14 @@ nox.options.reuse_existing_virtualenvs = True
 def flake8(session):
     session.install('flake8')
 
-    session.run('flake8', '--show-source', '--statistics', 'build')
+    session.run('flake8', '--show-source', '--statistics', 'casei')
 
 
 @nox.session(python='3.8')
 def isort(session):
     session.install('isort')
 
-    session.run('isort', '-y', '--diff', '--recursive', 'build')
+    session.run('isort', '-y', '--diff', '--recursive', 'casei')
 
 
 @nox.session(python='3.8')
@@ -26,7 +26,7 @@ def mypy(session):
     session.install('.', 'mypy')
 
     session.run('mypy', '-p', 'build')
-    session.run('mypy', '--py2', '-p', 'build')
+    session.run('mypy', '--py2', '-p', 'casei')
 
 
 @nox.session(python=['2.7', '3.5', '3.6', '3.7', '3.8', 'pypy2', 'pypy3'])

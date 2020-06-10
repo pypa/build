@@ -1,11 +1,11 @@
-************
-python-build
-************
+*****
+casei
+*****
 
 A simple, correct :pep:`517` package builder
 ********************************************
 
-python-build will invoke the :pep:`517` hooks to build a distribution package.
+casei will invoke the :pep:`517` hooks to build a distribution package.
 It is a simple build tool, it does no dependency management.
 
 
@@ -13,8 +13,8 @@ The recommended way to invoke is by calling the module:
 
 .. code-block:: sh
 
-   $ python -m build
-   usage: python -m build [-h] [--sdist] [--wheel] [--outdir ./dist] [--skip-dependencies] [.]
+   $ python -m casei
+   usage: python -m casei [-h] [--sdist] [--wheel] [--outdir ./dist] [--skip-dependencies] [.]
 
    positional arguments:
    .                     source directory (defaults to current directory)
@@ -28,14 +28,13 @@ The recommended way to invoke is by calling the module:
    --skip-dependencies, -x
                            does not check for the dependencies
 
-
-But the ``python-build`` script is also available, so that tools such as pipx_
-can use it:
+But the ``casei`` script is also available, so that tools such as pipx_ can use
+it:
 
 .. code-block:: sh
 
-   $ python-build
-   usage: python-build [-h] ...
+   $ casei
+   usage: casei [-h] ...
 
 
 Mission Statement
@@ -75,16 +74,16 @@ Difference from other tools
 ``setup.py sdist bdist_wheel``
 ------------------------------
 
-``python-build`` is roughly the equivalent of ``setup.py sdist bdist_wheel`` but
-with :pep:`517` support.
+``casei`` is roughly the equivalent of ``setup.py sdist bdist_wheel`` but with
+:pep:`517` support.
 
 
 ``python -m pep517.build``
 --------------------------
 
 ``python -m pep517.build`` will invoke pip_ to install missing dependencies,
-``python-build`` is *stricly* a build tool, it does not do any sort of
-dependency management. If the dependencies are not met, the build will fail.
+``casei`` is *stricly* a build tool, it does not do any sort of dependency
+management. If the dependencies are not met, the build will fail.
 
 
 Custom Behaviors
@@ -93,7 +92,7 @@ Custom Behaviors
 Fallback Backend
 ----------------
 
-As recommended in :pep:`517`, if no backend is specified, ``python-build`` will
+As recommended in :pep:`517`, if no backend is specified, ``casei`` will
 fallback to ``setuptools.build_meta:__legacy__``.
 
 
@@ -107,8 +106,7 @@ dependencies. The ``--skip-dependencies`` flag should be used in this case.
 Compability
 ===========
 
-``python-build`` is verified to be compatible with the following Python
-versions:
+``casei`` is verified to be compatible with the following Python versions:
 
 - 2.7
 - 3.5
@@ -132,7 +130,7 @@ versions:
 
 .. _tarball: https://github.com/FFY00/python-build/releases
 .. _git tag: https://github.com/FFY00/python-build/tags
-.. _project page: https://pypi.org/project/build/
+.. _project page: https://pypi.org/project/casei/
 
 
 .. |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2| replace:: ``3DCE51D60930EBA47858BA4146F633CBB0EB4BF2``

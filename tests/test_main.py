@@ -5,13 +5,13 @@ import os
 
 import pytest
 
-import build.__main__
+import casei.__main__
 
 
 if sys.version_info >= (3,):  # pragma: no cover
     build_open_owner = 'builtins'
 else:  # pragma: no cover
-    build_open_owner = 'build'
+    build_open_owner = 'casei'
 
 
 cwd = os.getcwd()
@@ -30,10 +30,10 @@ out = os.path.join(cwd, 'dist')
     ]
 )
 def test_parse_args(mocker, cli_args, build_args):
-    mocker.patch('build.__main__.build')
+    mocker.patch('casei.__main__.build')
 
-    build.__main__.main(cli_args)
-    build.__main__.build.assert_called_with(*build_args)
+    casei.__main__.main(cli_args)
+    casei.__main__.build.assert_called_with(*build_args)
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')
@@ -41,29 +41,32 @@ def test_build(mocker):
     open_mock = mocker.mock_open(read_data='')
     mocker.patch('{}.open'.format(build_open_owner), open_mock)
     mocker.patch('importlib.import_module')
-    mocker.patch('build.ProjectBuilder.check_depencencies')
-    mocker.patch('build.ProjectBuilder.build')
-    mocker.patch('build.__main__._error')
+    mocker.patch('casei.ProjectBuilder.check_depencencies')
+    mocker.patch('casei.ProjectBuilder.build')
+    mocker.patch('casei.__main__._error')
 
-    build.ProjectBuilder.check_depencencies.side_effect = [[], ['something'], [], []]
+    casei.ProjectBuilder.check_depencencies.side_effect = [[], ['something'], [], []]
 
     # check_dependencies = []
-    build.__main__.build('.', '.', ['sdist'])
-    build.ProjectBuilder.build.assert_called()
+    casei.__main__.build('.', '.', ['sdist'])
+    casei.ProjectBuilder.build.assert_called()
 
     # check_dependencies = ['something]
-    build.__main__.build('.', '.', ['sdist'])
-    build.__main__._error.assert_called()
+    casei.__main__.build('.', '.', ['sdist'])
+    casei.__main__._error.assert_called()
 
-    build.ProjectBuilder.build.side_effect = [build.BuildException, build.BuildBackendException]
-    build.__main__._error.reset_mock()
+    casei.ProjectBuilder.build.side_effect = [
+        casei.BuildException,
+        casei.BuildBackendException
+    ]
+    casei.__main__._error.reset_mock()
 
     # BuildException
-    build.__main__.build('.', '.', ['sdist'])
-    build.__main__._error.assert_called()
+    casei.__main__.build('.', '.', ['sdist'])
+    casei.__main__._error.assert_called()
 
-    build.__main__._error.reset_mock()
+    casei.__main__._error.reset_mock()
 
     # BuildBackendException
-    build.__main__.build('.', '.', ['sdist'])
-    build.__main__._error.assert_called()
+    casei.__main__.build('.', '.', ['sdist'])
+    casei.__main__._error.assert_called()

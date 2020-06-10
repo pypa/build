@@ -32,7 +32,7 @@ jobs:
       run: pip install importlib_metadata packaging
 
     - name: Run mypy
-      run: mypy --python-version ${{ matrix.python }} -p build
+      run: mypy --python-version ${{ matrix.python }} -p casei
 
 
   flake8:
@@ -51,7 +51,7 @@ jobs:
         flake8 --version
 
     - name: Run flake8
-      run: flake8 --show-source --statistics build
+      run: flake8 --show-source --statistics casei
 
   isort:
     runs-on: ubuntu-latest
@@ -69,5 +69,5 @@ jobs:
         isort --version
 
     - name: Run isort
-      run: isort --check-only --diff --recursive build
+      run: isort --check-only --diff --recursive casei
 

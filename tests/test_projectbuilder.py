@@ -8,7 +8,7 @@ import sys
 import pep517.wrappers
 import pytest
 
-import build
+import casei
 
 
 if sys.version_info >= (3, 8):  # pragma: no cover
@@ -20,9 +20,9 @@ else:  # pragma: no cover
     email_message_from_string = importlib_metadata._compat.email_message_from_string
 
 if sys.version_info >= (3,):  # pragma: no cover
-    build_open_owener = 'builtins'
+    build_open_owner = 'builtins'
 else:  # pragma: no cover
-    build_open_owener = 'build'
+    build_open_owner = 'casei'
     FileNotFoundError = IOError
     PermissionError = OSError
 
@@ -79,7 +79,7 @@ importlib_metadata.Distribution = MockDistribution
     ]
 )
 def test_check_version(requirement_string, extra, expected):
-    assert build.check_version(requirement_string) == expected
+    assert casei.check_version(requirement_string) == expected
 
 
 def test_init(mocker):
@@ -89,34 +89,34 @@ def test_init(mocker):
         'setuptools.build_meta:__legacy__': None,
     }
     mocker.patch('importlib.import_module', modules.get)
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owner), open_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # data = ''
-    build.ProjectBuilder('.')
+    casei.ProjectBuilder('.')
     pep517.wrappers.Pep517HookCaller.assert_called_with('.', 'flit_core.buildapi', backend_path=None)
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # FileNotFoundError
     open_mock.side_effect = FileNotFoundError
-    build.ProjectBuilder('.')
+    casei.ProjectBuilder('.')
     pep517.wrappers.Pep517HookCaller.assert_called_with('.', 'setuptools.build_meta:__legacy__', backend_path=None)
 
     # PermissionError
     open_mock.side_effect = PermissionError
-    with pytest.raises(build.BuildException):
-        build.ProjectBuilder('.')
+    with pytest.raises(casei.BuildException):
+        casei.ProjectBuilder('.')
 
 
 def test_check_dependencies(mocker):
     open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owner), open_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
-    mocker.patch('build.check_version')
+    mocker.patch('casei.check_version')
 
-    builder = build.ProjectBuilder('.')
+    builder = casei.ProjectBuilder('.')
 
     side_effects = [
         [],
@@ -124,7 +124,7 @@ def test_check_dependencies(mocker):
         pep517.wrappers.BackendUnavailable,
     ]
 
-    build.check_version.return_value = False
+    casei.check_version.return_value = False
     builder.hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
     builder.hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
@@ -137,9 +137,9 @@ def test_check_dependencies(mocker):
     assert builder.check_depencencies('wheel')
 
     # BackendUnavailable
-    with pytest.raises(build.BuildBackendException):
+    with pytest.raises(casei.BuildBackendException):
         builder.check_depencencies('sdist')
-    with pytest.raises(build.BuildBackendException):
+    with pytest.raises(casei.BuildBackendException):
         not builder.check_depencencies('wheel')
 
 
@@ -147,10 +147,10 @@ def test_check_dependencies(mocker):
 def test_build(mocker):
     open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owner), open_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
-    builder = build.ProjectBuilder('.')
+    builder = casei.ProjectBuilder('.')
 
     builder.hook.build_sdist.side_effect = [None, Exception]
     builder.hook.build_wheel.side_effect = [None, Exception]
@@ -161,8 +161,8 @@ def test_build(mocker):
     builder.build('wheel', '.')
     builder.hook.build_wheel.assert_called()
 
-    with pytest.raises(build.BuildBackendException):
+    with pytest.raises(casei.BuildBackendException):
         builder.build('sdist', '.')
 
-    with pytest.raises(build.BuildBackendException):
+    with pytest.raises(casei.BuildBackendException):
         builder.build('wheel', '.')

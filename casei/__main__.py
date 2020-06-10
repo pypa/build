@@ -97,5 +97,5 @@ def main(cli_args):  # type: (List[str]) -> None
 
 
 if __name__ == '__main__':  # pragma: no cover
-    sys.argv[0] = 'python -m build'
+    sys.argv[0] = 'python -m python_build'
     main(sys.argv[1:])

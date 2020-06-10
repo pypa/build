@@ -3,7 +3,7 @@ requires = ['poetry>=0.12']
 build-backend = 'poetry.masonry.api'
 
 [tool.poetry]
-name = 'build'
+name = 'casei'
 version = '0.0.3.1'
 description = 'A simple, correct PEP517 package builder'
 license = 'MIT'
@@ -25,7 +25,8 @@ classifiers = [
 ]
 
 packages = [
-    { include = 'build' },
+#    { include = 'build' },
+    { include = 'casei' },
 ]
 
 
@@ -47,4 +48,4 @@ pytest-mock = '^3.0'
 pytest-cov = '^2.0'
 
 [tool.poetry.scripts]
-python-build = 'build.__main__:main'
+casei = 'casei.__main__:main'

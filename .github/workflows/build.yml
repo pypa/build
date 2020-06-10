@@ -10,7 +10,7 @@ on:
 
 
 jobs:
-  python-build:
+  casei:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
     - name: Install build backend
       run: pip install poetry
 
-    - name: Build python-build
+    - name: Build casei
       run: python -m build -x
 
 

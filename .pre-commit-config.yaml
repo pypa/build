@@ -33,15 +33,15 @@ repos:
   - repo: local
     hooks:
       - <<: *mypy
-        files: ^build/
+        files: ^python_build/
       - <<: *mypy
         name: mypy (py2)
-        files: ^build/
+        files: ^python_build/
         args: ['--py2']
       - <<: *flake8
-        files: ^build/
+        files: ^python_build/
       - <<: *isort
-        files: ^build/
+        files: ^python_build/
         args: ['--check-only', '--diff']
       - <<: *pytest
         files: ^tests/

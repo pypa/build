@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-import build
+import casei
 
 
 def test_version():
-    assert build.__version__
+    assert casei.__version__
