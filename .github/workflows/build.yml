@@ -31,7 +31,7 @@ jobs:
       run: pip install typing
 
     - name: Install build backend
-      run: pip install flit-core
+      run: pip install poetry
 
     - name: Build python-build
       run: python -m build -x
