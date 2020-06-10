@@ -20,3 +20,11 @@ optional arguments:
 ```
 
 See the [documentation](https://python-build.readthedocs.io/en/latest/) for more information.
+
+### Code of Conduct
+
+Everyone interacting in the python-build's codebase, issue trackers, chat
+rooms, and mailing lists is expected to follow the [PyPA Code of Conduct].
+
+
+[PyPA Code of Conduct]: https://www.pypa.io/en/latest/code-of-conduct/
