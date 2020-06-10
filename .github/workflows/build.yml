@@ -1,0 +1,169 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  python-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [2.7, 3.5, 3.8]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install dependencies
+      run: pip install toml pep517 packaging importlib_metadata
+
+    - name: Install python2 dependencies
+      if: ${{ matrix.python == 2.7 }}
+      run: pip install typing
+
+    - name: Install build backend
+      run: pip install flit-core
+
+    - name: Build python-build
+      run: python -m build -x
+
+
+  pip:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [2.7, 3.5, 3.8]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Checkout pip
+      uses: actions/checkout@v1
+      with:
+        repository: pypa/pip
+        path: pip
+        ref: 'master'
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install dependencies
+      run: pip install toml pep517 packaging importlib_metadata
+
+    - name: Install python2 dependencies
+      if: ${{ matrix.python == 2.7 }}
+      run: pip install typing
+
+    - name: Install build backend
+      run: pip install setuptools wheel
+
+    - name: Build pip
+      run: python -m build -x -w ../pip
+
+
+#  python-install:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      matrix:
+#        python: [2.7, 3.5, 3.8]
+#
+#    steps:
+#    - name: Checkout
+#      uses: actions/checkout@v1
+#
+#    - name: Checkout python-install
+#      uses: actions/checkout@v1
+#      with:
+#        repository: FFY00/python-install
+#        path: python-install
+#        ref: 'master'
+#
+#    - name: Set up Python
+#      uses: actions/setup-python@v1
+#
+#    - name: Install dependencies
+#      run: pip install toml pep517 packaging importlib_metadata
+#
+#    - name: Install python2 dependencies
+#      if: ${{ matrix.python == 2.7 }}
+#      run: pip install typing
+#
+#    - name: Install build backend
+#      run: pip install flit-core
+#
+#    - name: Build python-install
+#      run: python -m build -x -w ../python-install
+
+
+  dateutil:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [2.7, 3.5, 3.8]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Checkout dateutil
+      uses: actions/checkout@v1
+      with:
+        repository: dateutil/dateutil
+        path: dateutil
+        ref: 'master'
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install dependencies
+      run: pip install toml pep517 packaging importlib_metadata
+
+    - name: Install python2 dependencies
+      if: ${{ matrix.python == 2.7 }}
+      run: pip install typing
+
+    - name: Install build backend
+      run: pip install setuptools wheel
+
+    - name: Build dateutil
+      run: python -m build -x -w ../dateutil
+
+
+  Solaar:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.5, 3.8]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Checkout Solaar
+      uses: actions/checkout@v1
+      with:
+        repository: pwr-Solaar/Solaar
+        path: solaar
+        ref: 'master'
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install dependencies
+      run: pip install toml pep517 packaging importlib_metadata
+
+    - name: Install build backend
+      run: pip install setuptools wheel
+
+    - name: Build Solaar
+      run: python -m build -x -w ../solaar
