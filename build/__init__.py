@@ -9,7 +9,7 @@ import importlib
 import os
 import sys
 
-from typing import List
+from typing import Set
 
 import pep517.wrappers
 import toml
@@ -106,27 +106,26 @@ class ProjectBuilder(object):
         self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
                                                      backend_path=self._build_system.get('backend-path'))
 
-    def check_depencencies(self, distribution):  # type: (str) -> List[str]
+    def get_dependencies(self, distribution):  # type: (str) -> Set[str]
+        '''
+        Returns a set of dependencies
+        '''
+        get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
+
+        try:
+            return set(get_requires())
+        except Exception as e:  # noqa: E722
+            raise BuildBackendException('Backend operation failed: {}'.format(e))
+
+    def check_depencencies(self, distribution):  # type: (str) -> Set[str]
         '''
         Returns a set of the missing dependencies
 
         :param distribution: Distribution to build (sdist or wheel)
         '''
-        get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
+        dependencies = self.get_dependencies(distribution)
 
-        dependencies = set()
-
-        try:
-            dependencies.update(get_requires())
-        except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {}'.format(e))
-
-        missing = []
-        for dep in dependencies:
-            if not check_version(dep):
-                missing.append(dep)
-
-        return missing
+        return {dep for dep in dependencies if not check_version(dep)}
 
     def build(self, distribution, outdir):  # type: (str, str) -> None
         '''
