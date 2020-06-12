@@ -82,14 +82,13 @@ def test_check_version(requirement_string, extra, expected):
     assert build.check_version(requirement_string) == expected
 
 
-def test_init(mocker):
-    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
+def test_init(mocker, pyproject_mock):
     modules = {
         'flit_core.buildapi': None,
         'setuptools.build_meta:__legacy__': None,
     }
     mocker.patch('importlib.import_module', modules.get)
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owener), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # data = ''
@@ -98,12 +97,12 @@ def test_init(mocker):
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # FileNotFoundError
-    open_mock.side_effect = FileNotFoundError
+    pyproject_mock.side_effect = FileNotFoundError
     build.ProjectBuilder('.')
     pep517.wrappers.Pep517HookCaller.assert_called_with('.', 'setuptools.build_meta:__legacy__', backend_path=None)
 
     # PermissionError
-    open_mock.side_effect = PermissionError
+    pyproject_mock.side_effect = PermissionError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder('.')
 
@@ -113,15 +112,14 @@ def test_init(mocker):
         build.ProjectBuilder('.')
 
 
-def test_check_dependencies(mocker):
-    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
+def test_check_dependencies(mocker, pyproject_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owener), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
     mocker.patch('build.check_version')
 
-    builder = build.ProjectBuilder('.')
+    builder = build.ProjectBuilder()
 
     side_effects = [
         [],
@@ -148,26 +146,53 @@ def test_check_dependencies(mocker):
         not builder.check_dependencies('wheel')
 
 
-@pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')
-def test_build(mocker):
-    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT)
+def test_build(mocker, pyproject_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owener), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
-    builder = build.ProjectBuilder('.')
+    builder = build.ProjectBuilder()
 
     builder.hook.build_sdist.side_effect = [None, Exception]
     builder.hook.build_wheel.side_effect = [None, Exception]
 
     builder.build('sdist', '.')
-    builder.hook.build_sdist.assert_called()
+    builder.hook.build_sdist.assert_called_with('.', {})
 
     builder.build('wheel', '.')
-    builder.hook.build_wheel.assert_called()
+    builder.hook.build_wheel.assert_called_with('.', {})
 
     with pytest.raises(build.BuildBackendException):
         builder.build('sdist', '.')
 
     with pytest.raises(build.BuildBackendException):
         builder.build('wheel', '.')
+
+
+def test_default_backend(mocker, empty_file_mock):
+    mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owener), empty_file_mock)
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    builder = build.ProjectBuilder()
+
+    assert builder._build_system == build._DEFAULT_BACKEND
+
+
+def test_missing_backend(mocker, pyproject_no_backend_mock):
+    mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owener), pyproject_no_backend_mock)
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    builder = build.ProjectBuilder()
+
+    assert builder._build_system == build._DEFAULT_BACKEND
+
+
+def test_missing_requires(mocker, pyproject_no_requires_mock):
+    mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owener), pyproject_no_requires_mock)
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder()
