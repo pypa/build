@@ -132,9 +132,6 @@ jobs:
       if: ${{ matrix.python == 2.7 }}
       run: pip install typing
 
-    - name: Install build backend
-      run: pip install setuptools wheel
-
     - name: Build dateutil
       run: python -m build -x -w ../dateutil
 
@@ -161,9 +158,6 @@ jobs:
 
     - name: Install dependencies
       run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install build backend
-      run: pip install setuptools wheel
 
     - name: Build Solaar
       run: python -m build -x -w ../solaar

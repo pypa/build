@@ -7,6 +7,8 @@ import traceback
 
 from typing import List, Optional
 
+import pep517.envbuild
+
 from . import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
 
 
@@ -27,8 +29,26 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
-def build(srcdir, outdir, distributions, config_settings=None, skip_dependencies=False):
-    # type: (str, str, List[str], Optional[ConfigSettings], bool) -> None
+def _build_in_isolated_env(builder, outdir, distributions):  # type: (ProjectBuilder, str, List[str]) -> None
+    with pep517.envbuild.BuildEnvironment() as env:
+        env.pip_install(builder.build_dependencies)
+        for distribution in distributions:
+            builder.build(distribution, outdir)
+
+
+def _build_in_current_env(builder, outdir, distributions, skip_dependencies=False):
+    # type: (ProjectBuilder, str, List[str], bool) -> None
+    for dist in distributions:
+        if not skip_dependencies:
+            missing = builder.check_dependencies(dist)
+            if missing:
+                _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
+
+        builder.build(dist, outdir)
+
+
+def build(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
+    # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
     '''
     Runs the build process
 
@@ -36,6 +56,7 @@ def build(srcdir, outdir, distributions, config_settings=None, skip_dependencies
     :param outdir: Output directory
     :param distributions: Distributions to build (sdist and/or wheel)
     :param config_settings: Configuration settings to be passed to the backend
+    :param isolation: Isolate the build in a separate environment
     :param skip_dependencies: Do not perform the dependency check
     '''
     if not config_settings:
@@ -44,13 +65,10 @@ def build(srcdir, outdir, distributions, config_settings=None, skip_dependencies
     try:
         builder = ProjectBuilder(srcdir, config_settings)
 
-        for dist in distributions:
-            if not skip_dependencies:
-                missing = builder.check_dependencies(dist)
-                if missing:
-                    _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
-
-            builder.build(dist, outdir)
+        if isolation:
+            _build_in_isolated_env(builder, outdir, distributions)
+        else:
+            _build_in_current_env(builder, outdir, distributions, skip_dependencies)
     except BuildException as e:
         _error(str(e))
     except BuildBackendException as e:
@@ -136,7 +154,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     if not distributions:
         distributions = ['sdist', 'wheel']
 
-    build(args.srcdir, args.outdir, distributions, config_settings, args.skip_dependencies)
+    build(args.srcdir, args.outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
 
 
 if __name__ == '__main__':  # pragma: no cover

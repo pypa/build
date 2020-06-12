@@ -5,8 +5,10 @@ import io
 import os
 import sys
 
+import pep517
 import pytest
 
+import build
 import build.__main__
 
 
@@ -23,31 +25,32 @@ out = os.path.join(cwd, 'dist')
 @pytest.mark.parametrize(
     ('cli_args', 'build_args'),
     [
-        ([], [cwd, out, ['sdist', 'wheel'], {}, False]),
-        (['-s'], [cwd, out, ['sdist'], {}, False]),
-        (['-w'], [cwd, out, ['wheel'], {}, False]),
-        (['source'], ['source', out, ['sdist', 'wheel'], {}, False]),
-        (['-o', 'out'], [cwd, 'out', ['sdist', 'wheel'], {}, False]),
-        (['-x'], [cwd, out, ['sdist', 'wheel'], {}, True]),
+        ([], [cwd, out, ['sdist', 'wheel'], {}, True, False]),
+        (['-n'], [cwd, out, ['sdist', 'wheel'], {}, False, False]),
+        (['-s'], [cwd, out, ['sdist'], {}, True, False]),
+        (['-w'], [cwd, out, ['wheel'], {}, True, False]),
+        (['source'], ['source', out, ['sdist', 'wheel'], {}, True, False]),
+        (['-o', 'out'], [cwd, 'out', ['sdist', 'wheel'], {}, True, False]),
+        (['-x'], [cwd, out, ['sdist', 'wheel'], {}, True, True]),
         (
             ['-C--flag1', '-C--flag2'],
             [cwd, out, ['sdist', 'wheel'], {
                 '--flag1': '',
                 '--flag2': '',
-            }, False]
+            }, True, False]
         ),
         (
             ['-C--flag=value'],
             [cwd, out, ['sdist', 'wheel'], {
                 '--flag': 'value',
-            }, False]
+            }, True, False]
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
             [cwd, out, ['sdist', 'wheel'], {
                 '--flag1': 'value',
                 '--flag2': ['other_value', 'extra_value'],
-            }, False]
+            }, True, False]
         ),
     ]
 )
@@ -72,7 +75,6 @@ def test_prog():
             build.__main__.main(['--help'], prog='something')
 
 
-@pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')
 def test_build(mocker):
     open_mock = mocker.mock_open(read_data='')
     mocker.patch('{}.open'.format(build_open_owner), open_mock)
@@ -80,26 +82,33 @@ def test_build(mocker):
     mocker.patch('build.ProjectBuilder.check_dependencies')
     mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.__main__._error')
+    mocker.patch('pep517.envbuild.BuildEnvironment.pip_install')
 
     build.ProjectBuilder.check_dependencies.side_effect = [[], ['something'], [], []]
 
-    # check_dependencies = []
+    # isolation=True
     build.__main__.build('.', '.', ['sdist'])
-    build.ProjectBuilder.build.assert_called()
+    build.ProjectBuilder.build.assert_called_with('sdist', '.')
 
-    # check_dependencies = ['something]
-    build.__main__.build('.', '.', ['sdist'])
-    build.__main__._error.assert_called()
+    # check_dependencies = []
+    build.__main__.build('.', '.', ['sdist'], isolation=False)
+    build.ProjectBuilder.build.assert_called_with('sdist', '.')
+    pep517.envbuild.BuildEnvironment.pip_install.assert_called_with(set(build._DEFAULT_BACKEND['requires']))
+
+    # check_dependencies = ['something']
+    build.__main__.build('.', '.', ['sdist'], isolation=False)
+    build.ProjectBuilder.build.assert_called_with('sdist', '.')
+    build.__main__._error.assert_called_with('Missing dependencies:\n\tsomething')
 
     build.ProjectBuilder.build.side_effect = [build.BuildException, build.BuildBackendException]
     build.__main__._error.reset_mock()
 
     # BuildException
     build.__main__.build('.', '.', ['sdist'])
-    build.__main__._error.assert_called()
+    build.__main__._error.assert_called_with('')
 
     build.__main__._error.reset_mock()
 
     # BuildBackendException
     build.__main__.build('.', '.', ['sdist'])
-    build.__main__._error.assert_called()
+    build.__main__._error.assert_called_with('')
