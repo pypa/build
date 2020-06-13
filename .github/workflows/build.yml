@@ -33,8 +33,8 @@ jobs:
     - name: Install build backend
       run: pip install setuptools wheel
 
-    - name: Build python-build
-      run: python -m build -x
+    - name: Build python-build (without isolation)
+      run: python -m build -x -n
 
 
   pip:
@@ -67,8 +67,8 @@ jobs:
     - name: Install build backend
       run: pip install setuptools wheel
 
-    - name: Build pip
-      run: python -m build -x -w ../pip
+    - name: Build pip (without isolation)
+      run: python -m build -x -n -w ../pip
 
 
 #  python-install:
@@ -132,7 +132,7 @@ jobs:
       if: ${{ matrix.python == 2.7 }}
       run: pip install typing
 
-    - name: Build dateutil
+    - name: Build dateutil (with isolation)
       run: python -m build -x -w ../dateutil
 
 
@@ -159,5 +159,5 @@ jobs:
     - name: Install dependencies
       run: pip install toml pep517 packaging importlib_metadata
 
-    - name: Build Solaar
+    - name: Build Solaar (with isolation)
       run: python -m build -x -w ../solaar
