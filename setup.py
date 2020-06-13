@@ -34,5 +34,11 @@ setup(
             'pytest-mock',
             'pytest-cov'
         ],
+        'doc': [
+            'sphinx',
+            'sphinx-autodoc-typehints'
+            'sphinxcontrib-autoprogram',
+            'Pallets-Sphinx-Themes',
+        ]
     },
 )
