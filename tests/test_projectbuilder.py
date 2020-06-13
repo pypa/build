@@ -7,6 +7,7 @@ import sys
 
 import pep517.wrappers
 import pytest
+import toml.decoder
 
 import build
 
@@ -41,7 +42,7 @@ build-backend = 'flit_core.buildapi'
 
 DUMMY_PYPROJECT_BAD = '''
 [build-system]
-build-backend = 'missing_backend'
+requires = ['bad' 'syntax']
 '''.strip()
 
 
@@ -104,6 +105,11 @@ def test_init(mocker):
 
     # PermissionError
     open_mock.side_effect = PermissionError
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder('.')
+
+    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT_BAD)
+    mocker.patch('{}.open'.format(build_open_owener), open_mock)
     with pytest.raises(build.BuildException):
         build.ProjectBuilder('.')
 

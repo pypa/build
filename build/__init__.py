@@ -13,6 +13,7 @@ from typing import Set
 
 import pep517.wrappers
 import toml
+import toml.decoder
 
 
 if sys.version_info < (3,):  # pragma: no cover
@@ -84,6 +85,8 @@ class ProjectBuilder(object):
             self._spec = {}
         except PermissionError as e:
             raise BuildException("{}: '{}' ".format(e.strerror, e.filename))
+        except toml.decoder.TomlDecodeError as e:
+            raise BuildException("Failed to parse pyproject.toml: {} ".format(e))
 
         try:
             self._build_system = self._spec['build-system']
