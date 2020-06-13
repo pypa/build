@@ -35,4 +35,4 @@ coverage: Makefile apidoc
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile apidoc
 	cp -r "$(SOURCEDIR)"/* "$(SRCBUILDDIR)"
-	@$(SPHINXBUILD) -M $@ "$(SRCBUILDDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@PYTHONPATH=.. $(SPHINXBUILD) -M $@ "$(SRCBUILDDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
