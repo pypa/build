@@ -64,7 +64,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     out = os.path.join(cwd, 'dist')
     parser = argparse.ArgumentParser()
     parser.add_argument('srcdir',
-                        type=str, nargs='?', metavar=cwd, default=cwd,
+                        type=str, nargs='?', metavar='.', default=cwd,
                         help='source directory (defaults to current directory)')
     parser.add_argument('--sdist', '-s',
                         action='store_true',
@@ -72,7 +72,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     parser.add_argument('--wheel', '-w',
                         action='store_true',
                         help='build a wheel')
-    parser.add_argument('--outdir', '-o', metavar=out,
+    parser.add_argument('--outdir', '-o', metavar='dist',
                         type=str, default=out,
                         help='output directory')
     parser.add_argument('--skip-dependencies', '-x',

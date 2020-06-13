@@ -41,6 +41,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
+    'sphinxcontrib.autoprogram',
     'pallets_sphinx_themes',
 ]
 

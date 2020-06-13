@@ -1,3 +1,4 @@
 sphinx==3.*
 sphinx-autodoc-typehints
+sphinxcontrib.autoprogram
 Pallets-Sphinx-Themes
