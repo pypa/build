@@ -20,9 +20,9 @@ else:  # pragma: no cover
     email_message_from_string = importlib_metadata._compat.email_message_from_string
 
 if sys.version_info >= (3,):  # pragma: no cover
-    build_open_owener = 'builtins'
+    build_open_owner = 'builtins'
 else:  # pragma: no cover
-    build_open_owener = 'build'
+    build_open_owner = 'build'
     FileNotFoundError = IOError
     PermissionError = OSError
 
@@ -88,7 +88,7 @@ def test_init(mocker, pyproject_mock):
         'setuptools.build_meta:__legacy__': None,
     }
     mocker.patch('importlib.import_module', modules.get)
-    mocker.patch('{}.open'.format(build_open_owener), pyproject_mock)
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # data = ''
@@ -107,14 +107,14 @@ def test_init(mocker, pyproject_mock):
         build.ProjectBuilder('.')
 
     open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT_BAD)
-    mocker.patch('{}.open'.format(build_open_owener), open_mock)
+    mocker.patch('{}.open'.format(build_open_owner), open_mock)
     with pytest.raises(build.BuildException):
         build.ProjectBuilder('.')
 
 
 def test_check_dependencies(mocker, pyproject_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), pyproject_mock)
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
     mocker.patch('build.check_version')
@@ -148,7 +148,7 @@ def test_check_dependencies(mocker, pyproject_mock):
 
 def test_build(mocker, pyproject_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), pyproject_mock)
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     builder = build.ProjectBuilder()
@@ -171,7 +171,7 @@ def test_build(mocker, pyproject_mock):
 
 def test_default_backend(mocker, empty_file_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), empty_file_mock)
+    mocker.patch('{}.open'.format(build_open_owner), empty_file_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     builder = build.ProjectBuilder()
@@ -181,7 +181,7 @@ def test_default_backend(mocker, empty_file_mock):
 
 def test_missing_backend(mocker, pyproject_no_backend_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), pyproject_no_backend_mock)
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_no_backend_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     builder = build.ProjectBuilder()
@@ -191,7 +191,7 @@ def test_missing_backend(mocker, pyproject_no_backend_mock):
 
 def test_missing_requires(mocker, pyproject_no_requires_mock):
     mocker.patch('importlib.import_module')
-    mocker.patch('{}.open'.format(build_open_owener), pyproject_no_requires_mock)
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_no_requires_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     with pytest.raises(build.BuildException):
