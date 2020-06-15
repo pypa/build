@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+import contextlib
+import io
 import sys
 import os
 
@@ -34,6 +36,20 @@ def test_parse_args(mocker, cli_args, build_args):
 
     build.__main__.main(cli_args)
     build.__main__.build.assert_called_with(*build_args)
+
+
+def test_prog():
+    out = io.StringIO()
+
+    if sys.version_info >= (3,):  # pragma: no cover
+        with pytest.raises(SystemExit):
+            with contextlib.redirect_stdout(out):
+                build.__main__.main(['--help'], prog='something')
+
+        assert out.getvalue().startswith('usage: something [-h]')
+    else:  # pragma: no cover
+        with pytest.raises(SystemExit):
+            build.__main__.main(['--help'], prog='something')
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')

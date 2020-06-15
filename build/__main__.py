@@ -5,12 +5,12 @@ import os
 import sys
 import traceback
 
-from typing import List
+from typing import List, Optional
 
 from . import BuildBackendException, BuildException, ProjectBuilder
 
 
-__all__ = ['build', 'main']
+__all__ = ['build', 'main', 'main_parser']
 
 
 def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
@@ -56,11 +56,9 @@ def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str
         _error(str(e))
 
 
-def main(cli_args):  # type: (List[str]) -> None
+def main_parser():  # type: () -> argparse.ArgumentParser
     '''
-    Parses the CLI arguments and invokes the build process.
-
-    :param cli_args: CLI arguments
+    Constructs the main parser
     '''
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
@@ -80,6 +78,21 @@ def main(cli_args):  # type: (List[str]) -> None
     parser.add_argument('--skip-dependencies', '-x',
                         action='store_true',
                         help='does not check for the dependencies')
+    parser.add_argument('--no-isolation', '-n',
+                        action='store_true',
+                        help='do not isolate the build in a virtual environment')
+    return parser
+
+
+def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
+    '''
+    Parses the CLI arguments and invokes the build process.
+
+    :param cli_args: CLI arguments
+    '''
+    parser = main_parser()
+    if prog:
+        parser.prog = prog
     args = parser.parse_args(cli_args)
 
     distributions = []
@@ -97,5 +110,4 @@ def main(cli_args):  # type: (List[str]) -> None
 
 
 if __name__ == '__main__':  # pragma: no cover
-    sys.argv[0] = 'python -m build'
-    main(sys.argv[1:])
+    main(sys.argv[1:], 'python -m build')
