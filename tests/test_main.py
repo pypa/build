@@ -57,11 +57,11 @@ def test_build(mocker):
     open_mock = mocker.mock_open(read_data='')
     mocker.patch('{}.open'.format(build_open_owner), open_mock)
     mocker.patch('importlib.import_module')
-    mocker.patch('build.ProjectBuilder.check_depencencies')
+    mocker.patch('build.ProjectBuilder.check_dependencies')
     mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.__main__._error')
 
-    build.ProjectBuilder.check_depencencies.side_effect = [[], ['something'], [], []]
+    build.ProjectBuilder.check_dependencies.side_effect = [[], ['something'], [], []]
 
     # check_dependencies = []
     build.__main__.build('.', '.', ['sdist'])
