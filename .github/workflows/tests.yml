@@ -42,6 +42,6 @@ jobs:
 
     - name: Send coverage report
       uses: codecov/codecov-action@v1
-      if: ${{ matrix.python == 3.8 }}
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        env_vars: PYTHON
