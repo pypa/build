@@ -16,7 +16,7 @@ import toml
 import toml.decoder
 
 
-if sys.version_info < (3,):  # pragma: no cover
+if sys.version_info < (3,):
     FileNotFoundError = IOError
     PermissionError = OSError
 
@@ -40,9 +40,9 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     '''
     import packaging.requirements
 
-    if sys.version_info >= (3, 8):  # pragma: no cover
+    if sys.version_info >= (3, 8):
         from importlib import metadata as importlib_metadata
-    else:  # pragma: no cover
+    else:
         import importlib_metadata
 
     req = packaging.requirements.Requirement(requirement_string)
