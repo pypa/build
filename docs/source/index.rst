@@ -11,22 +11,8 @@ It is a simple build tool, it does no dependency management.
 
 The recommended way to invoke is by calling the module:
 
-.. code-block:: sh
-
-   $ python -m build
-   usage: python -m build [-h] [--sdist] [--wheel] [--outdir ./dist] [--skip-dependencies] [.]
-
-   positional arguments:
-   .                     source directory (defaults to current directory)
-
-   optional arguments:
-   -h, --help            show this help message and exit
-   --sdist, -s           build a source package
-   --wheel, -w           build a wheel
-   --outdir ./dist, -o ./dist
-                           output directory
-   --skip-dependencies, -x
-                           does not check for the dependencies
+.. autoprogram:: build.__main__:main_parser()
+   :prog: python -m build
 
 
 But the ``python-build`` script is also available, so that tools such as pipx_
@@ -34,7 +20,6 @@ can use it:
 
 .. code-block:: sh
 
-   $ python-build
    usage: python-build [-h] ...
 
 
