@@ -22,11 +22,11 @@ setup(
         'console_scripts': ['python-build=build.__main__:main'],
     },
     install_requires=[
-        'toml'
+        'toml',
         'pep517',
         'packaging',
         'importlib-metadata; python_version < "3.8"',
-        'typing;python_version<"3"',
+        'typing; python_version<"3"',
     ],
     extras_require={
         'test': [
