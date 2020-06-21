@@ -9,7 +9,7 @@ import importlib
 import os
 import sys
 
-from typing import Set
+from typing import Dict, List, Optional, Set, Union
 
 import pep517.wrappers
 import toml
@@ -19,6 +19,9 @@ import toml.decoder
 if sys.version_info < (3,):
     FileNotFoundError = IOError
     PermissionError = OSError
+
+
+ConfigSettings = Dict[str, Union[str, List[str]]]
 
 
 class BuildException(Exception):
@@ -70,11 +73,12 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir='.'):  # type: (str) -> None
+    def __init__(self, srcdir='.', config_settings=None):  # type: (str, Optional[ConfigSettings]) -> None
         '''
         :param srcdir: Source directory
         '''
         self.srcdir = srcdir
+        self.config_settings = config_settings if config_settings else {}
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
@@ -116,7 +120,7 @@ class ProjectBuilder(object):
         get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
 
         try:
-            return set(get_requires())
+            return set(get_requires(self.config_settings))
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
@@ -140,6 +144,6 @@ class ProjectBuilder(object):
         build = getattr(self.hook, 'build_{}'.format(distribution))
 
         try:
-            build(outdir)
+            build(outdir, self.config_settings)
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))

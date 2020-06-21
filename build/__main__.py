@@ -7,7 +7,7 @@ import traceback
 
 from typing import List, Optional
 
-from . import BuildBackendException, BuildException, ProjectBuilder
+from . import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
 
 
 __all__ = ['build', 'main', 'main_parser']
@@ -27,17 +27,22 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
-def build(srcdir, outdir, distributions, skip_dependencies=False):  # type: (str, str, List[str], bool) -> None
+def build(srcdir, outdir, distributions, config_settings=None, skip_dependencies=False):
+    # type: (str, str, List[str], Optional[ConfigSettings], bool) -> None
     '''
     Runs the build process
 
     :param srcdir: Source directory
     :param outdir: Output directory
     :param distributions: Distributions to build (sdist and/or wheel)
+    :param config_settings: Configuration settings to be passed to the backend
     :param skip_dependencies: Do not perform the dependency check
     '''
+    if not config_settings:
+        config_settings = {}
+
     try:
-        builder = ProjectBuilder(srcdir)
+        builder = ProjectBuilder(srcdir, config_settings)
 
         for dist in distributions:
             if not skip_dependencies:
@@ -81,6 +86,9 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     parser.add_argument('--no-isolation', '-n',
                         action='store_true',
                         help='do not isolate the build in a virtual environment')
+    parser.add_argument('--config-setting', '-C',
+                        action='append',
+                        help='pass option to the backend')
     return parser
 
 
@@ -96,6 +104,28 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     args = parser.parse_args(cli_args)
 
     distributions = []
+    config_settings = {}
+
+    if args.config_setting:
+        for arg in args.config_setting:
+            if sys.version_info >= (3,):
+                data = arg.split('=', maxsplit=1)
+            else:
+                split_data = arg.split('=')
+                data = [
+                    split_data[0],
+                    '='.join(split_data[1:]),
+                ]
+            setting = data[0]
+            value = data[1] if len(data) >= 2 else ''
+
+            if setting not in config_settings:
+                config_settings[setting] = value
+            else:
+                if not isinstance(config_settings[setting], list):
+                    config_settings[setting] = [config_settings[setting]]
+
+                config_settings[setting].append(value)
 
     if args.sdist:
         distributions.append('sdist')
@@ -106,7 +136,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     if not distributions:
         distributions = ['sdist', 'wheel']
 
-    build(args.srcdir, args.outdir, distributions, args.skip_dependencies)
+    build(args.srcdir, args.outdir, distributions, config_settings, args.skip_dependencies)
 
 
 if __name__ == '__main__':  # pragma: no cover
