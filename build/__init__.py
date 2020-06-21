@@ -124,7 +124,7 @@ class ProjectBuilder(object):
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
-    def check_depencencies(self, distribution):  # type: (str) -> Set[str]
+    def check_dependencies(self, distribution):  # type: (str) -> Set[str]
         '''
         Returns a set of the missing dependencies
 

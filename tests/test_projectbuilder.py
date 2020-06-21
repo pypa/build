@@ -135,18 +135,18 @@ def test_check_dependencies(mocker):
     builder.hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
-    assert not builder.check_depencencies('sdist')
-    assert not builder.check_depencencies('wheel')
+    assert not builder.check_dependencies('sdist')
+    assert not builder.check_dependencies('wheel')
 
     # requires = ['something']
-    assert builder.check_depencencies('sdist')
-    assert builder.check_depencencies('wheel')
+    assert builder.check_dependencies('sdist')
+    assert builder.check_dependencies('wheel')
 
     # BackendUnavailable
     with pytest.raises(build.BuildBackendException):
-        builder.check_depencencies('sdist')
+        builder.check_dependencies('sdist')
     with pytest.raises(build.BuildBackendException):
-        not builder.check_depencencies('wheel')
+        not builder.check_dependencies('wheel')
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason='bug in mock')

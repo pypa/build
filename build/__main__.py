@@ -46,7 +46,7 @@ def build(srcdir, outdir, distributions, config_settings=None, skip_dependencies
 
         for dist in distributions:
             if not skip_dependencies:
-                missing = builder.check_depencencies(dist)
+                missing = builder.check_dependencies(dist)
                 if missing:
                     _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
 
