@@ -5,7 +5,6 @@ import io
 import os
 import sys
 
-import pep517
 import pytest
 
 import build
@@ -82,9 +81,10 @@ def test_build(mocker):
     mocker.patch('build.ProjectBuilder.check_dependencies')
     mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.__main__._error')
-    mocker.patch('pep517.envbuild.BuildEnvironment.pip_install')
+    mocker.patch('build.env.IsolatedEnvironment.install')
 
     build.ProjectBuilder.check_dependencies.side_effect = [[], ['something'], [], []]
+    build.env.IsolatedEnvironment._path = mocker.Mock()
 
     # isolation=True
     build.__main__.build('.', '.', ['sdist'])
@@ -93,7 +93,7 @@ def test_build(mocker):
     # check_dependencies = []
     build.__main__.build('.', '.', ['sdist'], isolation=False)
     build.ProjectBuilder.build.assert_called_with('sdist', '.')
-    pep517.envbuild.BuildEnvironment.pip_install.assert_called_with(set(build._DEFAULT_BACKEND['requires']))
+    build.env.IsolatedEnvironment.install.assert_called_with(set(build._DEFAULT_BACKEND['requires']))
 
     # check_dependencies = ['something']
     build.__main__.build('.', '.', ['sdist'], isolation=False)

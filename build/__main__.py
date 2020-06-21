@@ -7,9 +7,8 @@ import traceback
 
 from typing import List, Optional
 
-import pep517.envbuild
-
 from . import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
+from .env import IsolatedEnvironment
 
 
 __all__ = ['build', 'main', 'main_parser']
@@ -30,8 +29,8 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
 
 
 def _build_in_isolated_env(builder, outdir, distributions):  # type: (ProjectBuilder, str, List[str]) -> None
-    with pep517.envbuild.BuildEnvironment() as env:
-        env.pip_install(builder.build_dependencies)
+    with IsolatedEnvironment() as env:
+        env.install(builder.build_dependencies)
         for distribution in distributions:
             builder.build(distribution, outdir)
 
