@@ -32,8 +32,12 @@ def mypy(session):
 @nox.session(python=['2.7', '3.5', '3.6', '3.7', '3.8', 'pypy2', 'pypy3'])
 def test(session):
     htmlcov_output = os.path.join(session.virtualenv.location, 'htmlcov')
+    xmlcov_output = os.path.join(session.virtualenv.location, f'coverage-{session.python}.xml')
 
     session.install('.', 'importlib_metadata')
     session.install('pytest', 'pytest-cov', 'pytest-mock')
 
-    session.run('pytest', '--cov', f'--cov-report=html:{htmlcov_output}', 'tests/', *session.posargs)
+    session.run('pytest', '--cov',
+                f'--cov-report=html:{htmlcov_output}',
+                f'--cov-report=xml:{xmlcov_output}',
+                'tests/', *session.posargs)
