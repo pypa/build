@@ -134,6 +134,8 @@ jobs:
 
     - name: Build dateutil (with isolation)
       run: python -m build -x -w ../dateutil
+      env:
+        SETUPTOOLS_SCM_PRETEND_VERSION: dummy
 
 
   Solaar:
