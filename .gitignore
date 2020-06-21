@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+build/lib/
+dist/
+*.egg-info/
+.eggs
+
+# Documentation
+docs/srcbuild/
+
+# Testing and coverage
+.cache
+.nox/
+.mypy_cache/
+.pytest_cache
+htmlcov/
+.coverage
+coverage.xml
