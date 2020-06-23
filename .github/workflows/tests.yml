@@ -10,9 +10,10 @@ on:
 
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}-latest
     strategy:
       matrix:
+        platform: [ubuntu, macos, windows]
         python: [2.7, 3.5, 3.6, 3.7, 3.8]
 
     steps:
