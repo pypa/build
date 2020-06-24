@@ -3,10 +3,10 @@ name: checks
 on:
   push:
     branches:
-    - master
+      - master
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
   mypy:
@@ -35,9 +35,14 @@ jobs:
       run: mypy --python-version ${{ matrix.python }} -p build
 
 
-  pre-commit: # per https://github.com/pre-commit/action
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-    - uses: pre-commit/action@v2.0.0
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+
+    - name: Run pre-commit
+      uses: pre-commit/action@v2.0.0
