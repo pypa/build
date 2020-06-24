@@ -13,8 +13,18 @@ jobs:
     runs-on: ${{ matrix.platform }}-latest
     strategy:
       matrix:
-        platform: [ubuntu, macos, windows]
-        python: [2.7, 3.5, 3.6, 3.7, 3.8, pypy2, pypy3]
+        platform:
+        - ubuntu
+        - macos
+        - windows
+        python:
+        - 3.8
+        - 3.7
+        - 3.6
+        - 3.5
+        - 2.7
+        - pypy3
+        - pypy2
 
     steps:
     - name: Checkout
