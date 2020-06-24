@@ -7,7 +7,6 @@ import sys
 
 import pep517.wrappers
 import pytest
-import toml.decoder
 
 import build
 

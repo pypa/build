@@ -2,8 +2,8 @@
 
 import contextlib
 import io
-import sys
 import os
+import sys
 
 import pytest
 

@@ -35,39 +35,14 @@ jobs:
       run: mypy --python-version ${{ matrix.python }} -p build
 
 
-  flake8:
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v1
+    - name: Setup Python
+      uses: actions/setup-python@v2
 
-    - name: Install flake8
-      run: |
-        pip install --upgrade pip
-        pip install flake8
-        flake8 --version
-
-    - name: Run flake8
-      run: flake8 --show-source --statistics build
-
-  isort:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-
-    - name: Set up Python
-      uses: actions/setup-python@v1
-
-    - name: Install isort
-      run: |
-        pip install --upgrade pip
-        pip install isort
-        isort --version
-
-    - name: Run isort
-      run: isort --check-only --diff --recursive build
-
+    - name: Run pre-commit
+      uses: pre-commit/action@v2.0.0
