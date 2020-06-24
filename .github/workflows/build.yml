@@ -18,20 +18,13 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install python2 dependencies
-      if: ${{ matrix.python == 2.7 }}
-      run: pip install typing
-
-    - name: Install build backend
-      run: pip install setuptools wheel
+    - name: install build
+      run: pip install . setuptools wheel
 
     - name: Build python-build
       run: python -m build -x
@@ -45,30 +38,23 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Checkout pip
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
         repository: pypa/pip
         path: pip
         ref: 'master'
 
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install python2 dependencies
-      if: ${{ matrix.python == 2.7 }}
-      run: pip install typing
-
-    - name: Install build backend
-      run: pip install setuptools wheel
+    - name: install build
+      run: pip install . setuptools wheel
 
     - name: Build pip
-      run: python -m build -x -w ../pip
+      run: python -m build -x -w pip
 
 
 #  python-install:
@@ -113,30 +99,23 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Checkout dateutil
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
         repository: dateutil/dateutil
         path: dateutil
         ref: 'master'
 
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install python2 dependencies
-      if: ${{ matrix.python == 2.7 }}
-      run: pip install typing
-
-    - name: Install build backend
-      run: pip install setuptools wheel
+    - name: install build
+      run: pip install . setuptools wheel
 
     - name: Build dateutil
-      run: python -m build -x -w ../dateutil
+      run: python -m build -x -w dateutil
 
 
   Solaar:
@@ -147,23 +126,20 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Checkout Solaar
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
         repository: pwr-Solaar/Solaar
         path: solaar
         ref: 'master'
 
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install build backend
-      run: pip install setuptools wheel
+    - name: install build
+      run: pip install . setuptools wheel
 
     - name: Build Solaar
-      run: python -m build -x -w ../solaar
+      run: python -m build -x -w solaar

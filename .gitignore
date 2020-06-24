@@ -13,7 +13,7 @@ docs/srcbuild/
 
 # Testing and coverage
 .cache
-.nox/
+.tox/
 .mypy_cache/
 .pytest_cache
 htmlcov/

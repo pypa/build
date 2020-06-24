@@ -27,29 +27,36 @@ jobs:
         - pypy2
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-
+    - name: setup python for tox
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: install tox
+      run: python -m pip install tox
     - name: Set up target Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
-
-    - name: Set up Python
-      uses: actions/setup-python@v1
-
-    - name: Install pytest
+    - uses: actions/checkout@v2
+    - name: pick environment to run
       run: |
-        pip install nox
-        nox --version
-
-    - name: Run nox
-      run: nox -s test-${{ matrix.python }}
-
-    - name: Send coverage report
+        import subprocess; import json
+        major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
+        print('::set-env name=TOXENV::' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else ("3" if major == 3 else "")))
+      shell: python
+    - name: setup test suite
+      run: tox -vv --notest
+    - name: run test suite
+      run: tox
+    - name: rename coverage report file
+      run: |
+        import os; os.rename('.tox/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/coverage.xml')
+      shell: python
+    - name: send coverage report
       uses: codecov/codecov-action@v1
       env:
         PYTHON: ${{ matrix.python }}
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        env_vars: PYTHON
+        file: ./.tox/coverage.xml
+        flags: tests
+        name: ${{ matrix.py }} - ${{ matrix.os }}
