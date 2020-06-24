@@ -70,4 +70,3 @@ jobs:
 
     - name: Run isort
       run: isort --check-only --diff --recursive build
-
