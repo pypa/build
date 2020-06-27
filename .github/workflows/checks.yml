@@ -32,7 +32,7 @@ jobs:
       run: pip install importlib_metadata packaging
 
     - name: Run mypy
-      run: mypy --python-version ${{ matrix.python }} -p build
+      run: mypy --python-version ${{ matrix.python }} -p src/build
 
 
   pre-commit:

@@ -35,7 +35,8 @@ jobs:
 
     - name: Build python-build (without isolation)
       run: python -m build -x -n
-
+      env:
+         PYTHONPATH: src
 
   pip:
     runs-on: ubuntu-latest
@@ -69,7 +70,8 @@ jobs:
 
     - name: Build pip (without isolation)
       run: python -m build -x -n -w ../pip
-
+      env:
+         PYTHONPATH: src
 
 #  python-install:
 #    runs-on: ubuntu-latest
@@ -136,6 +138,7 @@ jobs:
       run: python -m build -x -w ../dateutil
       env:
         SETUPTOOLS_SCM_PRETEND_VERSION: dummy
+        PYTHONPATH: src
 
 
   Solaar:
@@ -163,3 +166,5 @@ jobs:
 
     - name: Build Solaar (with isolation)
       run: python -m build -x -w ../solaar
+      env:
+         PYTHONPATH: src
