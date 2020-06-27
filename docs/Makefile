@@ -9,7 +9,8 @@ SPHINXAPIDOC  ?= sphinx-apidoc
 SOURCEDIR     = source
 BUILDDIR      = build
 SRCBUILDDIR   = srcbuild
-MODULEDIR     = ../build
+MODULEDIR     = ../src/build
+SRCDIR        = ../src
 
 .DEFAULT_GOAL := html
 
@@ -35,4 +36,4 @@ coverage: Makefile apidoc
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile apidoc
 	cp -r "$(SOURCEDIR)"/* "$(SRCBUILDDIR)"
-	@PYTHONPATH=.. $(SPHINXBUILD) -M $@ "$(SRCBUILDDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@PYTHONPATH=$(SRCDIR) $(SPHINXBUILD) -M $@ "$(SRCBUILDDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

@@ -23,12 +23,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install python2 dependencies
-      if: ${{ matrix.python == 2.7 }}
-      run: pip install typing
+    - name: Install python-build
+      run: pip install .
 
     - name: Install build backend
       run: pip install setuptools wheel
@@ -57,12 +53,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install python2 dependencies
-      if: ${{ matrix.python == 2.7 }}
-      run: pip install typing
+    - name: Install python-build
+      run: pip install .
 
     - name: Install build backend
       run: pip install setuptools wheel
@@ -91,15 +83,8 @@ jobs:
 #    - name: Set up Python
 #      uses: actions/setup-python@v1
 #
-#    - name: Install dependencies
-#      run: pip install toml pep517 packaging importlib_metadata
-#
-#    - name: Install python2 dependencies
-#      if: ${{ matrix.python == 2.7 }}
-#      run: pip install typing
-#
-#    - name: Install build backend
-#      run: pip install flit-core
+#    - name: Install python-build
+#      run: pip install .
 #
 #    - name: Build python-install
 #      run: python -m build -x -w ../python-install
@@ -125,18 +110,13 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
-
-    - name: Install python2 dependencies
-      if: ${{ matrix.python == 2.7 }}
-      run: pip install typing
+    - name: Install python-build
+      run: pip install .
 
     - name: Build dateutil (with isolation)
       run: python -m build -x -w ../dateutil
       env:
         SETUPTOOLS_SCM_PRETEND_VERSION: dummy
-
 
   Solaar:
     runs-on: ubuntu-latest
@@ -158,8 +138,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
 
-    - name: Install dependencies
-      run: pip install toml pep517 packaging importlib_metadata
+    - name: Install python-build
+      run: pip install .
 
     - name: Build Solaar (with isolation)
       run: python -m build -x -w ../solaar
