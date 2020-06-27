@@ -23,7 +23,7 @@ def test(session):
     session.install('.', 'importlib_metadata')
     session.install('pytest', 'pytest-cov', 'pytest-mock')
 
-    session.run('pytest', '--cov',
+    session.run('pytest', '--cov=src',
                 f'--cov-report=html:{htmlcov_output}',
                 f'--cov-report=xml:{xmlcov_output}',
                 'tests/', *session.posargs)
