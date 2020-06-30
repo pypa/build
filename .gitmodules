@@ -1,0 +1,9 @@
+[submodule "tests/integration/pip"]
+	path = tests/integration/pip
+	url = https://github.com/pypa/pip.git
+[submodule "tests/integration/dateutil"]
+	path = tests/integration/dateutil
+	url = https://github.com/dateutil/dateutil.git
+[submodule "tests/integration/Solaar"]
+	path = tests/integration/Solaar
+	url = https://github.com/pwr-Solaar/Solaar.git
