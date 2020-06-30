@@ -11,6 +11,10 @@ if False:  # TYPE_CHECKING  # pragma: no cover
     from typing import Dict, Optional, Iterable, Type
 
 
+if sys.version_info[0] == 2:  # pragma: no cover
+    FileExistsError = OSError
+
+
 class IsolatedEnvironment(object):
     '''
     Isolated build environment context manager
@@ -37,6 +41,24 @@ class IsolatedEnvironment(object):
 
     def _get_env_path(self, path):  # type: (str) -> Optional[str]
         return sysconfig.get_path(path, vars=self._env_vars)
+
+    def _symlink_relative(self, path):  # type: (Optional[str]) -> None
+        if not path:  # pragma: no cover
+            return
+
+        prefix = sysconfig.get_config_var('prefix')
+        if prefix and path and path.startswith(prefix):
+            new_path = os.path.join(self._path, path[len(prefix + os.pathsep):])
+            if not os.path.exists(new_path):
+                try:
+                    os.makedirs(os.path.dirname(new_path))
+                except FileExistsError:
+                    pass
+                if os.name == 'nt':
+                    import shutil
+                    shutil.copytree(path, new_path)
+                else:
+                    os.symlink(path, new_path)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
         self._path = tempfile.mkdtemp(prefix='build-env-')
@@ -70,6 +92,10 @@ class IsolatedEnvironment(object):
         self._replace_env('PATH', self._get_env_path('scripts'))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
         self._replace_env('PYTHONHOME', self._path)
+
+        self._symlink_relative(sysconfig.get_path('include'))
+        self._symlink_relative(sysconfig.get_path('platinclude'))
+        self._symlink_relative(sysconfig.get_config_var('srcdir'))
 
         return self
 
