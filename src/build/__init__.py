@@ -7,9 +7,10 @@ __version__ = '0.0.3.1'
 
 import importlib
 import os
+import re
 import sys
 
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Optional, Sequence, Set, Union
 
 import pep517.wrappers
 import toml
@@ -82,6 +83,8 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
 
 
 class ProjectBuilder(object):
+    _EXPLODE_REQ = re.compile('({})'.format('|'.join(['===', '~=', '<=', '>=', '<', '>', '==', '!='])))
+
     def __init__(self, srcdir='.', config_settings=None):  # type: (str, Optional[ConfigSettings]) -> None
         '''
         :param srcdir: Source directory
@@ -105,7 +108,10 @@ class ProjectBuilder(object):
 
         if 'build-backend' not in self._build_system:
             self._build_system['build-backend'] = _DEFAULT_BACKEND['build-backend']
-            self._build_system['requires'] = self._build_system.get('requires', []) + _DEFAULT_BACKEND['requires']
+            self._build_system['requires'] = self._merge_requires(
+                self._build_system.get('requires', []),
+                _DEFAULT_BACKEND['requires']
+            )
 
         if 'requires' not in self._build_system:
             raise BuildException("Missing 'build-system.requires' in pyproject.yml")
@@ -119,6 +125,19 @@ class ProjectBuilder(object):
 
         self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
                                                      backend_path=self._build_system.get('backend-path'))
+
+    @classmethod
+    def _merge_requires(cls, strong, weak):  # type: (Sequence[str], Sequence[str]) -> List[str]
+        final = list(strong).copy()
+
+        strong_names = [cls._EXPLODE_REQ.split(re.sub('[ \'"]', '', req.strip()))[0] for req in strong]
+
+        for req in weak:
+            name = cls._EXPLODE_REQ.split(re.sub('[ \'"]', '', req.strip()))[0]
+            if name not in strong_names:
+                final.append(req)
+
+        return final
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]
