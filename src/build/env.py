@@ -150,5 +150,12 @@ class IsolatedEnvironment(object):
 
         subprocess.check_call([sys.executable, '-m', 'ensurepip'], cwd=self._path)
 
-        cmd = [sys.executable, '-m', 'pip', 'install', '--ignore-installed', '--prefix', self._path] + list(requirements)
-        subprocess.check_call(cmd)
+        with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
+            req_file.write(os.linesep.join(requirements))
+            req_file.close()
+            cmd = [
+                sys.executable, '-m', 'pip', 'install', '--prefix',
+                self._path, '-r', os.path.abspath(req_file.name)
+            ]
+            subprocess.check_call(cmd)
+            os.unlink(req_file.name)
