@@ -116,7 +116,15 @@ class IsolatedEnvironment(object):
             if path in sys_path:
                 sys_path.remove(path)
 
-        self._replace_env('PATH', self._get_env_path('scripts'))
+        env_scripts = self._get_env_path('scripts')
+        if env_scripts is None:  # pragma: no cover
+            raise RuntimeError('Missing scripts directory in sysconfig')
+
+        exe_path = [env_scripts]
+        if 'PATH' in os.environ:
+            exe_path.append(os.environ['PATH'])
+
+        self._replace_env('PATH', os.pathsep.join(exe_path))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
         self._replace_env('PYTHONHOME', self._path)
 
