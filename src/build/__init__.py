@@ -142,6 +142,7 @@ class ProjectBuilder(object):
         :param distribution: Distribution to build (sdist or wheel)
         '''
         dependencies = self.get_dependencies(distribution)
+        dependencies.update(self.build_dependencies)
 
         return {dep for dep in dependencies if not check_version(dep)}
 

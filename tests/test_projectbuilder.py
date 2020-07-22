@@ -132,8 +132,8 @@ def test_check_dependencies(mocker, pyproject_mock):
     builder.hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
-    assert not builder.check_dependencies('sdist')
-    assert not builder.check_dependencies('wheel')
+    assert builder.check_dependencies('sdist') == {'flit_core'}
+    assert builder.check_dependencies('wheel') == {'flit_core'}
 
     # requires = ['something']
     assert builder.check_dependencies('sdist')
