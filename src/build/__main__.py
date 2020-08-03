@@ -41,7 +41,7 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
 
 
 def _build_in_isolated_env(builder, outdir, distributions):  # type: (ProjectBuilder, str, List[str]) -> None
-    with IsolatedEnvironment() as env:
+    with IsolatedEnvironment.for_current() as env:
         env.install(builder.build_dependencies)
         for distribution in distributions:
             builder.build(distribution, outdir)

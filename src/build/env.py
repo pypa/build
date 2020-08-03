@@ -8,7 +8,7 @@ import types
 
 
 if False:  # TYPE_CHECKING  # pragma: no cover
-    from typing import Dict, Optional, Iterable, Type
+    from typing import Dict, Optional, Iterable, Sequence, Type
 
 
 if sys.version_info[0] == 2:  # pragma: no cover
@@ -49,9 +49,12 @@ class IsolatedEnvironment(object):
     Non-standard paths injected directly to sys.path still be passed to the environment.
     '''
 
-    def __init__(self):  # type: () -> None
+    MANIPULATE_PATHS = ('purelib', 'platlib')
+
+    def __init__(self, remove_paths):  # type: (Sequence[str]) -> None
         self._env = {}  # type: Dict[str, Optional[str]]
         self._path = None  # type: Optional[str]
+        self._remove_paths = remove_paths
 
     @property
     def path(self):  # type: () -> str
@@ -59,6 +62,22 @@ class IsolatedEnvironment(object):
             raise RuntimeError("{} context environment hasn't been entered yet".format(self.__class__.__name__))
 
         return self._path
+
+    @classmethod
+    def for_current(cls):  # type: () -> IsolatedEnvironment
+        remove_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
+
+        for path in cls.MANIPULATE_PATHS:
+            our_path = sysconfig.get_path(path)
+            if our_path:
+                remove_paths.append(our_path)
+
+            for scheme in sysconfig.get_scheme_names():
+                our_path = sysconfig.get_path(path, scheme)
+                if our_path:
+                    remove_paths.append(our_path)
+
+        return cls(remove_paths)
 
     def _replace_env(self, key, new):  # type: (str, Optional[str]) -> None
         if not new:  # pragma: no cover
@@ -104,23 +123,12 @@ class IsolatedEnvironment(object):
 
         sys_path = sys.path[1:]
 
-        remove_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
-
-        for path in ('purelib', 'platlib'):
-            our_path = sysconfig.get_path(path)
-            if our_path:
-                remove_paths.append(our_path)
-
-            for scheme in sysconfig.get_scheme_names():
-                our_path = sysconfig.get_path(path, scheme)
-                if our_path:
-                    remove_paths.append(our_path)
-
+        for path in self.MANIPULATE_PATHS:
             env_path = self._get_env_path(path)
             if env_path:
                 sys_path.append(env_path)
 
-        for path in remove_paths:
+        for path in self._remove_paths:
             if path in sys_path:
                 sys_path.remove(path)
 
