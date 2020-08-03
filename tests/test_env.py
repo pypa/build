@@ -12,7 +12,7 @@ import build.env
 
 def test_isolated_environment_setup(mocker):
     old_path = os.environ['PATH']
-    with build.env.IsolatedEnvironment() as env:
+    with build.env.IsolatedEnvironment.for_current() as env:
         if os.name != 'nt':
             assert os.environ['PATH'] == os.pathsep.join([os.path.join(env.path, 'bin'), old_path])
         assert os.environ['PYTHONHOME'] == env.path
@@ -54,7 +54,7 @@ def test_isolated_environment_setup(mocker):
 
 
 def test_isolated_environment_install(mocker):
-    with build.env.IsolatedEnvironment() as env:
+    with build.env.IsolatedEnvironment.for_current() as env:
         mocker.patch('subprocess.check_call')
 
         env.install([])
@@ -70,7 +70,7 @@ def test_isolated_environment_install(mocker):
 
 
 def test_uninitialised_isolated_environment():
-    env = build.env.IsolatedEnvironment()
+    env = build.env.IsolatedEnvironment.for_current()
 
     with pytest.raises(RuntimeError):
         env.path
