@@ -15,6 +15,33 @@ if sys.version_info[0] == 2:  # pragma: no cover
     FileExistsError = OSError
 
 
+_HAS_SYMLINK = None  # type: Optional[bool]
+
+
+def _fs_supports_symlink():  # type: () -> bool
+    if not hasattr(os, 'symlink'):
+        return False
+
+    if sys.platform.startswith(('aix', 'darwin', 'freebsd', 'linux')):
+        return True
+    else:
+        with tempfile.NamedTemporaryFile(prefix='TmP') as tmp_file:
+            temp_dir = os.path.dirname(tmp_file.name)
+            dest = os.path.join(temp_dir, '{}-{}'.format(tmp_file.name, 'b'))
+            try:
+                os.symlink(tmp_file.name, dest)
+                return True
+            except (OSError, NotImplementedError):
+                return False
+
+
+def fs_supports_symlink():  # type: () -> bool
+    global _HAS_SYMLINK
+    if _HAS_SYMLINK is None:
+        _HAS_SYMLINK = _fs_supports_symlink()
+    return _HAS_SYMLINK
+
+
 class IsolatedEnvironment(object):
     '''
     Isolated build environment context manager
@@ -54,11 +81,11 @@ class IsolatedEnvironment(object):
                     os.makedirs(os.path.dirname(new_path))
                 except FileExistsError:
                     pass
-                if os.name == 'nt':
+                if fs_supports_symlink():
+                    os.symlink(path, new_path)
+                else:
                     import shutil
                     shutil.copytree(path, new_path)
-                else:
-                    os.symlink(path, new_path)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
         self._path = tempfile.mkdtemp(prefix='build-env-')
