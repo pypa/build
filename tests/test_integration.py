@@ -44,7 +44,7 @@ def test_isolation(tmp_dir, test_flit_path, mocker):
     try:
         # if flit is available, we can't properly test the isolation - skip the test in those cases
         import flit_core  # noqa: F401
-        pytest.xfail('flit_core is available')
+        pytest.xfail('flit_core is available')  # pragma: no cover
     except:  # noqa: E722
         pass
 
