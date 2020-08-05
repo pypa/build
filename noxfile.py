@@ -22,7 +22,7 @@ def test(session):
 
     session.install('.[test]')
 
-    session.run('pytest', '--cov',
+    session.run('pytest', '--cov', '--cov-config', 'setup.cfg',
                 f'--cov-report=html:{htmlcov_output}',
                 f'--cov-report=xml:{xmlcov_output}',
                 'tests/', *session.posargs)
