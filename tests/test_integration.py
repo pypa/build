@@ -32,10 +32,7 @@ _WHEEL = re.compile('.*.whl')
 def test_build(tmp_dir, monkeypatch, integration_path, project, args):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
 
-    if project == 'python-build':  # windows does not support symlinks
-        path = os.path.abspath(os.path.join(__file__, '..', '..'))
-    else:
-        path = os.path.join(integration_path, project)
+    path = os.path.join(integration_path, project)
 
     build.__main__.main([path, '-o', tmp_dir] + args)
 

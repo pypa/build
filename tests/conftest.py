@@ -4,9 +4,27 @@ import os
 import os.path
 import shutil
 import stat
+import sys
+import tarfile
 import tempfile
 
+import filelock
 import pytest
+
+import build
+
+
+if sys.version_info[0] == 2:
+    from urllib2 import urlopen
+else:
+    from urllib.request import urlopen
+
+
+INTEGRATION_SOURCES = {
+    'dateutil': ('dateutil/dateutil', '2.8.1'),
+    'pip': ('pypa/pip', '20.2.1'),
+    'Solaar': ('pwr-Solaar/Solaar', '1.0.3'),
+}
 
 
 def pytest_addoption(parser):
@@ -34,9 +52,47 @@ def packages_path():
     return os.path.realpath(os.path.join(__file__, '..', 'packages'))
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def integration_path():
-    return os.path.realpath(os.path.join(__file__, '..', 'integration'))
+    src_dir = os.path.realpath('.integration-sources')
+    dest = tempfile.mkdtemp(prefix='python-build-integration-')
+
+    if not os.path.exists(src_dir):
+        os.makedirs(src_dir)
+
+    # for python-build we use our own source directly
+    self_source = os.path.abspath(os.path.join(__file__, '..', '..'))
+    self_dest = os.path.join(dest, 'python-build')
+    if not os.path.exists(self_dest):
+        if build.env.fs_supports_symlink():
+            os.symlink(self_source, self_dest)
+        else:  # pragma: no cover
+            shutil.copytree(self_source, self_dest)
+
+    for target, (repo, version) in INTEGRATION_SOURCES.items():
+        with filelock.FileLock(os.path.join(src_dir, '{}.lock'.format(target))):
+            target_dest = os.path.join(dest, target)
+            if os.path.exists(target_dest):  # pragma: no cover
+                continue
+
+            tarball = os.path.join(src_dir, '{}.tar.gz'.format(target))
+            data = urlopen('https://github.com/{}/archive/{}.tar.gz'.format(repo, version)).read()
+            with open(tarball, 'wb') as f:
+                f.write(data)
+
+            tarfile.open(tarball, 'r:gz').extractall(dest)
+            shutil.move(os.path.join(dest, '{}-{}'.format(repo.split('/')[1], version)), target_dest)
+
+    yield dest
+
+    try:
+        os.unlink(self_dest)  # some implementations try to recursively remove the files inside the symlink
+        shutil.rmtree(dest)
+    except WindowsError:  # pragma: no cover
+        '''
+        For some reason in some cases we don't have permission to remove
+        symlinks on windows, even though we created them?
+        '''
 
 
 @pytest.fixture
