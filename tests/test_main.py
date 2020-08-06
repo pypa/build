@@ -74,9 +74,7 @@ def test_prog():
             build.__main__.main(['--help'], prog='something')
 
 
-def test_build(mocker):
-    open_mock = mocker.mock_open(read_data='')
-    mocker.patch('{}.open'.format(build_open_owner), open_mock)
+def test_build(mocker, test_flit_path):
     mocker.patch('importlib.import_module')
     mocker.patch('build.ProjectBuilder.check_dependencies')
     mocker.patch('build.ProjectBuilder.build')
@@ -87,16 +85,16 @@ def test_build(mocker):
     build.env.IsolatedEnvironment._path = mocker.Mock()
 
     # isolation=True
-    build.__main__.build('.', '.', ['sdist'])
+    build.__main__.build(test_flit_path, '.', ['sdist'])
     build.ProjectBuilder.build.assert_called_with('sdist', '.')
 
     # check_dependencies = []
-    build.__main__.build('.', '.', ['sdist'], isolation=False)
+    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
     build.ProjectBuilder.build.assert_called_with('sdist', '.')
-    build.env.IsolatedEnvironment.install.assert_called_with(set(build._DEFAULT_BACKEND['requires']))
+    build.env.IsolatedEnvironment.install.assert_called_with({'flit_core >=2,<3'})
 
     # check_dependencies = ['something']
-    build.__main__.build('.', '.', ['sdist'], isolation=False)
+    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
     build.ProjectBuilder.build.assert_called_with('sdist', '.')
     build.__main__._error.assert_called_with('Missing dependencies:\n\tsomething')
 
@@ -104,11 +102,11 @@ def test_build(mocker):
     build.__main__._error.reset_mock()
 
     # BuildException
-    build.__main__.build('.', '.', ['sdist'])
+    build.__main__.build(test_flit_path, '.', ['sdist'])
     build.__main__._error.assert_called_with('')
 
     build.__main__._error.reset_mock()
 
     # BuildBackendException
-    build.__main__.build('.', '.', ['sdist'])
+    build.__main__.build(test_flit_path, '.', ['sdist'])
     build.__main__._error.assert_called_with('')
