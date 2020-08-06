@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import copy
-import os
 import sys
 
 import pep517.wrappers
@@ -31,6 +30,18 @@ else:  # pragma: no cover
 DUMMY_METADATA = '''
 Version: 1.0.0
 Provides-Extra: some_extra
+'''.strip()
+
+
+DUMMY_PYPROJECT = '''
+[build-system]
+build-backend = 'flit_core.buildapi'
+'''.strip()
+
+
+DUMMY_PYPROJECT_BAD = '''
+[build-system]
+requires = ['bad' 'syntax']
 '''.strip()
 
 
@@ -71,40 +82,44 @@ def test_check_version(requirement_string, extra, expected):
     assert build.check_version(requirement_string) == expected
 
 
-def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_syntax_path):
+def test_init(mocker, pyproject_mock):
     modules = {
         'flit_core.buildapi': None,
         'setuptools.build_meta:__legacy__': None,
     }
     mocker.patch('importlib.import_module', modules.get)
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
-    # correct flit pyproject.toml
-    build.ProjectBuilder(test_flit_path)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(test_flit_path, 'flit_core.buildapi', backend_path=None)
+    # data = ''
+    build.ProjectBuilder('.')
+    pep517.wrappers.Pep517HookCaller.assert_called_with('.', 'flit_core.buildapi', backend_path=None)
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # FileNotFoundError
-    build.ProjectBuilder(legacy_path)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(legacy_path, 'setuptools.build_meta:__legacy__', backend_path=None)
+    pyproject_mock.side_effect = FileNotFoundError
+    build.ProjectBuilder('.')
+    pep517.wrappers.Pep517HookCaller.assert_called_with('.', 'setuptools.build_meta:__legacy__', backend_path=None)
 
     # PermissionError
-    if sys.version_info[0] != 2 and os.name != 'nt':  # can't correctly set the permissions required for this
-        with pytest.raises(build.BuildException):
-            build.ProjectBuilder(test_no_permission)
-
-    # TomlDecodeError
+    pyproject_mock.side_effect = PermissionError
     with pytest.raises(build.BuildException):
-        build.ProjectBuilder(test_bad_syntax_path)
+        build.ProjectBuilder('.')
+
+    open_mock = mocker.mock_open(read_data=DUMMY_PYPROJECT_BAD)
+    mocker.patch('{}.open'.format(build_open_owner), open_mock)
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder('.')
 
 
-def test_check_dependencies(mocker, test_flit_path):
+def test_check_dependencies(mocker, pyproject_mock):
     mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
     mocker.patch('build.check_version')
 
-    builder = build.ProjectBuilder(test_flit_path)
+    builder = build.ProjectBuilder()
 
     side_effects = [
         [],
@@ -131,11 +146,12 @@ def test_check_dependencies(mocker, test_flit_path):
         not builder.check_dependencies('wheel')
 
 
-def test_build(mocker, test_flit_path):
+def test_build(mocker, pyproject_mock):
     mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
-    builder = build.ProjectBuilder(test_flit_path)
+    builder = build.ProjectBuilder()
 
     builder.hook.build_sdist.side_effect = [None, Exception]
     builder.hook.build_wheel.side_effect = [None, Exception]
@@ -153,27 +169,30 @@ def test_build(mocker, test_flit_path):
         builder.build('wheel', '.')
 
 
-def test_default_backend(mocker, legacy_path):
+def test_default_backend(mocker, empty_file_mock):
     mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owner), empty_file_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
-    builder = build.ProjectBuilder(legacy_path)
+    builder = build.ProjectBuilder()
 
     assert builder._build_system == build._DEFAULT_BACKEND
 
 
-def test_missing_backend(mocker, test_no_backend_path):
+def test_missing_backend(mocker, pyproject_no_backend_mock):
     mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_no_backend_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
-    builder = build.ProjectBuilder(test_no_backend_path)
+    builder = build.ProjectBuilder()
 
     assert builder._build_system == build._DEFAULT_BACKEND
 
 
-def test_missing_requires(mocker, test_no_requires_path):
+def test_missing_requires(mocker, pyproject_no_requires_mock):
     mocker.patch('importlib.import_module')
+    mocker.patch('{}.open'.format(build_open_owner), pyproject_no_requires_mock)
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     with pytest.raises(build.BuildException):
-        build.ProjectBuilder(test_no_requires_path)
+        build.ProjectBuilder()

@@ -43,8 +43,8 @@ jobs:
         pip install nox
         nox --version
 
-    - name: Run tests
-      run: nox -s test-${{ matrix.python }} -- --run-integration
+    - name: Run nox
+      run: nox -s test-${{ matrix.python }}
 
     - name: Send coverage report
       uses: codecov/codecov-action@v1

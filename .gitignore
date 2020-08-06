@@ -19,5 +19,3 @@ docs/srcbuild/
 htmlcov/
 .coverage
 coverage.xml
-tests/integration/
-.integration-sources

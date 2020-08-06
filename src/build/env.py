@@ -11,37 +11,6 @@ if False:  # TYPE_CHECKING  # pragma: no cover
     from typing import Dict, Optional, Iterable, Type
 
 
-if sys.version_info[0] == 2:  # pragma: no cover
-    FileExistsError = OSError
-
-
-_HAS_SYMLINK = None  # type: Optional[bool]
-
-
-def _fs_supports_symlink():  # type: () -> bool
-    if not hasattr(os, 'symlink'):
-        return False
-
-    if sys.platform.startswith(('aix', 'darwin', 'freebsd', 'linux')):
-        return True
-    else:
-        with tempfile.NamedTemporaryFile(prefix='TmP') as tmp_file:
-            temp_dir = os.path.dirname(tmp_file.name)
-            dest = os.path.join(temp_dir, '{}-{}'.format(tmp_file.name, 'b'))
-            try:
-                os.symlink(tmp_file.name, dest)
-                return True
-            except (OSError, NotImplementedError):
-                return False
-
-
-def fs_supports_symlink():  # type: () -> bool
-    global _HAS_SYMLINK
-    if _HAS_SYMLINK is None:
-        _HAS_SYMLINK = _fs_supports_symlink()
-    return _HAS_SYMLINK
-
-
 class IsolatedEnvironment(object):
     '''
     Isolated build environment context manager
@@ -68,24 +37,6 @@ class IsolatedEnvironment(object):
 
     def _get_env_path(self, path):  # type: (str) -> Optional[str]
         return sysconfig.get_path(path, vars=self._env_vars)
-
-    def _symlink_relative(self, path):  # type: (Optional[str]) -> None
-        if not path:  # pragma: no cover
-            return
-
-        prefix = sysconfig.get_config_var('prefix')
-        if prefix and path and path.startswith(prefix):
-            new_path = os.path.join(self._path, path[len(prefix + os.pathsep):])
-            if not os.path.exists(new_path):
-                try:
-                    os.makedirs(os.path.dirname(new_path))
-                except FileExistsError:
-                    pass
-                if fs_supports_symlink():
-                    os.symlink(path, new_path)
-                else:
-                    import shutil
-                    shutil.copytree(path, new_path)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
         self._path = tempfile.mkdtemp(prefix='build-env-')
@@ -119,10 +70,6 @@ class IsolatedEnvironment(object):
         self._replace_env('PATH', self._get_env_path('scripts'))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
         self._replace_env('PYTHONHOME', self._path)
-
-        self._symlink_relative(sysconfig.get_path('include'))
-        self._symlink_relative(sysconfig.get_path('platinclude'))
-        self._symlink_relative(sysconfig.get_config_var('srcdir'))
 
         return self
 
