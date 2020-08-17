@@ -130,7 +130,7 @@ class IsolatedEnvironment(object):
 
         self._symlink_relative(sysconfig.get_path('include'))
         self._symlink_relative(sysconfig.get_path('platinclude'))
-        self._symlink_relative(sysconfig.get_config_var('srcdir'))
+        self._symlink_relative(sysconfig.get_config_var('LIBPL'))
 
         return self
 
