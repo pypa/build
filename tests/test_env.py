@@ -29,7 +29,7 @@ def test_isolated_environment_setup(mocker):
         copy_path = (
             sysconfig.get_path('include'),
             sysconfig.get_path('platinclude'),
-            sysconfig.get_config_var('srcdir'),
+            sysconfig.get_config_var('LIBPL'),
         )
 
         prefix = sysconfig.get_config_var('prefix')
