@@ -26,11 +26,19 @@ def test_isolated_environment_setup(mocker):
                 }
             ) in python_path
 
-        copy_path = (
+        copy_path = [
             sysconfig.get_path('include'),
             sysconfig.get_path('platinclude'),
-            sysconfig.get_config_var('LIBPL'),
-        )
+        ]
+        libpl = sysconfig.get_config_var('LIBPL')
+        if libpl is None:
+            if os.name != 'nt':
+                #  if sys.version_info[0] == 2:
+                #      assert sys.subversion[0] == 'PyPy'  # not available in Windows CPython 3
+                #  else:
+                assert sys.implementation.name == 'pypy'  # Python 3 only
+        else:
+            copy_path.append(libpl)
 
         prefix = sysconfig.get_config_var('prefix')
         assert prefix is not None
