@@ -12,6 +12,7 @@ jobs:
   pytest:
     runs-on: ${{ matrix.platform }}-latest
     strategy:
+      fail-fast: false
       matrix:
         platform:
         - ubuntu
