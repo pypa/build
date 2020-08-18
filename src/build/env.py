@@ -51,6 +51,14 @@ class IsolatedEnvironment(object):
 
     def __init__(self):  # type: () -> None
         self._env = {}  # type: Dict[str, Optional[str]]
+        self._path = None  # type: Optional[str]
+
+    @property
+    def path(self):  # type: () -> str
+        if not self._path:
+            raise RuntimeError("{} context environment hasn't been entered yet".format(self.__class__.__name__))
+
+        return self._path
 
     def _replace_env(self, key, new):  # type: (str, Optional[str]) -> None
         if not new:  # pragma: no cover
@@ -75,7 +83,7 @@ class IsolatedEnvironment(object):
 
         prefix = sysconfig.get_config_var('prefix')
         if prefix and path and path.startswith(prefix):
-            new_path = os.path.join(self._path, path[len(prefix + os.pathsep):])
+            new_path = os.path.join(self.path, path[len(prefix + os.pathsep):])
             if not os.path.exists(new_path):
                 try:
                     os.makedirs(os.path.dirname(new_path))
@@ -90,8 +98,8 @@ class IsolatedEnvironment(object):
     def __enter__(self):  # type: () -> IsolatedEnvironment
         self._path = tempfile.mkdtemp(prefix='build-env-')
         self._env_vars = {
-            'base': self._path,
-            'platbase': self._path,
+            'base': self.path,
+            'platbase': self.path,
         }
 
         sys_path = sys.path[1:]
@@ -126,7 +134,7 @@ class IsolatedEnvironment(object):
 
         self._replace_env('PATH', os.pathsep.join(exe_path))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
-        self._replace_env('PYTHONHOME', self._path)
+        self._replace_env('PYTHONHOME', self.path)
 
         self._symlink_relative(sysconfig.get_path('include'))
         self._symlink_relative(sysconfig.get_path('platinclude'))
@@ -136,8 +144,8 @@ class IsolatedEnvironment(object):
 
     def __exit__(self, typ, value, traceback):
         # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]) -> None
-        if self._path and os.path.isdir(self._path):
-            shutil.rmtree(self._path)
+        if self.path and os.path.isdir(self.path):
+            shutil.rmtree(self.path)
 
         self._restore_env()
 
@@ -148,14 +156,14 @@ class IsolatedEnvironment(object):
         if not requirements:
             return
 
-        subprocess.check_call([sys.executable, '-m', 'ensurepip'], cwd=self._path)
+        subprocess.check_call([sys.executable, '-m', 'ensurepip'], cwd=self.path)
 
         with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
             req_file.write(os.linesep.join(requirements))
             req_file.close()
             cmd = [
                 sys.executable, '-m', 'pip', 'install', '--prefix',
-                self._path, '-r', os.path.abspath(req_file.name)
+                self.path, '-r', os.path.abspath(req_file.name)
             ]
             subprocess.check_call(cmd)
             os.unlink(req_file.name)
