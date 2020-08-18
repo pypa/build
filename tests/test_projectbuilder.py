@@ -121,8 +121,8 @@ def test_check_dependencies(mocker, test_flit_path):
     assert builder.check_dependencies('wheel') == {'flit_core >=2,<3'}
 
     # requires = ['something']
-    assert builder.check_dependencies('sdist')
-    assert builder.check_dependencies('wheel')
+    assert builder.check_dependencies('sdist') == {'flit_core >=2,<3', 'something'}
+    assert builder.check_dependencies('wheel') == {'flit_core >=2,<3', 'something'}
 
     # BackendUnavailable
     with pytest.raises(build.BuildBackendException):
