@@ -117,8 +117,8 @@ def test_check_dependencies(mocker, test_flit_path):
     builder.hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
-    assert builder.check_dependencies('sdist') == {'flit_core'}
-    assert builder.check_dependencies('wheel') == {'flit_core'}
+    assert builder.check_dependencies('sdist') == {'flit_core >=2,<3'}
+    assert builder.check_dependencies('wheel') == {'flit_core >=2,<3'}
 
     # requires = ['something']
     assert builder.check_dependencies('sdist')
