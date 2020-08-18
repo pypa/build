@@ -177,3 +177,11 @@ def test_missing_requires(mocker, test_no_requires_path):
 
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_no_requires_path)
+
+
+def test_build_system_typo(mocker, test_typo):
+    mocker.patch('importlib.import_module')
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    with pytest.warns(build.TypoWarning):
+        build.ProjectBuilder(test_typo)
