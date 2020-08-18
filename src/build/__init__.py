@@ -5,11 +5,13 @@ python-build - A simple, correct PEP517 package builder
 '''
 __version__ = '0.0.3.1'
 
+import difflib
 import importlib
 import os
 import sys
+import warnings
 
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Mapping, Optional, Set, Union
 
 import pep517.wrappers
 import toml
@@ -42,6 +44,12 @@ class BuildException(Exception):
 class BuildBackendException(Exception):
     '''
     Exception raised when the backend fails
+    '''
+
+
+class TypoWarning(Warning):
+    '''
+    Warning raised when a potential typo is found
     '''
 
 
@@ -81,6 +89,16 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     return True
 
 
+def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
+    if expected not in dictionary:
+        for obj in dictionary:
+            if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
+                warnings.warn(
+                    "Found '{}' in pyproject.toml, did you mean '{}'?".format(obj, expected),
+                    TypoWarning
+                )
+
+
 class ProjectBuilder(object):
     def __init__(self, srcdir='.', config_settings=None):  # type: (str, Optional[ConfigSettings]) -> None
         '''
@@ -101,9 +119,12 @@ class ProjectBuilder(object):
         except toml.decoder.TomlDecodeError as e:
             raise BuildException("Failed to parse pyproject.toml: {} ".format(e))
 
+        _find_typo(self._spec, 'build-system')
         self._build_system = self._spec.get('build-system', _DEFAULT_BACKEND)
 
         if 'build-backend' not in self._build_system:
+            _find_typo(self._build_system, 'build-backend')
+            _find_typo(self._build_system, 'requires')
             self._build_system['build-backend'] = _DEFAULT_BACKEND['build-backend']
             self._build_system['requires'] = self._build_system.get('requires', []) + _DEFAULT_BACKEND['requires']
 

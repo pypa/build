@@ -121,6 +121,11 @@ def test_no_requires_path(packages_path):
 
 
 @pytest.fixture
+def test_typo(packages_path):
+    return os.path.join(packages_path, 'test-typo')
+
+
+@pytest.fixture
 def test_no_permission(packages_path):
     path = os.path.join(packages_path, 'test-no-permission')
     file = os.path.join(path, 'pyproject.toml')
