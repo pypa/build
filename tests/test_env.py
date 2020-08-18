@@ -5,6 +5,8 @@ import subprocess
 import sys
 import sysconfig
 
+import pytest
+
 import build.env
 
 
@@ -12,8 +14,8 @@ def test_isolated_environment_setup(mocker):
     old_path = os.environ['PATH']
     with build.env.IsolatedEnvironment() as env:
         if os.name != 'nt':
-            assert os.environ['PATH'] == os.pathsep.join([os.path.join(env._path, 'bin'), old_path])
-        assert os.environ['PYTHONHOME'] == env._path
+            assert os.environ['PATH'] == os.pathsep.join([os.path.join(env.path, 'bin'), old_path])
+        assert os.environ['PYTHONHOME'] == env.path
 
         python_path = os.environ['PYTHONPATH'].split(os.pathsep)
         for path in ('purelib', 'platlib'):
@@ -21,8 +23,8 @@ def test_isolated_environment_setup(mocker):
             assert sysconfig.get_path(
                 path,
                 vars={
-                    'base': env._path,
-                    'platbase': env._path,
+                    'base': env.path,
+                    'platbase': env.path,
                 }
             ) in python_path
 
@@ -65,3 +67,10 @@ def test_isolated_environment_install(mocker):
         assert args[:7] == [
             sys.executable, '-m', 'pip', 'install', '--prefix', env._path, '-r'
         ]
+
+
+def test_uninitialised_isolated_environment():
+    env = build.env.IsolatedEnvironment()
+
+    with pytest.raises(RuntimeError):
+        env.path
