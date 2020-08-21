@@ -7,6 +7,7 @@ import os
 import sys
 
 import pep517.wrappers
+import pretend
 import pytest
 
 import build
@@ -153,13 +154,33 @@ def test_build(mocker, test_flit_path):
         builder.build('wheel', '.')
 
 
-def test_default_backend(mocker, legacy_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+def test_default_backend(legacy_path, monkeypatch):
+    import_module = pretend.call_recorder(lambda *a: None)
+    monkeypatch.setattr("importlib.import_module", import_module)
+
+    hook = pretend.stub()
+    hook_caller = pretend.call_recorder(lambda *a, **kw: hook)
+    monkeypatch.setattr("pep517.wrappers.Pep517HookCaller", hook_caller)
 
     builder = build.ProjectBuilder(legacy_path)
 
-    assert builder._build_system == build._DEFAULT_BACKEND
+    assert builder.hook == hook
+    assert import_module.calls == [pretend.call("setuptools.build_meta")]
+    assert hook_caller.calls == [
+        pretend.call(
+            os.path.abspath(legacy_path),
+            build._DEFAULT_BACKEND["build-backend"],
+            backend_path=None,
+        )
+    ]
+
+
+def test_backend_is_not_importable(legacy_path, monkeypatch):
+    import_module = pretend.raiser(ImportError)
+    monkeypatch.setattr("importlib.import_module", import_module)
+
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder(legacy_path)
 
 
 def test_missing_backend(mocker, test_no_backend_path):
