@@ -168,5 +168,9 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     build(args.srcdir, args.outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
 
 
+def entrypoint():  # type: () -> None
+    main(sys.argv[1:])
+
+
 if __name__ == '__main__':  # pragma: no cover
     main(sys.argv[1:], 'python -m build')
