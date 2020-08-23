@@ -3,6 +3,7 @@
 import os
 import os.path
 import re
+import subprocess
 
 import pytest
 
@@ -29,12 +30,24 @@ _WHEEL = re.compile('.*.whl')
         ['-x', '--no-isolation'],
     ]
 )
-def test_build(tmp_dir, monkeypatch, integration_path, project, args):
+@pytest.mark.parametrize(
+    ('call'),
+    [
+        None,  # via code
+        ['python', '-m', 'build'],  # module
+        ['python-build'],  # entrypoint
+    ]
+)
+def test_build(tmp_dir, monkeypatch, integration_path, project, args, call):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
 
     path = os.path.join(integration_path, project)
+    args = [path, '-o', tmp_dir] + args
 
-    build.__main__.main([path, '-o', tmp_dir] + args)
+    if call is None:
+        build.__main__.main(args)
+    else:
+        subprocess.check_call(call + args)
 
     assert filter(_SDIST.match, os.listdir(tmp_dir))
     assert filter(_WHEEL.match, os.listdir(tmp_dir))
