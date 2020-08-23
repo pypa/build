@@ -48,6 +48,7 @@ jobs:
       run: nox -s test-${{ matrix.python }} -- --run-integration
 
     - name: Send coverage report
+      if: ${{ always() }}
       uses: codecov/codecov-action@v1
       env:
         PYTHON: ${{ matrix.python }}
