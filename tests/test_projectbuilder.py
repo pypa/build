@@ -185,3 +185,28 @@ def test_build_system_typo(mocker, test_typo):
 
     with pytest.warns(build.TypoWarning):
         build.ProjectBuilder(test_typo)
+
+
+def test_missing_outdir(mocker, tmp_dir, test_flit_path):
+    mocker.patch('importlib.import_module')
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    builder = build.ProjectBuilder(test_flit_path)
+    out = os.path.join(tmp_dir, 'out')
+
+    builder.build('sdist', out)
+
+    assert os.path.isdir(out)
+
+
+def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):
+    mocker.patch('importlib.import_module')
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
+
+    builder = build.ProjectBuilder(test_flit_path)
+    out = os.path.join(tmp_dir, 'out')
+
+    open(out, 'a').close()  # create empty file
+
+    with pytest.raises(build.BuildException):
+        builder.build('sdist', out)
