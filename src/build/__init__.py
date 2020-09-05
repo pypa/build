@@ -5,13 +5,14 @@ python-build - A simple, correct PEP517 package builder
 '''
 __version__ = '0.0.3.1'
 
+import contextlib
 import difflib
 import importlib
 import os
 import sys
 import warnings
 
-from typing import Dict, List, Mapping, Optional, Set, Union
+from typing import Dict, Iterator, List, Mapping, Optional, Set, Union
 
 import pep517.wrappers
 import toml
@@ -99,12 +100,24 @@ def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
                 )
 
 
+@contextlib.contextmanager
+def _working_directory(path):  # type: (str) -> Iterator[None]
+    current = os.getcwd()
+
+    os.chdir(path)
+
+    try:
+        yield
+    finally:
+        os.chdir(current)
+
+
 class ProjectBuilder(object):
     def __init__(self, srcdir='.', config_settings=None):  # type: (str, Optional[ConfigSettings]) -> None
         '''
         :param srcdir: Source directory
         '''
-        self.srcdir = srcdir
+        self.srcdir = os.path.abspath(srcdir)
         self.config_settings = config_settings if config_settings else {}
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
@@ -152,7 +165,8 @@ class ProjectBuilder(object):
         get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
 
         try:
-            return set(get_requires(self.config_settings))
+            with _working_directory(self.srcdir):
+                return set(get_requires(self.config_settings))
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
@@ -177,6 +191,7 @@ class ProjectBuilder(object):
         build = getattr(self.hook, 'build_{}'.format(distribution))
 
         try:
-            build(outdir, self.config_settings)
+            with _working_directory(self.srcdir):
+                build(outdir, self.config_settings)
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
