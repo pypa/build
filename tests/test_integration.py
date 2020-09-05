@@ -21,6 +21,7 @@ _WHEEL = re.compile('.*.whl')
         'pip',
         'dateutil',
         'Solaar',
+        os.path.join('flit', 'flit_core')
     ]
 )
 @pytest.mark.parametrize(

@@ -24,6 +24,7 @@ INTEGRATION_SOURCES = {
     'dateutil': ('dateutil/dateutil', '2.8.1'),
     'pip': ('pypa/pip', '20.2.1'),
     'Solaar': ('pwr-Solaar/Solaar', '1.0.3'),
+    'flit': ('takluyver/flit', '2.3.0'),
 }
 
 
