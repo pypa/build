@@ -176,6 +176,12 @@ class ProjectBuilder(object):
         '''
         build = getattr(self.hook, 'build_{}'.format(distribution))
 
+        if os.path.exists(outdir):
+            if not os.path.isdir(outdir):
+                raise BuildException("Build path '{}' exists and is not a directory".format(outdir))
+        else:
+            os.mkdir(outdir)
+
         try:
             build(outdir, self.config_settings)
         except Exception as e:  # noqa: E722
