@@ -133,10 +133,11 @@ class ProjectBuilder(object):
 
         self._backend = self._build_system['build-backend']
 
-        try:
-            importlib.import_module(self._backend.split(':')[0])
-        except ImportError:  # can't mock importlib.import_module  # pragma: no cover
-            raise BuildException("Backend '{}' is not available".format(self._backend))
+        if 'backend-path' not in self._build_system:
+            try:
+                importlib.import_module(self._backend.split(':')[0])
+            except ImportError:  # can't mock importlib.import_module  # pragma: no cover
+                raise BuildException("Backend '{}' is not available".format(self._backend))
 
         self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
                                                      backend_path=self._build_system.get('backend-path'))
