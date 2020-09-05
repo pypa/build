@@ -131,9 +131,16 @@ def test_check_dependencies(mocker, test_flit_path):
         not builder.check_dependencies('wheel')
 
 
+def test_working_directory(tmp_dir):
+    assert os.path.realpath(os.curdir) != os.path.realpath(tmp_dir)
+    with build._working_directory(tmp_dir):
+        assert os.path.realpath(os.curdir) == os.path.realpath(tmp_dir)
+
+
 def test_build(mocker, test_flit_path):
     mocker.patch('importlib.import_module')
     mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('build._working_directory')
 
     builder = build.ProjectBuilder(test_flit_path)
 
@@ -142,14 +149,18 @@ def test_build(mocker, test_flit_path):
 
     builder.build('sdist', '.')
     builder.hook.build_sdist.assert_called_with('.', {})
+    build._working_directory.assert_called_with(test_flit_path)
 
     builder.build('wheel', '.')
     builder.hook.build_wheel.assert_called_with('.', {})
+    build._working_directory.assert_called_with(test_flit_path)
 
     with pytest.raises(build.BuildBackendException):
+        build._working_directory.assert_called_with(test_flit_path)
         builder.build('sdist', '.')
 
     with pytest.raises(build.BuildBackendException):
+        build._working_directory.assert_called_with(test_flit_path)
         builder.build('wheel', '.')
 
 
