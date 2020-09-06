@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import copy
+import importlib
 import os
 import sys
 
@@ -96,6 +97,15 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
     # TomlDecodeError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_bad_syntax_path)
+
+    mocker.patch('importlib.import_module')
+    importlib.import_module.side_effect = ImportError
+
+    # ImportError
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder(test_flit_path)
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder(test_flit_path)
 
 
 def test_check_dependencies(mocker, test_flit_path):
