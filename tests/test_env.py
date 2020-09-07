@@ -49,7 +49,7 @@ def test_isolated_environment_setup(mocker):
             assert path is not None
             if path.startswith(prefix):
                 relative_path = path[len(prefix + os.pathsep):]
-                path = os.path.join(env._path, relative_path)
+                path = os.path.join(env.path, relative_path)
             assert os.path.exists(path)
 
 
@@ -65,7 +65,7 @@ def test_isolated_environment_install(mocker):
             subprocess.check_call.assert_called()
         args = subprocess.check_call.call_args[0][0]
         assert args[:7] == [
-            sys.executable, '-m', 'pip', 'install', '--prefix', env._path, '-r'
+            sys.executable, '-m', 'pip', 'install', '--prefix', env.path, '-r'
         ]
 
 
