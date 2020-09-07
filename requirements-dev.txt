@@ -1,0 +1,12 @@
+packaging
+pep517
+toml
+importlib-metadata;python_version < "3.8"
+typing;python_version<"3"
+
+pytest
+pytest-mock
+pytest-cov
+filelock
+
+setuptools
