@@ -35,6 +35,15 @@ Provides-Extra: some_extra
 '''.strip()
 
 
+DEFAULT_BACKEND = {
+    'build-backend': 'setuptools.build_meta:__legacy__',
+    'requires': [
+        'setuptools >= 40.8.0',
+        'wheel'
+    ]
+}
+
+
 class MockDistribution(importlib_metadata.Distribution):
     def read_text(self, filename):
         return DUMMY_METADATA
@@ -180,7 +189,7 @@ def test_default_backend(mocker, legacy_path):
 
     builder = build.ProjectBuilder(legacy_path)
 
-    assert builder._build_system == build._DEFAULT_BACKEND
+    assert builder._build_system == DEFAULT_BACKEND
 
 
 def test_missing_backend(mocker, test_no_backend_path):
@@ -189,7 +198,7 @@ def test_missing_backend(mocker, test_no_backend_path):
 
     builder = build.ProjectBuilder(test_no_backend_path)
 
-    assert builder._build_system == build._DEFAULT_BACKEND
+    assert builder._build_system == DEFAULT_BACKEND
 
 
 def test_missing_requires(mocker, test_no_requires_path):
