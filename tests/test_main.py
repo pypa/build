@@ -75,7 +75,7 @@ def test_prog():
 
 
 def test_build(mocker, test_flit_path):
-    mocker.patch('importlib.import_module')
+    mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('build.ProjectBuilder.check_dependencies')
     mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.__main__._error')

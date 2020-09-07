@@ -98,7 +98,7 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_bad_syntax_path)
 
-    mocker.patch('importlib.import_module')
+    mocker.patch('importlib.import_module', autospec=True)
     importlib.import_module.side_effect = ImportError
 
     # ImportError
@@ -109,10 +109,10 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
 
 
 def test_check_dependencies(mocker, test_flit_path):
-    mocker.patch('importlib.import_module')
+    mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
-    mocker.patch('build.check_version')
+    mocker.patch('build.check_version', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
 
@@ -148,9 +148,9 @@ def test_working_directory(tmp_dir):
 
 
 def test_build(mocker, test_flit_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
-    mocker.patch('build._working_directory')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('build._working_directory', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
 
@@ -175,8 +175,8 @@ def test_build(mocker, test_flit_path):
 
 
 def test_default_backend(mocker, legacy_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(legacy_path)
 
@@ -184,8 +184,8 @@ def test_default_backend(mocker, legacy_path):
 
 
 def test_missing_backend(mocker, test_no_backend_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_no_backend_path)
 
@@ -193,24 +193,24 @@ def test_missing_backend(mocker, test_no_backend_path):
 
 
 def test_missing_requires(mocker, test_no_requires_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_no_requires_path)
 
 
 def test_build_system_typo(mocker, test_typo):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     with pytest.warns(build.TypoWarning):
         build.ProjectBuilder(test_typo)
 
 
 def test_missing_outdir(mocker, tmp_dir, test_flit_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
     out = os.path.join(tmp_dir, 'out')
@@ -221,8 +221,8 @@ def test_missing_outdir(mocker, tmp_dir, test_flit_path):
 
 
 def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):
-    mocker.patch('importlib.import_module')
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
     out = os.path.join(tmp_dir, 'out')
