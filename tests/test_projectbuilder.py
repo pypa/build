@@ -62,23 +62,27 @@ importlib_metadata.Distribution = MockDistribution
 
 
 @pytest.mark.parametrize(
-    ('requirement_string', 'extra', 'expected'),
+    ('requirement_string', 'expected', 'extra_warning'),
     [
-        ('something', '', True),
-        ('something_else', '', False),
-        ('something[extra]', '', False),
-        ('something[some_extra]', '', True),
-        ('something_else; python_version>"10"', '', True),
-        ('something_else; python_version<="1"', '', True),
-        ('something_else; python_version>="1"', '', False),
-        ('something == 1.0.0', '', True),
-        ('something == 2.0.0', '', False),
-        ('something[some_extra] == 1.0.0', '', True),
-        ('something[some_extra] == 2.0.0', '', False),
+        ('something', True, False),
+        ('something_else', False, False),
+        ('something[extra]', False, False),
+        ('something[some_extra]', True, True),
+        ('something_else; python_version>"10"', True, False),
+        ('something_else; python_version<="1"', True, False),
+        ('something_else; python_version>="1"', False, False),
+        ('something == 1.0.0', True, False),
+        ('something == 2.0.0', False, False),
+        ('something[some_extra] == 1.0.0', True, True),
+        ('something[some_extra] == 2.0.0', False, True),
     ]
 )
-def test_check_version(requirement_string, extra, expected):
-    assert build.check_version(requirement_string) == expected
+def test_check_version(requirement_string, expected, extra_warning):
+    if extra_warning:
+        with pytest.warns(build.IncompleteCheckWarning):
+            assert build.check_version(requirement_string) == expected
+    else:
+        assert build.check_version(requirement_string) == expected
 
 
 def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_syntax_path):
