@@ -54,6 +54,12 @@ class TypoWarning(Warning):
     '''
 
 
+class IncompleteCheckWarning(Warning):
+    '''
+    Warning raised when we have an incomplete check
+    '''
+
+
 def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     '''
     :param requirement_string: Requirement string
@@ -83,6 +89,11 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     for extra in req.extras:
         if extra not in (metadata.get_all('Provides-Extra') or []):
             return False
+        warnings.warn(
+            "Verified that the '{}[{}]' extra is present but did not verify that it is active "
+            "(it's dependencies are met)".format(req.name, extra),
+            IncompleteCheckWarning
+        )
 
     if req.specifier:
         return req.specifier.contains(version)
