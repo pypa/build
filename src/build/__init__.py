@@ -201,6 +201,7 @@ class ProjectBuilder(object):
         :param outdir: Outpur directory
         '''
         build = getattr(self.hook, 'build_{}'.format(distribution))
+        outdir = os.path.abspath(outdir)
 
         if os.path.exists(outdir):
             if not os.path.isdir(outdir):
