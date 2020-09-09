@@ -39,7 +39,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
 
-    - name: Install pytest
+    - name: Install nox
       run: |
         pip install nox
         nox --version
