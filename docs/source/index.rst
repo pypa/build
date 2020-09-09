@@ -45,11 +45,17 @@ we will try to keep dependencies to a minimum, in order to try make
 bootstrapping easier.
 
 
-Releases
-========
+Installation & Releases
+=======================
 
 You can download a tarball_ from Github, checkout the latest `git tag`_ or fetch
 the artifacts from `project page`_ on PyPI.
+
+``python-build`` may also be installed via `pip`_ or an equivalent:
+
+.. code-block:: sh
+
+   $ pip install build
 
 The recommended way is to checkout the git tags, as they are PGP signed with one
 of the following keys:
