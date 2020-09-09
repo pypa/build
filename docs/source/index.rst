@@ -77,9 +77,12 @@ with :pep:`517` support.
 ``python -m pep517.build``
 --------------------------
 
-``python-build`` implements a CLI tailored to end users. ``python -m
-pep517.build`` *"implements essentially the simplest possible frontend tool,
-to exercise and illustrate how the core functionality can be used"*.
+``python-build`` implements a CLI tailored to end users.
+
+``pep517.build`` contained a proof-of-concept of a :pep:`517`
+frontend. It *"implement[ed] essentially the simplest possible frontend
+tool, to exercise and illustrate how the core functionality can be
+used"*. It has since been `deprecated and is scheduled for removal`_.
 
 
 Custom Behaviors
@@ -130,6 +133,8 @@ versions:
 .. _tarball: https://github.com/FFY00/python-build/releases
 .. _git tag: https://github.com/FFY00/python-build/tags
 .. _project page: https://pypi.org/project/build/
+
+.. _deprecated and is scheduled for removal: https://github.com/pypa/pep517/pull/83
 
 
 .. |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2| replace:: ``3DCE51D60930EBA47858BA4146F633CBB0EB4BF2``
