@@ -39,6 +39,13 @@ def test_pythonpath(session):
     run_tests(session, env={'PYTHONPATH': 'src'})
 
 
+@nox.session(python='3.8')
+def docs(session):
+    session.install('.', '-r', 'docs/requirements.txt')
+    output = session.create_tmp()
+    session.run('python', '-m', 'sphinx', '-n', '-W', 'docs/source', output)
+
+
 @nox.session(python=['2.7', '3.5', '3.6', '3.7', '3.8', 'pypy2', 'pypy3'])
 def test_wheel(session):
     session.install('-r', 'requirements-dev.txt')
