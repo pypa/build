@@ -9,13 +9,13 @@ python-build will invoke the :pep:`517` hooks to build a distribution package.
 It is a simple build tool, it does no dependency management.
 
 
-The recommended way to invoke is by calling the module:
+The recommended way to invoke it is by calling the module:
 
 .. autoprogram:: build.__main__:main_parser()
    :prog: python -m build
 
 
-But the ``python-build`` script is also available, so that tools such as pipx_
+A ``python-build`` script is also available, so that tools such as pipx_
 can use it:
 
 .. code-block:: sh
