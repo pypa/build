@@ -7,7 +7,7 @@ See the [documentation](https://python-build.readthedocs.io/en/latest/) for more
 ### Code of Conduct
 
 Everyone interacting in the python-build's codebase, issue trackers, chat
-rooms, and mailing lists is expected to follow the [PyPA Code of Conduct].
+rooms, and mailing lists is expected to follow the [PSF Code of Conduct].
 
 
-[PyPA Code of Conduct]: https://www.pypa.io/en/latest/code-of-conduct/
+[PSF Code of Conduct]: https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md
