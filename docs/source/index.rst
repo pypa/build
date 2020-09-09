@@ -110,6 +110,8 @@ versions:
 - 3.6
 - 3.7
 - 3.8
+- PyPy(2)
+- PyPy3
 
 
 ``build`` module
