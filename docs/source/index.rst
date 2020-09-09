@@ -23,8 +23,8 @@ can use it:
    usage: python-build [-h] ...
 
 
-By default python-build will build the package in a isolated environment, but
-this behavior can be disabled with :option:`--no-isolation`.
+By default python-build will build the package in a isolated
+environment, but this behavior can be disabled with `--no-isolation`.
 
 
 Mission Statement
@@ -99,8 +99,8 @@ Bootstrapping
 =============
 
 This package can build itself with only the ``toml`` and ``pep517``
-dependencies. The :option:`--skip-dependencies` flag should be used in
-this case.
+dependencies. The `--skip-dependencies` flag should be used in this
+case.
 
 
 Compability
