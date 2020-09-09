@@ -4,6 +4,14 @@ A simple, correct PEP517 package builder.
 
 See the [documentation](https://python-build.readthedocs.io/en/latest/) for more information.
 
+### Installation
+
+`python-build` can be installed via `pip` or an equivalent via:
+
+  ```
+  $ pip install build
+  ```
+
 ### Code of Conduct
 
 Everyone interacting in the python-build's codebase, issue trackers, chat
