@@ -160,7 +160,7 @@ def test_working_directory(tmp_dir):
         assert os.path.realpath(os.curdir) == os.path.realpath(tmp_dir)
 
 
-def test_build(mocker, test_flit_path):
+def test_build(mocker, test_flit_path, tmp_dir):
     mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
     mocker.patch('build._working_directory', autospec=True)
@@ -170,21 +170,21 @@ def test_build(mocker, test_flit_path):
     builder.hook.build_sdist.side_effect = [None, Exception]
     builder.hook.build_wheel.side_effect = [None, Exception]
 
-    builder.build('sdist', '.')
-    builder.hook.build_sdist.assert_called_with('.', {})
+    builder.build('sdist', tmp_dir)
+    builder.hook.build_sdist.assert_called_with(tmp_dir, {})
     build._working_directory.assert_called_with(test_flit_path)
 
-    builder.build('wheel', '.')
-    builder.hook.build_wheel.assert_called_with('.', {})
+    builder.build('wheel', tmp_dir)
+    builder.hook.build_wheel.assert_called_with(tmp_dir, {})
     build._working_directory.assert_called_with(test_flit_path)
 
     with pytest.raises(build.BuildBackendException):
         build._working_directory.assert_called_with(test_flit_path)
-        builder.build('sdist', '.')
+        builder.build('sdist', tmp_dir)
 
     with pytest.raises(build.BuildBackendException):
         build._working_directory.assert_called_with(test_flit_path)
-        builder.build('wheel', '.')
+        builder.build('wheel', tmp_dir)
 
 
 def test_default_backend(mocker, legacy_path):
@@ -231,6 +231,17 @@ def test_missing_outdir(mocker, tmp_dir, test_flit_path):
     builder.build('sdist', out)
 
     assert os.path.isdir(out)
+
+
+def test_relative_outdir(mocker, tmp_dir, test_flit_path):
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+
+    builder.build('sdist', '.')
+
+    builder.hook.build_sdist.assert_called_with(os.path.abspath('.'), {})
 
 
 def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):
