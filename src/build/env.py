@@ -6,9 +6,7 @@ import sysconfig
 import tempfile
 import types
 
-
-if False:  # TYPE_CHECKING  # pragma: no cover
-    from typing import Dict, Optional, Iterable, Sequence, Type
+from typing import Dict, Iterable, Optional, Sequence, Type
 
 
 if sys.version_info[0] == 2:  # pragma: no cover
