@@ -13,8 +13,9 @@ nox.options.reuse_existing_virtualenvs = True
 def mypy(session):
     session.install('.', 'mypy')
 
-    session.run('mypy', 'src/build')
-    session.run('mypy', '--py2', 'src/build')
+    srcbuild = os.path.join('src', 'build')
+    session.run('mypy', srcbuild)
+    session.run('mypy', '--py2', srcbuild)
 
 
 def run_tests(session, env=None):
@@ -41,9 +42,12 @@ def test_pythonpath(session):
 
 @nox.session(python='3.8')
 def docs(session):
-    session.install('.', '-r', 'docs/requirements.txt')
+    session.install('.', '-r', os.path.join('docs', 'requirements.txt'))
     output = session.create_tmp()
-    session.run('python', '-m', 'sphinx', '-n', '-W', 'docs/source', output)
+    session.run(
+        'python', '-m', 'sphinx',
+        '-n', '-W', os.path.join('docs', 'source'), output,
+    )
 
 
 @nox.session(python=['2.7', '3.5', '3.6', '3.7', '3.8', 'pypy2', 'pypy3'])
