@@ -98,7 +98,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     out = os.path.join(cwd, 'dist')
     parser = argparse.ArgumentParser()
     parser.add_argument('srcdir',
-                        type=str, nargs='?', metavar='.', default=cwd,
+                        type=str, nargs='?', metavar='sourcedir', default=cwd,
                         help='source directory (defaults to current directory)')
     parser.add_argument('--sdist', '-s',
                         action='store_true',
