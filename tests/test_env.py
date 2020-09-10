@@ -10,7 +10,7 @@ import pytest
 import build.env
 
 
-def test_isolated_environment_setup(mocker):
+def test_isolated_environment_setup():
     old_path = os.environ['PATH']
     with build.env.IsolatedEnvironment.for_current() as env:
         if os.name != 'nt':
@@ -51,6 +51,13 @@ def test_isolated_environment_setup(mocker):
                 relative_path = path[len(prefix + os.pathsep):]
                 path = os.path.join(env.path, relative_path)
             assert os.path.exists(path)
+
+
+def test_isolated_environment_setup_require_virtualenv(mocker):
+    mocker.patch.dict(os.environ, {"PIP_REQUIRE_VIRTUALENV": "true"})
+    with build.env.IsolatedEnvironment.for_current():
+        assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
+    assert os.environ["PIP_REQUIRE_VIRTUALENV"] == "true"
 
 
 def test_isolated_environment_install(mocker):
