@@ -84,6 +84,9 @@ class IsolatedEnvironment(object):
         self._env[key] = os.environ.get(key, None)
         os.environ[key] = new
 
+    def _pop_env(self, key):  # type: (str) -> None
+        self._env[key] = os.environ.pop(key, None)
+
     def _restore_env(self):  # type: () -> None
         for key, val in self._env.items():
             if val is None:
@@ -141,6 +144,7 @@ class IsolatedEnvironment(object):
         self._replace_env('PATH', os.pathsep.join(exe_path))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
         self._replace_env('PYTHONHOME', self.path)
+        self._pop_env('PIP_REQUIRE_VIRTUALENV')
 
         self._symlink_relative(sysconfig.get_path('include'))
         self._symlink_relative(sysconfig.get_path('platinclude'))
