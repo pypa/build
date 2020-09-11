@@ -14,7 +14,11 @@ def test_isolated_environment_setup():
     old_path = os.environ['PATH']
     with build.env.IsolatedEnvironment.for_current() as env:
         if os.name != 'nt':
-            assert os.environ['PATH'] == os.pathsep.join([os.path.join(env.path, 'bin'), old_path])
+            assert os.environ['PATH'] == os.pathsep.join([
+                os.path.join(env.path, 'executable'),
+                os.path.join(env.path, 'bin'),
+                old_path
+            ])
         assert os.environ['PYTHONHOME'] == env.path
 
         python_path = os.environ['PYTHONPATH'].split(os.pathsep)
@@ -58,6 +62,13 @@ def test_isolated_environment_setup_require_virtualenv(mocker):
     with build.env.IsolatedEnvironment.for_current():
         assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
     assert os.environ["PIP_REQUIRE_VIRTUALENV"] == "true"
+
+
+def test_isolated_environment_executable():
+    with build.env.IsolatedEnvironment.for_current() as env:
+        executable = os.path.join(env.path, 'executable', 'python')
+        assert sys.executable == executable
+    assert sys.executable != executable
 
 
 def test_isolated_environment_install(mocker):

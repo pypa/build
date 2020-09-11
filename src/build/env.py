@@ -97,6 +97,18 @@ class IsolatedEnvironment(object):
     def _get_env_path(self, path):  # type: (str) -> Optional[str]
         return sysconfig.get_path(path, vars=self._env_vars)
 
+    def _place_file(self, path, new_subpath):  # type: (str, str) -> None
+        new_path = os.path.join(self.path, new_subpath)
+        dir_path = os.path.dirname(new_path)
+
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        if fs_supports_symlink():
+            os.symlink(path, new_path)
+        else:
+            shutil.copyfile(path, new_path)
+
     def _place_path_relative(self, path):  # type: (Optional[str]) -> None
         if not path:  # pragma: no cover
             return
@@ -112,7 +124,6 @@ class IsolatedEnvironment(object):
                 if fs_supports_symlink():
                     os.symlink(path, new_path)
                 else:
-                    import shutil
                     shutil.copytree(path, new_path)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
@@ -141,14 +152,24 @@ class IsolatedEnvironment(object):
         if 'PATH' in os.environ:
             exe_path.append(os.environ['PATH'])
 
-        self._replace_env('PATH', os.pathsep.join(exe_path))
-        self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
-        self._replace_env('PYTHONHOME', self.path)
-        self._pop_env('PIP_REQUIRE_VIRTUALENV')
-
         self._place_path_relative(sysconfig.get_path('include'))
         self._place_path_relative(sysconfig.get_path('platinclude'))
         self._place_path_relative(sysconfig.get_config_var('LIBPL'))
+
+        executable_dir = 'executable'
+        executable_path = os.path.join(self.path, executable_dir)
+        self._place_file(sys.executable, os.path.join(executable_dir, 'python'))
+        exe_path.insert(0, executable_path)
+        
+        self._executable = sys.executable
+        sys.executable = os.path.join(executable_path, 'python')
+
+        self._replace_env('PATH', os.pathsep.join(sorted(
+            set(exe_path), key=exe_path.index
+        )))  # sorted is required for Python 2 and 3.5
+        self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
+        self._replace_env('PYTHONHOME', self.path)
+        self._pop_env('PIP_REQUIRE_VIRTUALENV')
 
         return self
 
@@ -158,6 +179,7 @@ class IsolatedEnvironment(object):
             shutil.rmtree(self.path)
 
         self._restore_env()
+        sys.executable = self._executable
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         '''
