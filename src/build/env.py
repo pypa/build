@@ -97,7 +97,7 @@ class IsolatedEnvironment(object):
     def _get_env_path(self, path):  # type: (str) -> Optional[str]
         return sysconfig.get_path(path, vars=self._env_vars)
 
-    def _symlink_relative(self, path):  # type: (Optional[str]) -> None
+    def _place_path_relative(self, path):  # type: (Optional[str]) -> None
         if not path:  # pragma: no cover
             return
 
@@ -146,9 +146,9 @@ class IsolatedEnvironment(object):
         self._replace_env('PYTHONHOME', self.path)
         self._pop_env('PIP_REQUIRE_VIRTUALENV')
 
-        self._symlink_relative(sysconfig.get_path('include'))
-        self._symlink_relative(sysconfig.get_path('platinclude'))
-        self._symlink_relative(sysconfig.get_config_var('LIBPL'))
+        self._place_path_relative(sysconfig.get_path('include'))
+        self._place_path_relative(sysconfig.get_path('platinclude'))
+        self._place_path_relative(sysconfig.get_config_var('LIBPL'))
 
         return self
 
