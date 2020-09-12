@@ -50,6 +50,9 @@ class IsolatedEnvironment(object):
     MANIPULATE_PATHS = ('purelib', 'platlib')
 
     def __init__(self, remove_paths):  # type: (Sequence[str]) -> None
+        '''
+        :param remove_paths: Import paths that should be removed from the environment
+        '''
         self._env = {}  # type: Dict[str, Optional[str]]
         self._path = None  # type: Optional[str]
         self._remove_paths = remove_paths
@@ -63,6 +66,9 @@ class IsolatedEnvironment(object):
 
     @classmethod
     def for_current(cls):  # type: () -> IsolatedEnvironment
+        '''
+        Creates an isolated environment for the current interpreter
+        '''
         remove_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
 
         for path in cls.MANIPULATE_PATHS:
@@ -78,6 +84,9 @@ class IsolatedEnvironment(object):
         return cls(remove_paths)
 
     def _replace_env(self, key, new):  # type: (str, Optional[str]) -> None
+        '''
+        Replaces an environment variable
+        '''
         if not new:  # pragma: no cover
             return
 
@@ -85,9 +94,15 @@ class IsolatedEnvironment(object):
         os.environ[key] = new
 
     def _pop_env(self, key):  # type: (str) -> None
+        '''
+        Removes an environment variable
+        '''
         self._env[key] = os.environ.pop(key, None)
 
     def _restore_env(self):  # type: () -> None
+        '''
+        Restores the initial environment variables
+        '''
         for key, val in self._env.items():
             if val is None:
                 os.environ.pop(key, None)
@@ -95,9 +110,18 @@ class IsolatedEnvironment(object):
                 os.environ[key] = val
 
     def _get_env_path(self, path):  # type: (str) -> Optional[str]
+        '''
+        Returns sysconfig path from our environment
+        '''
         return sysconfig.get_path(path, vars=self._env_vars)
 
     def _place_file(self, path, new_subpath):  # type: (str, str) -> None
+        '''
+        Places a file into our environment
+
+        :param path: File to be symlinked
+        :param new_subpath: Subpath of target destination
+        '''
         new_path = os.path.join(self.path, new_subpath)
         dir_path = os.path.dirname(new_path)
 
@@ -110,6 +134,13 @@ class IsolatedEnvironment(object):
             shutil.copyfile(path, new_path)
 
     def _place_path_relative(self, path):  # type: (Optional[str]) -> None
+        '''
+        Places a path into our environment
+
+        The original prefix will be removed and replaced with our environmenmt's
+
+        If the path is not valid, nothing will happen
+        '''
         if not path:  # pragma: no cover
             return
 
@@ -127,6 +158,11 @@ class IsolatedEnvironment(object):
                     shutil.copytree(path, new_path)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
+        '''
+        Set up the environment
+
+        The environment path should be empty
+        '''
         self._path = tempfile.mkdtemp(prefix='build-env-')
         self._env_vars = {
             'base': self.path,
@@ -152,29 +188,54 @@ class IsolatedEnvironment(object):
         if 'PATH' in os.environ:
             exe_path.append(os.environ['PATH'])
 
+        '''
+        Place include, platinclude and LIBPL into our environment. They should
+        be present and may be used to compile native packages or similar.
+        '''
         self._place_path_relative(sysconfig.get_path('include'))
         self._place_path_relative(sysconfig.get_path('platinclude'))
         self._place_path_relative(sysconfig.get_config_var('LIBPL'))
 
+        '''
+        We use PYTHONHOME to relocate the Python installation to our environment,
+        but turns out this can't be blindely relied upon, *sigh*. If a pyvenv.cfg
+        file is present on the same directory than the binary or one level above,
+        data, platlib, platstdlib, purelib and scripts will be overritten. So we
+        need to make sure that doesn't happen, hence we symlink the Python
+        executable onto a path we control and use that binary for the enrionment.
+
+        Unfortunately, this forces us to override sys.executable. There is no
+        other way of doing it.
+        '''
         executable_dir = 'executable'
         executable_path = os.path.join(self.path, executable_dir)
         self._place_file(sys.executable, os.path.join(executable_dir, 'python'))
         exe_path.insert(0, executable_path)
-        
+
         self._executable = sys.executable
         sys.executable = os.path.join(executable_path, 'python')
 
+        # Replace PATH with our value for the environment
         self._replace_env('PATH', os.pathsep.join(sorted(
             set(exe_path), key=exe_path.index
         )))  # sorted is required for Python 2 and 3.5
+
+        # Inject the missing import paths via PYTHONPATH
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
+
+        # Point the Python interpreter to our environment
         self._replace_env('PYTHONHOME', self.path)
+
+        # Remove environment variables that intrefer with our use of pip
         self._pop_env('PIP_REQUIRE_VIRTUALENV')
 
         return self
 
     def __exit__(self, typ, value, traceback):
         # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]) -> None
+        '''
+        Restores the everything to the original state
+        '''
         if self.path and os.path.isdir(self.path):
             shutil.rmtree(self.path)
 
@@ -183,7 +244,11 @@ class IsolatedEnvironment(object):
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         '''
-        Installs the specified requirements on the environment
+        Installs the specified PEP 508 requirements on the environment
+
+        Passing non PEP 508 strings will result in undefined behavior, you
+        *should not* rely on it. It is merely an implementation detail, it may
+        change any time without warning.
         '''
         if not requirements:
             return
