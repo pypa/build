@@ -153,7 +153,7 @@ class ProjectBuilder(object):
             self._build_system['requires'] = self._build_system.get('requires', []) + _DEFAULT_BACKEND['requires']
 
         if 'requires' not in self._build_system:
-            raise BuildException("Missing 'build-system.requires' in pyproject.yml")
+            raise BuildException("Missing 'build-system.requires' in pyproject.toml")
 
         self._backend = self._build_system['build-backend']
 
