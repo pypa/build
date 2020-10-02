@@ -68,4 +68,4 @@ def test_isolation(tmp_dir, test_flit_path, mocker):
     mocker.patch('build.__main__._error')
 
     build.__main__.main([test_flit_path, '-o', tmp_dir, '--no-isolation'])
-    build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available")
+    build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available.")

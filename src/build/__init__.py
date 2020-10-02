@@ -7,7 +7,6 @@ __version__ = '0.0.4'
 
 import contextlib
 import difflib
-import importlib
 import os
 import sys
 import warnings
@@ -157,12 +156,6 @@ class ProjectBuilder(object):
 
         self._backend = self._build_system['build-backend']
 
-        if 'backend-path' not in self._build_system:
-            try:
-                importlib.import_module(self._backend.split(':')[0])
-            except ImportError:
-                raise BuildException("Backend '{}' is not available".format(self._backend))
-
         self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
                                                      backend_path=self._build_system.get('backend-path'))
 
@@ -179,6 +172,8 @@ class ProjectBuilder(object):
         try:
             with _working_directory(self.srcdir):
                 return set(get_requires(self.config_settings))
+        except pep517.wrappers.BackendUnavailable:
+            raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
@@ -198,7 +193,7 @@ class ProjectBuilder(object):
         Builds a distribution
 
         :param distribution: Distribution to build (sdist or wheel)
-        :param outdir: Outpur directory
+        :param outdir: Output directory
         '''
         build = getattr(self.hook, 'build_{}'.format(distribution))
         outdir = os.path.abspath(outdir)
@@ -212,5 +207,7 @@ class ProjectBuilder(object):
         try:
             with _working_directory(self.srcdir):
                 build(outdir, self.config_settings)
+        except pep517.wrappers.BackendUnavailable:
+            raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
