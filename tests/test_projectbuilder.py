@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import copy
-import importlib
 import os
 import sys
 
@@ -111,14 +110,23 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_bad_syntax_path)
 
-    mocker.patch('importlib.import_module', autospec=True)
-    importlib.import_module.side_effect = ImportError
 
-    # ImportError
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_get_dependencies_missing_backend(packages_path, distribution):
+    bad_backend_path = os.path.join(packages_path, 'test-bad-backend')
+    builder = build.ProjectBuilder(bad_backend_path)
+
     with pytest.raises(build.BuildException):
-        build.ProjectBuilder(test_flit_path)
+        builder.get_dependencies(distribution)
+
+
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_build_missing_backend(packages_path, distribution, tmpdir):
+    bad_backend_path = os.path.join(packages_path, 'test-bad-backend')
+    builder = build.ProjectBuilder(bad_backend_path)
+
     with pytest.raises(build.BuildException):
-        build.ProjectBuilder(test_flit_path)
+        builder.build(distribution, str(tmpdir))
 
 
 def test_check_dependencies(mocker, test_flit_path):
