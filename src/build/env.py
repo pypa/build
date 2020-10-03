@@ -115,7 +115,7 @@ class IsolatedEnvironment(object):
         '''
         return sysconfig.get_path(path, vars=self._env_vars)
 
-    def _place_file(self, path, new_subpath):  # type: (str, str) -> None
+    def _symlink_or_copy_file(self, path, new_subpath):  # type: (str, str) -> None
         '''
         Places a file into our environment
 
@@ -133,7 +133,7 @@ class IsolatedEnvironment(object):
         else:
             shutil.copyfile(path, new_path)
 
-    def _place_path_relative(self, path):  # type: (Optional[str]) -> None
+    def _symlink_or_copy_path_relative(self, path):  # type: (Optional[str]) -> None
         '''
         Places a path into our environment
 
@@ -192,9 +192,9 @@ class IsolatedEnvironment(object):
         Place include, platinclude and LIBPL into our environment. They should
         be present and may be used to compile native packages or similar.
         '''
-        self._place_path_relative(sysconfig.get_path('include'))
-        self._place_path_relative(sysconfig.get_path('platinclude'))
-        self._place_path_relative(sysconfig.get_config_var('LIBPL'))
+        self._symlink_or_copy_path_relative(sysconfig.get_path('include'))
+        self._symlink_or_copy_path_relative(sysconfig.get_path('platinclude'))
+        self._symlink_or_copy_path_relative(sysconfig.get_config_var('LIBPL'))
 
         '''
         We use PYTHONHOME to relocate the Python installation to our environment,
@@ -209,7 +209,7 @@ class IsolatedEnvironment(object):
         '''
         executable_dir = 'executable'
         executable_path = os.path.join(self.path, executable_dir)
-        self._place_file(sys.executable, os.path.join(executable_dir, 'python'))
+        self._symlink_or_copy_file(sys.executable, os.path.join(executable_dir, 'python'))
         exe_path.insert(0, executable_path)
 
         self._executable = sys.executable
