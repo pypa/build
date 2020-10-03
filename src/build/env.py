@@ -1,3 +1,4 @@
+import collections
 import os
 import shutil
 import subprocess
@@ -216,9 +217,9 @@ class IsolatedEnvironment(object):
         sys.executable = os.path.join(executable_path, 'python')
 
         # Replace PATH with our value for the environment
-        self._replace_env('PATH', os.pathsep.join(sorted(
-            set(exe_path), key=exe_path.index
-        )))  # sorted is required for Python 2 and 3.5
+        self._replace_env('PATH', os.pathsep.join(
+            list(collections.OrderedDict.fromkeys(exe_path))  # remove duplicates, need OrderedDict on Python <3.7
+        ))
 
         # Inject the missing import paths via PYTHONPATH
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
