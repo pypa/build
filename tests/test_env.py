@@ -10,7 +10,7 @@ import pytest
 import build.env
 
 
-@pytest.mark.skipif(sys.version_info[0] != 2, reason='Custom iolsated environment only available on Python 2')
+@pytest.mark.skipif(sys.version_info[0] != 2, reason='Custom isolated environment only available on Python 2')
 def test_isolated_environment_setup():
     old_path = os.environ['PATH']
     with build.env.IsolatedEnvironment.for_current() as env:

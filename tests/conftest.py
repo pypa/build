@@ -53,26 +53,6 @@ def packages_path():
     return os.path.realpath(os.path.join(__file__, '..', 'packages'))
 
 
-if sys.version_info >= (3, 8):  # pragma: no cover
-
-    def _copy_dir(src, dst, ignore=None):
-        shutil.copytree(src, dst, dirs_exist_ok=True, ignore=lambda *_: ignore or [])
-
-else:  # pragma: no cover
-
-    def _copy_dir(src, dst, ignore=None):
-        from distutils.dir_util import copy_tree
-        for node in os.listdir(src):
-            if node in ignore or []:
-                continue
-            path = os.path.join(src, node)
-            root = os.path.join(dst, node)
-            if os.path.isdir(path):
-                copy_tree(path, root)
-            else:
-                shutil.copy2(path, root)
-
-
 @pytest.fixture(scope='session')
 def integration_path():
     src_dir = os.path.realpath('.integration-sources')
@@ -88,7 +68,14 @@ def integration_path():
         if build.env.fs_supports_symlink():
             os.symlink(self_source, self_dest)
         else:  # pragma: no cover
-            _copy_dir(self_source, self_dest, ignore=['.git', '.nox', '.integration-sources'])
+            os.makedirs(self_dest)
+            for target in ('pyproject.toml', 'setup.cfg', 'LICENSE', 'src'):
+                target_source = os.path.join(self_source, target)
+                target_dest = os.path.join(self_dest, target)
+                if os.path.isfile(target_source):
+                    shutil.copyfile(target_source, target_dest)
+                else:
+                    shutil.copytree(target_source, target_dest)
 
     for target, (repo, version) in INTEGRATION_SOURCES.items():
         with filelock.FileLock(os.path.join(src_dir, '{}.lock'.format(target))):
