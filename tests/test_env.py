@@ -10,6 +10,7 @@ import pytest
 import build.env
 
 
+@pytest.mark.skipif(sys.version_info[0] != 2, reason='Custom iolsated environment only available on Python 2')
 def test_isolated_environment_setup():
     old_path = os.environ['PATH']
     with build.env.IsolatedEnvironment.for_current() as env:
@@ -34,11 +35,13 @@ def test_isolated_environment_setup():
         ]
         libpl = sysconfig.get_config_var('LIBPL')
         if libpl is None:
+            '''
             if os.name != 'nt':
-                #  if sys.version_info[0] == 2:
-                #      assert sys.subversion[0] == 'PyPy'  # not available in Windows CPython 3
-                #  else:
-                assert sys.implementation.name == 'pypy'  # Python 3 only
+                if sys.version_info[0] == 2:
+                    assert sys.subversion[0] == 'PyPy'  # not available in Windows CPython 3
+                else:
+                    assert sys.implementation.name == 'pypy'  # Python 3 only
+            '''
         else:
             copy_path.append(libpl)
 
@@ -51,6 +54,13 @@ def test_isolated_environment_setup():
                 relative_path = path[len(prefix + os.pathsep):]
                 path = os.path.join(env.path, relative_path)
             assert os.path.exists(path)
+
+
+def test_isolation():
+    subprocess.check_call([sys.executable, '-c', 'import build.env'])
+    with build.env.IsolatedEnvironment.for_current() as env:
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call([env.executable, '-c', 'import build.env'])
 
 
 def test_isolated_environment_setup_require_virtualenv(mocker):
@@ -72,7 +82,7 @@ def test_isolated_environment_install(mocker):
             subprocess.check_call.assert_called()
         args = subprocess.check_call.call_args[0][0]
         assert args[:7] == [
-            sys.executable, '-m', 'pip', 'install', '--prefix', env.path, '-r'
+            env.executable, '-m', 'pip', 'install', '--prefix', env.path, '-r'
         ]
 
 
