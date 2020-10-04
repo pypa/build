@@ -11,6 +11,8 @@ from typing import Dict, Iterable, Optional, Sequence, Type
 
 if sys.version_info[0] == 2:  # pragma: no cover
     FileExistsError = OSError
+else:
+    import venv
 
 
 _HAS_SYMLINK = None  # type: Optional[bool]
@@ -49,10 +51,12 @@ class IsolatedEnvironment(object):
 
     MANIPULATE_PATHS = ('purelib', 'platlib')
 
-    def __init__(self, remove_paths):  # type: (Sequence[str]) -> None
+    def __init__(self, remove_paths, _executable=sys.executable):  # type: (Sequence[str], str) -> None
         self._env = {}  # type: Dict[str, Optional[str]]
+        self._env_vars = {}  # type: Dict[str, str]
         self._path = None  # type: Optional[str]
         self._remove_paths = remove_paths
+        self._executable = _executable
 
     @property
     def path(self):  # type: () -> str
@@ -60,6 +64,10 @@ class IsolatedEnvironment(object):
             raise RuntimeError("{} context environment hasn't been entered yet".format(self.__class__.__name__))
 
         return self._path
+
+    @property
+    def executable(self):  # type: () -> str
+        return self._executable
 
     @classmethod
     def for_current(cls):  # type: () -> IsolatedEnvironment
@@ -115,13 +123,7 @@ class IsolatedEnvironment(object):
                     import shutil
                     shutil.copytree(path, new_path)
 
-    def __enter__(self):  # type: () -> IsolatedEnvironment
-        self._path = tempfile.mkdtemp(prefix='build-env-')
-        self._env_vars = {
-            'base': self.path,
-            'platbase': self.path,
-        }
-
+    def _create_env_pythonhome(self):  # type: () -> None
         sys_path = sys.path[1:]
 
         for path in self.MANIPULATE_PATHS:
@@ -144,11 +146,44 @@ class IsolatedEnvironment(object):
         self._replace_env('PATH', os.pathsep.join(exe_path))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
         self._replace_env('PYTHONHOME', self.path)
-        self._pop_env('PIP_REQUIRE_VIRTUALENV')
 
         self._symlink_relative(sysconfig.get_path('include'))
         self._symlink_relative(sysconfig.get_path('platinclude'))
         self._symlink_relative(sysconfig.get_config_var('LIBPL'))
+
+    def _create_env_venv(self):  # type: () -> None
+        if sys.version_info[0] == 2:
+            raise RuntimeError('venv not available on Python 2')
+        else:  # make mypy happy
+            venv.EnvBuilder(with_pip=True).create(self.path)
+
+        env_scripts = self._get_env_path('scripts')
+        if not env_scripts:
+            raise RuntimeError("Couldn't get environment scripts path")
+
+        exe = 'python'
+        if os.name == 'nt':
+            pythonw = '{}w.exe'.format(exe)
+            if os.path.isfile(os.path.join(self.path, env_scripts, pythonw)):
+                exe = pythonw
+            else:
+                exe = '{}.exe'.format(exe)
+
+        self._executable = os.path.join(self.path, env_scripts, exe)
+
+    def __enter__(self):  # type: () -> IsolatedEnvironment
+        self._path = tempfile.mkdtemp(prefix='build-env-')
+        self._env_vars = {
+            'base': self.path,
+            'platbase': self.path,
+        }
+
+        if sys.version_info[0] == 2:
+            self._create_env_pythonhome()
+        else:
+            self._create_env_venv()
+
+        self._pop_env('PIP_REQUIRE_VIRTUALENV')
 
         return self
 
@@ -166,13 +201,14 @@ class IsolatedEnvironment(object):
         if not requirements:
             return
 
-        subprocess.check_call([sys.executable, '-m', 'ensurepip'], cwd=self.path)
+        if sys.version_info[0] == 2:
+            subprocess.check_call([self.executable, '-m', 'ensurepip'], cwd=self.path)
 
         with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
             req_file.write(os.linesep.join(requirements))
             req_file.close()
             cmd = [
-                sys.executable, '-m', 'pip', 'install', '--prefix',
+                self.executable, '-m', 'pip', 'install', '--prefix',
                 self.path, '-r', os.path.abspath(req_file.name)
             ]
             subprocess.check_call(cmd)
