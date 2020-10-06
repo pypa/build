@@ -164,7 +164,11 @@ class IsolatedEnvironment(object):
         exe = 'python'
         if os.name == 'nt':
             pythonw = '{}w.exe'.format(exe)
-            if os.path.isfile(os.path.join(self.path, env_scripts, pythonw)):
+            if (
+                os.path.isfile(os.path.join(self.path, env_scripts, pythonw)) and not
+                # pythonw fails on Python 3.5 Windows
+                (os.name == 'nt' and sys.version_info[:2] == (3, 5))
+            ):
                 exe = pythonw
             else:
                 exe = '{}.exe'.format(exe)
