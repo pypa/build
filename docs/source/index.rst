@@ -33,4 +33,7 @@ environment, but this behavior can be disabled with `--no-isolation`.
    installation
    api
 
+   Source Code <https://github.com/FFY00/python-build/>
+   Issue Tracker <https://github.com/FFY00/python-build/issues>
+
 .. _pipx: https://github.com/pipxproject/pipx
