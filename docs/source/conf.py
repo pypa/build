@@ -10,8 +10,6 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-from pallets_sphinx_themes import ProjectLink
-
 import build
 
 
@@ -37,7 +35,6 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
     'sphinxcontrib.autoprogram',
-    'pallets_sphinx_themes',
 ]
 
 intersphinx_mapping = {
@@ -59,17 +56,8 @@ default_role = 'any'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'flask'
-
-html_context = {
-    'project_links': [
-        ProjectLink('Source Code', 'https://github.com/FFY00/python-build/'),
-        ProjectLink('Issue Tracker', 'https://github.com/FFY00/python-build/issues/'),
-    ]
-}
-html_sidebars = {
-    'index': ['project.html', 'localtoc.html', 'searchbox.html'],
-}
+html_theme = 'furo'
+html_title = f"python-build {version}"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
