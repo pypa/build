@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import os.path
 import subprocess
 import sys
 import sysconfig
@@ -18,16 +19,16 @@ def test_isolated_environment_setup():
             assert os.environ['PATH'] == os.pathsep.join([os.path.join(env.path, 'bin'), old_path])
         assert os.environ['PYTHONHOME'] == env.path
 
-        python_path = os.environ['PYTHONPATH'].split(os.pathsep)
+        python_path = map(os.path.normpath, os.environ['PYTHONPATH'].split(os.pathsep))
         for path in ('purelib', 'platlib'):
-            assert sysconfig.get_path(path) not in python_path
-            assert sysconfig.get_path(
+            assert os.path.normcase(sysconfig.get_path(path)) not in python_path
+            assert os.path.normcase(sysconfig.get_path(
                 path,
                 vars={
                     'base': env.path,
                     'platbase': env.path,
                 }
-            ) in python_path
+            )) in python_path
 
         copy_path = [
             sysconfig.get_path('include'),

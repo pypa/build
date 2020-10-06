@@ -6,7 +6,7 @@ import sysconfig
 import tempfile
 import types
 
-from typing import Dict, Iterable, Optional, Sequence, Type
+from typing import Dict, Iterable, List, Optional, Sequence, Type
 
 
 if sys.version_info[0] == 2:  # pragma: no cover
@@ -55,8 +55,12 @@ class IsolatedEnvironment(object):
         self._env = {}  # type: Dict[str, Optional[str]]
         self._env_vars = {}  # type: Dict[str, str]
         self._path = None  # type: Optional[str]
-        self._remove_paths = remove_paths
+        self._remove_paths = []  # type: List[str]
         self._executable = _executable
+
+        # normalize paths so that we can compare them -- required on case insensitive systems
+        for path in remove_paths:
+            self._remove_paths.append(os.path.normcase(path))
 
     @property
     def path(self):  # type: () -> str
@@ -129,7 +133,7 @@ class IsolatedEnvironment(object):
         for path in self.MANIPULATE_PATHS:
             env_path = self._get_env_path(path)
             if env_path:
-                sys_path.append(env_path)
+                sys_path.append(os.path.normcase(env_path))
 
         for path in self._remove_paths:
             if path in sys_path:
