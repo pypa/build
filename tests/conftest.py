@@ -2,6 +2,7 @@
 
 import os
 import os.path
+import platform
 import shutil
 import stat
 import sys
@@ -33,6 +34,10 @@ def pytest_addoption(parser):
     parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
 
 
+PYPY3_WIN_VENV_BAD = platform.python_implementation() == 'PyPy' and sys.version_info[0] == 3 and os.name == 'nt'
+PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
+
+
 def pytest_collection_modifyitems(config, items):
     skip_int = pytest.mark.skip(reason='integration tests not run')
     skip_other = pytest.mark.skip(reason='only integration tests are run')
@@ -41,7 +46,13 @@ def pytest_collection_modifyitems(config, items):
         raise pytest.UsageError("--run-integration and --only-integration can't be used together, choose one")
 
     for item in items:
-        if os.path.basename(item.location[0]) == 'test_integration.py':  # pragma: no cover
+        is_integration_file = os.path.basename(item.location[0]) == 'test_integration.py'
+        if PYPY3_WIN_VENV_BAD and item.get_closest_marker('isolated'):
+            if not (is_integration_file and item.originalname == 'test_build') or (
+                hasattr(item, 'callspec') and '--no-isolation' not in item.callspec.params.get('args', [])
+            ):
+                item.add_marker(pytest.mark.xfail(reason=PYPY3_WIN_M, strict=True))
+        if is_integration_file:  # pragma: no cover
             if not config.getoption('--run-integration') and not config.getoption('--only-integration'):
                 item.add_marker(skip_int)
         elif config.getoption('--only-integration'):  # pragma: no cover

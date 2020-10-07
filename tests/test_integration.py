@@ -36,6 +36,7 @@ _WHEEL = re.compile('.*.whl')
         ['python-build'],  # entrypoint
     ],
 )
+@pytest.mark.isolated
 def test_build(tmp_dir, monkeypatch, integration_path, project, args, call):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
 
