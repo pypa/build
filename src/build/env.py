@@ -52,6 +52,9 @@ class IsolatedEnvironment(object):
     MANIPULATE_PATHS = ('purelib', 'platlib')
 
     def __init__(self, remove_paths, _executable=sys.executable):  # type: (Sequence[str], str) -> None
+        '''
+        :param remove_paths: Import paths that should be removed from the environment
+        '''
         self._env = {}  # type: Dict[str, Optional[str]]
         self._env_vars = {}  # type: Dict[str, str]
         self._path = None  # type: Optional[str]
@@ -75,6 +78,9 @@ class IsolatedEnvironment(object):
 
     @classmethod
     def for_current(cls):  # type: () -> IsolatedEnvironment
+        '''
+        Creates an isolated environment for the current interpreter
+        '''
         remove_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
 
         for path in cls.MANIPULATE_PATHS:
@@ -90,6 +96,9 @@ class IsolatedEnvironment(object):
         return cls(remove_paths)
 
     def _replace_env(self, key, new):  # type: (str, Optional[str]) -> None
+        '''
+        Replaces an environment variable
+        '''
         if not new:  # pragma: no cover
             return
 
@@ -97,9 +106,15 @@ class IsolatedEnvironment(object):
         os.environ[key] = new
 
     def _pop_env(self, key):  # type: (str) -> None
+        '''
+        Removes an environment variable
+        '''
         self._env[key] = os.environ.pop(key, None)
 
     def _restore_env(self):  # type: () -> None
+        '''
+        Restores the initial environment variables
+        '''
         for key, val in self._env.items():
             if val is None:
                 os.environ.pop(key, None)
@@ -107,9 +122,19 @@ class IsolatedEnvironment(object):
                 os.environ[key] = val
 
     def _get_env_path(self, path):  # type: (str) -> Optional[str]
+        '''
+        Returns sysconfig path from our environment
+        '''
         return sysconfig.get_path(path, vars=self._env_vars)
 
     def _symlink_relative(self, path):  # type: (Optional[str]) -> None
+        '''
+        Symlinks a path into our environment
+
+        The original prefix will be removed and replaced with our environmenmt's
+
+        If the path is not valid, nothing will happen
+        '''
         if not path:  # pragma: no cover
             return
 
@@ -149,6 +174,8 @@ class IsolatedEnvironment(object):
 
         self._replace_env('PATH', os.pathsep.join(exe_path))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
+
+        # Point the Python interpreter to our environment
         self._replace_env('PYTHONHOME', self.path)
 
         self._symlink_relative(sysconfig.get_path('include'))
@@ -184,6 +211,11 @@ class IsolatedEnvironment(object):
         self._executable = os.path.join(self.path, env_scripts, exe)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
+        '''
+        Set up the environment
+
+        The environment path should be empty
+        '''
         self._path = tempfile.mkdtemp(prefix='build-env-')
         self._env_vars = {
             'base': self.path,
@@ -201,6 +233,9 @@ class IsolatedEnvironment(object):
 
     def __exit__(self, typ, value, traceback):
         # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]) -> None
+        '''
+        Restores the everything to the original state
+        '''
         if self.path and os.path.isdir(self.path):
             shutil.rmtree(self.path)
 
@@ -208,7 +243,11 @@ class IsolatedEnvironment(object):
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         '''
-        Installs the specified requirements on the environment
+        Installs the specified PEP 508 requirements on the environment
+
+        Passing non PEP 508 strings will result in undefined behavior, you
+        *should not* rely on it. It is merely an implementation detail, it may
+        change any time without warning.
         '''
         if not requirements:
             return
