@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -11,9 +12,6 @@ from typing import Dict, Iterable, List, Optional, Sequence, Type
 
 if sys.version_info[0] == 2:  # pragma: no cover
     FileExistsError = OSError
-else:
-    import venv
-
 
 _HAS_SYMLINK = None  # type: Optional[bool]
 
@@ -186,18 +184,15 @@ class IsolatedEnvironment(object):
     def _create_env_venv(self):  # type: () -> None
         if sys.version_info[0] == 2:
             raise RuntimeError('venv not available on Python 2')
-        else:  # make mypy happy
-            if os.name == 'nt' and sys.version_info[0] == 3 and sys.implementation.name == 'pypy':
-                # ensurepip is borked, bring your own pip
-                venv.EnvBuilder().create(self.path)
-            else:
-                venv.EnvBuilder(with_pip=True).create(self.path)
+
+        import venv
+
+        venv.EnvBuilder(with_pip=True).create(self.path)
 
         env_scripts = self._get_env_path('scripts')
         if not env_scripts:
             raise RuntimeError("Couldn't get environment scripts path")
-
-        exe = 'python'
+        exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
         if os.name == 'nt':
             pythonw = '{}w.exe'.format(exe)
             if (
@@ -211,6 +206,8 @@ class IsolatedEnvironment(object):
                 exe = '{}.exe'.format(exe)
 
         self._executable = os.path.join(self.path, env_scripts, exe)
+        if not os.path.exists(self._executable):
+            raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(self._executable))
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
         """

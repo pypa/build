@@ -2,6 +2,7 @@
 
 import os
 import os.path
+import platform
 import subprocess
 import sys
 import sysconfig
@@ -55,6 +56,11 @@ def test_isolated_environment_setup():
             assert os.path.exists(path)
 
 
+@pytest.mark.skipif(
+    platform.python_implementation() == 'PyPy' and sys.version_info[0] == 2,
+    reason='PyPy 2 does not honor PYTHONHOME - switch to virtualenv',
+)
+@pytest.mark.isolated
 def test_isolation():
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
     with build.env.IsolatedEnvironment.for_current() as env:
@@ -62,6 +68,7 @@ def test_isolation():
             subprocess.check_call([env.executable, '-c', 'import build.env'])
 
 
+@pytest.mark.isolated
 def test_isolated_environment_setup_require_virtualenv(mocker):
     mocker.patch.dict(os.environ, {'PIP_REQUIRE_VIRTUALENV': 'true'})
     with build.env.IsolatedEnvironment.for_current():
@@ -69,6 +76,7 @@ def test_isolated_environment_setup_require_virtualenv(mocker):
     assert os.environ['PIP_REQUIRE_VIRTUALENV'] == 'true'
 
 
+@pytest.mark.isolated
 def test_isolated_environment_install(mocker):
     with build.env.IsolatedEnvironment.for_current() as env:
         mocker.patch('subprocess.check_call')

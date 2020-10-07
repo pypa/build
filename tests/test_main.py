@@ -87,6 +87,7 @@ def test_prog():
             build.__main__.main(['--help'], prog='something')
 
 
+@pytest.mark.isolated
 def test_build(mocker, test_flit_path):
     mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('build.ProjectBuilder.check_dependencies')
