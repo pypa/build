@@ -8,12 +8,10 @@ import stat
 import sys
 import tarfile
 import tempfile
+import subprocess
 
 import filelock
 import pytest
-
-import build
-
 
 if sys.version_info[0] == 2:
     from urllib2 import urlopen
@@ -27,6 +25,28 @@ INTEGRATION_SOURCES = {
     'Solaar': ('pwr-Solaar/Solaar', '1.0.3'),
     'flit': ('takluyver/flit', '2.3.0'),
 }
+
+
+def _setup():
+    """At the start of the test suite initialize the environment in case of path/wheel/sdist mode"""
+    mode = os.environ.get("TEST_MODE")
+    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+    if mode == "path":
+        sys.path.insert(0, root)
+    elif mode in ("wheel", "sdist"):
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(root)
+        temp = tempfile.mkdtemp()
+        try:
+            cmd = [sys.executable, "-m", "build", "--{}".format(mode), "--no-isolation", "--outdir", str(temp)]
+            subprocess.check_output(cmd, env=env)
+            pkg = next(t for t in os.listdir(temp) if (t.endswith(".whl" if mode == "wheel" else ".tar.gz")))
+            subprocess.check_call([sys.executable, "-m", "pip", "install", os.path.join(temp, pkg)])
+        finally:
+            shutil.rmtree(temp)
+
+
+_setup()
 
 
 def pytest_addoption(parser):
@@ -76,7 +96,9 @@ def integration_path():
     self_source = os.path.abspath(os.path.join(__file__, '..', '..'))
     self_dest = os.path.join(dest, 'python-build')
     if not os.path.exists(self_dest):
-        if build.env.fs_supports_symlink():
+        from build.env import fs_supports_symlink
+
+        if fs_supports_symlink():
             os.symlink(self_source, self_dest)
         else:  # pragma: no cover
             os.makedirs(self_dest)

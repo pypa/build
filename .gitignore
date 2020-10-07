@@ -21,3 +21,4 @@ htmlcov/
 coverage.xml
 tests/integration/
 .integration-sources
+.tox
