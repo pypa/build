@@ -14,7 +14,7 @@ It is a simple build tool and does not perform any dependency management.
 
 .. note::
 
-   A ``python-build`` CLI script is also available, so that tools such as pipx_
+   A ``pyproject-build`` CLI script is also available, so that tools such as pipx_
    can use it.
 
 By default python-build will build the package in a isolated
