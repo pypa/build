@@ -22,10 +22,17 @@ def run_tests(session, env=None):
     htmlcov_output = os.path.join(session.virtualenv.location, 'htmlcov')
     xmlcov_output = os.path.join(session.virtualenv.location, f'coverage-{session.python}.xml')
 
-    session.run('pytest', '--cov', '--cov-config', 'setup.cfg',
-                f'--cov-report=html:{htmlcov_output}',
-                f'--cov-report=xml:{xmlcov_output}',
-                'tests/', *session.posargs, env=env)
+    session.run(
+        'pytest',
+        '--cov',
+        '--cov-config',
+        'setup.cfg',
+        f'--cov-report=html:{htmlcov_output}',
+        f'--cov-report=xml:{xmlcov_output}',
+        'tests/',
+        *session.posargs,
+        env=env,
+    )
 
 
 @nox.session(python=['2.7', '3.5', '3.6', '3.7', '3.8', 'pypy2', 'pypy3'])
@@ -45,8 +52,13 @@ def docs(session):
     session.install('.', '-r', os.path.join('docs', 'requirements.txt'))
     output = session.create_tmp()
     session.run(
-        'python', '-m', 'sphinx',
-        '-n', '-W', os.path.join('docs', 'source'), output,
+        'python',
+        '-m',
+        'sphinx',
+        '-n',
+        '-W',
+        os.path.join('docs', 'source'),
+        output,
     )
 
 
@@ -55,10 +67,7 @@ def test_wheel(session):
     session.install('-r', 'requirements-dev.txt')
 
     with tempfile.TemporaryDirectory(prefix='python-build-wheel-') as dest:
-        session.run(
-            'python', '-m', 'build', '--wheel', '--no-isolation', '--outdir', dest,
-            env={'PYTHONPATH': 'src'}
-        )
+        session.run('python', '-m', 'build', '--wheel', '--no-isolation', '--outdir', dest, env={'PYTHONPATH': 'src'})
         for target in os.listdir(dest):
             if target.endswith('.whl'):
                 session.install(os.path.join(dest, target))
@@ -72,10 +81,7 @@ def test_sdist(session):
     session.install('-r', 'requirements-dev.txt')
 
     with tempfile.TemporaryDirectory(prefix='python-build-wheel-') as dest:
-        session.run(
-            'python', '-m', 'build', '--sdist', '--no-isolation', '--outdir', dest,
-            env={'PYTHONPATH': 'src'}
-        )
+        session.run('python', '-m', 'build', '--sdist', '--no-isolation', '--outdir', dest, env={'PYTHONPATH': 'src'})
         for target in os.listdir(dest):
             if target.endswith('.tar.gz'):
                 session.install(os.path.join(dest, target))

@@ -21,15 +21,12 @@ _WHEEL = re.compile('.*.whl')
         'pip',
         'dateutil',
         'Solaar',
-        os.path.join('flit', 'flit_core')
-    ]
+        os.path.join('flit', 'flit_core'),
+    ],
 )
 @pytest.mark.parametrize(
     ('args'),
-    [
-        [],
-        ['-x', '--no-isolation'],
-    ]
+    [[], ['-x', '--no-isolation']],
 )
 @pytest.mark.parametrize(
     ('call'),
@@ -37,7 +34,7 @@ _WHEEL = re.compile('.*.whl')
         None,  # via code
         ['python', '-m', 'build'],  # module
         ['python-build'],  # entrypoint
-    ]
+    ],
 )
 def test_build(tmp_dir, monkeypatch, integration_path, project, args, call):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
@@ -61,6 +58,7 @@ def test_isolation(tmp_dir, test_flit_path, mocker):
     try:
         # if flit is available, we can't properly test the isolation - skip the test in those cases
         import flit_core  # noqa: F401
+
         pytest.xfail('flit_core is available')  # pragma: no cover
     except:  # noqa: E722
         pass
