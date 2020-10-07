@@ -140,7 +140,7 @@ class ProjectBuilder(object):
         except PermissionError as e:
             raise BuildException("{}: '{}' ".format(e.strerror, e.filename))
         except toml.decoder.TomlDecodeError as e:
-            raise BuildException("Failed to parse pyproject.toml: {} ".format(e))
+            raise BuildException('Failed to parse pyproject.toml: {} '.format(e))
 
         _find_typo(self._spec, 'build-system')
         self._build_system = self._spec.get('build-system', _DEFAULT_BACKEND)

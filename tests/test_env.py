@@ -65,10 +65,10 @@ def test_isolation():
 
 
 def test_isolated_environment_setup_require_virtualenv(mocker):
-    mocker.patch.dict(os.environ, {"PIP_REQUIRE_VIRTUALENV": "true"})
+    mocker.patch.dict(os.environ, {'PIP_REQUIRE_VIRTUALENV': 'true'})
     with build.env.IsolatedEnvironment.for_current():
-        assert "PIP_REQUIRE_VIRTUALENV" not in os.environ
-    assert os.environ["PIP_REQUIRE_VIRTUALENV"] == "true"
+        assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
+    assert os.environ['PIP_REQUIRE_VIRTUALENV'] == 'true'
 
 
 def test_isolated_environment_install(mocker):
