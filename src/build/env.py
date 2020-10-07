@@ -49,7 +49,7 @@ class IsolatedEnvironment(object):
     Non-standard paths injected directly to sys.path still be passed to the environment.
     '''
 
-    MANIPULATE_PATHS = ('purelib', 'platlib')
+    _MANIPULATE_PATHS = ('purelib', 'platlib')
 
     def __init__(self, remove_paths, _executable=sys.executable):  # type: (Sequence[str], str) -> None
         '''
@@ -83,7 +83,7 @@ class IsolatedEnvironment(object):
         '''
         remove_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
 
-        for path in cls.MANIPULATE_PATHS:
+        for path in cls._MANIPULATE_PATHS:
             our_path = sysconfig.get_path(path)
             if our_path:
                 remove_paths.append(our_path)
@@ -155,7 +155,7 @@ class IsolatedEnvironment(object):
     def _create_env_pythonhome(self):  # type: () -> None
         sys_path = sys.path[1:]
 
-        for path in self.MANIPULATE_PATHS:
+        for path in self._MANIPULATE_PATHS:
             env_path = self._get_env_path(path)
             if env_path:
                 sys_path.append(os.path.normcase(env_path))
