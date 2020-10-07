@@ -27,12 +27,12 @@ warnings.showwarning = _showwarning
 
 
 def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
-    '''
+    """
     Prints an error message and exits. Will color the output when writting to a TTY.
 
     :param msg: Error message
     :param code: Error code
-    '''
+    """
     prefix = 'ERROR'
     if sys.stdout.isatty():
         prefix = '\33[91m' + prefix + '\33[0m'
@@ -60,7 +60,7 @@ def _build_in_current_env(builder, outdir, distributions, skip_dependencies=Fals
 
 def build(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
     # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
-    '''
+    """
     Runs the build process
 
     :param srcdir: Source directory
@@ -69,7 +69,7 @@ def build(srcdir, outdir, distributions, config_settings=None, isolation=True, s
     :param config_settings: Configuration settings to be passed to the backend
     :param isolation: Isolate the build in a separate environment
     :param skip_dependencies: Do not perform the dependency check
-    '''
+    """
     if not config_settings:
         config_settings = {}
 
@@ -91,42 +91,60 @@ def build(srcdir, outdir, distributions, config_settings=None, isolation=True, s
 
 
 def main_parser():  # type: () -> argparse.ArgumentParser
-    '''
+    """
     Constructs the main parser
-    '''
+    """
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
     parser = argparse.ArgumentParser()
-    parser.add_argument('srcdir',
-                        type=str, nargs='?', metavar='sourcedir', default=cwd,
-                        help='source directory (defaults to current directory)')
-    parser.add_argument('--sdist', '-s',
-                        action='store_true',
-                        help='build a source package')
-    parser.add_argument('--wheel', '-w',
-                        action='store_true',
-                        help='build a wheel')
-    parser.add_argument('--outdir', '-o', metavar='dist',
-                        type=str, default=out,
-                        help='output directory')
-    parser.add_argument('--skip-dependencies', '-x',
-                        action='store_true',
-                        help='does not check for the dependencies')
-    parser.add_argument('--no-isolation', '-n',
-                        action='store_true',
-                        help='do not isolate the build in a virtual environment')
-    parser.add_argument('--config-setting', '-C',
-                        action='append',
-                        help='pass option to the backend')
+    parser.add_argument(
+        'srcdir',
+        type=str,
+        nargs='?',
+        metavar='sourcedir',
+        default=cwd,
+        help='source directory (defaults to current directory)',
+    )
+    parser.add_argument(
+        '--sdist',
+        '-s',
+        action='store_true',
+        help='build a source package',
+    )
+    parser.add_argument(
+        '--wheel',
+        '-w',
+        action='store_true',
+        help='build a wheel',
+    )
+    parser.add_argument('--outdir', '-o', metavar='dist', type=str, default=out, help='output directory')
+    parser.add_argument(
+        '--skip-dependencies',
+        '-x',
+        action='store_true',
+        help='does not check for the dependencies',
+    )
+    parser.add_argument(
+        '--no-isolation',
+        '-n',
+        action='store_true',
+        help='do not isolate the build in a virtual environment',
+    )
+    parser.add_argument(
+        '--config-setting',
+        '-C',
+        action='append',
+        help='pass option to the backend',
+    )
     return parser
 
 
 def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
-    '''
+    """
     Parses the CLI arguments and invokes the build process.
 
     :param cli_args: CLI arguments
-    '''
+    """
     parser = main_parser()
     if prog:
         parser.prog = prog

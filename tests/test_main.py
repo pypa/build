@@ -24,34 +24,47 @@ out = os.path.join(cwd, 'dist')
 @pytest.mark.parametrize(
     ('cli_args', 'build_args'),
     [
-        ([], [cwd, out, ['sdist', 'wheel'], {}, True, False]),
-        (['-n'], [cwd, out, ['sdist', 'wheel'], {}, False, False]),
-        (['-s'], [cwd, out, ['sdist'], {}, True, False]),
-        (['-w'], [cwd, out, ['wheel'], {}, True, False]),
-        (['source'], ['source', out, ['sdist', 'wheel'], {}, True, False]),
-        (['-o', 'out'], [cwd, 'out', ['sdist', 'wheel'], {}, True, False]),
-        (['-x'], [cwd, out, ['sdist', 'wheel'], {}, True, True]),
+        (
+            [],
+            [cwd, out, ['sdist', 'wheel'], {}, True, False],
+        ),
+        (
+            ['-n'],
+            [cwd, out, ['sdist', 'wheel'], {}, False, False],
+        ),
+        (
+            ['-s'],
+            [cwd, out, ['sdist'], {}, True, False],
+        ),
+        (
+            ['-w'],
+            [cwd, out, ['wheel'], {}, True, False],
+        ),
+        (
+            ['source'],
+            ['source', out, ['sdist', 'wheel'], {}, True, False],
+        ),
+        (
+            ['-o', 'out'],
+            [cwd, 'out', ['sdist', 'wheel'], {}, True, False],
+        ),
+        (
+            ['-x'],
+            [cwd, out, ['sdist', 'wheel'], {}, True, True],
+        ),
         (
             ['-C--flag1', '-C--flag2'],
-            [cwd, out, ['sdist', 'wheel'], {
-                '--flag1': '',
-                '--flag2': '',
-            }, True, False]
+            [cwd, out, ['sdist', 'wheel'], {'--flag1': '', '--flag2': ''}, True, False],
         ),
         (
             ['-C--flag=value'],
-            [cwd, out, ['sdist', 'wheel'], {
-                '--flag': 'value',
-            }, True, False]
+            [cwd, out, ['sdist', 'wheel'], {'--flag': 'value'}, True, False],
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
-            [cwd, out, ['sdist', 'wheel'], {
-                '--flag1': 'value',
-                '--flag2': ['other_value', 'extra_value'],
-            }, True, False]
+            [cwd, out, ['sdist', 'wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
         ),
-    ]
+    ],
 )
 def test_parse_args(mocker, cli_args, build_args):
     mocker.patch('build.__main__.build')

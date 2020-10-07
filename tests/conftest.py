@@ -97,10 +97,10 @@ def integration_path():
         os.unlink(self_dest)  # some implementations try to recursively remove the files inside the symlink
         shutil.rmtree(dest)
     except WindowsError:  # pragma: no cover
-        '''
+        """
         For some reason in some cases we don't have permission to remove
         symlinks on windows, even though we created them?
-        '''
+        """
 
 
 @pytest.fixture

@@ -15,9 +15,11 @@ import build
 if sys.version_info >= (3, 8):  # pragma: no cover
     from importlib import metadata as importlib_metadata
     import email
+
     email_message_from_string = email.message_from_string
 else:  # pragma: no cover
     import importlib_metadata
+
     email_message_from_string = importlib_metadata._compat.email_message_from_string
 
 if sys.version_info >= (3,):  # pragma: no cover
@@ -28,18 +30,15 @@ else:  # pragma: no cover
     PermissionError = OSError
 
 
-DUMMY_METADATA = '''
+DUMMY_METADATA = """
 Version: 1.0.0
 Provides-Extra: some_extra
-'''.strip()
+""".strip()
 
 
 DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
-    'requires': [
-        'setuptools >= 40.8.0',
-        'wheel'
-    ]
+    'requires': ['setuptools >= 40.8.0', 'wheel'],
 }
 
 
@@ -74,7 +73,7 @@ importlib_metadata.Distribution = MockDistribution
         ('something == 2.0.0', False, False),
         ('something[some_extra] == 1.0.0', True, True),
         ('something[some_extra] == 2.0.0', False, True),
-    ]
+    ],
 )
 def test_check_version(requirement_string, expected, extra_warning):
     if extra_warning:

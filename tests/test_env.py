@@ -21,14 +21,12 @@ def test_isolated_environment_setup():
 
         python_path = map(os.path.normpath, os.environ['PYTHONPATH'].split(os.pathsep))
         for path in ('purelib', 'platlib'):
+            sys_vars = {
+                'base': env.path,
+                'platbase': env.path,
+            }
             assert os.path.normcase(sysconfig.get_path(path)) not in python_path
-            assert os.path.normcase(sysconfig.get_path(
-                path,
-                vars={
-                    'base': env.path,
-                    'platbase': env.path,
-                }
-            )) in python_path
+            assert os.path.normcase(sysconfig.get_path(path, vars=sys_vars)) in python_path
 
         copy_path = [
             sysconfig.get_path('include'),
@@ -36,13 +34,13 @@ def test_isolated_environment_setup():
         ]
         libpl = sysconfig.get_config_var('LIBPL')
         if libpl is None:
-            '''
+            """
             if os.name != 'nt':
                 if sys.version_info[0] == 2:
                     assert sys.subversion[0] == 'PyPy'  # not available in Windows CPython 3
                 else:
                     assert sys.implementation.name == 'pypy'  # Python 3 only
-            '''
+            """
         else:
             copy_path.append(libpl)
 
@@ -52,7 +50,7 @@ def test_isolated_environment_setup():
         for path in copy_path:
             assert path is not None
             if path.startswith(prefix):
-                relative_path = path[len(prefix + os.pathsep):]
+                relative_path = path[len(prefix + os.pathsep) :]
                 path = os.path.join(env.path, relative_path)
             assert os.path.exists(path)
 
@@ -82,9 +80,7 @@ def test_isolated_environment_install(mocker):
         if sys.version_info[:2] != (3, 5):
             subprocess.check_call.assert_called()
         args = subprocess.check_call.call_args[0][0]
-        assert args[:7] == [
-            env.executable, '-m', 'pip', 'install', '--prefix', env.path, '-r'
-        ]
+        assert args[:7] == [env.executable, '-m', 'pip', 'install', '--prefix', env.path, '-r']
 
 
 def test_uninitialised_isolated_environment():

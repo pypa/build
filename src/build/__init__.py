@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 
-'''
+"""
 python-build - A simple, correct PEP517 package builder
-'''
+"""
 __version__ = '0.0.4'
 
 import contextlib
@@ -28,42 +28,39 @@ ConfigSettings = Dict[str, Union[str, List[str]]]
 
 _DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
-    'requires': [
-        'setuptools >= 40.8.0',
-        'wheel'
-    ]
+    'requires': ['setuptools >= 40.8.0', 'wheel'],
 }
 
 
 class BuildException(Exception):
-    '''
+    """
     Exception raised by ProjectBuilder
-    '''
+    """
 
 
 class BuildBackendException(Exception):
-    '''
+    """
     Exception raised when the backend fails
-    '''
+    """
 
 
 class TypoWarning(Warning):
-    '''
+    """
     Warning raised when a potential typo is found
-    '''
+    """
 
 
 class IncompleteCheckWarning(Warning):
-    '''
+    """
     Warning raised when we have an incomplete check
-    '''
+    """
 
 
 def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
-    '''
+    """
     :param requirement_string: Requirement string
     :param extra: Extra (eg. test in myproject[test])
-    '''
+    """
     import packaging.requirements
 
     if sys.version_info >= (3, 8):
@@ -72,9 +69,7 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
         import importlib_metadata
 
     req = packaging.requirements.Requirement(requirement_string)
-    env = {
-        'extra': extra
-    }
+    env = {'extra': extra}
 
     if req.marker and not req.marker.evaluate(env):
         return True
@@ -91,7 +86,7 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
         warnings.warn(
             "Verified that the '{}[{}]' extra is present but did not verify that it is active "
             "(it's dependencies are met)".format(req.name, extra),
-            IncompleteCheckWarning
+            IncompleteCheckWarning,
         )
 
     if req.specifier:
@@ -106,7 +101,7 @@ def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
             if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
                 warnings.warn(
                     "Found '{}' in pyproject.toml, did you mean '{}'?".format(obj, expected),
-                    TypoWarning
+                    TypoWarning,
                 )
 
 
@@ -124,9 +119,9 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 class ProjectBuilder(object):
     def __init__(self, srcdir='.', config_settings=None):  # type: (str, Optional[ConfigSettings]) -> None
-        '''
+        """
         :param srcdir: Source directory
-        '''
+        """
         self.srcdir = os.path.abspath(srcdir)
         self.config_settings = config_settings if config_settings else {}
 
@@ -156,17 +151,18 @@ class ProjectBuilder(object):
 
         self._backend = self._build_system['build-backend']
 
-        self.hook = pep517.wrappers.Pep517HookCaller(self.srcdir, self._backend,
-                                                     backend_path=self._build_system.get('backend-path'))
+        self.hook = pep517.wrappers.Pep517HookCaller(
+            self.srcdir, self._backend, backend_path=self._build_system.get('backend-path')
+        )
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]
         return set(self._build_system['requires'])
 
     def get_dependencies(self, distribution):  # type: (str) -> Set[str]
-        '''
+        """
         Returns a set of dependencies
-        '''
+        """
         get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
 
         try:
@@ -178,23 +174,23 @@ class ProjectBuilder(object):
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
     def check_dependencies(self, distribution):  # type: (str) -> Set[str]
-        '''
+        """
         Returns a set of the missing dependencies
 
         :param distribution: Distribution to build (sdist or wheel)
-        '''
+        """
         dependencies = self.get_dependencies(distribution)
         dependencies.update(self.build_dependencies)
 
         return {dep for dep in dependencies if not check_version(dep)}
 
     def build(self, distribution, outdir):  # type: (str, str) -> None
-        '''
+        """
         Builds a distribution
 
         :param distribution: Distribution to build (sdist or wheel)
         :param outdir: Output directory
-        '''
+        """
         build = getattr(self.hook, 'build_{}'.format(distribution))
         outdir = os.path.abspath(outdir)
 
