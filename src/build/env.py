@@ -159,7 +159,7 @@ class IsolatedEnvironment(object):
         if sys.version_info[0] == 2:
             raise RuntimeError('venv not available on Python 2')
         else:  # make mypy happy
-            if sys.version_info[0] == 3 and sys.implementation.name == 'pypy':
+            if os.name == 'nt' and sys.version_info[0] == 3 and sys.implementation.name == 'pypy':
                 # ensurepip is borked, bring your own pip
                 venv.EnvBuilder().create(self.path)
             else:
