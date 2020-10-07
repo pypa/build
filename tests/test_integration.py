@@ -33,15 +33,15 @@ _WHEEL = re.compile('.*.whl')
     [
         None,  # via code
         ['python', '-m', 'build'],  # module
-        ['python-build'],  # entrypoint
+        ['pyproject-build'],  # entrypoint
     ],
 )
 @pytest.mark.isolated
 def test_build(tmp_dir, monkeypatch, integration_path, project, args, call):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
 
-    if call and call[0] == 'python-build' and 'PYTHONPATH' in os.environ:
-        pytest.skip('Running via PYTHONPATH, so the python-build entrypoint is not available')
+    if call and call[0] == 'pyproject-build' and 'PYTHONPATH' in os.environ:
+        pytest.skip('Running via PYTHONPATH, so the pyproject-build entrypoint is not available')
 
     path = os.path.join(integration_path, project)
     args = [path, '-o', tmp_dir] + args
