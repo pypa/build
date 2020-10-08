@@ -18,7 +18,7 @@ jobs:
       - name: Setup python for pre-commit
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - uses: pre-commit/action@v2.0.0
 
@@ -34,6 +34,7 @@ jobs:
           - macos
           - windows
         py:
+          - 3.9
           - 3.8
           - 3.7
           - 3.6
