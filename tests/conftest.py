@@ -5,13 +5,14 @@ import os.path
 import platform
 import shutil
 import stat
+import subprocess
 import sys
 import tarfile
 import tempfile
-import subprocess
 
 import filelock
 import pytest
+
 
 if sys.version_info[0] == 2:
     from urllib2 import urlopen
@@ -29,19 +30,19 @@ INTEGRATION_SOURCES = {
 
 def _setup():
     """At the start of the test suite initialize the environment in case of path/wheel/sdist mode"""
-    mode = os.environ.get("TEST_MODE")
-    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
-    if mode == "path":
+    mode = os.environ.get('TEST_MODE')
+    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src')
+    if mode == 'path':
         sys.path.insert(0, root)
-    elif mode in ("wheel", "sdist"):
+    elif mode in ('wheel', 'sdist'):
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(root)
+        env['PYTHONPATH'] = str(root)
         temp = tempfile.mkdtemp()
         try:
-            cmd = [sys.executable, "-m", "build", "--{}".format(mode), "--no-isolation", "--outdir", str(temp)]
+            cmd = [sys.executable, '-m', 'build', '--{}'.format(mode), '--no-isolation', '--outdir', str(temp)]
             subprocess.check_output(cmd, env=env)
-            pkg = next(t for t in os.listdir(temp) if (t.endswith(".whl" if mode == "wheel" else ".tar.gz")))
-            subprocess.check_call([sys.executable, "-m", "pip", "install", os.path.join(temp, pkg)])
+            pkg = next(t for t in os.listdir(temp) if (t.endswith('.whl' if mode == 'wheel' else '.tar.gz')))
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', os.path.join(temp, pkg)])
         finally:
             shutil.rmtree(temp)
 
