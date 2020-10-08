@@ -25,10 +25,10 @@ repos:
   rev: v1.14.0
   hooks:
   - id: setup-cfg-fmt
-    args: ["--min-py3-version", "3.5", "--max-py-version", "3.8"]
+    args: ["--min-py3-version", "3.5", "--max-py-version", "3.9"]
 - repo: https://gitlab.com/pycqa/flake8
   rev: "3.8.4"
   hooks:
   - id: flake8
     additional_dependencies: ["flake8-bugbear == 20.1.4"]
-    language_version: python3.8
+    language_version: python3.9
