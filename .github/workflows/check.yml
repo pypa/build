@@ -16,13 +16,13 @@ jobs:
       - uses: actions/checkout@v1
 
       - name: Setup python for pre-commit
-          uses: actions/setup-python@v2
-          with:
-            python-version: 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
       - uses: pre-commit/action@v2.0.0
 
-  test:
+  pytest:
     runs-on: ${{ matrix.os }}-latest
     env:
       PYTEST_ADDOPTS: "--showlocals -vv --durations=10"
@@ -102,7 +102,6 @@ jobs:
           name: ${{ matrix.py }} - ${{ matrix.os }}
 
   check:
-    name: check ${{ matrix.tox_env }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
