@@ -6,3 +6,8 @@ build-backend = 'setuptools.build_meta'
 line-length = 127
 skip-string-normalization = true
 target-version = ['py38', 'py37', 'py36', 'py35', 'py27']
+
+[tool.isort]
+profile = "black"
+line_length = 127
+known_first_party = "build"

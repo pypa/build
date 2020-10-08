@@ -13,7 +13,6 @@ import tempfile
 import filelock
 import pytest
 
-
 if sys.version_info[0] == 2:
     from urllib2 import urlopen
 else:

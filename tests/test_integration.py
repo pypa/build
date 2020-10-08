@@ -9,7 +9,6 @@ import pytest
 
 import build.__main__
 
-
 _SDIST = re.compile('.*.tar.gz')
 _WHEEL = re.compile('.*.whl')
 
