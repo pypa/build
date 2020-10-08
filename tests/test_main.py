@@ -10,7 +10,6 @@ import pytest
 import build
 import build.__main__
 
-
 if sys.version_info >= (3,):  # pragma: no cover
     build_open_owner = 'builtins'
 else:  # pragma: no cover

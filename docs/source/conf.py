@@ -12,7 +12,6 @@
 
 import build
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'python-build'
