@@ -22,9 +22,10 @@ repos:
   hooks:
     - id: isort
 - repo: https://github.com/asottile/setup-cfg-fmt
-  rev: v1.9.0
+  rev: v1.14.0
   hooks:
   - id: setup-cfg-fmt
+    args: ["--min-py3-version", "3.5", "--max-py-version", "3.8"]
 - repo: https://gitlab.com/pycqa/flake8
   rev: "3.8.4"
   hooks:
