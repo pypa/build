@@ -59,8 +59,8 @@ PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://fos
 
 
 def pytest_collection_modifyitems(config, items):
-    skip_int = pytest.mark.skip(reason='integration tests not run')
-    skip_other = pytest.mark.skip(reason='only integration tests are run')
+    skip_int = pytest.mark.skip(reason='integration tests not run (no --run-integration flag)')
+    skip_other = pytest.mark.skip(reason='only integration tests are run (got --only-integration flag)')
 
     if config.getoption('--run-integration') and config.getoption('--only-integration'):  # pragma: no cover
         raise pytest.UsageError("--run-integration and --only-integration can't be used together, choose one")
