@@ -6,14 +6,48 @@ import sys
 import sysconfig
 import tempfile
 import types
-
-from typing import Dict, Iterable, List, Optional, Sequence, Type
-
+from contextlib import contextmanager
+from datetime import datetime
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Type
 
 if sys.version_info[0] == 2:  # pragma: no cover
     FileExistsError = OSError
 
 _HAS_SYMLINK = None  # type: Optional[bool]
+
+
+DARWIN_CACHE = '~/Library/Caches/pypa/build'
+WINDOWS_CACHE = '~\\AppData\\Local\\pypa\\build\\Cache'
+LINUX_CACHE = '~/.cache/pypa/build'
+
+
+def get_shared_folder():
+    return DARWIN_CACHE if sys.platform == 'darwin' else WINDOWS_CACHE if sys.platform == 'win32' else LINUX_CACHE
+
+
+class Isolation(object):
+    def __init__(self, enabled=True, ensure_pip=False, cache=None, reset_cache=False):
+        # type: (bool, bool, Optional[str], bool) -> None
+        self.enabled = enabled
+        self.ensure_pip = ensure_pip
+        if cache is None:
+            cache = get_shared_folder()
+        self.cache = cache
+        self.reset_cache = reset_cache
+
+    def __eq__(self, other):  # type: (Any) -> bool
+        if type(self) != type(other):
+            return False
+        left = self.enabled, self.ensure_pip, self.cache, self.reset_cache
+        right = (other.enabled, other.ensure_pip, other.cache, other.reset_cache)
+        return left == right
+
+    def __ne__(self, other):  # type: (Any) -> bool
+        return not self.__eq__(other)
+
+    def __repr__(self):  # type: () -> str
+        fmt = '{}(enabled={}, ensure_pip={}, cache={}, reset_cache={})'
+        return fmt.format(self.__class__.__name__, self.enabled, self.ensure_pip, self.cache, self.reset_cache)
 
 
 def _fs_supports_symlink():  # type: () -> bool
@@ -49,7 +83,8 @@ class IsolatedEnvironment(object):
 
     _MANIPULATE_PATHS = ('purelib', 'platlib')
 
-    def __init__(self, remove_paths, _executable=sys.executable):  # type: (Sequence[str], str) -> None
+    def __init__(self, remove_paths, isolation, _executable=sys.executable):
+        # type: (Sequence[str], Isolation, str) -> None
         """
         :param remove_paths: Import paths that should be removed from the environment
         """
@@ -58,6 +93,9 @@ class IsolatedEnvironment(object):
         self._path = None  # type: Optional[str]
         self._remove_paths = []  # type: List[str]
         self._executable = _executable
+        self._isolation = isolation
+        self._cleanup_path = True
+        self._old_sys_executable = None  # type: Optional[str]
 
         # normalize paths so that we can compare them -- required on case insensitive systems
         for path in remove_paths:
@@ -70,12 +108,17 @@ class IsolatedEnvironment(object):
 
         return self._path
 
+    @path.setter
+    def path(self, value):  # type: (str) -> None
+        self._path = value
+        self._cleanup_path = False
+
     @property
     def executable(self):  # type: () -> str
         return self._executable
 
     @classmethod
-    def for_current(cls):  # type: () -> IsolatedEnvironment
+    def for_current(cls, isolation=None):  # type: (Optional[Isolation]) -> IsolatedEnvironment
         """
         Creates an isolated environment for the current interpreter
         """
@@ -90,8 +133,9 @@ class IsolatedEnvironment(object):
                 our_path = sysconfig.get_path(path, scheme)
                 if our_path:
                     remove_paths.append(our_path)
-
-        return cls(remove_paths)
+        if isolation is None:
+            isolation = Isolation(enabled=True, ensure_pip=True)
+        return cls(remove_paths, isolation)
 
     def _replace_env(self, key, new):  # type: (str, Optional[str]) -> None
         """
@@ -187,7 +231,7 @@ class IsolatedEnvironment(object):
 
         import venv
 
-        venv.EnvBuilder(with_pip=True).create(self.path)
+        venv.EnvBuilder(with_pip=False, clear=True).create(self.path)
 
         env_scripts = self._get_env_path('scripts')
         if not env_scripts:
@@ -215,27 +259,74 @@ class IsolatedEnvironment(object):
 
         The environment path should be empty
         """
-        self._path = tempfile.mkdtemp(prefix='build-env-')
+        if self._path is None:
+            self._path = tempfile.mkdtemp(prefix='build-env-')
         self._env_vars = {
             'base': self.path,
             'platbase': self.path,
         }
 
+        with self._elapsed('Done isolated build environment at {} '.format(self.path)):
+            self._create_isolated_python()
+            self._provision_pip()
+
+        sys.executable, self._old_sys_executable = self._executable, sys.executable
+        self._pop_env('PIP_REQUIRE_VIRTUALENV')
+
+        return self
+
+    @contextmanager
+    def _elapsed(self, msg):
+        start = datetime.now()
+        try:
+            yield
+        finally:
+            print('{} within {}'.format(msg, (datetime.now() - start).total_seconds()))
+
+    def _create_isolated_python(self):
         if sys.version_info[0] == 2:
             self._create_env_pythonhome()
         else:
             self._create_env_venv()
 
-        self._pop_env('PIP_REQUIRE_VIRTUALENV')
+    def _provision_pip(self):
+        if self._isolation.ensure_pip:
+            subprocess.check_call([self._executable, '-Im', 'ensurepip', '--upgrade', '--default-pip'])
+            # we don't want the default setuptools
+            subprocess.check_call([self._executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+        else:
+            # version qualify per python minor, so that we don't break when pip drops older python versions
+            folder = os.path.expanduser(os.path.expandvars(self._isolation.cache))
+            if self._isolation.reset_cache and os.path.exists(folder):
+                print('Delete {}'.format(folder))
+                shutil.rmtree(folder)
+            try:
+                os.makedirs(folder)
+            except OSError:  # ignore now and check after to make it parallel safe
+                pass
+            if not os.path.exists(folder):
+                raise RuntimeError('Could not create folder {}'.format(folder))
 
-        return self
+            # TBD: needs a (file)lock here for parallel safety
+            folder = os.path.join(folder, 'pip', '{}.{}'.format(*sys.version_info[0:2]))
+            cached_pure_lib = sysconfig.get_path('purelib', vars={'base': folder})
+            if not os.path.exists(os.path.join(cached_pure_lib, 'pip')):  # if does not exists yet create one
+                env = IsolatedEnvironment.for_current()
+                env.path = folder
+                with env:
+                    pass
+            own_pure_lib = sysconfig.get_path('purelib', vars={'base': self._path})
+            with open(os.path.join(own_pure_lib, '_pip.pth'), 'wt') as file_handler:
+                file_handler.write(cached_pure_lib)
 
     def __exit__(self, typ, value, traceback):
         # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]) -> None
         """
         Restores the everything to the original state
         """
-        if self.path and os.path.isdir(self.path):
+        if self._old_sys_executable is not None:
+            sys.executable = self._old_sys_executable
+        if self._cleanup_path and self.path and os.path.isdir(self.path):
             shutil.rmtree(self.path)
 
         self._restore_env()
@@ -251,9 +342,6 @@ class IsolatedEnvironment(object):
         if not requirements:
             return
 
-        if sys.version_info[0] == 2:
-            subprocess.check_call([self.executable, '-m', 'ensurepip'], cwd=self.path)
-
         with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
             req_file.write(os.linesep.join(requirements))
             req_file.close()
@@ -267,5 +355,6 @@ class IsolatedEnvironment(object):
                 '-r',
                 os.path.abspath(req_file.name),
             ]
-            subprocess.check_call(cmd)
+            with self._elapsed('Done provision build dependencies {}'.format(' '.join(requirements))):
+                subprocess.check_call(cmd)
             os.unlink(req_file.name)

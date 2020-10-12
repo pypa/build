@@ -5,12 +5,11 @@ import os
 import sys
 import traceback
 import warnings
-
+from collections import defaultdict
 from typing import List, Optional, TextIO, Type
 
-from . import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
-from .env import IsolatedEnvironment
-
+from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
+from build.env import IsolatedEnvironment, Isolation
 
 __all__ = ['build', 'main', 'main_parser']
 
@@ -40,8 +39,9 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
-def _build_in_isolated_env(builder, outdir, distributions):  # type: (ProjectBuilder, str, List[str]) -> None
-    with IsolatedEnvironment.for_current() as env:
+def _build_in_isolated_env(builder, outdir, distributions, isolation):
+    # type: (ProjectBuilder, str, List[str], Isolation) -> None
+    with IsolatedEnvironment.for_current(isolation) as env:
         env.install(builder.build_dependencies)
         for distribution in distributions:
             builder.build(distribution, outdir)
@@ -58,8 +58,8 @@ def _build_in_current_env(builder, outdir, distributions, skip_dependencies=Fals
         builder.build(dist, outdir)
 
 
-def build(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
-    # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
+def build(srcdir, outdir, distributions, isolation, config_settings=None, skip_dependencies=False):
+    # type: (str, str, List[str], Isolation, Optional[ConfigSettings], bool) -> None
     """
     Runs the build process
 
@@ -76,8 +76,8 @@ def build(srcdir, outdir, distributions, config_settings=None, isolation=True, s
     try:
         builder = ProjectBuilder(srcdir, config_settings)
 
-        if isolation:
-            _build_in_isolated_env(builder, outdir, distributions)
+        if isolation.enabled:
+            _build_in_isolated_env(builder, outdir, distributions, isolation)
         else:
             _build_in_current_env(builder, outdir, distributions, skip_dependencies)
     except BuildException as e:
@@ -96,7 +96,12 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     """
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
-    parser = argparse.ArgumentParser()
+
+    class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+        def __init__(self, prog):
+            super(HelpFormatter, self).__init__(prog, max_help_position=32, width=240)
+
+    parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
     parser.add_argument(
         'srcdir',
         type=str,
@@ -125,18 +130,54 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         help='does not check for the dependencies',
     )
     parser.add_argument(
+        '--config-setting',
+        '-C',
+        action='append',
+        metavar='k=v',
+        type=config_setting,
+        help='pass option to the backend',
+        default=[],
+    )
+
+    group = parser.add_argument_group('isolation options')
+    default_isolation = Isolation()
+    group = group.add_mutually_exclusive_group()
+    group.add_argument(
         '--no-isolation',
         '-n',
         action='store_true',
         help='do not isolate the build in a virtual environment',
+        default=not default_isolation.enabled,
     )
-    parser.add_argument(
-        '--config-setting',
-        '-C',
-        action='append',
-        help='pass option to the backend',
+    group.add_argument(
+        '--ensurepip',
+        dest='ensure_pip',
+        action='store_true',
+        help='isolate in a virtual environment and call a fresh ensurepip every time',
+        default=default_isolation.ensure_pip,
+    )
+    group.add_argument(
+        '--cache',
+        dest='cache',
+        help='cache isolation environment(s) in between runs',
+        default=default_isolation.cache,
+    )
+    group.add_argument(
+        '--reset-cache',
+        dest='reset_cache',
+        help='clear out the tools cache',
+        action='store_true',
+        default=default_isolation.reset_cache,
     )
     return parser
+
+
+def config_setting(arg):
+    split_data = arg.split('=')
+    data = [split_data[0], '='.join(split_data[1:])]
+    setting = data[0]
+    value = data[1] if len(data) >= 2 else ''
+    return setting, value
 
 
 def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
@@ -144,46 +185,33 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     Parses the CLI arguments and invokes the build process.
 
     :param cli_args: CLI arguments
+    :param prog: name of the program
     """
     parser = main_parser()
     if prog:
         parser.prog = prog
     args = parser.parse_args(cli_args)
 
+    conf = defaultdict(list)
+    for key, value in args.config_setting:
+        conf[key].append(value)
+    config_settings = {k: v[0] if len(v) == 1 else v for k, v in conf.items()}
+
     distributions = []
-    config_settings = {}
-
-    if args.config_setting:
-        for arg in args.config_setting:
-            if sys.version_info >= (3,):
-                data = arg.split('=', maxsplit=1)
-            else:
-                split_data = arg.split('=')
-                data = [
-                    split_data[0],
-                    '='.join(split_data[1:]),
-                ]
-            setting = data[0]
-            value = data[1] if len(data) >= 2 else ''
-
-            if setting not in config_settings:
-                config_settings[setting] = value
-            else:
-                if not isinstance(config_settings[setting], list):
-                    config_settings[setting] = [config_settings[setting]]
-
-                config_settings[setting].append(value)
-
     if args.sdist:
         distributions.append('sdist')
     if args.wheel:
         distributions.append('wheel')
-
-    # default targets
     if not distributions:
         distributions = ['sdist', 'wheel']
 
-    build(args.srcdir, args.outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
+    isolation = Isolation(
+        enabled=args.no_isolation is False,
+        ensure_pip=args.ensure_pip,
+        cache=args.cache,
+        reset_cache=args.reset_cache,
+    )
+    build(args.srcdir, args.outdir, distributions, isolation, config_settings, args.skip_dependencies)
 
 
 def entrypoint():  # type: () -> None
