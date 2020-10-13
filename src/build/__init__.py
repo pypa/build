@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-python-build - A simple, correct PEP517 package builder
+build - A simple, correct PEP517 package builder
 """
 __version__ = '0.0.4'
 

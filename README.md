@@ -1,4 +1,4 @@
-# python-build
+# build
 
 ![CI](https://github.com/pypa/build/workflows/check/badge.svg)
 [![codecov](https://codecov.io/gh/pypa/build/branch/master/graph/badge.svg)](https://codecov.io/gh/pypa/build)
@@ -11,7 +11,7 @@ See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for more i
 
 ### Installation
 
-`python-build` can be installed via `pip` or an equivalent via:
+`build` can be installed via `pip` or an equivalent via:
 
 ```
 $ pip install build
@@ -19,7 +19,7 @@ $ pip install build
 
 ### Code of Conduct
 
-Everyone interacting in the python-build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
+Everyone interacting in the build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
 the [PSF Code of Conduct].
 
 [psf code of conduct]: https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md

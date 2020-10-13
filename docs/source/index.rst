@@ -1,12 +1,12 @@
 :hide-toc:
 
-************
-python-build
-************
+*****
+build
+*****
 
 A simple, correct :pep:`517` package builder.
 
-python-build will invoke the :pep:`517` hooks to build a distribution package.
+build will invoke the :pep:`517` hooks to build a distribution package.
 It is a simple build tool and does not perform any dependency management.
 
 .. autoprogram:: build.__main__:main_parser()
@@ -17,7 +17,7 @@ It is a simple build tool and does not perform any dependency management.
    A ``pyproject-build`` CLI script is also available, so that tools such as pipx_
    can use it.
 
-By default python-build will build the package in a isolated
+By default build will build the package in a isolated
 environment, but this behavior can be disabled with `--no-isolation`.
 
 .. toctree::
