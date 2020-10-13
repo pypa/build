@@ -206,4 +206,4 @@ class ProjectBuilder(object):
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {}'.format(e))
+            raise BuildBackendException('Backend operation failed: {!r}'.format(e))

@@ -193,16 +193,7 @@ class IsolatedEnvironment(object):
             raise RuntimeError("Couldn't get environment scripts path")
         exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
         if os.name == 'nt':
-            pythonw = '{}w.exe'.format(exe)
-            if (
-                os.path.isfile(os.path.join(self.path, env_scripts, pythonw))
-                and not
-                # pythonw fails on Python 3.5 Windows
-                (os.name == 'nt' and sys.version_info[:2] == (3, 5))
-            ):
-                exe = pythonw
-            else:
-                exe = '{}.exe'.format(exe)
+            exe = '{}.exe'.format(exe)
 
         self._executable = os.path.join(self.path, env_scripts, exe)
         if not os.path.exists(self._executable):
