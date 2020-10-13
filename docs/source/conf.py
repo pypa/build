@@ -14,7 +14,7 @@ import build
 
 # -- Project information -----------------------------------------------------
 
-project = 'python-build'
+project = 'build'
 copyright = '2020, Filipe Laíns'
 author = 'Filipe Laíns'
 
@@ -56,7 +56,7 @@ default_role = 'any'
 # a list of builtin themes.
 #
 html_theme = 'furo'
-html_title = f'python-build {version}'
+html_title = f'build {version}'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

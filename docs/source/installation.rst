@@ -5,7 +5,7 @@ Installation
 You can download a tarball_ from Github, checkout the latest `git tag`_ or fetch
 the artifacts from `project page`_ on PyPI.
 
-``python-build`` may also be installed via `pip`_ or an equivalent:
+``build`` may also be installed via `pip`_ or an equivalent:
 
 .. code-block:: sh
 
@@ -27,7 +27,7 @@ case.
 Compatibility
 =============
 
-``python-build`` is verified to be compatible with the following Python
+``build`` is verified to be compatible with the following Python
 versions:
 
 - 2.7
