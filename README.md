@@ -1,13 +1,13 @@
 # python-build
 
-![CI](https://github.com/FFY00/python-build/workflows/check/badge.svg)
-[![codecov](https://codecov.io/gh/FFY00/python-build/branch/master/graph/badge.svg)](https://codecov.io/gh/FFY00/python-build)
-[![Documentation Status](https://readthedocs.org/projects/python-build/badge/?version=latest)](https://python-build.readthedocs.io/en/latest/?badge=latest)
+![CI](https://github.com/pypa/build/workflows/check/badge.svg)
+[![codecov](https://codecov.io/gh/pypa/build/branch/master/graph/badge.svg)](https://codecov.io/gh/pypa/build)
+[![Documentation Status](https://readthedocs.org/projects/pypa-build/badge/?version=latest)](https://pypa-build.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/build.svg)](https://pypi.org/project/build/)
 
 A simple, correct PEP517 package builder.
 
-See the [documentation](https://python-build.readthedocs.io/en/latest/) for more information.
+See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for more information.
 
 ### Installation
 

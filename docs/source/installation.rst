@@ -43,8 +43,8 @@ versions:
 .. _pip: https://github.com/pypa/pip
 .. _PyPI: https://pypi.org/
 
-.. _tarball: https://github.com/FFY00/python-build/releases
-.. _git tag: https://github.com/FFY00/python-build/tags
+.. _tarball: https://github.com/pypa/build/releases
+.. _git tag: https://github.com/pypa/build/tags
 .. _project page: https://pypi.org/project/build/
 
 
