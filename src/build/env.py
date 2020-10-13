@@ -6,9 +6,7 @@ import sys
 import sysconfig
 import tempfile
 import types
-
 from typing import Dict, Iterable, List, Optional, Sequence, Type
-
 
 if sys.version_info[0] == 2:  # pragma: no cover
     FileExistsError = OSError
@@ -58,6 +56,7 @@ class IsolatedEnvironment(object):
         self._path = None  # type: Optional[str]
         self._remove_paths = []  # type: List[str]
         self._executable = _executable
+        self._old_executable = None  # type: Optional[str]
 
         # normalize paths so that we can compare them -- required on case insensitive systems
         for path in remove_paths:
@@ -227,6 +226,8 @@ class IsolatedEnvironment(object):
             self._create_env_venv()
 
         self._pop_env('PIP_REQUIRE_VIRTUALENV')
+        # address https://github.com/pypa/pep517/pull/93
+        self._old_executable, sys.executable = sys.executable, self._executable
 
         return self
 
@@ -235,6 +236,8 @@ class IsolatedEnvironment(object):
         """
         Restores the everything to the original state
         """
+        if self._old_executable is not None:
+            sys.executable = self._old_executable
         if self.path and os.path.isdir(self.path):
             shutil.rmtree(self.path)
 
