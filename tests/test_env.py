@@ -87,14 +87,13 @@ def test_isolated_environment_install(mocker):
         args = subprocess.check_call.call_args[0][0][:-1]
         assert args == [
             env._pip_executable,
-            '-m',
+            '-{}m'.format('E' if env._pip_executable == env._executable and sys.version_info[0] == 2 else ''),
             'pip',
             'install',
             '--prefix',
             env.path,
             '--ignore-installed',
             '--no-warn-script-location',
-            '--disable-pip-version-check',
             '-r',
         ]
 
@@ -108,7 +107,7 @@ def test_uninitialised_isolated_environment():
 
 def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
     mocker.patch.object(build.env, 'pip', None)
-    expected = {'pip', 'greenlet', 'readline', 'cffi'} if platform.python_implementation() == "PyPy" else {'pip'}
+    expected = {'pip', 'greenlet', 'readline', 'cffi'} if platform.python_implementation() == 'PyPy' else {'pip'}
 
     with build.env.IsolatedEnvironment.for_current() as isolated_env:
         cmd = [isolated_env.executable, '-m', 'pip', 'list', '--format', 'json']
