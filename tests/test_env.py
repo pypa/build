@@ -56,10 +56,6 @@ def test_isolated_environment_setup():
             assert os.path.exists(path)
 
 
-@pytest.mark.skipif(
-    platform.python_implementation() == 'PyPy' and sys.version_info[0] == 2,
-    reason='PyPy 2 does not honor PYTHONHOME - switch to virtualenv',
-)
 @pytest.mark.isolated
 def test_isolation():
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
