@@ -8,8 +8,8 @@ import warnings
 
 from typing import List, Optional, TextIO, Type
 
-from . import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
-from .env import IsolatedEnvironment
+from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
+from build.env import IsolatedEnvironment
 
 
 __all__ = ['build', 'main', 'main_parser']

@@ -6,10 +6,15 @@ import sys
 import sysconfig
 import tempfile
 import types
-from typing import Dict, Iterable, List, Optional, Sequence, Type
+from typing import Dict, Iterable, List, Optional, Sequence, Type, cast
 
-if sys.version_info[0] == 2:  # pragma: no cover
+if sys.version_info[0] == 2:
     FileExistsError = OSError
+
+try:
+    import pip
+except ImportError:
+    pip = None  # pragma: no cover
 
 _HAS_SYMLINK = None  # type: Optional[bool]
 
@@ -57,6 +62,7 @@ class IsolatedEnvironment(object):
         self._remove_paths = []  # type: List[str]
         self._executable = _executable
         self._old_executable = None  # type: Optional[str]
+        self._pip_executable = None  # type: Optional[str]
 
         # normalize paths so that we can compare them -- required on case insensitive systems
         for path in remove_paths:
@@ -89,6 +95,10 @@ class IsolatedEnvironment(object):
                 our_path = sysconfig.get_path(path, scheme)
                 if our_path:
                     remove_paths.append(our_path)
+        # also remove the pth file adding this project (when installed via --develop install)
+        for path in sys.path:
+            if os.path.exists(os.path.join(path, 'build.egg-info')):
+                remove_paths.append(path)
 
         return cls(remove_paths)
 
@@ -186,7 +196,7 @@ class IsolatedEnvironment(object):
 
         import venv
 
-        venv.EnvBuilder(with_pip=True).create(self.path)
+        venv.EnvBuilder(with_pip=False).create(self.path)
 
         env_scripts = self._get_env_path('scripts')
         if not env_scripts:
@@ -211,16 +221,35 @@ class IsolatedEnvironment(object):
             'platbase': self.path,
         }
 
-        if sys.version_info[0] == 2:
-            self._create_env_pythonhome()
-        else:
-            self._create_env_venv()
+        self._create_isolated_env()
 
         self._pop_env('PIP_REQUIRE_VIRTUALENV')
         # address https://github.com/pypa/pep517/pull/93
         self._old_executable, sys.executable = sys.executable, self._executable
 
         return self
+
+    def _create_isolated_env(self):  # type: () -> None
+        is_py2 = sys.version_info[0] == 2
+        if is_py2:
+            self._create_env_pythonhome()
+        else:
+            self._create_env_venv()
+
+        # Scenario 1: pip is available (either installed or via pth file) within the python executable alongside
+        # this projects environment: in this case we should be able to import it
+        if pip is not None:
+            self._pip_executable = sys.executable
+            return
+        # Scenario 2: this project is installed into a virtual environment that has no pip, but the matching system has
+        # Scenario 3: there's a pip executable on PATH
+        # Scenario 4: no pip can be found, we might be able to provision one into the isolated build env via ensurepip
+        flags = '-{}m'.format('' if is_py2 else 'I')
+        cmd = [self.executable, flags, 'ensurepip', '--upgrade', '--default-pip']
+        subprocess.check_call(cmd, cwd=self.path)
+        # avoid the setuptools from ensurepip to break the isolation
+        subprocess.check_call([self.executable, flags, 'pip', 'uninstall', 'setuptools', '-y'])
+        self._pip_executable = self.executable
 
     def __exit__(self, typ, value, traceback):
         # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]) -> None
@@ -245,19 +274,19 @@ class IsolatedEnvironment(object):
         if not requirements:
             return
 
-        if sys.version_info[0] == 2:
-            subprocess.check_call([self.executable, '-m', 'ensurepip'], cwd=self.path)
-
         with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
             req_file.write(os.linesep.join(requirements))
             req_file.close()
             cmd = [
-                self.executable,
+                cast(str, self._pip_executable),
                 '-m',
                 'pip',
                 'install',
                 '--prefix',
                 self.path,
+                '--ignore-installed',
+                '--no-warn-script-location',
+                '--disable-pip-version-check',
                 '-r',
                 os.path.abspath(req_file.name),
             ]

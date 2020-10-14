@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-
+import json
 import os
 import os.path
 import platform
@@ -88,8 +88,19 @@ def test_isolated_environment_install(mocker):
         env.install(['some', 'requirements'])
         if sys.version_info[:2] != (3, 5):
             subprocess.check_call.assert_called()
-        args = subprocess.check_call.call_args[0][0]
-        assert args[:7] == [env.executable, '-m', 'pip', 'install', '--prefix', env.path, '-r']
+        args = subprocess.check_call.call_args[0][0][:-1]
+        assert args == [
+            env._pip_executable,
+            '-m',
+            'pip',
+            'install',
+            '--prefix',
+            env.path,
+            '--ignore-installed',
+            '--no-warn-script-location',
+            '--disable-pip-version-check',
+            '-r',
+        ]
 
 
 def test_uninitialised_isolated_environment():
@@ -97,3 +108,26 @@ def test_uninitialised_isolated_environment():
 
     with pytest.raises(RuntimeError):
         env.path
+
+
+def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
+    mocker.patch.object(build.env, 'pip', None)
+    expected = {'pip', 'greenlet', 'readline', 'cffi'} if platform.python_implementation() == "PyPy" else {'pip'}
+
+    with build.env.IsolatedEnvironment.for_current() as isolated_env:
+        cmd = [isolated_env.executable, '-m', 'pip', 'list', '--format', 'json']
+        packages = {p['name'] for p in json.loads(subprocess.check_output(cmd, universal_newlines=True))}
+        assert packages == expected
+    assert isolated_env._pip_executable == isolated_env.executable
+    out, err = capfd.readouterr()
+    assert out  # ensurepip prints onto the stdout
+    assert not err
+
+
+def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker):
+    with build.env.IsolatedEnvironment.for_current() as isolated_env:
+        pass
+    assert isolated_env._pip_executable == sys.executable
+    out, err = capfd.readouterr()
+    assert not out
+    assert not err
