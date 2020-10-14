@@ -285,14 +285,15 @@ class IsolatedEnvironment(object):
             req_file.close()
             cmd = [
                 cast(str, self._pip_executable),
-                '-m',
+                # on python2 if isolation is achieved via environment variables, we need to ignore those while calling
+                # host python (otherwise pip would not be available within it)
+                '-{}m'.format('E' if self._pip_executable == self._executable and sys.version_info[0] == 2 else ''),
                 'pip',
                 'install',
                 '--prefix',
                 self.path,
                 '--ignore-installed',
                 '--no-warn-script-location',
-                '--disable-pip-version-check',
                 '-r',
                 os.path.abspath(req_file.name),
             ]
