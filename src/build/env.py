@@ -176,11 +176,6 @@ class IsolatedEnvironment(object):
         if env_scripts is None:  # pragma: no cover
             raise RuntimeError('Missing scripts directory in sysconfig')
 
-        exe_path = [env_scripts]
-        if 'PATH' in os.environ:
-            exe_path.append(os.environ['PATH'])
-
-        self._replace_env('PATH', os.pathsep.join(exe_path))
         self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
 
         # Point the Python interpreter to our environment
