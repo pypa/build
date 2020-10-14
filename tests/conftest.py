@@ -35,6 +35,8 @@ _setup()
 
 
 def pytest_addoption(parser):
+    os.environ['PYTHONWARNINGS'] = 'ignore:DEPRECATION::pip._internal.cli.base_command'  # for when not run within tox
+    os.environ['PIP_DISABLE_PIP_VERSION_CHECK'] = '1'  # do not pollute stderr with upgrade advisory
     parser.addoption('--run-integration', action='store_true', help='run the integration tests')
     parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
 
