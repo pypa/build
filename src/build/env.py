@@ -232,7 +232,13 @@ class IsolatedEnvironment(object):
     def _create_isolated_env(self):  # type: () -> None
         is_py2 = sys.version_info[0] == 2
         if is_py2:
-            self._create_env_pythonhome()
+            if platform.python_implementation() == 'PyPy':
+                from virtualenv import cli_run
+
+                result = cli_run([str(self.path), '--without-pip', '--activators', ''])
+                self._executable = str(result.creator.exe)
+            else:
+                self._create_env_pythonhome()
         else:
             self._create_env_venv()
 
