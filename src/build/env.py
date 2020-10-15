@@ -13,7 +13,7 @@ if sys.version_info[0] == 2:
 
 try:
     import pip
-except ImportError:
+except ImportError:  # pragma: no cover
     pip = None  # pragma: no cover
 
 _HAS_SYMLINK = None  # type: Optional[bool]
@@ -85,20 +85,10 @@ class IsolatedEnvironment(object):
         Creates an isolated environment for the current interpreter
         """
         remove_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
-
-        for path in cls._MANIPULATE_PATHS:
-            our_path = sysconfig.get_path(path)
-            if our_path:
-                remove_paths.append(our_path)
-
-            for scheme in sysconfig.get_scheme_names():
-                our_path = sysconfig.get_path(path, scheme)
-                if our_path:
-                    remove_paths.append(our_path)
         # also remove the pth file adding this project (when installed via --develop install)
         for path in sys.path:
             if os.path.exists(os.path.join(path, 'build.egg-info')):
-                remove_paths.append(path)
+                remove_paths.append(path)  # pragma: no cover
 
         return cls(remove_paths)
 
@@ -134,61 +124,7 @@ class IsolatedEnvironment(object):
         """
         return sysconfig.get_path(path, vars=self._env_vars)
 
-    def _symlink_relative(self, path):  # type: (Optional[str]) -> None
-        """
-        Symlinks a path into our environment
-
-        The original prefix will be removed and replaced with our environmenmt's
-
-        If the path is not valid, nothing will happen
-        """
-        if not path:  # pragma: no cover
-            return
-
-        prefix = sysconfig.get_config_var('prefix')
-        if prefix and path and path.startswith(prefix):
-            new_path = os.path.join(self.path, path[len(prefix + os.pathsep) :])
-            if not os.path.exists(new_path):
-                try:
-                    os.makedirs(os.path.dirname(new_path))
-                except FileExistsError:
-                    pass
-                if fs_supports_symlink():
-                    os.symlink(path, new_path)
-                else:
-                    import shutil
-
-                    shutil.copytree(path, new_path)
-
-    def _create_env_pythonhome(self):  # type: () -> None
-        sys_path = sys.path[1:]
-
-        for path in self._MANIPULATE_PATHS:
-            env_path = self._get_env_path(path)
-            if env_path:
-                sys_path.append(os.path.normcase(env_path))
-
-        for path in self._remove_paths:
-            if path in sys_path:
-                sys_path.remove(path)
-
-        env_scripts = self._get_env_path('scripts')
-        if env_scripts is None:  # pragma: no cover
-            raise RuntimeError('Missing scripts directory in sysconfig')
-
-        self._replace_env('PYTHONPATH', os.pathsep.join(sys_path))
-
-        # Point the Python interpreter to our environment
-        self._replace_env('PYTHONHOME', self.path)
-
-        self._symlink_relative(sysconfig.get_path('include'))
-        self._symlink_relative(sysconfig.get_path('platinclude'))
-        self._symlink_relative(sysconfig.get_config_var('LIBPL'))
-
     def _create_env_venv(self):  # type: () -> None
-        if sys.version_info[0] == 2:
-            raise RuntimeError('venv not available on Python 2')
-
         import venv
 
         venv.EnvBuilder(with_pip=False).create(self.path)
@@ -203,6 +139,42 @@ class IsolatedEnvironment(object):
         self._executable = os.path.join(self.path, env_scripts, exe)
         if not os.path.exists(self._executable):
             raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(self._executable))
+
+        # Scenario 1: pip is available (either installed or via pth file) within the python executable alongside
+        # this projects environment: in this case we should be able to import it
+        if pip is not None:
+            self._pip_executable = sys.executable
+            return
+        # Scenario 2: this project is installed into a virtual environment that has no pip, but the matching system has
+        # Scenario 3: there's a pip executable on PATH
+        # Scenario 4: no pip can be found, we might be able to provision one into the isolated build env via ensurepip
+        cmd = [self.executable, '-Im', 'ensurepip', '--upgrade', '--default-pip']
+        try:
+            subprocess.check_call(cmd, cwd=self.path)
+        except subprocess.CalledProcessError:  # pragma: no cover
+            pass  # pragma: no cover
+        # avoid the setuptools from ensurepip to break the isolation
+        subprocess.check_call([self.executable, '-Im', 'pip', 'uninstall', 'setuptools', '-y'])
+        self._pip_executable = self.executable
+
+    def _create_env_virtualenv(self):  # type: () -> None
+        from virtualenv import cli_run
+
+        cmd = [str(self.path), '--no-setuptools', '--no-wheel', '--activators', '']
+        if pip is not None:
+            cmd.append('--no-pip')
+        result = cli_run(cmd, setup_logging=False)
+        self._executable = str(result.creator.exe)
+        self._pip_executable = self._executable
+        if pip is not None:
+            self._pip_executable = sys.executable
+
+    def _create_isolated_env(self):  # type: () -> None
+        if sys.version_info[0] == 2:
+            self._create_env_virtualenv()
+
+        else:
+            self._create_env_venv()
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
         """
@@ -223,34 +195,6 @@ class IsolatedEnvironment(object):
         self._old_executable, sys.executable = sys.executable, self._executable
 
         return self
-
-    def _create_isolated_env(self):  # type: () -> None
-        is_py2 = sys.version_info[0] == 2
-        if is_py2:
-            if platform.python_implementation() == 'PyPy':
-                from virtualenv import cli_run
-
-                result = cli_run([str(self.path), '--without-pip', '--activators', ''])
-                self._executable = str(result.creator.exe)
-            else:
-                self._create_env_pythonhome()
-        else:
-            self._create_env_venv()
-
-        # Scenario 1: pip is available (either installed or via pth file) within the python executable alongside
-        # this projects environment: in this case we should be able to import it
-        if pip is not None:
-            self._pip_executable = sys.executable
-            return
-        # Scenario 2: this project is installed into a virtual environment that has no pip, but the matching system has
-        # Scenario 3: there's a pip executable on PATH
-        # Scenario 4: no pip can be found, we might be able to provision one into the isolated build env via ensurepip
-        flags = '-{}m'.format('' if is_py2 else 'I')
-        cmd = [self.executable, flags, 'ensurepip', '--upgrade', '--default-pip']
-        subprocess.check_call(cmd, cwd=self.path)
-        # avoid the setuptools from ensurepip to break the isolation
-        subprocess.check_call([self.executable, flags, 'pip', 'uninstall', 'setuptools', '-y'])
-        self._pip_executable = self.executable
 
     def __exit__(self, typ, value, traceback):
         # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[types.TracebackType]) -> None

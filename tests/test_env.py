@@ -5,52 +5,10 @@ import os.path
 import platform
 import subprocess
 import sys
-import sysconfig
 
 import pytest
 
 import build.env
-
-
-@pytest.mark.skipif(sys.version_info[0] != 2, reason='Custom isolated environment only available on Python 2')
-def test_isolated_environment_setup():
-    with build.env.IsolatedEnvironment.for_current() as env:
-        assert os.environ['PYTHONHOME'] == env.path
-
-        python_path = map(os.path.normpath, os.environ['PYTHONPATH'].split(os.pathsep))
-        for path in ('purelib', 'platlib'):
-            sys_vars = {
-                'base': env.path,
-                'platbase': env.path,
-            }
-            assert os.path.normcase(sysconfig.get_path(path)) not in python_path
-            assert os.path.normcase(sysconfig.get_path(path, vars=sys_vars)) in python_path
-
-        copy_path = [
-            sysconfig.get_path('include'),
-            sysconfig.get_path('platinclude'),
-        ]
-        libpl = sysconfig.get_config_var('LIBPL')
-        if libpl is None:
-            """
-            if os.name != 'nt':
-                if sys.version_info[0] == 2:
-                    assert sys.subversion[0] == 'PyPy'  # not available in Windows CPython 3
-                else:
-                    assert sys.implementation.name == 'pypy'  # Python 3 only
-            """
-        else:
-            copy_path.append(libpl)
-
-        prefix = sysconfig.get_config_var('prefix')
-        assert prefix is not None
-
-        for path in copy_path:
-            assert path is not None
-            if path.startswith(prefix):
-                relative_path = path[len(prefix + os.pathsep) :]
-                path = os.path.join(env.path, relative_path)
-            assert os.path.exists(path)
 
 
 @pytest.mark.isolated
@@ -102,6 +60,7 @@ def test_uninitialised_isolated_environment():
         env.path
 
 
+@pytest.mark.isolated
 def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
     mocker.patch.object(build.env, 'pip', None)
     expected = {'pip', 'greenlet', 'readline', 'cffi'} if platform.python_implementation() == 'PyPy' else {'pip'}
@@ -112,10 +71,14 @@ def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
         assert packages == expected
     assert isolated_env._pip_executable == isolated_env.executable
     out, err = capfd.readouterr()
-    assert out  # ensurepip prints onto the stdout
+    if sys.version_info[0] == 3:
+        assert out  # ensurepip prints onto the stdout
+    else:
+        assert not out
     assert not err
 
 
+@pytest.mark.isolated
 def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker):
     with build.env.IsolatedEnvironment.for_current() as isolated_env:
         pass
