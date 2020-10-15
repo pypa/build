@@ -6,7 +6,8 @@ import sys
 import sysconfig
 import tempfile
 import types
-from typing import Dict, Iterable, List, Optional, Sequence, Type, cast
+import typing
+from typing import Dict, Iterable, List, Optional, Sequence, Type
 
 if sys.version_info[0] == 2:
     FileExistsError = OSError
@@ -223,7 +224,7 @@ class IsolatedEnvironment(object):
             req_file.write(os.linesep.join(requirements))
             req_file.close()
             cmd = [
-                cast(str, self._pip_executable),
+                typing.cast(str, self._pip_executable),
                 # on python2 if isolation is achieved via environment variables, we need to ignore those while calling
                 # host python (otherwise pip would not be available within it)
                 '-{}m'.format('E' if self._pip_executable == self._executable and sys.version_info[0] == 2 else ''),
