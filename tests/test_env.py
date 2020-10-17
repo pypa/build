@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MIT
 import json
-import os
-import os.path
 import platform
+import shutil
 import subprocess
 import sys
 
@@ -14,23 +13,15 @@ import build.env
 @pytest.mark.isolated
 def test_isolation():
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
-    with build.env.IsolatedEnvironment.for_current() as env:
+    with build.env.isolated_env() as env:
         with pytest.raises(subprocess.CalledProcessError):
             debug = 'import sys; import os; print(os.linesep.join(sys.path));'
             subprocess.check_call([env.executable, '-c', '{} import build.env'.format(debug)])
 
 
 @pytest.mark.isolated
-def test_isolated_environment_setup_require_virtualenv(mocker):
-    mocker.patch.dict(os.environ, {'PIP_REQUIRE_VIRTUALENV': 'true'})
-    with build.env.IsolatedEnvironment.for_current():
-        assert 'PIP_REQUIRE_VIRTUALENV' not in os.environ
-    assert os.environ['PIP_REQUIRE_VIRTUALENV'] == 'true'
-
-
-@pytest.mark.isolated
 def test_isolated_environment_install(mocker):
-    with build.env.IsolatedEnvironment.for_current() as env:
+    with build.env.isolated_env() as env:
         mocker.patch('subprocess.check_call')
 
         env.install([])
@@ -53,19 +44,12 @@ def test_isolated_environment_install(mocker):
         ]
 
 
-def test_uninitialised_isolated_environment():
-    env = build.env.IsolatedEnvironment.for_current()
-
-    with pytest.raises(RuntimeError):
-        env.path
-
-
 @pytest.mark.isolated
 def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
     mocker.patch.object(build.env, 'pip', None)
     expected = {'pip', 'greenlet', 'readline', 'cffi'} if platform.python_implementation() == 'PyPy' else {'pip'}
 
-    with build.env.IsolatedEnvironment.for_current() as isolated_env:
+    with build.env.isolated_env() as isolated_env:
         cmd = [isolated_env.executable, '-m', 'pip', 'list', '--format', 'json']
         packages = {p['name'] for p in json.loads(subprocess.check_output(cmd, universal_newlines=True))}
         assert packages == expected
@@ -80,9 +64,35 @@ def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
 
 @pytest.mark.isolated
 def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker):
-    with build.env.IsolatedEnvironment.for_current() as isolated_env:
+    with build.env.isolated_env() as isolated_env:
         pass
     assert isolated_env._pip_executable == sys.executable
     out, err = capfd.readouterr()
     assert not out
     assert not err
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
+def test_fail_to_get_script_path(mocker):
+    get_path = mocker.patch('sysconfig.get_path', return_value=None)
+    with pytest.raises(RuntimeError, match="Couldn't get environment scripts path"):
+        with build.env.isolated_env():
+            pass
+    assert get_path.call_count == 1
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
+def test_executable_missing_post_creation(mocker):
+    import sysconfig
+
+    original_get_path = sysconfig.get_path
+
+    def _get_path(name, vars):  # noqa
+        shutil.rmtree(vars['base'])
+        return original_get_path(name, vars=vars)
+
+    get_path = mocker.patch('sysconfig.get_path', side_effect=_get_path)
+    with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
+        with build.env.isolated_env():
+            pass
+    assert get_path.call_count == 1
