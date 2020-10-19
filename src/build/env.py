@@ -24,18 +24,18 @@ class IsolatedEnvironment(object):
     Non-standard paths injected directly to sys.path still be passed to the environment.
     """
 
-    def __init__(self, path, executable, install_executable):
+    def __init__(self, path, python_executable, install_executable):
         # type: (str, str, str) -> None
         """
         Define an isolated build environment.
 
         :param path: the path where the environment exists
-        :param executable: the python executable within the environment
+        :param python_executable: the python executable within the environment
         :param install_executable: an executable that allows installing packages within the environment
         """
         self._path = path
         self._install_executable = install_executable
-        self._executable = executable
+        self._python_executable = python_executable
 
     @classmethod
     def for_current(cls):  # type: () -> IsolatedEnvironment
@@ -46,7 +46,7 @@ class IsolatedEnvironment(object):
         """
         path = tempfile.mkdtemp(prefix='build-env-')
         executable, pip_executable = _create_isolated_env(path)
-        return cls(path=path, executable=executable, install_executable=pip_executable)
+        return cls(path=path, python_executable=executable, install_executable=pip_executable)
 
     def __enter__(self):  # type: () -> IsolatedEnvironment
         """Enable the isolated build environment"""
@@ -76,7 +76,7 @@ class IsolatedEnvironment(object):
     @property
     def executable(self):  # type: () -> str
         """:return: the python executable of the isolated build environment"""
-        return self._executable
+        return self._python_executable
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         """

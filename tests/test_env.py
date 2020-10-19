@@ -33,7 +33,7 @@ def test_isolated_environment_install(mocker):
         args = subprocess.check_call.call_args[0][0][:-1]
         assert args == [
             env._install_executable,
-            '-{}m'.format('E' if env._install_executable == env._executable and sys.version_info[0] == 2 else ''),
+            '-{}m'.format('E' if env._install_executable == env._python_executable and sys.version_info[0] == 2 else ''),
             'pip',
             'install',
             '--prefix',
