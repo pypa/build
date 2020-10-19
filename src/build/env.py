@@ -1,7 +1,6 @@
 """
 Creates and manages isolated build environments.
 """
-import contextlib
 import os
 import platform
 import shutil
@@ -9,7 +8,8 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
-from typing import Generator, Iterable, Tuple
+from types import TracebackType
+from typing import Iterable, Optional, Tuple, Type
 
 try:
     import pip
@@ -17,36 +17,99 @@ except ImportError:  # pragma: no cover
     pip = None  # pragma: no cover
 
 
-@contextlib.contextmanager
-def isolated_env():  # type: () -> Generator[IsolatedEnvironment, None, None]
+class IsolatedEnvironment(object):
     """
-    Create an isolated build environment.
+    Isolated build environment context manager
+
+    Non-standard paths injected directly to sys.path still be passed to the environment.
     """
-    path = tempfile.mkdtemp(prefix='build-env-')
-    try:
+
+    def __init__(self, path, executable, install_executable):
+        # type: (str, str, str) -> None
+        """
+        Define an isolated build environment.
+
+        :param path: the path where the environment exists
+        :param executable: the python executable within the environment
+        :param install_executable: an executable that allows installing packages within the environment
+        """
+        self._path = path
+        self._install_executable = install_executable
+        self._executable = executable
+
+    @classmethod
+    def for_current(cls):  # type: () -> IsolatedEnvironment
+        """
+        Create an isolated build environment into a temporary folder that matches the current interpreter.
+
+        :return: the isolated build environment
+        """
+        path = tempfile.mkdtemp(prefix='build-env-')
         executable, pip_executable = _create_isolated_env(path)
-        env = IsolatedEnvironment(path, executable, pip_executable)
-        with _patch_sys_executable(executable):
-            yield env
-    finally:
-        if os.path.exists(path):  # in case the user already deleted skip remove
-            shutil.rmtree(path)
+        return cls(path=path, executable=executable, install_executable=pip_executable)
 
+    def __enter__(self):  # type: () -> IsolatedEnvironment
+        """Enable the isolated build environment"""
+        return self
 
-@contextlib.contextmanager
-def _patch_sys_executable(executable):  # type: (str) -> Generator[None, None, None]
-    """
-    Address https://github.com/pypa/pep517/pull/93, that always uses sys.executable to run pep517 hooks in.
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]) -> None
+        """
+        Exit from the isolated build environment.
 
-    :param executable: the new sys.executable
-    """
+        :param exc_type: the type of exception raised (if any)
+        :param exc_val: the value of exception raised (if any)
+        :param exc_tb: the traceback of exception raised (if any)
+        """
+        self.close()
 
-    old_executable = sys.executable
-    sys.executable = executable
-    try:
-        yield
-    finally:
-        sys.executable = old_executable
+    def close(self):  # type: () -> None
+        """Close the isolated cleanup environment."""
+        if os.path.exists(self._path):  # in case the user already deleted skip remove
+            shutil.rmtree(self._path)
+
+    @property
+    def path(self):  # type: () -> str
+        """:return: the location of the isolated build environment"""
+        return self._path
+
+    @property
+    def executable(self):  # type: () -> str
+        """:return: the python executable of the isolated build environment"""
+        return self._executable
+
+    def install(self, requirements):  # type: (Iterable[str]) -> None
+        """
+        Installs the specified PEP 508 requirements on the environment
+
+        :param requirements: PEP-508 requirement specification to install
+
+        :note: Passing non PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is \
+               merely an implementation detail, it may change any time without warning.
+        """
+        if not requirements:
+            return
+
+        with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
+            req_file.write(os.linesep.join(requirements))
+        try:
+            cmd = [
+                self._install_executable,
+                # on python2 if isolation is achieved via environment variables, we need to ignore those while calling
+                # host python (otherwise pip would not be available within it)
+                '-{}m'.format('E' if self._install_executable == self.executable and sys.version_info[0] == 2 else ''),
+                'pip',
+                'install',
+                '--prefix',
+                self.path,
+                '--ignore-installed',
+                '--no-warn-script-location',
+                '-r',
+                os.path.abspath(req_file.name),
+            ]
+            subprocess.check_call(cmd)
+        finally:
+            os.unlink(req_file.name)
 
 
 if sys.version_info[0] == 2:  # noqa: C901 # disable if too complex
@@ -123,62 +186,4 @@ else:
         return executable
 
 
-class IsolatedEnvironment(object):
-    """
-    Isolated build environment context manager
-
-    Non-standard paths injected directly to sys.path still be passed to the environment.
-    """
-
-    def __init__(self, path, executable, pip_executable):  # type: (str, str, str) -> None
-        self._path = path
-        self._pip_executable = pip_executable
-        self._executable = executable
-
-    @property
-    def path(self):  # type: () -> str
-        """:return: the location of the isolated build environment"""
-        return self._path
-
-    @property
-    def executable(self):  # type: () -> str
-        """:return: the python executable of the isolated build environment"""
-        return self._executable
-
-    def install(self, requirements):  # type: (Iterable[str]) -> None
-        """
-        Installs the specified PEP 508 requirements on the environment
-
-        :param requirements: PEP-508 requirement specification to install
-
-        :note: Passing non PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is \
-               merely an implementation detail, it may change any time without warning.
-        """
-        if not requirements:
-            return
-
-        with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
-            req_file.write(os.linesep.join(requirements))
-            req_file.close()
-            cmd = [
-                self._pip_executable,
-                # on python2 if isolation is achieved via environment variables, we need to ignore those while calling
-                # host python (otherwise pip would not be available within it)
-                '-{}m'.format('E' if self._pip_executable == self.executable and sys.version_info[0] == 2 else ''),
-                'pip',
-                'install',
-                '--prefix',
-                self.path,
-                '--ignore-installed',
-                '--no-warn-script-location',
-                '-r',
-                os.path.abspath(req_file.name),
-            ]
-            subprocess.check_call(cmd)
-            os.unlink(req_file.name)
-
-
-__all__ = (
-    'IsolatedEnvironment',
-    'isolated_env',
-)
+__all__ = ('IsolatedEnvironment',)

@@ -87,39 +87,56 @@ def test_prog():
 
 
 @pytest.mark.isolated
-def test_build(mocker, test_flit_path):
-    mocker.patch('importlib.import_module', autospec=True)
-    mocker.patch('build.ProjectBuilder.check_dependencies')
-    mocker.patch('build.ProjectBuilder.build')
+def test_build_isolated(mocker, test_flit_path):
+    build_cmd = mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.__main__._error')
+    install = mocker.patch('build.env.IsolatedEnvironment.install')
+
+    build.__main__.build(test_flit_path, '.', ['sdist'])
+
+    build_cmd.assert_called_with('sdist', '.')
+    install.assert_called_with({'flit_core >=2,<3'})
+
+
+def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
+    # check_dependencies = []
+    build_cmd = mocker.patch('build.ProjectBuilder.build')
+    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
+
+    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
+
+    build_cmd.assert_called_with('sdist', '.')
+
+
+def test_build_no_isolation_with_check_deps(mocker, test_flit_path):
+    # check_dependencies = ['something']
+    error = mocker.patch('build.__main__._error')
+    build_cmd = mocker.patch('build.ProjectBuilder.build')
+    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=['something'])
+
+    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
+
+    build_cmd.assert_called_with('sdist', '.')
+    error.assert_called_with('Missing dependencies:\n\tsomething')
+
+
+@pytest.mark.isolated
+def test_build_raises_build_exception(mocker, test_flit_path):
+    error = mocker.patch('build.__main__._error')
+    mocker.patch('build.ProjectBuilder.build', side_effect=build.BuildException)
     mocker.patch('build.env.IsolatedEnvironment.install')
 
-    build.ProjectBuilder.check_dependencies.side_effect = [[], ['something'], [], []]
-    build.env.IsolatedEnvironment._path = mocker.Mock()
-
-    # isolation=True
     build.__main__.build(test_flit_path, '.', ['sdist'])
-    build.ProjectBuilder.build.assert_called_with('sdist', '.')
 
-    # check_dependencies = []
-    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
-    build.ProjectBuilder.build.assert_called_with('sdist', '.')
-    build.env.IsolatedEnvironment.install.assert_called_with({'flit_core >=2,<3'})
+    error.assert_called_with('')
 
-    # check_dependencies = ['something']
-    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
-    build.ProjectBuilder.build.assert_called_with('sdist', '.')
-    build.__main__._error.assert_called_with('Missing dependencies:\n\tsomething')
 
-    build.ProjectBuilder.build.side_effect = [build.BuildException, build.BuildBackendException]
-    build.__main__._error.reset_mock()
+@pytest.mark.isolated
+def test_build_raises_build_backend_exception(mocker, test_flit_path):
+    error = mocker.patch('build.__main__._error')
+    mocker.patch('build.ProjectBuilder.build', side_effect=build.BuildBackendException)
+    mocker.patch('build.env.IsolatedEnvironment.install')
 
-    # BuildException
     build.__main__.build(test_flit_path, '.', ['sdist'])
-    build.__main__._error.assert_called_with('')
 
-    build.__main__._error.reset_mock()
-
-    # BuildBackendException
-    build.__main__.build(test_flit_path, '.', ['sdist'])
-    build.__main__._error.assert_called_with('')
+    error.assert_called_with('')

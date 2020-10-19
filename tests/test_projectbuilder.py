@@ -88,16 +88,18 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
         'setuptools.build_meta:__legacy__': None,
     }
     mocker.patch('importlib.import_module', modules.get)
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    caller = mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # correct flit pyproject.toml
     build.ProjectBuilder(test_flit_path)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(test_flit_path, 'flit_core.buildapi', backend_path=None)
-    pep517.wrappers.Pep517HookCaller.reset_mock()
+    caller.assert_called_with(test_flit_path, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable)
+    caller.reset_mock()
 
     # FileNotFoundError
     build.ProjectBuilder(legacy_path)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(legacy_path, 'setuptools.build_meta:__legacy__', backend_path=None)
+    caller.assert_called_with(
+        legacy_path, 'setuptools.build_meta:__legacy__', backend_path=None, python_executable=sys.executable
+    )
 
     # PermissionError
     if sys.version_info[0] != 2 and os.name != 'nt':  # can't correctly set the permissions required for this

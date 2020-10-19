@@ -10,13 +10,11 @@ import difflib
 import os
 import sys
 import warnings
-
 from typing import Dict, Iterator, List, Mapping, Optional, Set, Union
 
 import pep517.wrappers
 import toml
 import toml.decoder
-
 
 if sys.version_info < (3,):
     FileNotFoundError = IOError
@@ -118,7 +116,8 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir='.', config_settings=None):  # type: (str, Optional[ConfigSettings]) -> None
+    def __init__(self, srcdir='.', config_settings=None, executable=sys.executable):
+        # type: (str, Optional[ConfigSettings], str) -> None
         """
         :param srcdir: Source directory
         """
@@ -152,7 +151,7 @@ class ProjectBuilder(object):
         self._backend = self._build_system['build-backend']
 
         self.hook = pep517.wrappers.Pep517HookCaller(
-            self.srcdir, self._backend, backend_path=self._build_system.get('backend-path')
+            self.srcdir, self._backend, backend_path=self._build_system.get('backend-path'), python_executable=executable
         )
 
     @property
@@ -190,6 +189,7 @@ class ProjectBuilder(object):
 
         :param distribution: Distribution to build (sdist or wheel)
         :param outdir: Output directory
+        :param executable: executable
         """
         build = getattr(self.hook, 'build_{}'.format(distribution))
         outdir = os.path.abspath(outdir)

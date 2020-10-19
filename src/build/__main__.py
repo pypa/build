@@ -9,8 +9,7 @@ import warnings
 from typing import List, Optional, TextIO, Type, Union
 
 from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
-from build.env import isolated_env
-
+from build.env import IsolatedEnvironment
 
 __all__ = ['build', 'main', 'main_parser']
 
@@ -40,8 +39,10 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
-def _build_in_isolated_env(builder, outdir, distributions):  # type: (ProjectBuilder, str, List[str]) -> None
-    with isolated_env() as env:
+def _build_in_isolated_env(builder, outdir, distributions):
+    # type: (ProjectBuilder, str, List[str]) -> None
+    with IsolatedEnvironment.for_current() as env:
+        builder.hook.python_executable = env.executable
         env.install(builder.build_dependencies)
         for distribution in distributions:
             builder.build(distribution, outdir)
@@ -75,7 +76,6 @@ def build(srcdir, outdir, distributions, config_settings=None, isolation=True, s
 
     try:
         builder = ProjectBuilder(srcdir, config_settings)
-
         if isolation:
             _build_in_isolated_env(builder, outdir, distributions)
         else:
