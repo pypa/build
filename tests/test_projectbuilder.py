@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import copy
 import os
 import sys
+import typing
 
 import pep517.wrappers
 import pytest
@@ -92,13 +93,31 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
 
     # correct flit pyproject.toml
     build.ProjectBuilder(test_flit_path)
-    caller.assert_called_with(test_flit_path, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable)
-    caller.reset_mock()
+    pep517.wrappers.Pep517HookCaller.assert_called_with(
+        test_flit_path,
+        'flit_core.buildapi',
+        backend_path=None,
+        python_executable=sys.executable,
+    )
+    pep517.wrappers.Pep517HookCaller.reset_mock()
+
+    # custom python
+    build.ProjectBuilder(test_flit_path, python_executable='some-python')
+    pep517.wrappers.Pep517HookCaller.assert_called_with(
+        test_flit_path,
+        'flit_core.buildapi',
+        backend_path=None,
+        python_executable='some-python',
+    )
+    pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # FileNotFoundError
     build.ProjectBuilder(legacy_path)
-    caller.assert_called_with(
-        legacy_path, 'setuptools.build_meta:__legacy__', backend_path=None, python_executable=sys.executable
+    pep517.wrappers.Pep517HookCaller.assert_called_with(
+        legacy_path,
+        'setuptools.build_meta:__legacy__',
+        backend_path=None,
+        python_executable=sys.executable,
     )
 
     # PermissionError
@@ -109,6 +128,15 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
     # TomlDecodeError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_bad_syntax_path)
+
+
+@pytest.mark.parametrize('value', [b'something', typing.Text('something_else')])
+def test_python_executable(test_flit_path, value):
+    builder = build.ProjectBuilder(test_flit_path)
+
+    builder.python_executable = value
+    assert builder.python_executable == value
+    assert builder.hook.python_executable == value
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
