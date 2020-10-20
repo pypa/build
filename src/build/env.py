@@ -1,6 +1,7 @@
 """
 Creates and manages isolated build environments.
 """
+import abc
 import os
 import platform
 import shutil
@@ -17,56 +18,79 @@ except ImportError:  # pragma: no cover
     pip = None  # pragma: no cover
 
 
-class IsolatedEnvironment(object):
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # Python 2/3 compatible ABC
+
+
+class IsolatedEnvironment(ABC):
+    """Abstract base of isolated build environments, as required by the build project."""
+
+    @property
+    @abc.abstractmethod
+    def executable(self):  # type: () -> str
+        """Return the executable of the isolated build environment."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def install(self, requirements):  # type: (Iterable[str]) -> None
+        """
+        Install PEP-508 requirements into the isolated build environment.
+
+        :param requirements: PEP-508 requirements
+        """
+        raise NotImplementedError
+
+
+class IsolatedEnvBuilder(object):
+    def __init__(self):
+        """Builder object for isolated environment."""
+        self._path = None  # type: Optional[str]
+
+    def __enter__(self):  # type: () -> IsolatedEnvironment
+        """
+        Creates an isolated build environment.
+
+        :return: the isolated build environment
+        """
+        self._path = tempfile.mkdtemp(prefix='build-env-')
+        try:
+            executable, pip_executable = _create_isolated_env(self._path)
+            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, pip_executable=pip_executable)
+        except Exception:  # cleanup if creation fails
+            self.__exit__(*sys.exc_info())
+            raise
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]) -> None
+        """
+        Delete the created isolated build environment.
+
+        :param exc_type: the type of exception raised (if any)
+        :param exc_val: the value of exception raised (if any)
+        :param exc_tb: the traceback of exception raised (if any)
+        """
+        if self._path is not None and os.path.exists(self._path):  # in case the user already deleted skip remove
+            shutil.rmtree(self._path)
+
+
+class _IsolatedEnvVenvPip(IsolatedEnvironment):
     """
     Isolated build environment context manager
 
     Non-standard paths injected directly to sys.path still be passed to the environment.
     """
 
-    def __init__(self, path, python_executable, install_executable):
+    def __init__(self, path, python_executable, pip_executable):
         # type: (str, str, str) -> None
         """
         Define an isolated build environment.
 
         :param path: the path where the environment exists
         :param python_executable: the python executable within the environment
-        :param install_executable: an executable that allows installing packages within the environment
+        :param pip_executable: an executable that allows installing packages within the environment
         """
         self._path = path
-        self._install_executable = install_executable
+        self._pip_executable = pip_executable
         self._python_executable = python_executable
-
-    @classmethod
-    def for_current(cls):  # type: () -> IsolatedEnvironment
-        """
-        Create an isolated build environment into a temporary folder that matches the current interpreter.
-
-        :return: the isolated build environment
-        """
-        path = tempfile.mkdtemp(prefix='build-env-')
-        executable, pip_executable = _create_isolated_env(path)
-        return cls(path=path, python_executable=executable, install_executable=pip_executable)
-
-    def __enter__(self):  # type: () -> IsolatedEnvironment
-        """Enable the isolated build environment"""
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]) -> None
-        """
-        Exit from the isolated build environment.
-
-        :param exc_type: the type of exception raised (if any)
-        :param exc_val: the value of exception raised (if any)
-        :param exc_tb: the traceback of exception raised (if any)
-        """
-        self.close()
-
-    def close(self):  # type: () -> None
-        """Close the isolated cleanup environment."""
-        if os.path.exists(self._path):  # in case the user already deleted skip remove
-            shutil.rmtree(self._path)
 
     @property
     def path(self):  # type: () -> str
@@ -94,10 +118,10 @@ class IsolatedEnvironment(object):
             req_file.write(os.linesep.join(requirements))
         try:
             cmd = [
-                self._install_executable,
+                self._pip_executable,
                 # on python2 if isolation is achieved via environment variables, we need to ignore those while calling
                 # host python (otherwise pip would not be available within it)
-                '-{}m'.format('E' if self._install_executable == self.executable and sys.version_info[0] == 2 else ''),
+                '-{}m'.format('E' if self._pip_executable == self.executable and sys.version_info[0] == 2 else ''),
                 'pip',
                 'install',
                 '--prefix',
@@ -186,4 +210,7 @@ else:
         return executable
 
 
-__all__ = ('IsolatedEnvironment',)
+__all__ = (
+    'IsolatedEnvBuilder',
+    'IsolatedEnvironment',
+)

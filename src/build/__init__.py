@@ -116,11 +116,15 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir='.', config_settings=None, executable=sys.executable):
+    def __init__(self, srcdir='.', config_settings=None, python_executable=sys.executable):
+        """
+        Create a project builder.
+
+        :param srcdir: the source directory
+        :param config_settings: config settings for the build backend
+        :param python_executable: the python executable where the backend lives
+        """
         # type: (str, Optional[ConfigSettings], str) -> None
-        """
-        :param srcdir: Source directory
-        """
         self.srcdir = os.path.abspath(srcdir)
         self.config_settings = config_settings if config_settings else {}
 
@@ -151,7 +155,10 @@ class ProjectBuilder(object):
         self._backend = self._build_system['build-backend']
 
         self.hook = pep517.wrappers.Pep517HookCaller(
-            self.srcdir, self._backend, backend_path=self._build_system.get('backend-path'), python_executable=executable
+            self.srcdir,
+            self._backend,
+            backend_path=self._build_system.get('backend-path'),
+            python_executable=python_executable,
         )
 
     @property
@@ -189,7 +196,6 @@ class ProjectBuilder(object):
 
         :param distribution: Distribution to build (sdist or wheel)
         :param outdir: Output directory
-        :param executable: executable
         """
         build = getattr(self.hook, 'build_{}'.format(distribution))
         outdir = os.path.abspath(outdir)
