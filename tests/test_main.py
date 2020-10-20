@@ -90,7 +90,7 @@ def test_prog():
 def test_build_isolated(mocker, test_flit_path):
     build_cmd = mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.__main__._error')
-    install = mocker.patch('build.env.IsolatedEnvironment.install')
+    install = mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
     build.__main__.build(test_flit_path, '.', ['sdist'])
 
@@ -124,7 +124,7 @@ def test_build_no_isolation_with_check_deps(mocker, test_flit_path):
 def test_build_raises_build_exception(mocker, test_flit_path):
     error = mocker.patch('build.__main__._error')
     mocker.patch('build.ProjectBuilder.build', side_effect=build.BuildException)
-    mocker.patch('build.env.IsolatedEnvironment.install')
+    mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
     build.__main__.build(test_flit_path, '.', ['sdist'])
 
@@ -135,7 +135,7 @@ def test_build_raises_build_exception(mocker, test_flit_path):
 def test_build_raises_build_backend_exception(mocker, test_flit_path):
     error = mocker.patch('build.__main__._error')
     mocker.patch('build.ProjectBuilder.build', side_effect=build.BuildBackendException)
-    mocker.patch('build.env.IsolatedEnvironment.install')
+    mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
     build.__main__.build(test_flit_path, '.', ['sdist'])
 
