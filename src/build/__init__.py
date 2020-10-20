@@ -117,6 +117,7 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 class ProjectBuilder(object):
     def __init__(self, srcdir='.', config_settings=None, python_executable=sys.executable):
+        # type: (str, Optional[ConfigSettings], str) -> None
         """
         Create a project builder.
 
@@ -124,7 +125,6 @@ class ProjectBuilder(object):
         :param config_settings: config settings for the build backend
         :param python_executable: the python executable where the backend lives
         """
-        # type: (str, Optional[ConfigSettings], str) -> None
         self.srcdir = os.path.abspath(srcdir)
         self.config_settings = config_settings if config_settings else {}
 
