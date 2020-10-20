@@ -10,7 +10,9 @@ import difflib
 import os
 import sys
 import warnings
-from typing import Dict, Iterator, List, Mapping, Optional, Set, Union
+import typing
+
+from typing import Dict, Iterator, List, Mapping, Optional, Set, Union, Text
 
 import pep517.wrappers
 import toml
@@ -117,7 +119,7 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 class ProjectBuilder(object):
     def __init__(self, srcdir='.', config_settings=None, python_executable=sys.executable):
-        # type: (str, Optional[ConfigSettings], str) -> None
+        # type: (str, Optional[ConfigSettings], Union[bytes, Text]) -> None
         """
         Create a project builder.
 
@@ -160,6 +162,17 @@ class ProjectBuilder(object):
             backend_path=self._build_system.get('backend-path'),
             python_executable=python_executable,
         )
+
+    @property
+    def python_executable(self):  # type: () -> Union[bytes, Text]
+        # make mypy happy
+        if not isinstance(self.hook.python_executable, typing.Text) and not isinstance(self.hook.python_executable, bytes):
+            raise TypeError('python_executable is not a string: {}'.format(type(self.hook.python_executable)))
+        return self.hook.python_executable
+
+    @python_executable.setter
+    def python_executable(self, value):  # type: (Union[bytes, Text]) -> None
+        self.hook.python_executable = value
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]
