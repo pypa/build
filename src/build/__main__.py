@@ -6,7 +6,7 @@ import sys
 import traceback
 import warnings
 
-from typing import List, Optional, TextIO, Type
+from typing import List, Optional, TextIO, Type, Union
 
 from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
 from build.env import IsolatedEnvironment
@@ -16,11 +16,11 @@ __all__ = ['build', 'main', 'main_parser']
 
 
 def _showwarning(message, category, filename, lineno, file=None, line=None):  # pragma: no cover
-    # type: (str, Type[Warning], str, int, Optional[TextIO], Optional[str]) -> None
+    # type: (Union[Warning, str], Type[Warning], str, int, Optional[TextIO], Optional[str]) -> None
     prefix = 'WARNING'
     if sys.stdout.isatty():
         prefix = '\33[93m' + prefix + '\33[0m'
-    print('{} {}'.format(prefix, message))
+    print('{} {}'.format(prefix, str(message)))
 
 
 warnings.showwarning = _showwarning
