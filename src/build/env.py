@@ -12,20 +12,19 @@ import tempfile
 from types import TracebackType
 from typing import Iterable, Optional, Tuple, Type
 
+from ._compat import abstractproperty, add_metaclass
+
 try:
     import pip
 except ImportError:  # pragma: no cover
     pip = None  # pragma: no cover
 
 
-ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # Python 2/3 compatible ABC
-
-
-class IsolatedEnvironment(ABC):
+@add_metaclass(abc.ABCMeta)
+class IsolatedEnv(object):
     """Abstract base of isolated build environments, as required by the build project."""
 
-    @property
-    @abc.abstractmethod
+    @abstractproperty
     def executable(self):  # type: () -> str
         """Return the executable of the isolated build environment."""
         raise NotImplementedError
@@ -41,11 +40,11 @@ class IsolatedEnvironment(ABC):
 
 
 class IsolatedEnvBuilder(object):
-    def __init__(self):
+    def __init__(self):  # type: () -> None
         """Builder object for isolated environment."""
         self._path = None  # type: Optional[str]
 
-    def __enter__(self):  # type: () -> IsolatedEnvironment
+    def __enter__(self):  # type: () -> IsolatedEnv
         """
         Creates an isolated build environment.
 
@@ -55,7 +54,7 @@ class IsolatedEnvBuilder(object):
         try:
             executable, pip_executable = _create_isolated_env(self._path)
             return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, pip_executable=pip_executable)
-        except Exception:  # cleanup if creation fails
+        except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
 
@@ -72,7 +71,7 @@ class IsolatedEnvBuilder(object):
             shutil.rmtree(self._path)
 
 
-class _IsolatedEnvVenvPip(IsolatedEnvironment):
+class _IsolatedEnvVenvPip(IsolatedEnv):
     """
     Isolated build environment context manager
 
@@ -212,5 +211,5 @@ else:
 
 __all__ = (
     'IsolatedEnvBuilder',
-    'IsolatedEnvironment',
+    'IsolatedEnv',
 )

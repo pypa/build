@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -76,8 +77,10 @@ def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker):
 def test_fail_to_get_script_path(mocker):
     get_path = mocker.patch('sysconfig.get_path', return_value=None)
     with pytest.raises(RuntimeError, match="Couldn't get environment scripts path"):
-        with build.env.IsolatedEnvBuilder():
+        env = build.env.IsolatedEnvBuilder()
+        with env:
             pass
+    assert not os.path.exists(env._path)
     assert get_path.call_count == 1
 
 
@@ -96,3 +99,27 @@ def test_executable_missing_post_creation(mocker):
         with build.env.IsolatedEnvBuilder():
             pass
     assert get_path.call_count == 1
+
+
+def test_isolated_env_abstract():
+    with pytest.raises(TypeError):
+        build.env.IsolatedEnv()
+
+
+def test_isolated_env_has_executable_still_abstract():
+    class Env(build.env.IsolatedEnv):  # noqa
+        @property
+        def executable(self):
+            raise NotImplementedError
+
+    with pytest.raises(TypeError):
+        Env()
+
+
+def test_isolated_env_has_install_still_abstract():
+    class Env(build.env.IsolatedEnv):  # noqa
+        def install(self, requirements):
+            raise NotImplementedError
+
+    with pytest.raises(TypeError):
+        Env()
