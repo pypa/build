@@ -136,7 +136,7 @@ def test_python_executable(test_flit_path, value):
 
     builder.python_executable = value
     assert builder.python_executable == value
-    assert builder.hook.python_executable == value
+    assert builder._hook.python_executable == value
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
@@ -172,8 +172,8 @@ def test_check_dependencies(mocker, test_flit_path):
     ]
 
     build.check_version.return_value = False
-    builder.hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
-    builder.hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
+    builder._hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
+    builder._hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
     assert builder.check_dependencies('sdist') == {'flit_core >=2,<3'}
@@ -203,15 +203,15 @@ def test_build(mocker, test_flit_path, tmp_dir):
 
     builder = build.ProjectBuilder(test_flit_path)
 
-    builder.hook.build_sdist.side_effect = [None, Exception]
-    builder.hook.build_wheel.side_effect = [None, Exception]
+    builder._hook.build_sdist.side_effect = [None, Exception]
+    builder._hook.build_wheel.side_effect = [None, Exception]
 
     builder.build('sdist', tmp_dir)
-    builder.hook.build_sdist.assert_called_with(tmp_dir, {})
+    builder._hook.build_sdist.assert_called_with(tmp_dir, {})
     build._working_directory.assert_called_with(test_flit_path)
 
     builder.build('wheel', tmp_dir)
-    builder.hook.build_wheel.assert_called_with(tmp_dir, {})
+    builder._hook.build_wheel.assert_called_with(tmp_dir, {})
     build._working_directory.assert_called_with(test_flit_path)
 
     with pytest.raises(build.BuildBackendException):
@@ -277,7 +277,7 @@ def test_relative_outdir(mocker, tmp_dir, test_flit_path):
 
     builder.build('sdist', '.')
 
-    builder.hook.build_sdist.assert_called_with(os.path.abspath('.'), {})
+    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), {})
 
 
 def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):

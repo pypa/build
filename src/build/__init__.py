@@ -155,7 +155,7 @@ class ProjectBuilder(object):
 
         self._backend = self._build_system['build-backend']
 
-        self.hook = pep517.wrappers.Pep517HookCaller(
+        self._hook = pep517.wrappers.Pep517HookCaller(
             self.srcdir,
             self._backend,
             backend_path=self._build_system.get('backend-path'),
@@ -165,12 +165,12 @@ class ProjectBuilder(object):
     @property
     def python_executable(self):  # type: () -> Union[bytes, Text]
         # make mypy happy
-        exe = self.hook.python_executable  # type: Union[bytes, Text]
+        exe = self._hook.python_executable  # type: Union[bytes, Text]
         return exe
 
     @python_executable.setter
     def python_executable(self, value):  # type: (Union[bytes, Text]) -> None
-        self.hook.python_executable = value
+        self._hook.python_executable = value
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]
@@ -180,7 +180,7 @@ class ProjectBuilder(object):
         """
         Returns a set of dependencies
         """
-        get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
+        get_requires = getattr(self._hook, 'get_requires_for_build_{}'.format(distribution))
 
         try:
             with _working_directory(self.srcdir):
@@ -208,7 +208,7 @@ class ProjectBuilder(object):
         :param distribution: Distribution to build (sdist or wheel)
         :param outdir: Output directory
         """
-        build = getattr(self.hook, 'build_{}'.format(distribution))
+        build = getattr(self._hook, 'build_{}'.format(distribution))
         outdir = os.path.abspath(outdir)
 
         if os.path.exists(outdir):
