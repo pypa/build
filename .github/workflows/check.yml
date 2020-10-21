@@ -75,16 +75,16 @@ jobs:
         run: tox -vv --notest -e ${{env.BASE}},${{env.BASE}}-path,${{env.BASE}}-sdist,${{env.BASE}}-wheel
 
       - name: Run test suite via tox
-        run: tox -e ${{env.BASE}} --skip-pkg-install
+        run: tox -e ${{env.BASE}} --skip-pkg-install -- --run-integration
 
       - name: Run test suite via path
-        run: tox -e ${{env.BASE}}-path --skip-pkg-install
+        run: tox -e ${{env.BASE}}-path --skip-pkg-install -- --run-integration
 
       - name: Run test suite via sdist
-        run: tox -e ${{env.BASE}}-sdist --skip-pkg-install
+        run: tox -e ${{env.BASE}}-sdist --skip-pkg-install -- --run-integration
 
       - name: Run test suite via wheel
-        run: tox -e ${{env.BASE}}-wheel --skip-pkg-install
+        run: tox -e ${{env.BASE}}-wheel --skip-pkg-install -- --run-integration
 
       - name: Rename coverage report file
         run: |
