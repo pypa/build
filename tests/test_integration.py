@@ -35,10 +35,13 @@ def get_project(name, tmp_path):
     if name == 'build':
         # our own project is available in-source, just ignore development files
 
-        def _ignore_folder(_, filenames):
-            return [n for n in filenames if n in exclude or n.endswith('_cache') or n.endswith('.egg-info')]
+        def _ignore_folder(base, filenames):
+            ignore = [n for n in filenames if n in excl or any(n.endswith(i) for i in ('_cache', '.egg-info', '.pyc'))]
+            if os.path.basename == ROOT and 'build' in filenames:  # ignore build only at root (our module is build too)
+                ignore.append('build')
+            return ignore
 
-        exclude = '.tox', 'dist', 'build', '.git', '__pycache__'
+        excl = '.tox', 'dist', '.git', '__pycache__', '.integration-sources', '.github', 'tests', 'docs'
         shutil.copytree(ROOT, str(dest), ignore=_ignore_folder)
         return dest
 
