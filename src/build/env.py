@@ -195,7 +195,7 @@ else:
         :param path: the location of the virtual environment
         :return: the python executable
         """
-        config_vars = sysconfig.get_config_vars()
+        config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
         config_vars['base'] = path
         env_scripts = sysconfig.get_path('scripts', vars=config_vars)
         if not env_scripts:
