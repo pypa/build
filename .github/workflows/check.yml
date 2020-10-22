@@ -75,7 +75,7 @@ jobs:
         run: tox -vv --notest -e ${{env.BASE}},${{env.BASE}}-path,${{env.BASE}}-sdist,${{env.BASE}}-wheel
 
       - name: Run test suite via tox
-        run: tox -e ${{env.BASE}} --skip-pkg-install -- --run-integration
+        run: tox -e ${{env.BASE}} --skip-pkg-install
 
       - name: Run test suite via path
         run: tox -e ${{env.BASE}}-path --skip-pkg-install -- --run-integration
