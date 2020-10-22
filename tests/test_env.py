@@ -5,6 +5,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import sysconfig
 
 import pytest
 
@@ -75,6 +76,7 @@ def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker):
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
 def test_fail_to_get_script_path(mocker):
+    sysconfig.get_config_vars()  # the config vars are globally cached and may use get_path, make sure they are created
     get_path = mocker.patch('sysconfig.get_path', return_value=None)
     with pytest.raises(RuntimeError, match="Couldn't get environment scripts path"):
         env = build.env.IsolatedEnvBuilder()
@@ -86,8 +88,7 @@ def test_fail_to_get_script_path(mocker):
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
 def test_executable_missing_post_creation(mocker):
-    import sysconfig
-
+    sysconfig.get_config_vars()  # the config vars are globally cached and may use get_path, make sure they are created
     original_get_path = sysconfig.get_path
 
     def _get_path(name, vars):  # noqa
