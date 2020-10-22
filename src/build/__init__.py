@@ -10,7 +10,6 @@ import difflib
 import os
 import sys
 import warnings
-import typing
 
 from typing import Dict, Iterator, List, Mapping, Optional, Set, Union, Text
 
@@ -166,9 +165,8 @@ class ProjectBuilder(object):
     @property
     def python_executable(self):  # type: () -> Union[bytes, Text]
         # make mypy happy
-        if not isinstance(self.hook.python_executable, typing.Text) and not isinstance(self.hook.python_executable, bytes):
-            raise TypeError('python_executable is not a string: {}'.format(type(self.hook.python_executable)))
-        return self.hook.python_executable
+        exe = self.hook.python_executable  # type: Union[bytes, Text]
+        return exe
 
     @python_executable.setter
     def python_executable(self, value):  # type: (Union[bytes, Text]) -> None
