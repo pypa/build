@@ -89,7 +89,7 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
         'setuptools.build_meta:__legacy__': None,
     }
     mocker.patch('importlib.import_module', modules.get)
-    caller = mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # correct flit pyproject.toml
     build.ProjectBuilder(test_flit_path)
