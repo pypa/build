@@ -113,8 +113,8 @@ def test_build(monkeypatch, project, args, call, tmp_path):
         subprocess.check_call(call + args)
 
     pkg_names = os.listdir(str(pkgs))
-    assert filter(_SDIST.match, pkg_names)
-    assert filter(_WHEEL.match, pkg_names)
+    assert list(filter(_SDIST.match, pkg_names))
+    assert list(filter(_WHEEL.match, pkg_names))
 
 
 def test_isolation(tmp_dir, test_flit_path, mocker):
