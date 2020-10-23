@@ -59,7 +59,7 @@ def _build_in_current_env(builder, outdir, distributions, skip_dependencies=Fals
         builder.build(dist, outdir)
 
 
-def build(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
+def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
     # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
     """
     Runs the build process
@@ -183,7 +183,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     if not distributions:
         distributions = ['sdist', 'wheel']
 
-    build(args.srcdir, args.outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
+    build_package(args.srcdir, args.outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
 
 
 def entrypoint():  # type: () -> None
