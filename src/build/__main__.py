@@ -98,7 +98,6 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         'srcdir',
         type=str,
         nargs='?',
-        metavar='sourcedir',
         default='.',
         help='source directory (defaults to current directory)',
     )
@@ -118,7 +117,8 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '--outdir',
         '-o',
         type=str,
-        help='output directory (defaults to sourcedir/dist)',
+        metavar='dir',
+        help='output directory (defaults to {srcdir}/dist)',
     )
     parser.add_argument(
         '--skip-dependencies',

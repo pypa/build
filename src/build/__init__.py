@@ -197,8 +197,7 @@ class ProjectBuilder(object):
         build = getattr(self.hook, 'build_{}'.format(distribution))
 
         if outdir is None:
-            # Resolve outdir relative to project root if not specified.
-            # See: https://github.com/pypa/build/issues/69#issuecomment-704312424
+            # resolve outdir relative to project root if not specified.
             outdir = os.path.join(self.srcdir, 'dist')
         else:
             outdir = os.path.abspath(outdir)
