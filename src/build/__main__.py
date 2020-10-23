@@ -99,7 +99,6 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         'srcdir',
         type=str,
         nargs='?',
-        default='.',
         help='source directory (defaults to current directory)',
     )
     parser.add_argument(

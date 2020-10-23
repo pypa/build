@@ -20,19 +20,19 @@ else:  # pragma: no cover
     [
         (
             [],
-            ['.', None, ['sdist', 'wheel'], {}, True, False],
+            [None, None, ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-n'],
-            ['.', None, ['sdist', 'wheel'], {}, False, False],
+            [None, None, ['sdist', 'wheel'], {}, False, False],
         ),
         (
             ['-s'],
-            ['.', None, ['sdist'], {}, True, False],
+            [None, None, ['sdist'], {}, True, False],
         ),
         (
             ['-w'],
-            ['.', None, ['wheel'], {}, True, False],
+            [None, None, ['wheel'], {}, True, False],
         ),
         (
             ['source'],
@@ -40,23 +40,23 @@ else:  # pragma: no cover
         ),
         (
             ['-o', 'out'],
-            ['.', 'out', ['sdist', 'wheel'], {}, True, False],
+            [None, 'out', ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-x'],
-            ['.', None, ['sdist', 'wheel'], {}, True, True],
+            [None, None, ['sdist', 'wheel'], {}, True, True],
         ),
         (
             ['-C--flag1', '-C--flag2'],
-            ['.', None, ['sdist', 'wheel'], {'--flag1': '', '--flag2': ''}, True, False],
+            [None, None, ['sdist', 'wheel'], {'--flag1': '', '--flag2': ''}, True, False],
         ),
         (
             ['-C--flag=value'],
-            ['.', None, ['sdist', 'wheel'], {'--flag': 'value'}, True, False],
+            [None, None, ['sdist', 'wheel'], {'--flag': 'value'}, True, False],
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
-            ['.', None, ['sdist', 'wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
+            [None, None, ['sdist', 'wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
         ),
     ],
 )
@@ -87,9 +87,9 @@ def test_build_isolated(mocker, test_flit_path):
     mocker.patch('build.__main__._error')
     install = mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    build.__main__.build(test_flit_path, '.', ['sdist'])
+    build.__main__.build(test_flit_path, None, ['sdist'])
 
-    build_cmd.assert_called_with('sdist', '.')
+    build_cmd.assert_called_with('sdist', None)
     install.assert_called_with({'flit_core >=2,<3'})
 
 
@@ -98,9 +98,9 @@ def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
     build_cmd = mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
 
-    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
+    build.__main__.build(test_flit_path, None, ['sdist'], isolation=False)
 
-    build_cmd.assert_called_with('sdist', '.')
+    build_cmd.assert_called_with('sdist', None)
 
 
 def test_build_no_isolation_with_check_deps(mocker, test_flit_path):
@@ -109,9 +109,9 @@ def test_build_no_isolation_with_check_deps(mocker, test_flit_path):
     build_cmd = mocker.patch('build.ProjectBuilder.build')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=['something'])
 
-    build.__main__.build(test_flit_path, '.', ['sdist'], isolation=False)
+    build.__main__.build(test_flit_path, None, ['sdist'], isolation=False)
 
-    build_cmd.assert_called_with('sdist', '.')
+    build_cmd.assert_called_with('sdist', None)
     error.assert_called_with('Missing dependencies:\n\tsomething')
 
 
@@ -121,7 +121,7 @@ def test_build_raises_build_exception(mocker, test_flit_path):
     mocker.patch('build.ProjectBuilder.build', side_effect=build.BuildException)
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    build.__main__.build(test_flit_path, '.', ['sdist'])
+    build.__main__.build(test_flit_path, None, ['sdist'])
 
     error.assert_called_with('')
 
@@ -132,6 +132,6 @@ def test_build_raises_build_backend_exception(mocker, test_flit_path):
     mocker.patch('build.ProjectBuilder.build', side_effect=build.BuildBackendException)
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    build.__main__.build(test_flit_path, '.', ['sdist'])
+    build.__main__.build(test_flit_path, None, ['sdist'])
 
     error.assert_called_with('')

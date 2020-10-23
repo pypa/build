@@ -104,8 +104,8 @@ def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir='.', config_settings=None, python_executable=sys.executable):
-        # type: (str, Optional[ConfigSettings], Union[bytes, Text]) -> None
+    def __init__(self, srcdir=None, config_settings=None, python_executable=sys.executable):
+        # type: (Optional[str], Optional[ConfigSettings], Union[bytes, Text]) -> None
         """
         Create a project builder.
 
@@ -113,10 +113,13 @@ class ProjectBuilder(object):
         :param config_settings: config settings for the build backend
         :param python_executable: the python executable where the backend lives
         """
-        self.srcdir = os.path.abspath(srcdir)
+        if srcdir is None:
+            self.srcdir = os.getcwd()
+        else:
+            self.srcdir = os.path.abspath(srcdir)
         self.config_settings = config_settings if config_settings else {}
 
-        spec_file = os.path.join(srcdir, 'pyproject.toml')
+        spec_file = os.path.join(self.srcdir, 'pyproject.toml')
 
         try:
             with open(spec_file) as f:
