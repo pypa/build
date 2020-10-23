@@ -86,15 +86,12 @@ def test_prog():
             build.__main__.main(['--help'], prog='something')
 
 
-@pytest.mark.skipif(
-    sys.version_info[0] == 2,
-    reason='capsys not working on Python 2. See https://github.com/pytest-dev/pytest/issues/2327'
-)
 def test_version(capsys):
     with pytest.raises(SystemExit):
         build.__main__.main(['--version'])
     out, err = capsys.readouterr()
-    assert out.startswith('build {}'.format(build.__version__))
+    target = out if sys.version_info[0] == 3 else err
+    assert target.startswith('build {}'.format(build.__version__))
 
 
 @pytest.mark.isolated

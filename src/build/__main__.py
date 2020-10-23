@@ -97,6 +97,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     """
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
+    # mypy does not recognize module.__path__
     # https://github.com/python/mypy/issues/1422
     paths = build.__path__  # type: Iterable[Optional[str]]  # type: ignore
     parser = argparse.ArgumentParser()
