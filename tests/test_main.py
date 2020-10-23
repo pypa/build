@@ -2,7 +2,6 @@
 
 import contextlib
 import io
-import os
 import sys
 
 import pytest
@@ -16,52 +15,48 @@ else:  # pragma: no cover
     build_open_owner = 'build'
 
 
-cwd = os.getcwd()
-out = os.path.join(cwd, 'dist')
-
-
 @pytest.mark.parametrize(
     ('cli_args', 'build_args'),
     [
         (
             [],
-            [cwd, out, ['sdist', 'wheel'], {}, True, False],
+            ['.', None, ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-n'],
-            [cwd, out, ['sdist', 'wheel'], {}, False, False],
+            ['.', None, ['sdist', 'wheel'], {}, False, False],
         ),
         (
             ['-s'],
-            [cwd, out, ['sdist'], {}, True, False],
+            ['.', None, ['sdist'], {}, True, False],
         ),
         (
             ['-w'],
-            [cwd, out, ['wheel'], {}, True, False],
+            ['.', None, ['wheel'], {}, True, False],
         ),
         (
             ['source'],
-            ['source', out, ['sdist', 'wheel'], {}, True, False],
+            ['source', None, ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-o', 'out'],
-            [cwd, 'out', ['sdist', 'wheel'], {}, True, False],
+            ['.', 'out', ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-x'],
-            [cwd, out, ['sdist', 'wheel'], {}, True, True],
+            ['.', None, ['sdist', 'wheel'], {}, True, True],
         ),
         (
             ['-C--flag1', '-C--flag2'],
-            [cwd, out, ['sdist', 'wheel'], {'--flag1': '', '--flag2': ''}, True, False],
+            ['.', None, ['sdist', 'wheel'], {'--flag1': '', '--flag2': ''}, True, False],
         ),
         (
             ['-C--flag=value'],
-            [cwd, out, ['sdist', 'wheel'], {'--flag': 'value'}, True, False],
+            ['.', None, ['sdist', 'wheel'], {'--flag': 'value'}, True, False],
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
-            [cwd, out, ['sdist', 'wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
+            ['.', None, ['sdist', 'wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
         ),
     ],
 )

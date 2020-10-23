@@ -5,13 +5,12 @@ build - A simple, correct PEP517 package builder
 """
 __version__ = '0.0.4'
 
-import contextlib
 import difflib
 import os
 import sys
 import warnings
 
-from typing import Dict, Iterator, List, Mapping, Optional, Set, Union, Text
+from typing import Dict, List, Mapping, Optional, Set, Union, Text
 
 import pep517.wrappers
 import toml
@@ -104,18 +103,6 @@ def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
                 )
 
 
-@contextlib.contextmanager
-def _working_directory(path):  # type: (str) -> Iterator[None]
-    current = os.getcwd()
-
-    os.chdir(path)
-
-    try:
-        yield
-    finally:
-        os.chdir(current)
-
-
 class ProjectBuilder(object):
     def __init__(self, srcdir='.', config_settings=None, python_executable=sys.executable):
         # type: (str, Optional[ConfigSettings], Union[bytes, Text]) -> None
@@ -183,8 +170,7 @@ class ProjectBuilder(object):
         get_requires = getattr(self.hook, 'get_requires_for_build_{}'.format(distribution))
 
         try:
-            with _working_directory(self.srcdir):
-                return set(get_requires(self.config_settings))
+            return set(get_requires(self.config_settings))
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
@@ -201,7 +187,7 @@ class ProjectBuilder(object):
 
         return {dep for dep in dependencies if not check_version(dep)}
 
-    def build(self, distribution, outdir):  # type: (str, str) -> None
+    def build(self, distribution, outdir=None):  # type: (str, Optional[str]) -> None
         """
         Builds a distribution
 
@@ -209,7 +195,13 @@ class ProjectBuilder(object):
         :param outdir: Output directory
         """
         build = getattr(self.hook, 'build_{}'.format(distribution))
-        outdir = os.path.abspath(outdir)
+
+        if outdir is None:
+            # Resolve outdir relative to project root if not specified.
+            # See: https://github.com/pypa/build/issues/69#issuecomment-704312424
+            outdir = os.path.join(self.srcdir, 'dist')
+        else:
+            outdir = os.path.abspath(outdir)
 
         if os.path.exists(outdir):
             if not os.path.isdir(outdir):
@@ -218,8 +210,7 @@ class ProjectBuilder(object):
             os.mkdir(outdir)
 
         try:
-            with _working_directory(self.srcdir):
-                build(outdir, self.config_settings)
+            build(outdir, self.config_settings)
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722

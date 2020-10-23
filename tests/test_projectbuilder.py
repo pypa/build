@@ -190,16 +190,9 @@ def test_check_dependencies(mocker, test_flit_path):
         not builder.check_dependencies('wheel')
 
 
-def test_working_directory(tmp_dir):
-    assert os.path.realpath(os.curdir) != os.path.realpath(tmp_dir)
-    with build._working_directory(tmp_dir):
-        assert os.path.realpath(os.curdir) == os.path.realpath(tmp_dir)
-
-
 def test_build(mocker, test_flit_path, tmp_dir):
     mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
-    mocker.patch('build._working_directory', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
 
@@ -208,18 +201,14 @@ def test_build(mocker, test_flit_path, tmp_dir):
 
     builder.build('sdist', tmp_dir)
     builder.hook.build_sdist.assert_called_with(tmp_dir, {})
-    build._working_directory.assert_called_with(test_flit_path)
 
     builder.build('wheel', tmp_dir)
     builder.hook.build_wheel.assert_called_with(tmp_dir, {})
-    build._working_directory.assert_called_with(test_flit_path)
 
     with pytest.raises(build.BuildBackendException):
-        build._working_directory.assert_called_with(test_flit_path)
         builder.build('sdist', tmp_dir)
 
     with pytest.raises(build.BuildBackendException):
-        build._working_directory.assert_called_with(test_flit_path)
         builder.build('wheel', tmp_dir)
 
 
@@ -269,7 +258,18 @@ def test_missing_outdir(mocker, tmp_dir, test_flit_path):
     assert os.path.isdir(out)
 
 
-def test_relative_outdir(mocker, tmp_dir, test_flit_path):
+def test_outdir_is_dist_relative_to_srcdir_if_none(mocker, test_flit_path):
+    mocker.patch('importlib.import_module', autospec=True)
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+
+    builder.build('sdist')
+
+    builder.hook.build_sdist.assert_called_with(os.path.join(test_flit_path, 'dist'), {})
+
+
+def test_outdir_resolved_relative_to_cwd_if_not_none(mocker, test_flit_path):
     mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
@@ -277,6 +277,7 @@ def test_relative_outdir(mocker, tmp_dir, test_flit_path):
 
     builder.build('sdist', '.')
 
+    assert test_flit_path != os.getcwd()
     builder.hook.build_sdist.assert_called_with(os.path.abspath('.'), {})
 
 

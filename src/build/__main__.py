@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import os
 import sys
 import traceback
 import warnings
@@ -94,15 +93,13 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     """
     Constructs the main parser
     """
-    cwd = os.getcwd()
-    out = os.path.join(cwd, 'dist')
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'srcdir',
         type=str,
         nargs='?',
         metavar='sourcedir',
-        default=cwd,
+        default='.',
         help='source directory (defaults to current directory)',
     )
     parser.add_argument(
@@ -117,7 +114,12 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         action='store_true',
         help='build a wheel',
     )
-    parser.add_argument('--outdir', '-o', metavar='dist', type=str, default=out, help='output directory')
+    parser.add_argument(
+        '--outdir',
+        '-o',
+        type=str,
+        help='output directory (defaults to sourcedir/dist)',
+    )
     parser.add_argument(
         '--skip-dependencies',
         '-x',
