@@ -40,7 +40,7 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
 
 
 def _build_in_isolated_env(builder, outdir, distributions):
-    # type: (ProjectBuilder, str, List[str]) -> None
+    # type: (ProjectBuilder, Optional[str], List[str]) -> None
     with IsolatedEnvBuilder() as env:
         builder.python_executable = env.executable
         env.install(builder.build_dependencies)
@@ -49,7 +49,7 @@ def _build_in_isolated_env(builder, outdir, distributions):
 
 
 def _build_in_current_env(builder, outdir, distributions, skip_dependencies=False):
-    # type: (ProjectBuilder, str, List[str], bool) -> None
+    # type: (ProjectBuilder, Optional[str], List[str], bool) -> None
     for dist in distributions:
         if not skip_dependencies:
             missing = builder.check_dependencies(dist)
@@ -60,7 +60,7 @@ def _build_in_current_env(builder, outdir, distributions, skip_dependencies=Fals
 
 
 def build(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
-    # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
+    # type: (Optional[str], Optional[str], List[str], Optional[ConfigSettings], bool, bool) -> None
     """
     Runs the build process
 
