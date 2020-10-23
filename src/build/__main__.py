@@ -6,8 +6,9 @@ import sys
 import traceback
 import warnings
 
-from typing import List, Optional, TextIO, Type, Union
+from typing import List, Optional, TextIO, Type, Union, Iterable
 
+import build
 from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
 from build.env import IsolatedEnvBuilder
 
@@ -96,6 +97,8 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     """
     cwd = os.getcwd()
     out = os.path.join(cwd, 'dist')
+    # https://github.com/python/mypy/issues/1422
+    paths = build.__path__  # type: Iterable[Optional[str]]  # type: ignore
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'srcdir',
@@ -104,6 +107,12 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         metavar='sourcedir',
         default=cwd,
         help='source directory (defaults to current directory)',
+    )
+    parser.add_argument(
+        '--version',
+        '-V',
+        action='version',
+        version='build {} ({})'.format(build.__version__, ', '.join(path for path in paths if path)),
     )
     parser.add_argument(
         '--sdist',

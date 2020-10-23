@@ -86,6 +86,17 @@ def test_prog():
             build.__main__.main(['--help'], prog='something')
 
 
+@pytest.mark.skipif(
+    sys.version_info[0] == 2,
+    reason='capsys not working on Python 2. See https://github.com/pytest-dev/pytest/issues/2327'
+)
+def test_version(capsys):
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--version'])
+    out, err = capsys.readouterr()
+    assert out.startswith('build {}'.format(build.__version__))
+
+
 @pytest.mark.isolated
 def test_build_isolated(mocker, test_flit_path):
     build_cmd = mocker.patch('build.ProjectBuilder.build')
