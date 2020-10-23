@@ -41,11 +41,15 @@ out = os.path.join(cwd, 'dist')
         ),
         (
             ['source'],
-            ['source', out, ['sdist', 'wheel'], {}, True, False],
+            ['source', os.path.join('source', 'dist'), ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-o', 'out'],
             [cwd, 'out', ['sdist', 'wheel'], {}, True, False],
+        ),
+        (
+            ['source', '-o', 'out'],
+            ['source', 'out', ['sdist', 'wheel'], {}, True, False],
         ),
         (
             ['-x'],
