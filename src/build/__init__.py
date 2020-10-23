@@ -113,10 +113,7 @@ class ProjectBuilder(object):
         :param config_settings: config settings for the build backend
         :param python_executable: the python executable where the backend lives
         """
-        if srcdir is None:
-            self.srcdir = os.getcwd()
-        else:
-            self.srcdir = os.path.abspath(srcdir)
+        self.srcdir = os.getcwd() if srcdir is None else os.path.abspath(srcdir)
         self.config_settings = config_settings if config_settings else {}
 
         spec_file = os.path.join(self.srcdir, 'pyproject.toml')
