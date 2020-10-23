@@ -95,8 +95,6 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     """
     Constructs the main parser
     """
-    cwd = os.getcwd()
-    out = os.path.join(cwd, 'dist')
     # mypy does not recognize module.__path__
     # https://github.com/python/mypy/issues/1422
     paths = build.__path__  # type: Iterable[Optional[str]]  # type: ignore
@@ -105,8 +103,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         'srcdir',
         type=str,
         nargs='?',
-        metavar='sourcedir',
-        default=cwd,
+        default=os.getcwd(),
         help='source directory (defaults to current directory)',
     )
     parser.add_argument(
@@ -127,7 +124,13 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         action='store_true',
         help='build a wheel',
     )
-    parser.add_argument('--outdir', '-o', metavar='dist', type=str, default=out, help='output directory')
+    parser.add_argument(
+        '--outdir',
+        '-o',
+        metavar='dir',
+        type=str,
+        help='output directory (defaults to {{srcdir}}{sep}dist)'.format(sep=os.sep),
+    )
     parser.add_argument(
         '--skip-dependencies',
         '-x',
@@ -193,7 +196,10 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     if not distributions:
         distributions = ['sdist', 'wheel']
 
-    build_package(args.srcdir, args.outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
+    # outdir is relative to srcdir only if omitted.
+    outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
+
+    build_package(args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
 
 
 def entrypoint():  # type: () -> None
