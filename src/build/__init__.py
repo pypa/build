@@ -117,7 +117,7 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir='.', config_settings=None, python_executable=sys.executable):
+    def __init__(self, srcdir, config_settings=None, python_executable=sys.executable):
         # type: (str, Optional[ConfigSettings], Union[bytes, Text]) -> None
         """
         Create a project builder.
