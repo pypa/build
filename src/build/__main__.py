@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import os
 import sys
 import traceback
 import warnings
@@ -118,7 +119,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '-o',
         type=str,
         metavar='dir',
-        help='output directory (defaults to {srcdir}/dist)',
+        help='output directory (defaults to {{srcdir}}{sep}dist)'.format(sep=os.sep),
     )
     parser.add_argument(
         '--skip-dependencies',
