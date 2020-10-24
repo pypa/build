@@ -25,7 +25,7 @@ jobs:
   pytest:
     runs-on: ${{ matrix.os }}-latest
     env:
-      PYTEST_ADDOPTS: "--showlocals -vv --durations=10"
+      PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10"
     strategy:
       fail-fast: false
       matrix:
@@ -78,13 +78,13 @@ jobs:
         run: tox -e ${{env.BASE}} --skip-pkg-install
 
       - name: Run test suite via path
-        run: tox -e ${{env.BASE}}-path --skip-pkg-install -- --run-integration
+        run: tox -e ${{env.BASE}}-path --skip-pkg-install
 
       - name: Run test suite via sdist
-        run: tox -e ${{env.BASE}}-sdist --skip-pkg-install -- --run-integration
+        run: tox -e ${{env.BASE}}-sdist --skip-pkg-install
 
       - name: Run test suite via wheel
-        run: tox -e ${{env.BASE}}-wheel --skip-pkg-install -- --run-integration
+        run: tox -e ${{env.BASE}}-wheel --skip-pkg-install
 
       - name: Rename coverage report file
         run: |
