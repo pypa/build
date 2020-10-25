@@ -11,7 +11,7 @@ import os
 import sys
 import warnings
 
-from typing import Dict, Iterator, List, Mapping, Optional, Set, Union, Text
+from typing import Iterator, Mapping, Optional, Sequence, Set, Text, Union
 
 import pep517.wrappers
 import toml
@@ -22,7 +22,7 @@ if sys.version_info < (3,):
     PermissionError = OSError
 
 
-ConfigSettings = Dict[str, Union[str, List[str]]]
+ConfigSettings = Mapping[str, Union[str, Sequence[str]]]
 
 
 _DEFAULT_BACKEND = {
