@@ -126,8 +126,8 @@ class ProjectBuilder(object):
         :param config_settings: config settings for the build backend
         :param python_executable: the python executable where the backend lives
         """
-        self.srcdir = os.path.abspath(srcdir)
-        self.config_settings = config_settings if config_settings else {}
+        self.srcdir = os.path.abspath(srcdir)  # type: str
+        self.config_settings = config_settings if config_settings else {}  # type: ConfigSettings
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
