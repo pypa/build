@@ -84,7 +84,7 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
             return False
         warnings.warn(
             "Verified that the '{}[{}]' extra is present but did not verify that it is active "
-            "(it's dependencies are met)".format(req.name, extra),
+            '(its dependencies are met)'.format(req.name, extra),
             IncompleteCheckWarning,
         )
 
