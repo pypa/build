@@ -3,19 +3,19 @@
 """
 build - A simple, correct PEP517 package builder
 """
-__version__ = '0.0.4'
 
 import contextlib
 import difflib
 import os
 import sys
 import warnings
-
 from typing import Iterator, Mapping, Optional, Sequence, Set, Text, Union
 
 import pep517.wrappers
 import toml
 import toml.decoder
+
+from .version import __version__
 
 if sys.version_info < (3,):
     FileNotFoundError = IOError
@@ -224,3 +224,13 @@ class ProjectBuilder(object):
             raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {!r}'.format(e))
+
+
+__all__ = (
+    '__version__',
+    'ProjectBuilder',
+    'BuildException',
+    'BuildBackendException',
+    'TypoWarning',
+    'IncompleteCheckWarning',
+)
