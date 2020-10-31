@@ -149,6 +149,13 @@ def test_get_dependencies_missing_backend(packages_path, distribution):
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_get_dependencies_missing_optional_hooks(test_optional_hooks_path, distribution):
+    builder = build.ProjectBuilder(test_optional_hooks_path)
+
+    assert builder.get_dependencies(distribution) == set()
+
+
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
 def test_build_missing_backend(packages_path, distribution, tmpdir):
     bad_backend_path = os.path.join(packages_path, 'test-bad-backend')
     builder = build.ProjectBuilder(bad_backend_path)
