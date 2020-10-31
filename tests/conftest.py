@@ -119,6 +119,11 @@ def test_no_requires_path(packages_path):
 
 
 @pytest.fixture
+def test_optional_hooks_path(packages_path):
+    return os.path.join(packages_path, 'test-optional-hooks')
+
+
+@pytest.fixture
 def test_typo(packages_path):
     return os.path.join(packages_path, 'test-typo')
 
