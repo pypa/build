@@ -133,26 +133,31 @@ class ProjectBuilder(object):
 
         try:
             with open(spec_file) as f:
-                self._spec = toml.load(f)
+                spec = toml.load(f)
         except FileNotFoundError:
-            self._spec = {}
+            spec = {}
         except PermissionError as e:
             raise BuildException("{}: '{}' ".format(e.strerror, e.filename))
         except toml.decoder.TomlDecodeError as e:
-            raise BuildException('Failed to parse pyproject.toml: {} '.format(e))
+            raise BuildException('Failed to parse {}: {} '.format(spec_file, e))
 
-        _find_typo(self._spec, 'build-system')
-        self._build_system = self._spec.get('build-system', _DEFAULT_BACKEND)
+        build_system = spec.get('build-system')
+        # if pyproject.toml is missing (per PEP 517) or [build-system] is missing (pep PEP 518),
+        # use default values.
+        if build_system is None:
+            _find_typo(spec, 'build-system')
+            build_system = _DEFAULT_BACKEND
+        # if [build-system] is present, it must have a ``requires`` field (per PEP 518).
+        elif 'requires' not in build_system:
+            _find_typo(build_system, 'requires')
+            raise BuildException("Missing 'build-system.requires' in {}".format(spec_file))
+        # if ``build-backend`` is missing, inject the legacy setuptools backend
+        # but leave ``requires`` alone to emulate pip.
+        elif 'build-backend' not in build_system:
+            _find_typo(build_system, 'build-backend')
+            build_system['build-backend'] = _DEFAULT_BACKEND['build-backend']
 
-        if 'build-backend' not in self._build_system:
-            _find_typo(self._build_system, 'build-backend')
-            _find_typo(self._build_system, 'requires')
-            self._build_system['build-backend'] = _DEFAULT_BACKEND['build-backend']
-            self._build_system['requires'] = self._build_system.get('requires', []) + _DEFAULT_BACKEND['requires']
-
-        if 'requires' not in self._build_system:
-            raise BuildException("Missing 'build-system.requires' in pyproject.toml")
-
+        self._build_system = build_system
         self._backend = self._build_system['build-backend']
 
         self._hook = pep517.wrappers.Pep517HookCaller(

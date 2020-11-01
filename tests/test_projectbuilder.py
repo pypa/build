@@ -245,7 +245,7 @@ def test_missing_backend(mocker, test_no_backend_path):
 
     builder = build.ProjectBuilder(test_no_backend_path)
 
-    assert builder._build_system == DEFAULT_BACKEND
+    assert builder._build_system == {'requires': [], 'build-backend': DEFAULT_BACKEND['build-backend']}
 
 
 def test_missing_requires(mocker, test_no_requires_path):
