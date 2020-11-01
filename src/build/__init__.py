@@ -169,6 +169,9 @@ class ProjectBuilder(object):
 
     @property
     def python_executable(self):  # type: () -> Union[bytes, Text]
+        """
+        The Python executable used to invoke the backend.
+        """
         # make mypy happy
         exe = self._hook.python_executable  # type: Union[bytes, Text]
         return exe
@@ -179,11 +182,20 @@ class ProjectBuilder(object):
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]
+        """
+        The dependencies defined in the ``pyproject.toml``'s
+        ``build-system.requires`` field or the default build dependencies
+        if ``pyproject.toml`` is missing or ``build-system`` is undefined.
+        """
         return set(self._build_system['requires'])
 
     def get_dependencies(self, distribution):  # type: (str) -> Set[str]
         """
-        Returns a set of dependencies
+        Return the dependencies defined by the backend in addition to
+        :attr:`build_dependencies` for a given distribution.
+
+        :param distribution: Distribution to get the dependencies of
+            (``sdist`` or ``wheel``)
         """
         get_requires = getattr(self._hook, 'get_requires_for_build_{}'.format(distribution))
 
@@ -197,9 +209,11 @@ class ProjectBuilder(object):
 
     def check_dependencies(self, distribution):  # type: (str) -> Set[str]
         """
-        Returns a set of the missing dependencies
+        Return the dependencies which are not satisfied from the combined set of
+        :attr:`build_dependencies` and :meth:`get_dependencies` for a given
+        distribution.
 
-        :param distribution: Distribution to build (sdist or wheel)
+        :param distribution: Distribution to check (``sdist`` or ``wheel``)
         """
         dependencies = self.get_dependencies(distribution)
         dependencies.update(self.build_dependencies)
@@ -208,9 +222,9 @@ class ProjectBuilder(object):
 
     def build(self, distribution, outdir):  # type: (str, str) -> None
         """
-        Builds a distribution
+        Build a distribution.
 
-        :param distribution: Distribution to build (sdist or wheel)
+        :param distribution: Distribution to build (``sdist`` or ``wheel``)
         :param outdir: Output directory
         """
         build = getattr(self._hook, 'build_{}'.format(distribution))
