@@ -1,4 +1,0 @@
-sphinx==3.*
-sphinx-autodoc-typehints
-sphinxcontrib.autoprogram
-furo

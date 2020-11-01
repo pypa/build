@@ -8,9 +8,6 @@ dist/
 *.egg-info/
 .eggs
 
-# Documentation
-docs/srcbuild/
-
 # Testing and coverage
 .cache
 .nox/
