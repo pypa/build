@@ -32,57 +32,80 @@ else:  # pragma: no cover
     PermissionError = OSError
 
 
-DUMMY_METADATA = """
-Version: 1.0.0
-Provides-Extra: some_extra
-""".strip()
-
-
 DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
     'requires': ['setuptools >= 40.8.0', 'wheel'],
 }
 
 
-class MockDistribution(importlib_metadata.Distribution):
-    def read_text(self, filename):
-        return DUMMY_METADATA
-
+class BaseMockDistribution(importlib_metadata.Distribution):
     def locate_file(self, path):  # pragma: no cover
         return ''
 
     @classmethod
     def from_name(cls, name):
-        if name == 'something':
-            return cls()
+        if name == 'something' or name == 'extra_with_met_deps_dep':
+            return MockDistribution()
+        elif name == 'recursive_dep':
+            return RecursiveMockDistribution()
         raise importlib_metadata.PackageNotFoundError
 
 
-importlib_metadata.Distribution = MockDistribution
+class MockDistribution(BaseMockDistribution):
+    def read_text(self, filename):
+        return """
+Version: 1.0.0
+Provides-Extra: extra_without_associated_deps
+Provides-Extra: extra_with_unmet_deps
+Requires-Dist: unmet_dep; extra == 'extra_with_unmet_deps'
+Provides-Extra: extra_with_met_deps
+Requires-Dist: extra_with_met_deps_dep; extra == 'extra_with_met_deps'
+Provides-Extra: recursive_extra_with_unmet_deps
+Requires-Dist: recursive_dep; extra == 'recursive_extra_with_unmet_deps'
+""".strip()
+
+
+class RecursiveMockDistribution(BaseMockDistribution):
+    def read_text(self, filename):
+        return """
+Version: 1.0.0
+Requires-Dist: recursive_unmet_dep
+""".strip()
 
 
 @pytest.mark.parametrize(
-    ('requirement_string', 'expected', 'extra_warning'),
+    ('requirement_string', 'expected'),
     [
-        ('something', True, False),
-        ('something_else', False, False),
-        ('something[extra]', False, False),
-        ('something[some_extra]', True, True),
-        ('something_else; python_version>"10"', True, False),
-        ('something_else; python_version<="1"', True, False),
-        ('something_else; python_version>="1"', False, False),
-        ('something == 1.0.0', True, False),
-        ('something == 2.0.0', False, False),
-        ('something[some_extra] == 1.0.0', True, True),
-        ('something[some_extra] == 2.0.0', False, True),
+        ('something', None),
+        ('something_else', ('something_else',)),
+        ('something[undefined_extra]', None),
+        # would the wheel builder filter this out?
+        ('something[extra_without_associated_deps]', None),
+        (
+            'something[extra_with_unmet_deps]',
+            ('something[extra_with_unmet_deps]', "unmet_dep; extra == 'extra_with_unmet_deps'"),
+        ),
+        (
+            'something[recursive_extra_with_unmet_deps]',
+            (
+                'something[recursive_extra_with_unmet_deps]',
+                "recursive_dep; extra == 'recursive_extra_with_unmet_deps'",
+                'recursive_unmet_dep',
+            ),
+        ),
+        ('something[extra_with_met_deps]', None),
+        ('something_else; python_version>"10"', None),
+        ('something_else; python_version<="1"', None),
+        ('something_else; python_version>="1"', ('something_else; python_version>="1"',)),
+        ('something == 1.0.0', None),
+        ('something == 2.0.0', ('something == 2.0.0',)),
+        ('something[extra_without_associated_deps] == 1.0.0', None),
+        ('something[extra_without_associated_deps] == 2.0.0', ('something[extra_without_associated_deps] == 2.0.0',)),
     ],
 )
-def test_check_version(requirement_string, expected, extra_warning):
-    if extra_warning:
-        with pytest.warns(build.IncompleteCheckWarning):
-            assert build.check_version(requirement_string) == expected
-    else:
-        assert build.check_version(requirement_string) == expected
+def test_check_dependency(monkeypatch, requirement_string, expected):
+    monkeypatch.setattr(importlib_metadata, 'Distribution', BaseMockDistribution)
+    assert next(build.check_dependency(requirement_string), None) == expected
 
 
 def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_syntax_path):
@@ -170,7 +193,6 @@ def test_check_dependencies(mocker, test_flit_path):
     mocker.patch('importlib.import_module', autospec=True)
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
     mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
-    mocker.patch('build.check_version', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
 
@@ -180,17 +202,16 @@ def test_check_dependencies(mocker, test_flit_path):
         pep517.wrappers.BackendUnavailable,
     ]
 
-    build.check_version.return_value = False
     builder._hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
     builder._hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
-    assert builder.check_dependencies('sdist') == {'flit_core >=2,<3'}
-    assert builder.check_dependencies('wheel') == {'flit_core >=2,<3'}
+    assert builder.check_dependencies('sdist') == {('flit_core >=2,<3',)}
+    assert builder.check_dependencies('wheel') == {('flit_core >=2,<3',)}
 
     # requires = ['something']
-    assert builder.check_dependencies('sdist') == {'flit_core >=2,<3', 'something'}
-    assert builder.check_dependencies('wheel') == {'flit_core >=2,<3', 'something'}
+    assert builder.check_dependencies('sdist') == {('flit_core >=2,<3',), ('something',)}
+    assert builder.check_dependencies('wheel') == {('flit_core >=2,<3',), ('something',)}
 
     # BackendUnavailable
     with pytest.raises(build.BuildBackendException):
