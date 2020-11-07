@@ -11,7 +11,7 @@ import os
 import sys
 import warnings
 
-from typing import Iterator, Mapping, Optional, Sequence, Set, Text, Union
+from typing import AbstractSet, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
 
 import pep517.wrappers
 import toml
@@ -50,16 +50,14 @@ class TypoWarning(Warning):
     """
 
 
-class IncompleteCheckWarning(Warning):
+def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozenset()):
+    # type: (str, Tuple[str, ...], AbstractSet[str]) -> Iterator[Tuple[str, ...]]
     """
-    Warning raised when we have an incomplete check
-    """
+    Verify that a dependency and all of its dependencies are met.
 
-
-def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
-    """
-    :param requirement_string: Requirement string
-    :param extra: Extra (eg. test in myproject[test])
+    :param req_string: Requirement string
+    :param parent_extras: Extras (eg. "test" in myproject[test])
+    :yields: Unmet dependencies
     """
     import packaging.requirements
 
@@ -68,31 +66,31 @@ def check_version(requirement_string, extra=''):  # type: (str, str) -> bool
     else:
         import importlib_metadata
 
-    req = packaging.requirements.Requirement(requirement_string)
-    env = {'extra': extra}
+    req = packaging.requirements.Requirement(req_string)
 
-    if req.marker and not req.marker.evaluate(env):
-        return True
+    if req.marker:
+        extras = frozenset(('',)).union(parent_extras)
+        # a requirement can have multiple extras but ``evaluate`` can
+        # only check one at a time.
+        if all(not req.marker.evaluate(environment={'extra': e}) for e in extras):
+            # if the marker conditions are not met, we pretend that the
+            # dependency is satisfied.
+            return
 
     try:
-        version = importlib_metadata.version(req.name)
-        metadata = importlib_metadata.metadata(req.name)
+        dist = importlib_metadata.distribution(req.name)
     except importlib_metadata.PackageNotFoundError:
-        return False
-
-    for extra in req.extras:
-        if extra not in (metadata.get_all('Provides-Extra') or []):
-            return False
-        warnings.warn(
-            "Verified that the '{}[{}]' extra is present but did not verify that it is active "
-            '(its dependencies are met)'.format(req.name, extra),
-            IncompleteCheckWarning,
-        )
-
-    if req.specifier:
-        return req.specifier.contains(version)
-
-    return True
+        # dependency is not installed in the environment.
+        yield ancestral_req_strings + (req_string,)
+    else:
+        if req.specifier and dist.version not in req.specifier:
+            # the installed version is incompatible.
+            yield ancestral_req_strings + (req_string,)
+        elif dist.requires:
+            for other_req_string in dist.requires:
+                for unmet_req in check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras):
+                    # a transitive dependency is not satisfied.
+                    yield unmet_req
 
 
 def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
@@ -208,18 +206,17 @@ class ProjectBuilder(object):
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
-    def check_dependencies(self, distribution):  # type: (str) -> Set[str]
+    def check_dependencies(self, distribution):  # type: (str) -> Set[Tuple[str, ...]]
         """
         Return the dependencies which are not satisfied from the combined set of
         :attr:`build_dependencies` and :meth:`get_dependencies` for a given
         distribution.
 
         :param distribution: Distribution to check (``sdist`` or ``wheel``)
+        :returns: Set of variable-length unmet dependency tuples
         """
-        dependencies = self.get_dependencies(distribution)
-        dependencies.update(self.build_dependencies)
-
-        return {dep for dep in dependencies if not check_version(dep)}
+        dependencies = self.get_dependencies(distribution).union(self.build_dependencies)
+        return {u for d in dependencies for u in check_dependency(d)}
 
     def build(self, distribution, outdir):  # type: (str, str) -> None
         """
