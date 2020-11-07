@@ -6,7 +6,7 @@ import sys
 import traceback
 import warnings
 
-from typing import Iterable, List, Optional, TextIO, Type, Union
+from typing import Iterable, List, Optional, Sequence, TextIO, Type, Union
 
 import build
 
@@ -42,6 +42,10 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
+def _format_dep_chain(dep_chain):  # type: (Sequence[str]) -> str
+    return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
+
+
 def _build_in_isolated_env(builder, outdir, distributions):
     # type: (ProjectBuilder, str, List[str]) -> None
     with IsolatedEnvBuilder() as env:
@@ -57,7 +61,10 @@ def _build_in_current_env(builder, outdir, distributions, skip_dependencies=Fals
         if not skip_dependencies:
             missing = builder.check_dependencies(dist)
             if missing:
-                _error('Missing dependencies:' + ''.join(['\n\t' + dep for dep in missing]))
+                _error(
+                    'Missing dependencies:'
+                    + ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
+                )
 
         builder.build(dist, outdir)
 
