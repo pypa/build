@@ -121,16 +121,22 @@ def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
     build_cmd.assert_called_with('sdist', '.')
 
 
-def test_build_no_isolation_with_check_deps(mocker, test_flit_path):
-    # check_dependencies = ['something']
+@pytest.mark.parametrize(
+    ['missing_deps', 'output'],
+    [
+        ([('foo',)], '\n\tfoo'),
+        ([('foo',), ('bar', 'baz', 'qux')], '\n\tfoo\n\tbar\n\tbaz -> qux'),
+    ],
+)
+def test_build_no_isolation_with_check_deps(mocker, test_flit_path, missing_deps, output):
     error = mocker.patch('build.__main__._error')
     build_cmd = mocker.patch('build.ProjectBuilder.build')
-    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=['something'])
+    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=missing_deps)
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'], isolation=False)
 
     build_cmd.assert_called_with('sdist', '.')
-    error.assert_called_with('Missing dependencies:\n\tsomething')
+    error.assert_called_with('Missing dependencies:' + output)
 
 
 @pytest.mark.isolated
