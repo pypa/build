@@ -6,11 +6,13 @@ import sys
 import traceback
 import warnings
 
-from typing import List, Optional, TextIO, Type, Union, Iterable
+from typing import Iterable, List, Optional, TextIO, Type, Union
 
 import build
+
 from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
 from build.env import IsolatedEnvBuilder
+
 
 __all__ = ['build', 'main', 'main_parser']
 

@@ -9,5 +9,7 @@ target-version = ['py38', 'py37', 'py36', 'py35', 'py27']
 
 [tool.isort]
 profile = "black"
+lines_between_types = 1
+lines_after_imports = 2
 line_length = 127
 known_first_party = "build"

@@ -1,6 +1,8 @@
 import abc
 import sys
-from typing import Callable, TypeVar, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Callable, TypeVar
+
 
 _T = TypeVar('_T')
 

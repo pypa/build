@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tarfile
 
+
 if sys.version_info[0] == 3:
     from urllib.request import Request, urlopen
 else:
@@ -17,6 +18,7 @@ import filelock
 import pytest
 
 import build.__main__
+
 
 INTEGRATION_SOURCES = {
     'dateutil': ('dateutil/dateutil', '2.8.1'),

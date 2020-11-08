@@ -12,8 +12,10 @@ import pytest
 
 import build
 
+
 if sys.version_info >= (3, 8):  # pragma: no cover
     import email
+
     from importlib import metadata as importlib_metadata
 
     email_message_from_string = email.message_from_string
