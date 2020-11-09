@@ -32,20 +32,22 @@ DEFAULT_BACKEND = {
 }
 
 
-class BaseMockDistribution(importlib_metadata.Distribution):
+class MockDistribution(importlib_metadata.Distribution):
     def locate_file(self, path):  # pragma: no cover
         return ''
 
     @classmethod
     def from_name(cls, name):
-        if name == 'something' or name == 'extra_with_met_deps_dep':
-            return MockDistribution()
+        if name == 'extras_dep':
+            return ExtraMockDistribution()
         elif name == 'recursive_dep':
             return RecursiveMockDistribution()
+        elif name == 'requireless_dep':
+            return RequirelessMockDistribution()
         raise importlib_metadata.PackageNotFoundError
 
 
-class MockDistribution(BaseMockDistribution):
+class ExtraMockDistribution(MockDistribution):
     def read_text(self, filename):
         return """
 Version: 1.0.0
@@ -53,13 +55,13 @@ Provides-Extra: extra_without_associated_deps
 Provides-Extra: extra_with_unmet_deps
 Requires-Dist: unmet_dep; extra == 'extra_with_unmet_deps'
 Provides-Extra: extra_with_met_deps
-Requires-Dist: extra_with_met_deps_dep; extra == 'extra_with_met_deps'
+Requires-Dist: extras_dep; extra == 'extra_with_met_deps'
 Provides-Extra: recursive_extra_with_unmet_deps
 Requires-Dist: recursive_dep; extra == 'recursive_extra_with_unmet_deps'
 """.strip()
 
 
-class RecursiveMockDistribution(BaseMockDistribution):
+class RecursiveMockDistribution(MockDistribution):
     def read_text(self, filename):
         return """
 Version: 1.0.0
@@ -67,38 +69,44 @@ Requires-Dist: recursive_unmet_dep
 """.strip()
 
 
+class RequirelessMockDistribution(MockDistribution):
+    def read_text(self, filename):
+        return ''
+
+
 @pytest.mark.parametrize(
     ('requirement_string', 'expected'),
     [
-        ('something', None),
-        ('something_else', ('something_else',)),
-        ('something[undefined_extra]', None),
+        ('extras_dep', None),
+        ('missing_dep', ('missing_dep',)),
+        ('requireless_dep', None),
+        ('extras_dep[undefined_extra]', None),
         # would the wheel builder filter this out?
-        ('something[extra_without_associated_deps]', None),
+        ('extras_dep[extra_without_associated_deps]', None),
         (
-            'something[extra_with_unmet_deps]',
-            ('something[extra_with_unmet_deps]', "unmet_dep; extra == 'extra_with_unmet_deps'"),
+            'extras_dep[extra_with_unmet_deps]',
+            ('extras_dep[extra_with_unmet_deps]', "unmet_dep; extra == 'extra_with_unmet_deps'"),
         ),
         (
-            'something[recursive_extra_with_unmet_deps]',
+            'extras_dep[recursive_extra_with_unmet_deps]',
             (
-                'something[recursive_extra_with_unmet_deps]',
+                'extras_dep[recursive_extra_with_unmet_deps]',
                 "recursive_dep; extra == 'recursive_extra_with_unmet_deps'",
                 'recursive_unmet_dep',
             ),
         ),
-        ('something[extra_with_met_deps]', None),
-        ('something_else; python_version>"10"', None),
-        ('something_else; python_version<="1"', None),
-        ('something_else; python_version>="1"', ('something_else; python_version>="1"',)),
-        ('something == 1.0.0', None),
-        ('something == 2.0.0', ('something == 2.0.0',)),
-        ('something[extra_without_associated_deps] == 1.0.0', None),
-        ('something[extra_without_associated_deps] == 2.0.0', ('something[extra_without_associated_deps] == 2.0.0',)),
+        ('extras_dep[extra_with_met_deps]', None),
+        ('missing_dep; python_version>"10"', None),
+        ('missing_dep; python_version<="1"', None),
+        ('missing_dep; python_version>="1"', ('missing_dep; python_version>="1"',)),
+        ('extras_dep == 1.0.0', None),
+        ('extras_dep == 2.0.0', ('extras_dep == 2.0.0',)),
+        ('extras_dep[extra_without_associated_deps] == 1.0.0', None),
+        ('extras_dep[extra_without_associated_deps] == 2.0.0', ('extras_dep[extra_without_associated_deps] == 2.0.0',)),
     ],
 )
 def test_check_dependency(monkeypatch, requirement_string, expected):
-    monkeypatch.setattr(importlib_metadata, 'Distribution', BaseMockDistribution)
+    monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
 
 
