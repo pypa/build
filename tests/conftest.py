@@ -12,27 +12,49 @@ import tempfile
 
 import pytest
 
-
-def _setup():
-    """At the start of the test suite initialize the environment in case of path/wheel/sdist mode"""
-    mode = os.environ.get('TEST_MODE')
-    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src')
-    if mode == 'path':
-        sys.path.insert(0, root)
-    elif mode in ('wheel', 'sdist'):
-        env = os.environ.copy()
-        env['PYTHONPATH'] = str(root)
-        temp = tempfile.mkdtemp()
-        try:
-            cmd = [sys.executable, '-m', 'build', '--{}'.format(mode), '--no-isolation', '--outdir', str(temp)]
-            subprocess.check_output(cmd, env=env)
-            pkg = next(t for t in os.listdir(temp) if (t.endswith('.whl' if mode == 'wheel' else '.tar.gz')))
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', os.path.join(temp, pkg)])
-        finally:
-            shutil.rmtree(temp)
+from filelock import FileLock
 
 
-_setup()
+def _build_and_reinstall_build(test_mode):
+    temp = tempfile.mkdtemp()
+    try:
+        subprocess.check_output(
+            [sys.executable, '-m', 'build', '--{}'.format(test_mode), '--no-isolation', '--outdir', temp],
+        )
+        dist_file = next(d for d in os.listdir(temp) if d.endswith('.whl' if test_mode == 'wheel' else '.tar.gz'))
+        subprocess.check_call(
+            [
+                sys.executable,
+                '-m',
+                'pip',
+                'install',
+                '--upgrade',  # ``--upgrade`` will uninstall build prior to installing the ``dist_file``
+                os.path.join(temp, dist_file),
+            ],
+        )
+    finally:
+        shutil.rmtree(temp)
+
+
+def _one_time_setup():
+    test_mode = os.environ.get('TEST_MODE')
+    if not test_mode:
+        return
+
+    if test_mode == 'path':
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, os.path.join(project_root, 'src'))
+    elif test_mode in {'sdist', 'wheel'}:
+        status_marker_file = os.path.join(os.environ['TEST_STATUS_DIR'], 'status-marker')
+        with FileLock(status_marker_file + '.lock'):
+            if not os.path.exists(status_marker_file):
+                _build_and_reinstall_build(test_mode)
+
+                with open(status_marker_file, 'wb'):
+                    pass
+
+
+_one_time_setup()
 
 
 def pytest_addoption(parser):
