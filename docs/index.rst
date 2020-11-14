@@ -17,7 +17,7 @@ It is a simple build tool and does not perform any dependency management.
    A ``pyproject-build`` CLI script is also available, so that tools such as pipx_
    can use it.
 
-By default build will build the package in a isolated
+By default build will build the package in an isolated
 environment, but this behavior can be disabled with `--no-isolation`.
 
 .. toctree::
