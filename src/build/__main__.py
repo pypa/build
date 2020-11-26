@@ -42,6 +42,19 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
+def _print_info(msg):  # type: (str) -> None
+    """
+    Custom build.print_info implementation to print directly to stdout, and with
+    colors.
+    """
+    prefix = '*'
+    end = ''
+    if sys.stdout.isatty():
+        prefix = '\33[1m\33[36m' + prefix + '\33[39m'
+        end = '\33[0m'
+    print('{} {}{}'.format(prefix, msg, end))
+
+
 def _format_dep_chain(dep_chain):  # type: (Sequence[str]) -> str
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
@@ -167,6 +180,8 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
 
     :param cli_args: CLI arguments
     """
+    build.print_info = _print_info
+
     parser = main_parser()
     if prog:
         parser.prog = prog
