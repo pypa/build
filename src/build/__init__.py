@@ -7,6 +7,7 @@ __version__ = '0.1.0'
 
 import contextlib
 import difflib
+import logging
 import os
 import sys
 import warnings
@@ -48,6 +49,19 @@ class TypoWarning(Warning):
     """
     Warning raised when a potential typo is found
     """
+
+
+_logger = logging.getLogger('build')
+
+
+def print_info(msg):  # type: (str) -> None
+    """
+    Prints information
+
+    The default implementation uses the logging module but this function can be
+    overwritten by users to have a different implementation.
+    """
+    _logger.log(logging.INFO, msg, stacklevel=2)
 
 
 def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozenset()):
@@ -235,6 +249,7 @@ class ProjectBuilder(object):
             os.mkdir(outdir)
 
         try:
+            print_info('Building {}...'.format(distribution))
             with _working_directory(self.srcdir):
                 build(outdir, self.config_settings)
         except pep517.wrappers.BackendUnavailable:
