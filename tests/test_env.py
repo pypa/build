@@ -22,8 +22,9 @@ def test_isolation():
 
 
 @pytest.mark.isolated
-def test_isolated_environment_install(mocker):
-    with build.env.IsolatedEnvBuilder() as env:
+@pytest.mark.parametrize('silent', [True, False])
+def test_isolated_environment_install(mocker, capfd, silent):
+    with build.env.IsolatedEnvBuilder(silent) as env:
         mocker.patch('subprocess.check_call')
 
         env.install([])
@@ -44,38 +45,48 @@ def test_isolated_environment_install(mocker):
             '--no-warn-script-location',
             '-r',
         ]
+        out, err = capfd.readouterr()
+        if silent:
+            assert not out
+        assert not err
 
 
 @pytest.mark.isolated
-def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker):
+@pytest.mark.parametrize('silent', [True, False])
+def test_create_isolated_build_host_with_no_pip(tmp_path, capfd, mocker, silent):
     mocker.patch.object(build.env, 'pip', None)
     expected = {'pip', 'greenlet', 'readline', 'cffi'} if platform.python_implementation() == 'PyPy' else {'pip'}
 
-    with build.env.IsolatedEnvBuilder() as isolated_env:
+    with build.env.IsolatedEnvBuilder(silent) as isolated_env:
         cmd = [isolated_env.executable, '-m', 'pip', 'list', '--format', 'json']
         packages = {p['name'] for p in json.loads(subprocess.check_output(cmd, universal_newlines=True))}
         assert packages == expected
     assert isolated_env._pip_executable == isolated_env.executable
     out, err = capfd.readouterr()
-    if sys.version_info[0] == 3:
-        assert out  # ensurepip prints onto the stdout
-    else:
+    if silent:
         assert not out
+    else:
+        if sys.version_info[0] == 3:
+            assert out  # ensurepip prints onto the stdout
+        else:
+            assert not out
     assert not err
 
 
 @pytest.mark.isolated
-def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker):
-    with build.env.IsolatedEnvBuilder() as isolated_env:
+@pytest.mark.parametrize('silent', [True, False])
+def test_create_isolated_build_has_with_pip(tmp_path, capfd, mocker, silent):
+    with build.env.IsolatedEnvBuilder(silent) as isolated_env:
         pass
     assert isolated_env._pip_executable == sys.executable
     out, err = capfd.readouterr()
-    assert not out
+    if silent:
+        assert not out
     assert not err
 
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
-def test_fail_to_get_script_path(mocker):
+def test_fail_to_get_script_path(mocker, capfd):
     get_path = mocker.patch('sysconfig.get_path', return_value=None)
     with pytest.raises(RuntimeError, match="Couldn't get environment scripts path"):
         env = build.env.IsolatedEnvBuilder()

@@ -11,7 +11,7 @@ import sysconfig
 import tempfile
 
 from types import TracebackType
-from typing import Iterable, Optional, Tuple, Type
+from typing import IO, Iterable, Optional, TextIO, Tuple, Type, Union
 
 from ._compat import abstractproperty, add_metaclass
 
@@ -42,9 +42,20 @@ class IsolatedEnv(object):
 
 
 class IsolatedEnvBuilder(object):
-    def __init__(self):  # type: () -> None
-        """Builder object for isolated environment."""
+    def __init__(self, silent=True):  # type: (bool) -> None
+        """
+        Builder object for isolated environment
+
+        :param silent: Silence the output
+        """
         self._path = None  # type: Optional[str]
+        self._silent = silent
+        self._outfd = sys.stdout  # type: Union[int, TextIO, IO[str]]
+        if silent:
+            if sys.version_info[0] == 2:
+                self._outfd = open(os.devnull, 'w')
+            else:
+                self._outfd = subprocess.DEVNULL
 
     def __enter__(self):  # type: () -> IsolatedEnv
         """
@@ -54,8 +65,17 @@ class IsolatedEnvBuilder(object):
         """
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
-            executable, pip_executable = _create_isolated_env(self._path)
-            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, pip_executable=pip_executable)
+            executable, pip_executable = _create_isolated_env(
+                self._path,
+                self._silent,
+                self._outfd,
+            )
+            return _IsolatedEnvVenvPip(
+                path=self._path,
+                python_executable=executable,
+                pip_executable=pip_executable,
+                outfd=self._outfd,
+            )
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
@@ -80,18 +100,20 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     Non-standard paths injected directly to sys.path still be passed to the environment.
     """
 
-    def __init__(self, path, python_executable, pip_executable):
-        # type: (str, str, str) -> None
+    def __init__(self, path, python_executable, pip_executable, outfd):
+        # type: (str, str, str, Union[int, TextIO, IO[str]]) -> None
         """
         Define an isolated build environment.
 
         :param path: the path where the environment exists
         :param python_executable: the python executable within the environment
         :param pip_executable: an executable that allows installing packages within the environment
+        :param outfd: Output file descriptor
         """
         self._path = path
         self._pip_executable = pip_executable
         self._python_executable = python_executable
+        self._outfd = outfd
 
     @property
     def path(self):  # type: () -> str
@@ -132,14 +154,15 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
                 '-r',
                 os.path.abspath(req_file.name),
             ]
-            subprocess.check_call(cmd)
+            subprocess.check_call(cmd, stdout=self._outfd)
         finally:
             os.unlink(req_file.name)
 
 
 if sys.version_info[0] == 2:  # noqa: C901 # disable if too complex
 
-    def _create_isolated_env(path):  # type: (str) -> Tuple[str, str]
+    def _create_isolated_env(path, quiet=True, outfd=sys.stdout):
+        # type: (str, bool, Union[int, TextIO, IO[str]]) -> Tuple[str, str]
         """
         On Python 2 we use the virtualenv package to provision a virtual environment.
 
@@ -151,6 +174,8 @@ if sys.version_info[0] == 2:  # noqa: C901 # disable if too complex
         cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
         if pip is not None:
             cmd.append('--no-pip')
+        if quiet:
+            cmd.append('--quiet')
         result = cli_run(cmd, setup_logging=False)
         executable = str(result.creator.exe)
         pip_executable = executable if pip is None else sys.executable
@@ -159,7 +184,8 @@ if sys.version_info[0] == 2:  # noqa: C901 # disable if too complex
 
 else:
 
-    def _create_isolated_env(path):  # type: (str) -> Tuple[str, str]
+    def _create_isolated_env(path, quiet=True, outfd=sys.stdout):
+        # type: (str, bool, Union[int, TextIO, IO[str]]) -> Tuple[str, str]
         """
         On Python 3 we use the venv package from the standard library, and if host python has no pip the ensurepip
         package to provision one into the created virtual environment.
@@ -182,11 +208,14 @@ else:
             # Scenario 4: no pip can be found, we might be able to provision one into the build env via ensurepip
             cmd = [executable, '-Im', 'ensurepip', '--upgrade', '--default-pip']
             try:
-                subprocess.check_call(cmd, cwd=path)
+                subprocess.check_call(cmd, cwd=path, stdout=outfd)
             except subprocess.CalledProcessError:  # pragma: no cover
                 pass  # pragma: no cover
             # avoid the setuptools from ensurepip to break the isolation
-            subprocess.check_call([executable, '-Im', 'pip', 'uninstall', 'setuptools', '-y'])
+            subprocess.check_call(
+                [executable, '-Im', 'pip', 'uninstall', 'setuptools', '-y'],
+                stdout=outfd,
+            )
             pip_executable = executable
         return executable, pip_executable
 
