@@ -48,10 +48,13 @@ def _format_dep_chain(dep_chain):  # type: (Sequence[str]) -> str
 
 def _build_in_isolated_env(builder, outdir, distributions):
     # type: (ProjectBuilder, str, List[str]) -> None
-    with IsolatedEnvBuilder() as env:
-        builder.python_executable = env.executable
-        env.install(builder.build_dependencies)
-        for distribution in distributions:
+    for distribution in distributions:
+        with IsolatedEnvBuilder() as env:
+            builder.python_executable = env.executable
+            # first install the build dependencies
+            env.install(builder.build_dependencies)
+            # then get the extra required dependencies from the backend (which was installed in the call above :P)
+            env.install(builder.get_dependencies(distribution))
             builder.build(distribution, outdir)
 
 
