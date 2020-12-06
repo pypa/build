@@ -30,7 +30,7 @@ warnings.showwarning = _showwarning
 
 def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     """
-    Prints an error message and exits. Will color the output when writting to a TTY.
+    Prints an error message and exits. Will color the output when writing to a TTY.
 
     :param msg: Error message
     :param code: Error code
