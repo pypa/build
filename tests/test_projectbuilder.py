@@ -228,14 +228,14 @@ def test_build(mocker, test_flit_path, tmp_dir):
 
     builder = build.ProjectBuilder(test_flit_path)
 
-    builder._hook.build_sdist.side_effect = [None, Exception]
-    builder._hook.build_wheel.side_effect = [None, Exception]
+    builder._hook.build_sdist.side_effect = ['dist.tar.gz', Exception]
+    builder._hook.build_wheel.side_effect = ['dist.whl', Exception]
 
-    builder.build('sdist', tmp_dir)
+    assert builder.build('sdist', tmp_dir) == os.path.join(tmp_dir, 'dist.tar.gz')
     builder._hook.build_sdist.assert_called_with(tmp_dir, {})
     build._working_directory.assert_called_with(test_flit_path)
 
-    builder.build('wheel', tmp_dir)
+    assert builder.build('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist.whl')
     builder._hook.build_wheel.assert_called_with(tmp_dir, {})
     build._working_directory.assert_called_with(test_flit_path)
 

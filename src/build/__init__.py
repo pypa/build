@@ -218,12 +218,13 @@ class ProjectBuilder(object):
         dependencies = self.get_dependencies(distribution).union(self.build_dependencies)
         return {u for d in dependencies for u in check_dependency(d)}
 
-    def build(self, distribution, outdir):  # type: (str, str) -> None
+    def build(self, distribution, outdir):  # type: (str, str) -> str
         """
         Build a distribution.
 
         :param distribution: Distribution to build (``sdist`` or ``wheel``)
         :param outdir: Output directory
+        :returns: The full path to the built distribution
         """
         build = getattr(self._hook, 'build_{}'.format(distribution))
         outdir = os.path.abspath(outdir)
@@ -236,7 +237,8 @@ class ProjectBuilder(object):
 
         try:
             with _working_directory(self.srcdir):
-                build(outdir, self.config_settings)
+                basename = build(outdir, self.config_settings)  # type: str
+                return os.path.join(outdir, basename)
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
