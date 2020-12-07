@@ -282,6 +282,7 @@ def test_missing_outdir(mocker, tmp_dir, test_flit_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'
     out = os.path.join(tmp_dir, 'out')
 
     builder.build('sdist', out)
@@ -293,6 +294,7 @@ def test_relative_outdir(mocker, tmp_dir, test_flit_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'
 
     builder.build('sdist', '.')
 
@@ -303,6 +305,7 @@ def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'
     out = os.path.join(tmp_dir, 'out')
 
     open(out, 'a').close()  # create empty file
