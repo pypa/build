@@ -1,5 +1,5 @@
 [build-system]
-requires = ['setuptools >= 40.8.0', 'wheel']
+requires = ['setuptools >= 44', 'wheel', 'setuptools_scm[toml] >= 3.4.3']
 build-backend = 'setuptools.build_meta'
 
 [tool.black]
@@ -14,3 +14,5 @@ lines_after_imports = 2
 line_length = 127
 known_first_party = "build"
 skip = []  # "build" is included in the default skip list
+
+[tool.setuptools_scm]
