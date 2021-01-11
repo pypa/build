@@ -40,16 +40,21 @@ class MockDistribution(importlib_metadata.Distribution):
     def from_name(cls, name):
         if name == 'extras_dep':
             return ExtraMockDistribution()
-        elif name == 'recursive_dep':
-            return RecursiveMockDistribution()
         elif name == 'requireless_dep':
             return RequirelessMockDistribution()
+        elif name == 'recursive_dep':
+            return RecursiveMockDistribution()
+        elif name == 'prerelease_dep':
+            return PrereleaseMockDistribution()
         raise importlib_metadata.PackageNotFoundError
 
 
 class ExtraMockDistribution(MockDistribution):
     def read_text(self, filename):
-        return """
+        if filename == 'METADATA':
+            return """
+Metadata-Version: 2.2
+Name: extras_dep
 Version: 1.0.0
 Provides-Extra: extra_without_associated_deps
 Provides-Extra: extra_with_unmet_deps
@@ -61,17 +66,35 @@ Requires-Dist: recursive_dep; extra == 'recursive_extra_with_unmet_deps'
 """.strip()
 
 
+class RequirelessMockDistribution(MockDistribution):
+    def read_text(self, filename):
+        if filename == 'METADATA':
+            return """
+Metadata-Version: 2.2
+Name: requireless_dep
+Version: 1.0.0
+""".strip()
+
+
 class RecursiveMockDistribution(MockDistribution):
     def read_text(self, filename):
-        return """
+        if filename == 'METADATA':
+            return """
+Metadata-Version: 2.2
+Name: recursive_dep
 Version: 1.0.0
 Requires-Dist: recursive_unmet_dep
 """.strip()
 
 
-class RequirelessMockDistribution(MockDistribution):
+class PrereleaseMockDistribution(MockDistribution):
     def read_text(self, filename):
-        return ''
+        if filename == 'METADATA':
+            return """
+Metadata-Version: 2.2
+Name: prerelease_dep
+Version: 1.0.1a0
+""".strip()
 
 
 @pytest.mark.parametrize(
@@ -103,6 +126,7 @@ class RequirelessMockDistribution(MockDistribution):
         ('extras_dep == 2.0.0', ('extras_dep == 2.0.0',)),
         ('extras_dep[extra_without_associated_deps] == 1.0.0', None),
         ('extras_dep[extra_without_associated_deps] == 2.0.0', ('extras_dep[extra_without_associated_deps] == 2.0.0',)),
+        ('prerelease_dep >= 1.0.0', None),
     ],
 )
 def test_check_dependency(monkeypatch, requirement_string, expected):
