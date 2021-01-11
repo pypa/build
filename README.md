@@ -17,6 +17,15 @@ See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for more i
 $ pip install build
 ```
 
+### Usage
+
+```bash
+python -m build . --sdist --wheel
+```
+
+This will build the package in an isolated environment, generating a
+source-distribution and wheel in the directory `dist/`.
+
 ### Code of Conduct
 
 Everyone interacting in the build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
