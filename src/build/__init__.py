@@ -83,7 +83,7 @@ def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozens
         # dependency is not installed in the environment.
         yield ancestral_req_strings + (req_string,)
     else:
-        if req.specifier and dist.version not in req.specifier:
+        if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
             # the installed version is incompatible.
             yield ancestral_req_strings + (req_string,)
         elif dist.requires:
