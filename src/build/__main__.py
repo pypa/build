@@ -128,7 +128,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '--sdist',
         '-s',
         action='store_true',
-        help='build a source package',
+        help='build a source distribution',
     )
     parser.add_argument(
         '--wheel',
@@ -139,7 +139,6 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     parser.add_argument(
         '--outdir',
         '-o',
-        metavar='dir',
         type=str,
         help='output directory (defaults to {{srcdir}}{sep}dist)'.format(sep=os.sep),
     )
@@ -147,7 +146,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '--skip-dependencies',
         '-x',
         action='store_true',
-        help='does not check for the dependencies',
+        help='do not check that build dependencies are installed',
     )
     parser.add_argument(
         '--no-isolation',
@@ -159,7 +158,8 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '--config-setting',
         '-C',
         action='append',
-        help='pass option to the backend',
+        help='pass options to the backend.  options which begin with a hyphen must be in the form of '
+        '`--config-setting=--opt(=value)` or `-C--opt(=value)`',
     )
     return parser
 
