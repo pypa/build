@@ -180,17 +180,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
 
     if args.config_setting:
         for arg in args.config_setting:
-            if sys.version_info >= (3,):
-                data = arg.split('=', maxsplit=1)
-            else:
-                split_data = arg.split('=')
-                data = [
-                    split_data[0],
-                    '='.join(split_data[1:]),
-                ]
-            setting = data[0]
-            value = data[1] if len(data) >= 2 else ''
-
+            setting, _, value = arg.partition('=')
             if setting not in config_settings:
                 config_settings[setting] = value
             else:
