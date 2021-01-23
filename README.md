@@ -1,6 +1,6 @@
 # build
 
-![CI](https://github.com/pypa/build/workflows/check/badge.svg)
+[![CI](https://github.com/pypa/build/workflows/check/badge.svg)](https://github.com/pypa/build/actions)
 [![codecov](https://codecov.io/gh/pypa/build/branch/master/graph/badge.svg)](https://codecov.io/gh/pypa/build)
 [![Documentation Status](https://readthedocs.org/projects/pypa-build/badge/?version=latest)](https://pypa-build.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/build.svg)](https://pypi.org/project/build/)
