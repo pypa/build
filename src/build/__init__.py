@@ -62,7 +62,7 @@ def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozens
     import packaging.requirements
 
     if sys.version_info >= (3, 8):
-        from importlib import metadata as importlib_metadata
+        import importlib.metadata as importlib_metadata
     else:
         import importlib_metadata
 
