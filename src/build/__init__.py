@@ -168,6 +168,7 @@ class ProjectBuilder(object):
             python_executable=python_executable,
             runner=self._runner,
         )
+        self._prepared_metadata_directories = {}  # type: Dict[str, str]
 
     def _runner(self, cmd, cwd=None, extra_environ=None):
         # type: (Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]) -> None
@@ -247,6 +248,36 @@ class ProjectBuilder(object):
         dependencies = self.get_dependencies(distribution, config_settings).union(self.build_dependencies)
         return {u for d in dependencies for u in check_dependency(d)}
 
+    def prepare(self, distribution, outdir, config_settings=None):
+        # type: (str, str, Optional[ConfigSettings]) -> Optional[str]
+        """
+        Prepare metadata for a distribution.
+
+        :param distribution: Distribution to build (must be ``wheel``)
+        :param outdir: Output directory
+        :returns: The full path to the prepared metadata directory
+        """
+        prepare = getattr(self._hook, 'prepare_metadata_for_build_{}'.format(distribution))
+        outdir = os.path.abspath(outdir)
+
+        if os.path.exists(outdir):
+            if not os.path.isdir(outdir):
+                raise BuildException("Build path '{}' exists and is not a directory".format(outdir))
+        else:
+            os.mkdir(outdir)
+
+        try:
+            with _working_directory(self.srcdir):
+                basename = prepare(outdir, config_settings, _allow_fallback=False)  # type: str
+            self._prepared_metadata_directories[distribution] = path = os.path.join(outdir, basename)
+        except pep517.wrappers.BackendUnavailable:
+            raise BuildException("Backend '{}' is not available.".format(self._backend))
+        except pep517.wrappers.HookMissing:
+            return None
+        except Exception as e:  # noqa: E722
+            raise BuildBackendException('Backend operation failed: {!r}'.format(e))
+        return path
+
     def build(self, distribution, outdir, config_settings=None):  # type: (str, str, Optional[ConfigSettings]) -> str
         """
         Build a distribution.
@@ -266,8 +297,15 @@ class ProjectBuilder(object):
             os.mkdir(outdir)
 
         try:
+            metadata_directory = self._prepared_metadata_directories.pop(distribution)
+        except KeyError:
+            kwargs = {}  # type: Dict[str, str]
+        else:
+            kwargs = {'metadata_directory': metadata_directory}
+
+        try:
             with _working_directory(self.srcdir):
-                basename = build(outdir, config_settings)  # type: str
+                basename = build(outdir, config_settings, **kwargs)  # type: str
                 return os.path.join(outdir, basename)
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
