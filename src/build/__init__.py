@@ -116,17 +116,15 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir, config_settings=None, python_executable=sys.executable):
-        # type: (str, Optional[ConfigSettings], Union[bytes, Text]) -> None
+    def __init__(self, srcdir, python_executable=sys.executable):
+        # type: (str, Union[bytes, Text]) -> None
         """
         Create a project builder.
 
         :param srcdir: the source directory
-        :param config_settings: config settings for the build backend
         :param python_executable: the python executable where the backend lives
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
-        self.config_settings = config_settings if config_settings else {}  # type: ConfigSettings
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
@@ -188,42 +186,46 @@ class ProjectBuilder(object):
         """
         return set(self._build_system['requires'])
 
-    def get_dependencies(self, distribution):  # type: (str) -> Set[str]
+    def get_dependencies(self, distribution, config_settings=None):  # type: (str, Optional[ConfigSettings]) -> Set[str]
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_dependencies` for a given distribution.
 
         :param distribution: Distribution to get the dependencies of
             (``sdist`` or ``wheel``)
+        :param config_settings: Config settings for the build backend
         """
         get_requires = getattr(self._hook, 'get_requires_for_build_{}'.format(distribution))
 
         try:
             with _working_directory(self.srcdir):
-                return set(get_requires(self.config_settings))
+                return set(get_requires(config_settings))
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
         except Exception as e:  # noqa: E722
             raise BuildBackendException('Backend operation failed: {}'.format(e))
 
-    def check_dependencies(self, distribution):  # type: (str) -> Set[Tuple[str, ...]]
+    def check_dependencies(self, distribution, config_settings=None):
+        # type: (str, Optional[ConfigSettings]) -> Set[Tuple[str, ...]]
         """
         Return the dependencies which are not satisfied from the combined set of
         :attr:`build_dependencies` and :meth:`get_dependencies` for a given
         distribution.
 
         :param distribution: Distribution to check (``sdist`` or ``wheel``)
+        :param config_settings: Config settings for the build backend
         :returns: Set of variable-length unmet dependency tuples
         """
-        dependencies = self.get_dependencies(distribution).union(self.build_dependencies)
+        dependencies = self.get_dependencies(distribution, config_settings).union(self.build_dependencies)
         return {u for d in dependencies for u in check_dependency(d)}
 
-    def build(self, distribution, outdir):  # type: (str, str) -> str
+    def build(self, distribution, outdir, config_settings=None):  # type: (str, str, Optional[ConfigSettings]) -> str
         """
         Build a distribution.
 
         :param distribution: Distribution to build (``sdist`` or ``wheel``)
         :param outdir: Output directory
+        :param config_settings: Config settings for the build backend
         :returns: The full path to the built distribution
         """
         build = getattr(self._hook, 'build_{}'.format(distribution))
@@ -237,7 +239,7 @@ class ProjectBuilder(object):
 
         try:
             with _working_directory(self.srcdir):
-                basename = build(outdir, self.config_settings)  # type: str
+                basename = build(outdir, config_settings)  # type: str
                 return os.path.join(outdir, basename)
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))

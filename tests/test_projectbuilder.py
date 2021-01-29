@@ -256,11 +256,11 @@ def test_build(mocker, test_flit_path, tmp_dir):
     builder._hook.build_wheel.side_effect = ['dist.whl', Exception]
 
     assert builder.build('sdist', tmp_dir) == os.path.join(tmp_dir, 'dist.tar.gz')
-    builder._hook.build_sdist.assert_called_with(tmp_dir, {})
+    builder._hook.build_sdist.assert_called_with(tmp_dir, None)
     build._working_directory.assert_called_with(test_flit_path)
 
     assert builder.build('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist.whl')
-    builder._hook.build_wheel.assert_called_with(tmp_dir, {})
+    builder._hook.build_wheel.assert_called_with(tmp_dir, None)
     build._working_directory.assert_called_with(test_flit_path)
 
     with pytest.raises(build.BuildBackendException):
@@ -322,7 +322,7 @@ def test_relative_outdir(mocker, tmp_dir, test_flit_path):
 
     builder.build('sdist', '.')
 
-    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), {})
+    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)
 
 
 def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):

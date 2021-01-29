@@ -46,8 +46,8 @@ def _format_dep_chain(dep_chain):  # type: (Sequence[str]) -> str
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
 
-def _build_in_isolated_env(builder, outdir, distributions):
-    # type: (ProjectBuilder, str, List[str]) -> None
+def _build_in_isolated_env(builder, outdir, distributions, config_settings):
+    # type: (ProjectBuilder, str, List[str], ConfigSettings) -> None
     for distribution in distributions:
         with IsolatedEnvBuilder() as env:
             builder.python_executable = env.executable
@@ -55,11 +55,11 @@ def _build_in_isolated_env(builder, outdir, distributions):
             env.install(builder.build_dependencies)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
             env.install(builder.get_dependencies(distribution))
-            builder.build(distribution, outdir)
+            builder.build(distribution, outdir, config_settings)
 
 
-def _build_in_current_env(builder, outdir, distributions, skip_dependencies=False):
-    # type: (ProjectBuilder, str, List[str], bool) -> None
+def _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependencies=False):
+    # type: (ProjectBuilder, str, List[str], ConfigSettings, bool) -> None
     for dist in distributions:
         if not skip_dependencies:
             missing = builder.check_dependencies(dist)
@@ -69,7 +69,7 @@ def _build_in_current_env(builder, outdir, distributions, skip_dependencies=Fals
                     + ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
                 )
 
-        builder.build(dist, outdir)
+        builder.build(dist, outdir, config_settings)
 
 
 def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
@@ -88,11 +88,11 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
         config_settings = {}
 
     try:
-        builder = ProjectBuilder(srcdir, config_settings)
+        builder = ProjectBuilder(srcdir)
         if isolation:
-            _build_in_isolated_env(builder, outdir, distributions)
+            _build_in_isolated_env(builder, outdir, distributions, config_settings)
         else:
-            _build_in_current_env(builder, outdir, distributions, skip_dependencies)
+            _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependencies)
     except BuildException as e:
         _error(str(e))
     except BuildBackendException as e:
