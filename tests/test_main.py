@@ -118,7 +118,7 @@ def test_build_isolated(mocker, test_flit_path):
     required_cmd.assert_called_with('sdist')
     install.assert_any_call(['dep1', 'dep2'])
 
-    build_cmd.assert_called_with('sdist', '.')
+    build_cmd.assert_called_with('sdist', '.', {})
 
 
 def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
@@ -128,7 +128,7 @@ def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'], isolation=False)
 
-    build_cmd.assert_called_with('sdist', '.')
+    build_cmd.assert_called_with('sdist', '.', {})
 
 
 @pytest.mark.parametrize(
@@ -145,7 +145,7 @@ def test_build_no_isolation_with_check_deps(mocker, test_flit_path, missing_deps
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'], isolation=False)
 
-    build_cmd.assert_called_with('sdist', '.')
+    build_cmd.assert_called_with('sdist', '.', {})
     error.assert_called_with('Missing dependencies:' + output)
 
 
