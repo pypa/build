@@ -321,7 +321,7 @@ def test_relative_outdir(mocker, tmp_dir, test_flit_path):
     builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)
 
 
-def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):
+def test_build_not_dir_outdir(mocker, tmp_dir, test_flit_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
@@ -384,3 +384,49 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     path_vars = lines[0].split(os.pathsep)
     which_detected = lines[1]
     assert which_detected.startswith(path_vars[0]), out
+
+
+def test_prepare(mocker, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('build._working_directory', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'
+
+    assert builder.prepare('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist-1.0.dist-info')
+    builder._hook.prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)
+    build._working_directory.assert_called_with(test_flit_path)
+
+
+def test_prepare_no_hook(mocker, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.prepare_metadata_for_build_wheel.side_effect = pep517.wrappers.HookMissing(
+        'prepare_metadata_for_build_wheel'
+    )
+
+    assert builder.prepare('wheel', tmp_dir) is None
+
+
+def test_prepare_error(mocker, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.prepare_metadata_for_build_wheel.side_effect = Exception
+
+    with pytest.raises(build.BuildBackendException):
+        builder.prepare('wheel', tmp_dir)
+
+
+def test_prepare_not_dir_outdir(mocker, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+
+    out = os.path.join(tmp_dir, 'out')
+    with open(out, 'w') as f:
+        f.write('Not a directory')
+
+    with pytest.raises(build.BuildException):
+        builder.prepare('wheel', out)
