@@ -247,23 +247,24 @@ class ProjectBuilder(object):
         dependencies = self.get_dependencies(distribution, config_settings).union(self.build_dependencies)
         return {u for d in dependencies for u in check_dependency(d)}
 
-    def prepare(self, distribution, outdir, config_settings=None):
+    def prepare(self, distribution, output_directory, config_settings=None):
         # type: (str, str, Optional[ConfigSettings]) -> Optional[str]
         """
         Prepare metadata for a distribution.
 
         :param distribution: Distribution to build (must be ``wheel``)
-        :param outdir: Output directory
+        :param output_directory: Directory to put the prepared metadata in
+        :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
         prepare = getattr(self._hook, 'prepare_metadata_for_build_{}'.format(distribution))
-        outdir = os.path.abspath(outdir)
+        outdir = os.path.abspath(output_directory)
 
-        if os.path.exists(outdir):
-            if not os.path.isdir(outdir):
-                raise BuildException("Build path '{}' exists and is not a directory".format(outdir))
+        if os.path.exists(output_directory):
+            if not os.path.isdir(output_directory):
+                raise BuildException("Build path '{}' exists and is not a directory".format(output_directory))
         else:
-            os.mkdir(outdir)
+            os.mkdir(output_directory)
 
         try:
             with _working_directory(self.srcdir):
