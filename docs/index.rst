@@ -31,6 +31,7 @@ environment, but this behavior can be disabled with `--no-isolation`.
    :hidden:
 
    installation
+   changelog
    api
 
    Source Code <https://github.com/pypa/build/>
