@@ -32,8 +32,8 @@ class IsolatedEnv(object):
         raise NotImplementedError
 
     @abstractproperty
-    def script_dir(self):  # type: () -> str
-        """Return the executable of the isolated build environment."""
+    def scripts_dir(self):  # type: () -> str
+        """Return the scripts directory of the isolated build environment."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -61,10 +61,10 @@ class IsolatedEnvBuilder(object):
         try:
             # use virtualenv on Python 2 (no stdlib venv) or when virtualenv is available (as it's faster than venv)
             if sys.version_info[0] == 2 or virtualenv is not None:
-                executable, script_dir = _create_isolated_env_virtualenv(self._path)
+                executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
-                executable, script_dir = _create_isolated_env_venv(self._path)
-            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, script_dir=script_dir)
+                executable, scripts_dir = _create_isolated_env_venv(self._path)
+            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, scripts_dir=scripts_dir)
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
@@ -89,7 +89,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     Non-standard paths injected directly to sys.path still be passed to the environment.
     """
 
-    def __init__(self, path, python_executable, script_dir):
+    def __init__(self, path, python_executable, scripts_dir):
         # type: (str, str, str) -> None
         """
         Define an isolated build environment.
@@ -99,7 +99,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         """
         self._path = path
         self._python_executable = python_executable
-        self._script_dir = script_dir
+        self._scripts_dir = scripts_dir
 
     @property
     def path(self):  # type: () -> str
@@ -112,8 +112,8 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         return self._python_executable
 
     @property
-    def script_dir(self):  # type: () -> str
-        return self._script_dir
+    def scripts_dir(self):  # type: () -> str
+        return self._scripts_dir
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         """
@@ -192,7 +192,7 @@ def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str]
     exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
     if os.name == 'nt':
         exe = '{}.exe'.format(exe)
-    executable = os.path.join(path, env_scripts, exe)
+    executable = os.path.join(env_scripts, exe)
     if not os.path.exists(executable):
         raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
     return executable, env_scripts

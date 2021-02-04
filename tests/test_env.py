@@ -59,6 +59,7 @@ def test_fail_to_get_script_path(mocker):
 
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
+@pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
     mocker.patch.object(build.env, 'virtualenv', None)
     original_get_path = sysconfig.get_path

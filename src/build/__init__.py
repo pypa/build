@@ -158,7 +158,7 @@ class ProjectBuilder(object):
 
         self._build_system = build_system
         self._backend = self._build_system['build-backend']
-        self.script_dir = os.path.dirname(python_executable) if scripts_dir is None else scripts_dir
+        self._scripts_dir = scripts_dir
         self._hook = pep517.wrappers.Pep517HookCaller(
             self.srcdir,
             self._backend,
@@ -170,11 +170,13 @@ class ProjectBuilder(object):
     def _runner(self, cmd, cwd=None, extra_environ=None):
         # type: (Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]) -> None
         # if script dir is specified must be inserted at the start of PATH (avoid duplicate path while doing so)
-        paths = OrderedDict()  # type:  Dict[str, None]
-        paths[str(self.script_dir)] = None
-        paths.update((i, None) for i in os.environ.get('PATH', '').split(os.pathsep))
-        extra_environ = {} if extra_environ is None else extra_environ
-        extra_environ['PATH'] = os.pathsep.join(paths)
+        if self.scripts_dir is not None:
+            paths = OrderedDict()  # type:  Dict[str, None]
+            paths[str(self.scripts_dir)] = None
+            if 'PATH' in os.environ:
+                paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
+            extra_environ = {} if extra_environ is None else extra_environ
+            extra_environ['PATH'] = os.pathsep.join(paths)
         pep517.default_subprocess_runner(cmd, cwd, extra_environ)
 
     @property
@@ -189,6 +191,17 @@ class ProjectBuilder(object):
     @python_executable.setter
     def python_executable(self, value):  # type: (Union[bytes, Text]) -> None
         self._hook.python_executable = value
+
+    @property
+    def scripts_dir(self):  # type: () -> Union[None, bytes, Text]
+        """
+        The folder where the scripts are stored for the python executable.
+        """
+        return self._scripts_dir
+
+    @scripts_dir.setter
+    def scripts_dir(self, value):  # type: (Union[None, bytes, Text]) -> None
+        self._scripts_dir = value
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]

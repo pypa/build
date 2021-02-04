@@ -5,9 +5,8 @@ from __future__ import unicode_literals
 import copy
 import os
 import sys
+import textwrap
 import typing
-
-from textwrap import dedent
 
 import pep517.wrappers
 import pytest
@@ -354,8 +353,8 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
     # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
     toml = '[build-system]\nrequires = ["demo_pkg_inline"]\nbuild-backend = "build"\nbackend-path = ["."]\n'
-    code = dedent(
-        """
+    code = textwrap.dedent(
+        '''
         import os
         import sys
         print("BB " + os.environ["PATH"])
@@ -368,7 +367,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
             if not os.path.exists(exe_at):
                 exe_at = None
         print("BB " + exe_at)
-    """
+        '''
     )
     (tmp_path / 'pyproject.toml').write_text(toml)
     (tmp_path / 'build.py').write_text(code)
