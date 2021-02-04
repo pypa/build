@@ -132,7 +132,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         try:
             cmd = [
                 self.executable,
-                '-{}m'.format('E' if sys.version_info[0] == 2 else ''),
+                '-{}m'.format('E' if sys.version_info[0] == 2 else 'I'),
                 'pip',
                 'install',
                 '--no-warn-script-location',
