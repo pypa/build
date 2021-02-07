@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.2.0 (07-02-2021)
+==================
 
 - Check dependencies recursively (`PR #183`_, Fixes `#25`_)
 - Build wheel and sdist distributions in separate environments, as they may have different dependencies (`PR #195`_, Fixes `#194`_)
