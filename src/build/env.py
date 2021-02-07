@@ -17,9 +17,9 @@ from ._compat import abstractproperty, add_metaclass
 
 
 try:
-    import pip
+    import virtualenv
 except ImportError:  # pragma: no cover
-    pip = None  # pragma: no cover
+    virtualenv = None  # pragma: no cover
 
 
 @add_metaclass(abc.ABCMeta)
@@ -29,6 +29,11 @@ class IsolatedEnv(object):
     @abstractproperty
     def executable(self):  # type: () -> str
         """Return the executable of the isolated build environment."""
+        raise NotImplementedError
+
+    @abstractproperty
+    def scripts_dir(self):  # type: () -> str
+        """Return the scripts directory of the isolated build environment."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -54,8 +59,12 @@ class IsolatedEnvBuilder(object):
         """
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
-            executable, pip_executable = _create_isolated_env(self._path)
-            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, pip_executable=pip_executable)
+            # use virtualenv on Python 2 (no stdlib venv) or when virtualenv is available (as it's faster than venv)
+            if sys.version_info[0] == 2 or virtualenv is not None:
+                executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
+            else:
+                executable, scripts_dir = _create_isolated_env_venv(self._path)
+            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, scripts_dir=scripts_dir)
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
@@ -80,18 +89,17 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     Non-standard paths injected directly to sys.path still be passed to the environment.
     """
 
-    def __init__(self, path, python_executable, pip_executable):
+    def __init__(self, path, python_executable, scripts_dir):
         # type: (str, str, str) -> None
         """
         Define an isolated build environment.
 
         :param path: the path where the environment exists
         :param python_executable: the python executable within the environment
-        :param pip_executable: an executable that allows installing packages within the environment
         """
         self._path = path
-        self._pip_executable = pip_executable
         self._python_executable = python_executable
+        self._scripts_dir = scripts_dir
 
     @property
     def path(self):  # type: () -> str
@@ -102,6 +110,10 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     def executable(self):  # type: () -> str
         """:return: the python executable of the isolated build environment"""
         return self._python_executable
+
+    @property
+    def scripts_dir(self):  # type: () -> str
+        return self._scripts_dir
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         """
@@ -119,15 +131,10 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
             req_file.write(os.linesep.join(requirements))
         try:
             cmd = [
-                self._pip_executable,
-                # on python2 if isolation is achieved via environment variables, we need to ignore those while calling
-                # host python (otherwise pip would not be available within it)
-                '-{}m'.format('E' if self._pip_executable == self.executable and sys.version_info[0] == 2 else ''),
+                self.executable,
+                '-{}m'.format('E' if sys.version_info[0] == 2 else 'I'),
                 'pip',
                 'install',
-                '--prefix',
-                self.path,
-                '--ignore-installed',
                 '--no-warn-script-location',
                 '-r',
                 os.path.abspath(req_file.name),
@@ -137,78 +144,58 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
             os.unlink(req_file.name)
 
 
-if sys.version_info[0] == 2:  # noqa: C901 # disable if too complex
+def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
+    """
+    On Python 2 we use the virtualenv package to provision a virtual environment.
 
-    def _create_isolated_env(path):  # type: (str) -> Tuple[str, str]
-        """
-        On Python 2 we use the virtualenv package to provision a virtual environment.
-
-        :param path: the folder where to create the isolated build environment
-        :return: the isolated build environment executable, and the pip to use to install packages into it
-        """
-        from virtualenv import cli_run
-
-        cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
-        if pip is not None:
-            cmd.append('--no-pip')
-        result = cli_run(cmd, setup_logging=False)
-        executable = str(result.creator.exe)
-        pip_executable = executable if pip is None else sys.executable
-        return executable, pip_executable
+    :param path: the folder where to create the isolated build environment
+    :return: the isolated build environment executable, and the pip to use to install packages into it
+    """
+    cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
+    result = virtualenv.cli_run(cmd, setup_logging=False)
+    executable = str(result.creator.exe)
+    script_dir = str(result.creator.script_dir)
+    return executable, script_dir
 
 
-else:
+def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
+    """
+    On Python 3 we use the venv package from the standard library, and if host python has no pip the ensurepip
+    package to provision one into the created virtual environment.
 
-    def _create_isolated_env(path):  # type: (str) -> Tuple[str, str]
-        """
-        On Python 3 we use the venv package from the standard library, and if host python has no pip the ensurepip
-        package to provision one into the created virtual environment.
+    :param path: the folder where to create the isolated build environment
+    :return: the isolated build environment executable, and the pip to use to install packages into it
+    """
+    import venv
 
-        :param path: the folder where to create the isolated build environment
-        :return: the isolated build environment executable, and the pip to use to install packages into it
-        """
-        import venv
+    venv.EnvBuilder(with_pip=True).create(path)
+    executable, script_dir = _find_executable_and_scripts(path)
+    # avoid the setuptools from ensurepip to break the isolation
+    if sys.version_info[0:2] == (3, 5):  # python3.5 by default comes with pip 9 that's too old, for new standards
+        subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
+    subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+    return executable, script_dir
 
-        venv.EnvBuilder(with_pip=False).create(path)
-        executable = _find_executable(path)
 
-        # Scenario 1: pip is available (either installed or via pth file) within the python executable alongside
-        # this projects environment: in this case we should be able to import it
-        if pip is not None:
-            pip_executable = sys.executable
-        else:
-            # Scenario 2: this project is installed into a virtual environment that has no pip, but the system has
-            # Scenario 3: there's a pip executable on PATH
-            # Scenario 4: no pip can be found, we might be able to provision one into the build env via ensurepip
-            cmd = [executable, '-Im', 'ensurepip', '--upgrade', '--default-pip']
-            try:
-                subprocess.check_call(cmd, cwd=path)
-            except subprocess.CalledProcessError:  # pragma: no cover
-                pass  # pragma: no cover
-            # avoid the setuptools from ensurepip to break the isolation
-            subprocess.check_call([executable, '-Im', 'pip', 'uninstall', 'setuptools', '-y'])
-            pip_executable = executable
-        return executable, pip_executable
+def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str]
+    """
+    Detect the executable within a virtual environment.
 
-    def _find_executable(path):  # type: (str) -> str
-        """
-        Detect the executable within a virtual environment.
-
-        :param path: the location of the virtual environment
-        :return: the python executable
-        """
-        config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
-        config_vars['base'] = path
-        env_scripts = sysconfig.get_path('scripts', vars=config_vars)
-        if not env_scripts:
-            raise RuntimeError("Couldn't get environment scripts path")
-        exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
-        if os.name == 'nt':
-            exe = '{}.exe'.format(exe)
-        executable = os.path.join(path, env_scripts, exe)
-        if not os.path.exists(executable):
-            raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
-        return executable
+    :param path: the location of the virtual environment
+    :return: the python executable
+    """
+    config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
+    config_vars['base'] = path
+    env_scripts = sysconfig.get_path('scripts', vars=config_vars)
+    if not env_scripts:
+        raise RuntimeError("Couldn't get environment scripts path")
+    exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
+    if os.name == 'nt':
+        exe = '{}.exe'.format(exe)
+    executable = os.path.join(env_scripts, exe)
+    if not os.path.exists(executable):
+        raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
+    return executable, env_scripts
 
 
 __all__ = (

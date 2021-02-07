@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import copy
 import os
 import sys
+import textwrap
 import typing
 
 import pep517.wrappers
@@ -138,32 +139,27 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # correct flit pyproject.toml
-    build.ProjectBuilder(test_flit_path)
+    builder = build.ProjectBuilder(test_flit_path)
     pep517.wrappers.Pep517HookCaller.assert_called_with(
-        test_flit_path,
-        'flit_core.buildapi',
-        backend_path=None,
-        python_executable=sys.executable,
+        test_flit_path, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable, runner=builder._runner
     )
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # custom python
-    build.ProjectBuilder(test_flit_path, python_executable='some-python')
+    builder = build.ProjectBuilder(test_flit_path, python_executable='some-python')
     pep517.wrappers.Pep517HookCaller.assert_called_with(
-        test_flit_path,
-        'flit_core.buildapi',
-        backend_path=None,
-        python_executable='some-python',
+        test_flit_path, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
     )
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # FileNotFoundError
-    build.ProjectBuilder(legacy_path)
+    builder = build.ProjectBuilder(legacy_path)
     pep517.wrappers.Pep517HookCaller.assert_called_with(
         legacy_path,
         'setuptools.build_meta:__legacy__',
         backend_path=None,
         python_executable=sys.executable,
+        runner=builder._runner,
     )
 
     # PermissionError
@@ -336,3 +332,55 @@ def test_not_dir_outdir(mocker, tmp_dir, test_flit_path):
 
     with pytest.raises(build.BuildException):
         builder.build('sdist', out)
+
+
+@pytest.fixture(scope='session')
+def demo_pkg_inline(tmp_path_factory):
+    # builds a wheel without any dependencies and with a console script demo-pkg-inline
+    tmp_path = tmp_path_factory.mktemp('demo-pkg-inline')
+    builder = build.ProjectBuilder(srcdir=os.path.join(os.path.dirname(__file__), 'packages', 'inline'))
+    out = tmp_path / 'dist'
+    builder.build('wheel', str(out))
+    return next(out.iterdir())
+
+
+@pytest.mark.isolated
+def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mocker):
+    """
+    All command-line scripts provided by the build-required packages must be present in the build environment's PATH.
+    """
+    # we first install install demo pkg inline as build dependency (as this provides a console script we can check)
+    # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
+    # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
+    toml = '[build-system]\nrequires = ["demo_pkg_inline"]\nbuild-backend = "build"\nbackend-path = ["."]\n'
+    code = textwrap.dedent(
+        '''
+        import os
+        import sys
+        print("BB " + os.environ["PATH"])
+        if sys.version_info[0] == 3:
+            import shutil
+            exe_at = shutil.which("demo-pkg-inline")
+        else:
+            paths = os.environ["PATH"].split(os.pathsep)
+            exe_at = os.path.join(paths[0], "demo-pkg-inline{}".format(".exe" if sys.platform == "win32" else ""))
+            if not os.path.exists(exe_at):
+                exe_at = None
+        print("BB " + exe_at)
+        '''
+    )
+    (tmp_path / 'pyproject.toml').write_text(toml)
+    (tmp_path / 'build.py').write_text(code)
+
+    deps = {str(demo_pkg_inline)}  # we patch the requires demo_pkg_inline to refer to the wheel -> we don't need index
+    mocker.patch('build.ProjectBuilder.build_dependencies', new_callable=mocker.PropertyMock, return_value=deps)
+    from build.__main__ import main
+
+    with pytest.raises(SystemExit):
+        main(['--wheel', '--outdir', str(tmp_path / 'dist'), str(tmp_path)])
+
+    out, err = capfd.readouterr()
+    lines = [line[3:] for line in out.splitlines() if line.startswith('BB ')]  # filter for our markers
+    path_vars = lines[0].split(os.pathsep)
+    which_detected = lines[1]
+    assert which_detected.startswith(path_vars[0]), out

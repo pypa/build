@@ -11,7 +11,8 @@ import os
 import sys
 import warnings
 
-from typing import AbstractSet, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
+from collections import OrderedDict
+from typing import AbstractSet, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
 
 import pep517.wrappers
 import toml
@@ -116,12 +117,13 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 
 class ProjectBuilder(object):
-    def __init__(self, srcdir, python_executable=sys.executable):
-        # type: (str, Union[bytes, Text]) -> None
+    def __init__(self, srcdir, python_executable=sys.executable, scripts_dir=None):
+        # type: (str, Union[bytes, Text], Optional[Union[bytes, Text]]) -> None
         """
         Create a project builder.
 
         :param srcdir: the source directory
+        :param scripts_dir: the location of the scripts dir (defaults to the folder where the python executable lives)
         :param python_executable: the python executable where the backend lives
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
@@ -156,13 +158,26 @@ class ProjectBuilder(object):
 
         self._build_system = build_system
         self._backend = self._build_system['build-backend']
-
+        self._scripts_dir = scripts_dir
         self._hook = pep517.wrappers.Pep517HookCaller(
             self.srcdir,
             self._backend,
             backend_path=self._build_system.get('backend-path'),
             python_executable=python_executable,
+            runner=self._runner,
         )
+
+    def _runner(self, cmd, cwd=None, extra_environ=None):
+        # type: (Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]) -> None
+        # if script dir is specified must be inserted at the start of PATH (avoid duplicate path while doing so)
+        if self.scripts_dir is not None:
+            paths = OrderedDict()  # type:  Dict[str, None]
+            paths[str(self.scripts_dir)] = None
+            if 'PATH' in os.environ:
+                paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
+            extra_environ = {} if extra_environ is None else extra_environ
+            extra_environ['PATH'] = os.pathsep.join(paths)
+        pep517.default_subprocess_runner(cmd, cwd, extra_environ)
 
     @property
     def python_executable(self):  # type: () -> Union[bytes, Text]
@@ -176,6 +191,17 @@ class ProjectBuilder(object):
     @python_executable.setter
     def python_executable(self, value):  # type: (Union[bytes, Text]) -> None
         self._hook.python_executable = value
+
+    @property
+    def scripts_dir(self):  # type: () -> Union[None, bytes, Text]
+        """
+        The folder where the scripts are stored for the python executable.
+        """
+        return self._scripts_dir
+
+    @scripts_dir.setter
+    def scripts_dir(self, value):  # type: (Union[None, bytes, Text]) -> None
+        self._scripts_dir = value
 
     @property
     def build_dependencies(self):  # type: () -> Set[str]
