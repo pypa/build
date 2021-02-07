@@ -9,6 +9,7 @@ Unreleased
 - Check dependencies recursively (`PR #183`_, Fixes `#25`_)
 - Build wheel and sdist distributions in separate environments, as they may have different dependencies (`PR #195`_, Fixes `#194`_)
 - Add support for pre-releases in ``check_dependency`` (`PR #204`_, Fixes `#191`_)
+- Fixes console scripts not being available during build (`PR #221`_, Fixes `#214`_)
 - Do not add the default backend requirements to ``requires`` when no backend is specified (`PR #177`_, Fixes `#107`_)
 - Return the sdist name in ``ProjectBuild.build`` (`PR #197`_)
 - Improve documentation (`PR #178`_, `PR #203`_)
@@ -28,12 +29,14 @@ Breaking changes
 .. _PR #204: https://github.com/pypa/build/pull/204
 .. _PR #218: https://github.com/pypa/build/pull/218
 .. _PR #219: https://github.com/pypa/build/pull/219
+.. _PR #221: https://github.com/pypa/build/pull/221
 .. _#25: https://github.com/pypa/build/issues/25
 .. _#107: https://github.com/pypa/build/issues/107
 .. _#109: https://github.com/pypa/build/issues/109
 .. _#169: https://github.com/pypa/build/issues/169
 .. _#191: https://github.com/pypa/build/issues/191
 .. _#194: https://github.com/pypa/build/issues/194
+.. _#214: https://github.com/pypa/build/issues/214
 .. _#216: https://github.com/pypa/build/issues/216
 
 
