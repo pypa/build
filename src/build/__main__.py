@@ -30,7 +30,7 @@ warnings.showwarning = _showwarning
 
 def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     """
-    Prints an error message and exits. Will color the output when writing to a TTY.
+    Print an error message and exit. Will color the output when writing to a TTY.
 
     :param msg: Error message
     :param code: Error code
@@ -76,7 +76,7 @@ def _build_in_current_env(builder, outdir, distributions, config_settings, skip_
 def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
     # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
     """
-    Runs the build process
+    Run the build process.
 
     :param srcdir: Source directory
     :param outdir: Output directory
@@ -106,7 +106,7 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
 
 def main_parser():  # type: () -> argparse.ArgumentParser
     """
-    Constructs the main parser
+    Construct the main parser.
     """
     # mypy does not recognize module.__path__
     # https://github.com/python/mypy/issues/1422
@@ -167,9 +167,10 @@ def main_parser():  # type: () -> argparse.ArgumentParser
 
 def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     """
-    Parses the CLI arguments and invokes the build process.
+    Parse the CLI arguments and invoke the build process.
 
     :param cli_args: CLI arguments
+    :param prog: Program name to show in help text
     """
     parser = main_parser()
     if prog:
