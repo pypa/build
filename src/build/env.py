@@ -171,7 +171,7 @@ def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
     venv.EnvBuilder(with_pip=True).create(path)
     executable, script_dir = _find_executable_and_scripts(path)
     # avoid the setuptools from ensurepip to break the isolation
-    if sys.version_info[0:2] == (3, 5):  # python3.5 by default comes with pip 9 that's too old, for new standards
+    if sys.version_info < (3, 6, 6):  # python 3.5 up to 3.6.5 come with pip 9 that's too old, for new standards
         subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
     subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
     return executable, script_dir

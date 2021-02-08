@@ -97,3 +97,10 @@ def test_isolated_env_has_install_still_abstract():
 
     with pytest.raises(TypeError):
         Env()
+
+
+@pytest.mark.isolated
+@pytest.mark.skipif(sys.version_info > (3, 6, 5), reason='inapplicable')
+def test_default_pip_is_upgraded_on_python_3_6_5_and_below():
+    with build.env.IsolatedEnvBuilder() as env:
+        assert not subprocess.check_output([env.executable, '-m', 'pip', '-V']).startswith(b'pip 9.0')
