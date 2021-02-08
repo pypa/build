@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-build - A simple, correct PEP517 package builder
+build - A simple, correct PEP 517 package builder
 """
 __version__ = '0.2.0'
 
@@ -117,14 +117,16 @@ def _working_directory(path):  # type: (str) -> Iterator[None]
 
 
 class ProjectBuilder(object):
+    """
+    The PEP 517 consumer API.
+    """
+
     def __init__(self, srcdir, python_executable=sys.executable, scripts_dir=None):
         # type: (str, Union[bytes, Text], Optional[Union[bytes, Text]]) -> None
         """
-        Create a project builder.
-
-        :param srcdir: the source directory
-        :param scripts_dir: the location of the scripts dir (defaults to the folder where the python executable lives)
-        :param python_executable: the python executable where the backend lives
+        :param srcdir: The source directory
+        :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
+        :param python_executable: The python executable where the backend lives
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
 

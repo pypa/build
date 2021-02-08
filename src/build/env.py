@@ -28,34 +28,35 @@ class IsolatedEnv(object):
 
     @abstractproperty
     def executable(self):  # type: () -> str
-        """Return the executable of the isolated build environment."""
+        """The executable of the isolated build environment."""
         raise NotImplementedError
 
     @abstractproperty
     def scripts_dir(self):  # type: () -> str
-        """Return the scripts directory of the isolated build environment."""
+        """The scripts directory of the isolated build environment."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def install(self, requirements):  # type: (Iterable[str]) -> None
         """
-        Install PEP-508 requirements into the isolated build environment.
+        Install packages from PEP 508 requirements in the isolated build environment.
 
-        :param requirements: PEP-508 requirements
+        :param requirements: PEP 508 requirements
         """
         raise NotImplementedError
 
 
 class IsolatedEnvBuilder(object):
+    """Builder object for isolated environments."""
+
     def __init__(self):  # type: () -> None
-        """Builder object for isolated environment."""
         self._path = None  # type: Optional[str]
 
     def __enter__(self):  # type: () -> IsolatedEnv
         """
-        Creates an isolated build environment.
+        Create an isolated build environment.
 
-        :return: the isolated build environment
+        :return: The isolated build environment
         """
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
@@ -74,9 +75,9 @@ class IsolatedEnvBuilder(object):
         """
         Delete the created isolated build environment.
 
-        :param exc_type: the type of exception raised (if any)
-        :param exc_val: the value of exception raised (if any)
-        :param exc_tb: the traceback of exception raised (if any)
+        :param exc_type: The type of exception raised (if any)
+        :param exc_val: The value of exception raised (if any)
+        :param exc_tb: The traceback of exception raised (if any)
         """
         if self._path is not None and os.path.exists(self._path):  # in case the user already deleted skip remove
             shutil.rmtree(self._path)
@@ -86,16 +87,14 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     """
     Isolated build environment context manager
 
-    Non-standard paths injected directly to sys.path still be passed to the environment.
+    Non-standard paths injected directly to sys.path will still be passed to the environment.
     """
 
     def __init__(self, path, python_executable, scripts_dir):
         # type: (str, str, str) -> None
         """
-        Define an isolated build environment.
-
-        :param path: the path where the environment exists
-        :param python_executable: the python executable within the environment
+        :param path: The path where the environment exists
+        :param python_executable: The python executable within the environment
         """
         self._path = path
         self._python_executable = python_executable
@@ -103,12 +102,12 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
 
     @property
     def path(self):  # type: () -> str
-        """:return: the location of the isolated build environment"""
+        """The location of the isolated build environment."""
         return self._path
 
     @property
     def executable(self):  # type: () -> str
-        """:return: the python executable of the isolated build environment"""
+        """The python executable of the isolated build environment."""
         return self._python_executable
 
     @property
@@ -117,16 +116,18 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
 
     def install(self, requirements):  # type: (Iterable[str]) -> None
         """
-        Installs the specified PEP 508 requirements on the environment
+        Install packages from PEP 508 requirements in the isolated build environment.
 
-        :param requirements: PEP-508 requirement specification to install
+        :param requirements: PEP 508 requirement specification to install
 
-        :note: Passing non PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is \
+        :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
                merely an implementation detail, it may change any time without warning.
         """
         if not requirements:
             return
 
+        # pip does not honour environment markers in command line arguments
+        # but it does for requirements from a file
         with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
             req_file.write(os.linesep.join(requirements))
         try:
@@ -148,8 +149,8 @@ def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
     """
     On Python 2 we use the virtualenv package to provision a virtual environment.
 
-    :param path: the folder where to create the isolated build environment
-    :return: the isolated build environment executable, and the pip to use to install packages into it
+    :param path: The path where to create the isolated build environment
+    :return: The Python executable and script folder
     """
     cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
     result = virtualenv.cli_run(cmd, setup_logging=False)
@@ -160,11 +161,10 @@ def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
 
 def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
     """
-    On Python 3 we use the venv package from the standard library, and if host python has no pip the ensurepip
-    package to provision one into the created virtual environment.
+    On Python 3 we use the venv package from the standard library.
 
-    :param path: the folder where to create the isolated build environment
-    :return: the isolated build environment executable, and the pip to use to install packages into it
+    :param path: The path where to create the isolated build environment
+    :return: The Python executable and script folder
     """
     import venv
 
@@ -179,10 +179,10 @@ def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
 
 def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str]
     """
-    Detect the executable within a virtual environment.
+    Detect the Python executable and script folder of a virtual environment.
 
-    :param path: the location of the virtual environment
-    :return: the python executable
+    :param path: The location of the virtual environment
+    :return: The Python executable and script folder
     """
     config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
     config_vars['base'] = path
