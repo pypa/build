@@ -3,13 +3,14 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.2.1 (09-02-2021)
+==================
 
 - Fix error from unrecognised pip flag on Python 3.6.0 to 3.6.5 (`PR #227`_, Fixes `#226`_)
 
 .. _PR #227: https://github.com/pypa/build/pull/227
 .. _#226: https://github.com/pypa/build/issues/226
+
 
 
 0.2.0 (07-02-2021)
