@@ -8,6 +8,8 @@ import sysconfig
 
 import pytest
 
+from packaging.version import Version
+
 import build.env
 
 
@@ -60,6 +62,25 @@ def test_fail_to_get_script_path(mocker):
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
+def test_fail_to_get_purepath(mocker):
+    sysconfig_get_path = sysconfig.get_path
+
+    def mock_sysconfig_get_path(path, *args, **kwargs):
+        if path == 'purelib':
+            return ''
+        else:
+            return sysconfig_get_path(path, *args, **kwargs)
+
+    mocker.patch('sysconfig.get_path', side_effect=mock_sysconfig_get_path)
+
+    with pytest.raises(RuntimeError, match="Couldn't get environment purelib folder"):
+        env = build.env.IsolatedEnvBuilder()
+        with env:
+            pass
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason='venv module used on Python 3 only')
+@pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
     mocker.patch.object(build.env, 'virtualenv', None)
     original_get_path = sysconfig.get_path
@@ -100,7 +121,9 @@ def test_isolated_env_has_install_still_abstract():
 
 
 @pytest.mark.isolated
-@pytest.mark.skipif(sys.version_info > (3, 6, 5), reason='inapplicable')
-def test_default_pip_is_upgraded_on_python_3_6_5_and_below():
+def test_default_pip_is_never_too_old():
     with build.env.IsolatedEnvBuilder() as env:
-        assert not subprocess.check_output([env.executable, '-m', 'pip', '-V']).startswith(b'pip 9.0')
+        version = subprocess.check_output(
+            [env.executable, '-c', 'import pip; print(pip.__version__)'], universal_newlines=True
+        ).strip()
+        assert Version(version) >= Version('19.1')
