@@ -13,8 +13,15 @@ import tempfile
 from types import TracebackType
 from typing import Iterable, Optional, Tuple, Type
 
+import packaging.version
+
 from ._compat import abstractproperty, add_metaclass
 
+
+if sys.version_info < (3, 8):
+    import importlib_metadata as metadata
+else:
+    from importlib import metadata
 
 try:
     import virtualenv
@@ -169,20 +176,28 @@ def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
     import venv
 
     venv.EnvBuilder(with_pip=True).create(path)
-    executable, script_dir = _find_executable_and_scripts(path)
-    # avoid the setuptools from ensurepip to break the isolation
-    if sys.version_info < (3, 6, 6):  # python 3.5 up to 3.6.5 come with pip 9 that's too old, for new standards
+    executable, script_dir, purelib = _find_executable_and_scripts(path)
+
+    # Get the version of pip in the environment
+    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
+    pip_version = packaging.version.Version(pip_distribution.version)
+
+    # Currently upgrade if Pip 19.1+ not available, since Pip 19 is the first
+    # one to officially support PEP 517, and 19.1 supports manylinux1.
+    if pip_version < packaging.version.Version('19.1'):
         subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
+
+    # Avoid the setuptools from ensurepip to break the isolation
     subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
     return executable, script_dir
 
 
-def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str]
+def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str, str]
     """
     Detect the Python executable and script folder of a virtual environment.
 
     :param path: The location of the virtual environment
-    :return: The Python executable and script folder
+    :return: The Python executable, script folder, and purelib folder
     """
     config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
     config_vars['base'] = path
@@ -195,7 +210,11 @@ def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str]
     executable = os.path.join(env_scripts, exe)
     if not os.path.exists(executable):
         raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
-    return executable, env_scripts
+
+    purelib = sysconfig.get_path('purelib', vars=config_vars)
+    if not purelib:
+        raise RuntimeError("Couldn't get environment purelib folder")
+    return executable, env_scripts, purelib
 
 
 __all__ = (

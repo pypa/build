@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Upgrade pip based on venv pip version, avoids error from unrecognised pip flag on Debian Python 3.6.5-3.8 (`PR #229`_, Fixes `#228`_)
+
+.. _PR #229: https://github.com/pypa/build/pull/229
+.. _#228: https://github.com/pypa/build/issues/228
+
+
+
 0.2.1 (09-02-2021)
 ==================
 
