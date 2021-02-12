@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+import collections
 import os
 import platform
 import shutil
@@ -11,6 +12,12 @@ import pytest
 from packaging.version import Version
 
 import build.env
+
+
+try:
+    import virtualenv
+except ImportError:
+    virtualenv = None
 
 
 IS_PYPY3 = sys.version_info[0] == 3 and platform.python_implementation() == 'PyPy'
@@ -128,3 +135,30 @@ def test_default_pip_is_never_too_old():
             [env.executable, '-c', 'import pip; print(pip.__version__)'], universal_newlines=True
         ).strip()
         assert Version(version) >= Version('19.1')
+
+
+@pytest.mark.isolated
+@pytest.mark.parametrize('pip_version', ['20.2.0', '20.3.0', '21.0.0', '21.0.1'])
+@pytest.mark.parametrize('arch', ['x86_64', 'arm64'])
+@pytest.mark.skipif(
+    sys.version_info[:2] == (3, 5), reason="Python 3.5 does not run on macOS 11, and pip can't upgrade to 21 there"
+)
+@pytest.mark.skipif(virtualenv is not None, reason='Upgrade not performed if virtualenv installed')
+def test_pip_needs_upgrade_macOS_11(mocker, pip_version, arch):
+    SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
+
+    check_call = mocker.patch('subprocess.check_call')
+    mocker.patch('platform.system', return_value='Darwin')
+    mocker.patch('platform.machine', return_value=arch)
+    mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
+    mocker.patch('build.env.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
+
+    min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
+    with build.env.IsolatedEnvBuilder():
+        if Version(pip_version) < min_version:
+            upgrade_call, uninstall_call = check_call.call_args_list
+            assert upgrade_call[0][0][1:] == ['-m', 'pip', 'install', '-U', 'pip']
+            assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
+        else:
+            (uninstall_call,) = check_call.call_args_list
+            assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
