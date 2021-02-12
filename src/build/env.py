@@ -183,31 +183,21 @@ def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
     pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
     pip_version = packaging.version.Version(pip_distribution.version)
 
-    # If any of these match, an upgrade is needed
+    needs_pip_upgrade = False
     if pip_version < packaging.version.Version('19.1'):
-        # Currently upgrade if Pip 19.1+ not available, since Pip 19 is the first
-        # one to officially support PEP 517, and 19.1 supports manylinux1.
-        subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
+        # PEP-517 and manylinux1 was first implemented in 19.1
+        needs_pip_upgrade = True
     elif platform.system() == 'Darwin':
-        # macOS 11+ needs Pip 20.3+ due to the name scheme change.  Note
-        # that Intel macOS 11.0 can be told to report 10.16 for backwards
-        # compatibility; but that also fixes earlier versions of pip so
-        # this is only needed for 11+.
-
-        # Have to use workaround due to missing typestub in Python 2 typeshed
-        platform_mac_ver = cast(Any, platform.mac_ver)
-
-        mac_ver = int(platform_mac_ver()[0].split('.')[0])
-        if mac_ver >= 11:
-            if pip_version < packaging.version.Version('20.3'):
-                subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
-            elif (
-                pip_version < packaging.version.Version('21.0.1')
+        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
+        # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
+        if int(cast(Any, platform.mac_ver)()[0].split('.')[0]) >= 11:
+            needs_pip_upgrade = pip_version < packaging.version.Version('20.3') or (
+                pip_version < packaging.version.Version('21.0.1')  # Apple Silicon macOS requires 21.0.1+
                 and sys.version_info >= (3, 6)
                 and platform.machine() != 'x86_64'
-            ):
-                # The first version of Pip to fully support Apple Silicon macOS was 21.0.1.
-                subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
+            )
+    if needs_pip_upgrade:
+        subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
 
     # Avoid the setuptools from ensurepip to break the isolation
     subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
