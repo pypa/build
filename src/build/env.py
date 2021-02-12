@@ -11,7 +11,7 @@ import sysconfig
 import tempfile
 
 from types import TracebackType
-from typing import Any, Iterable, Optional, Tuple, Type, cast
+from typing import Iterable, Optional, Tuple, Type
 
 import packaging.version
 
@@ -167,66 +167,69 @@ def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
     return executable, script_dir
 
 
-def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
-    """
-    On Python 3 we use the venv package from the standard library.
+# venv only exists on Python 3+
+if sys.version_info >= (3,):  # noqa: C901
 
-    :param path: The path where to create the isolated build environment
-    :return: The Python executable and script folder
-    """
-    import venv
+    def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
+        """
+        On Python 3 we use the venv package from the standard library.
 
-    venv.EnvBuilder(with_pip=True).create(path)
-    executable, script_dir, purelib = _find_executable_and_scripts(path)
+        :param path: The path where to create the isolated build environment
+        :return: The Python executable and script folder
+        """
+        import venv
 
-    # Get the version of pip in the environment
-    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
-    pip_version = packaging.version.Version(pip_distribution.version)
+        venv.EnvBuilder(with_pip=True).create(path)
+        executable, script_dir, purelib = _find_executable_and_scripts(path)
 
-    needs_pip_upgrade = False
-    if pip_version < packaging.version.Version('19.1'):
-        # PEP-517 and manylinux1 was first implemented in 19.1
-        needs_pip_upgrade = True
-    elif platform.system() == 'Darwin':
-        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
-        # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
-        if int(cast(Any, platform.mac_ver)()[0].split('.')[0]) >= 11:
-            needs_pip_upgrade = pip_version < packaging.version.Version('20.3') or (
-                pip_version < packaging.version.Version('21.0.1')  # Apple Silicon macOS requires 21.0.1+
-                and sys.version_info >= (3, 6)
-                and platform.machine() != 'x86_64'
-            )
-    if needs_pip_upgrade:
-        subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
+        # Get the version of pip in the environment
+        pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
+        pip_version = packaging.version.Version(pip_distribution.version)
 
-    # Avoid the setuptools from ensurepip to break the isolation
-    subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
-    return executable, script_dir
+        needs_pip_upgrade = False
+        if pip_version < packaging.version.Version('19.1'):
+            # PEP-517 and manylinux1 was first implemented in 19.1
+            needs_pip_upgrade = True
+        elif platform.system() == 'Darwin':
+            # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
+            # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
 
+            if int(platform.mac_ver()[0].split('.')[0]) >= 11:
+                needs_pip_upgrade = pip_version < packaging.version.Version('20.3') or (
+                    pip_version < packaging.version.Version('21.0.1')  # Apple Silicon macOS requires 21.0.1+
+                    and sys.version_info >= (3, 6)
+                    and platform.machine() != 'x86_64'
+                )
+        if needs_pip_upgrade:
+            subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
 
-def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str, str]
-    """
-    Detect the Python executable and script folder of a virtual environment.
+        # Avoid the setuptools from ensurepip to break the isolation
+        subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+        return executable, script_dir
 
-    :param path: The location of the virtual environment
-    :return: The Python executable, script folder, and purelib folder
-    """
-    config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
-    config_vars['base'] = path
-    env_scripts = sysconfig.get_path('scripts', vars=config_vars)
-    if not env_scripts:
-        raise RuntimeError("Couldn't get environment scripts path")
-    exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
-    if os.name == 'nt':
-        exe = '{}.exe'.format(exe)
-    executable = os.path.join(env_scripts, exe)
-    if not os.path.exists(executable):
-        raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
+    def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str, str]
+        """
+        Detect the Python executable and script folder of a virtual environment.
 
-    purelib = sysconfig.get_path('purelib', vars=config_vars)
-    if not purelib:
-        raise RuntimeError("Couldn't get environment purelib folder")
-    return executable, env_scripts, purelib
+        :param path: The location of the virtual environment
+        :return: The Python executable, script folder, and purelib folder
+        """
+        config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
+        config_vars['base'] = path
+        env_scripts = sysconfig.get_path('scripts', vars=config_vars)
+        if not env_scripts:
+            raise RuntimeError("Couldn't get environment scripts path")
+        exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
+        if os.name == 'nt':
+            exe = '{}.exe'.format(exe)
+        executable = os.path.join(env_scripts, exe)
+        if not os.path.exists(executable):
+            raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
+
+        purelib = sysconfig.get_path('purelib', vars=config_vars)
+        if not purelib:
+            raise RuntimeError("Couldn't get environment purelib folder")
+        return executable, env_scripts, purelib
 
 
 __all__ = (
