@@ -12,7 +12,7 @@ import sys
 import warnings
 
 from collections import OrderedDict
-from typing import AbstractSet, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
+from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
 
 import pep517.wrappers
 import toml
@@ -43,6 +43,13 @@ class BuildBackendException(Exception):
     """
     Exception raised when the backend fails
     """
+
+    def __init__(self, exception):  # type: (Exception) -> None
+        super(BuildBackendException, self).__init__()
+        self.exception = exception  # type: Exception
+
+    def __repr__(self):  # type: () -> str
+        return 'Backend operation failed: {!r}'.format(self.exception)
 
 
 class TypoWarning(Warning):
@@ -230,8 +237,8 @@ class ProjectBuilder(object):
                 return set(get_requires(config_settings))
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {}'.format(e))
+        except Exception as e:
+            raise BuildBackendException(e)
 
     def check_dependencies(self, distribution, config_settings=None):
         # type: (str, Optional[ConfigSettings]) -> Set[Tuple[str, ...]]
@@ -258,25 +265,12 @@ class ProjectBuilder(object):
         :returns: The full path to the prepared metadata directory
         """
         prepare = getattr(self._hook, 'prepare_metadata_for_build_{}'.format(distribution))
-        outdir = os.path.abspath(output_directory)
-
-        if os.path.exists(output_directory):
-            if not os.path.isdir(output_directory):
-                raise BuildException("Build path '{}' exists and is not a directory".format(output_directory))
-        else:
-            os.mkdir(output_directory)
-
         try:
-            with _working_directory(self.srcdir):
-                basename = prepare(outdir, config_settings, _allow_fallback=False)  # type: str
-            path = os.path.join(outdir, basename)
-        except pep517.wrappers.BackendUnavailable:
-            raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except pep517.wrappers.HookMissing:
-            return None
-        except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {!r}'.format(e))
-        return path
+            return self._call_backend(prepare, output_directory, config_settings, _allow_fallback=False)
+        except BuildBackendException as exception:
+            if isinstance(exception.exception, pep517.wrappers.HookMissing):
+                return None
+            raise
 
     def build(self, distribution, output_directory, config_settings=None, metadata_directory=None):
         # type: (str, str, Optional[ConfigSettings], Optional[str]) -> str
@@ -291,27 +285,27 @@ class ProjectBuilder(object):
         :returns: The full path to the built distribution
         """
         build = getattr(self._hook, 'build_{}'.format(distribution))
-        output_directory = os.path.abspath(output_directory)
+        kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
+        return self._call_backend(build, output_directory, config_settings, **kwargs)
 
-        if os.path.exists(output_directory):
-            if not os.path.isdir(output_directory):
-                raise BuildException("Build path '{}' exists and is not a directory".format(output_directory))
-        else:
-            os.mkdir(output_directory)
+    def _call_backend(self, callback, outdir, config_settings=None, **kwargs):
+        # type: (Callable[...,str], str, Optional[ConfigSettings], Any) -> str
+        outdir = os.path.abspath(outdir)
 
-        if metadata_directory is not None:
-            kwargs = {'metadata_directory': metadata_directory}
+        if os.path.exists(outdir):
+            if not os.path.isdir(outdir):
+                raise BuildException("Build path '{}' exists and is not a directory".format(outdir))
         else:
-            kwargs = {}
+            os.mkdir(outdir)
 
         try:
             with _working_directory(self.srcdir):
-                basename = build(output_directory, config_settings=config_settings, **kwargs)  # type: str
-                return os.path.join(output_directory, basename)
+                basename = callback(outdir, config_settings, **kwargs)  # type: str
+                return os.path.join(outdir, basename)
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {!r}'.format(e))
+        except Exception as exception:
+            raise BuildBackendException(exception)
 
 
 __all__ = (

@@ -402,9 +402,8 @@ def test_prepare_no_hook(mocker, tmp_dir, test_flit_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     builder = build.ProjectBuilder(test_flit_path)
-    builder._hook.prepare_metadata_for_build_wheel.side_effect = pep517.wrappers.HookMissing(
-        'prepare_metadata_for_build_wheel'
-    )
+    failure = pep517.wrappers.HookMissing('prepare_metadata_for_build_wheel')
+    builder._hook.prepare_metadata_for_build_wheel.side_effect = failure
 
     assert builder.prepare('wheel', tmp_dir) is None
 

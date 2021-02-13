@@ -163,7 +163,7 @@ def test_build_raises_build_exception(mocker, test_flit_path):
 @pytest.mark.isolated
 def test_build_raises_build_backend_exception(mocker, test_flit_path):
     error = mocker.patch('build.__main__._error')
-    mocker.patch('build.ProjectBuilder.get_dependencies', side_effect=build.BuildBackendException)
+    mocker.patch('build.ProjectBuilder.get_dependencies', side_effect=build.BuildBackendException(Exception('a')))
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'])
