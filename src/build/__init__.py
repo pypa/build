@@ -143,7 +143,7 @@ class ProjectBuilder(object):
             raise BuildException('Failed to parse {}: {} '.format(spec_file, e))
 
         build_system = spec.get('build-system')
-        # if pyproject.toml is missing (per PEP 517) or [build-system] is missing (pep PEP 518),
+        # if pyproject.toml is missing (per PEP 517) or [build-system] is missing (per PEP 518),
         # use default values.
         if build_system is None:
             _find_typo(spec, 'build-system')
