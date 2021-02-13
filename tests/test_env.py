@@ -42,6 +42,7 @@ def test_isolated_environment_install(mocker):
             '-{}m'.format('E' if sys.version_info[0] == 2 else 'I'),
             'pip',
             'install',
+            '--use-pep517',
             '--no-warn-script-location',
             '-r',
         ]

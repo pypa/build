@@ -7,9 +7,12 @@ Unreleased
 ==========
 
 - Upgrade pip based on venv pip version, avoids error from unrecognised pip flag on Debian Python 3.6.5-3.8 (`PR #229`_, Fixes `#228`_)
+- Build dependencies in isolation, instead of in the build environment (`PR #232`_, Fixes `#231`_)
 
 .. _PR #229: https://github.com/pypa/build/pull/229
 .. _#228: https://github.com/pypa/build/issues/228
+.. _PR #232: https://github.com/pypa/build/pull/232
+.. _#231: https://github.com/pypa/build/issues/231
 
 
 
