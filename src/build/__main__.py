@@ -160,7 +160,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '-C',
         action='append',
         help='pass options to the backend.  options which begin with a hyphen must be in the form of '
-        '`--config-setting=--opt(=value)` or `-C--opt(=value)`',
+        '``--config-setting=--opt(=value)`` or ``-C--opt(=value)``',
     )
     return parser
 
