@@ -349,7 +349,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     """
     All command-line scripts provided by the build-required packages must be present in the build environment's PATH.
     """
-    # we first install install demo pkg inline as build dependency (as this provides a console script we can check)
+    # we first install demo pkg inline as build dependency (as this provides a console script we can check)
     # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
     # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
     toml = '[build-system]\nrequires = ["demo_pkg_inline"]\nbuild-backend = "build"\nbackend-path = ["."]\n'
