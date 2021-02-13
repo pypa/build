@@ -414,7 +414,7 @@ def test_prepare_error(mocker, tmp_dir, test_flit_path):
     builder = build.ProjectBuilder(test_flit_path)
     builder._hook.prepare_metadata_for_build_wheel.side_effect = Exception
 
-    with pytest.raises(build.BuildBackendException):
+    with pytest.raises(build.BuildBackendException, match='Backend operation failed: Exception'):
         builder.prepare('wheel', tmp_dir)
 
 
@@ -426,6 +426,5 @@ def test_prepare_not_dir_outdir(mocker, tmp_dir, test_flit_path):
     out = os.path.join(tmp_dir, 'out')
     with open(out, 'w') as f:
         f.write('Not a directory')
-
-    with pytest.raises(build.BuildException):
+    with pytest.raises(build.BuildException, match='Build path .* exists and is not a directory'):
         builder.prepare('wheel', out)

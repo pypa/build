@@ -48,7 +48,7 @@ class BuildBackendException(Exception):
         super(BuildBackendException, self).__init__()
         self.exception = exception  # type: Exception
 
-    def __repr__(self):  # type: () -> str
+    def __str__(self):  # type: () -> str
         return 'Backend operation failed: {!r}'.format(self.exception)
 
 

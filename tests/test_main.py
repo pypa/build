@@ -167,5 +167,5 @@ def test_build_raises_build_backend_exception(mocker, test_flit_path):
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'])
-
-    error.assert_called_with('')
+    msg = "Backend operation failed: Exception('a'{})".format(',' if sys.version_info < (3, 7) else '')
+    error.assert_called_with(msg)
