@@ -34,7 +34,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
-    'sphinxcontrib.autoprogram',
+    'sphinx_argparse_cli',
 ]
 
 intersphinx_mapping = {
