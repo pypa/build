@@ -13,7 +13,10 @@ import tempfile
 from types import TracebackType
 from typing import Iterable, Optional, Tuple, Type
 
+import packaging.requirements
 import packaging.version
+
+import build
 
 from ._compat import abstractproperty, add_metaclass
 
@@ -25,8 +28,8 @@ else:
 
 try:
     import virtualenv
-except ImportError:  # pragma: no cover
-    virtualenv = None  # pragma: no cover
+except ImportError:
+    virtualenv = None
 
 
 @add_metaclass(abc.ABCMeta)
@@ -56,8 +59,22 @@ class IsolatedEnv(object):
 class IsolatedEnvBuilder(object):
     """Builder object for isolated environments."""
 
+    _has_virtualenv = None  # type: Optional[bool]
+
     def __init__(self):  # type: () -> None
         self._path = None  # type: Optional[str]
+
+    def _should_use_virtualenv(self):  # type: () -> Optional[bool]
+        # virtualenv might be incompatible if it was installed separately
+        # from build. This verifies that virtualenv and all of its
+        # dependencies are installed as specified by build.
+        if self._has_virtualenv is None:
+            self.__class__._has_virtualenv = virtualenv is not None and not any(
+                packaging.requirements.Requirement(d[1]).name == 'virtualenv'
+                for d in build.check_dependency('build[virtualenv]')
+                if len(d) > 1
+            )
+        return self._has_virtualenv
 
     def __enter__(self):  # type: () -> IsolatedEnv
         """
@@ -67,8 +84,8 @@ class IsolatedEnvBuilder(object):
         """
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
-            # use virtualenv on Python 2 (no stdlib venv) or when virtualenv is available (as it's faster than venv)
-            if sys.version_info[0] == 2 or virtualenv is not None:
+            # use virtualenv on Python 2 or when valid virtualenv is available (as it's faster than venv)
+            if sys.version_info < (3,) or self._should_use_virtualenv():
                 executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
                 executable, scripts_dir = _create_isolated_env_venv(self._path)
