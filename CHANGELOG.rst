@@ -6,9 +6,11 @@ Changelog
 Unreleased
 ==========
 
-- Upgrade pip based on venv pip version, avoids error from unrecognised pip flag on Debian Python 3.6.5-3.8 (`PR #229`_, Fixes `#228`_)
+- Upgrade pip based on venv pip version, avoids error on Debian Python 3.6.5-3.8 or issues installing wheels on Big Sur (`PR #229`_, `PR #230`_, Fixes `#228`_)
 - Build dependencies in isolation, instead of in the build environment (`PR #232`_, Fixes `#231`_)
+- Fallback on venv if virtualenv is too old (`PR 241`_)
 
+.. _PR #241: https://github.com/pypa/build/pull/241
 .. _PR #230: https://github.com/pypa/build/pull/230
 .. _PR #229: https://github.com/pypa/build/pull/229
 .. _#228: https://github.com/pypa/build/issues/228
