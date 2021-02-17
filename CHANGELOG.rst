@@ -12,12 +12,12 @@ Unreleased
 - Add metadata preparation hook (`PR #217`_, Fixes `#130`_)
 
 .. _PR #217: https://github.com/pypa/build/pull/217
-.. _PR #241: https://github.com/pypa/build/pull/241
-.. _PR #230: https://github.com/pypa/build/pull/230
 .. _PR #229: https://github.com/pypa/build/pull/229
-.. _#228: https://github.com/pypa/build/issues/228
+.. _PR #230: https://github.com/pypa/build/pull/230
 .. _PR #232: https://github.com/pypa/build/pull/232
+.. _PR #241: https://github.com/pypa/build/pull/241
 .. _#130: https://github.com/pypa/build/issues/130
+.. _#228: https://github.com/pypa/build/issues/228
 .. _#231: https://github.com/pypa/build/issues/231
 
 
