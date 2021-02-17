@@ -8,7 +8,7 @@ Unreleased
 
 - Upgrade pip based on venv pip version, avoids error on Debian Python 3.6.5-3.8 or issues installing wheels on Big Sur (`PR #229`_, `PR #230`_, Fixes `#228`_)
 - Build dependencies in isolation, instead of in the build environment (`PR #232`_, Fixes `#231`_)
-- Fallback on venv if virtualenv is too old (`PR 241`_)
+- Fallback on venv if virtualenv is too old (`PR #241`_)
 - Add metadata preparation hook (`PR #217`_, Fixes `#130`_)
 
 .. _PR #217: https://github.com/pypa/build/pull/217
