@@ -12,7 +12,7 @@ import sys
 import warnings
 
 from collections import OrderedDict
-from typing import AbstractSet, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
+from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
 
 import pep517.wrappers
 import toml
@@ -43,6 +43,13 @@ class BuildBackendException(Exception):
     """
     Exception raised when the backend fails
     """
+
+    def __init__(self, exception):  # type: (Exception) -> None
+        super(BuildBackendException, self).__init__()
+        self.exception = exception  # type: Exception
+
+    def __str__(self):  # type: () -> str
+        return 'Backend operation failed: {!r}'.format(self.exception)
 
 
 class TypoWarning(Warning):
@@ -230,8 +237,8 @@ class ProjectBuilder(object):
                 return set(get_requires(config_settings))
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {}'.format(e))
+        except Exception as e:
+            raise BuildBackendException(e)
 
     def check_dependencies(self, distribution, config_settings=None):
         # type: (str, Optional[ConfigSettings]) -> Set[Tuple[str, ...]]
@@ -247,16 +254,42 @@ class ProjectBuilder(object):
         dependencies = self.get_dependencies(distribution, config_settings).union(self.build_dependencies)
         return {u for d in dependencies for u in check_dependency(d)}
 
-    def build(self, distribution, outdir, config_settings=None):  # type: (str, str, Optional[ConfigSettings]) -> str
+    def prepare(self, distribution, output_directory, config_settings=None):
+        # type: (str, str, Optional[ConfigSettings]) -> Optional[str]
+        """
+        Prepare metadata for a distribution.
+
+        :param distribution: Distribution to build (must be ``wheel``)
+        :param output_directory: Directory to put the prepared metadata in
+        :param config_settings: Config settings for the build backend
+        :returns: The full path to the prepared metadata directory
+        """
+        prepare = getattr(self._hook, 'prepare_metadata_for_build_{}'.format(distribution))
+        try:
+            return self._call_backend(prepare, output_directory, config_settings, _allow_fallback=False)
+        except BuildBackendException as exception:
+            if isinstance(exception.exception, pep517.wrappers.HookMissing):
+                return None
+            raise
+
+    def build(self, distribution, output_directory, config_settings=None, metadata_directory=None):
+        # type: (str, str, Optional[ConfigSettings], Optional[str]) -> str
         """
         Build a distribution.
 
         :param distribution: Distribution to build (``sdist`` or ``wheel``)
-        :param outdir: Output directory
+        :param output_directory: Directory to put the built distribution in
         :param config_settings: Config settings for the build backend
+        :param metadata_directory: If provided, should be the return value of a
+            previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
         build = getattr(self._hook, 'build_{}'.format(distribution))
+        kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
+        return self._call_backend(build, output_directory, config_settings, **kwargs)
+
+    def _call_backend(self, callback, outdir, config_settings=None, **kwargs):
+        # type: (Callable[...,str], str, Optional[ConfigSettings], Any) -> str
         outdir = os.path.abspath(outdir)
 
         if os.path.exists(outdir):
@@ -267,12 +300,12 @@ class ProjectBuilder(object):
 
         try:
             with _working_directory(self.srcdir):
-                basename = build(outdir, config_settings)  # type: str
+                basename = callback(outdir, config_settings, **kwargs)  # type: str
                 return os.path.join(outdir, basename)
         except pep517.wrappers.BackendUnavailable:
             raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except Exception as e:  # noqa: E722
-            raise BuildBackendException('Backend operation failed: {!r}'.format(e))
+        except Exception as exception:
+            raise BuildBackendException(exception)
 
 
 __all__ = (

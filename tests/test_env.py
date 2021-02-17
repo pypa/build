@@ -67,19 +67,15 @@ def test_fail_to_get_script_path(mocker):
 @pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_fail_to_get_purepath(mocker):
+    mocker.patch.object(build.env, 'virtualenv', None)
     sysconfig_get_path = sysconfig.get_path
-
-    def mock_sysconfig_get_path(path, *args, **kwargs):
-        if path == 'purelib':
-            return ''
-        else:
-            return sysconfig_get_path(path, *args, **kwargs)
-
-    mocker.patch('sysconfig.get_path', side_effect=mock_sysconfig_get_path)
+    mocker.patch(
+        'sysconfig.get_path',
+        side_effect=lambda path, *args, **kwargs: '' if path == 'purelib' else sysconfig_get_path(path, *args, **kwargs),
+    )
 
     with pytest.raises(RuntimeError, match="Couldn't get environment purelib folder"):
-        env = build.env.IsolatedEnvBuilder()
-        with env:
+        with build.env.IsolatedEnvBuilder():
             pass
 
 
