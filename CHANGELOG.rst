@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.3.0 (19-02-2021)
+==================
 
 - Upgrade pip based on venv pip version, avoids error on Debian Python 3.6.5-3.8 or issues installing wheels on Big Sur (`PR #229`_, `PR #230`_, Fixes `#228`_)
 - Build dependencies in isolation, instead of in the build environment (`PR #232`_, Fixes `#231`_)
