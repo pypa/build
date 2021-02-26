@@ -38,6 +38,10 @@ environment, but this behavior can be disabled with ``--no-isolation``.
    changelog
    api
 
+.. toctree::
+   :caption: Project Links
+   :hidden:
+
    Source Code <https://github.com/pypa/build/>
    Issue Tracker <https://github.com/pypa/build/issues>
 
