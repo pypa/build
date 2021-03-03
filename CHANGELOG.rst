@@ -3,15 +3,6 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
-
-- Support direct usage from pipx run in 0.16.1.0+ (`PR #247`_)
-
-.. _PR #247: https://github.com/pypa/build/pull/217
-
-
-
 0.3.0 (19-02-2021)
 ==================
 
