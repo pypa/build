@@ -141,7 +141,7 @@ class ProjectBuilder(object):
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
         try:
-            with io.open(spec_file, encoding="UTF-8") as f:
+            with io.open(spec_file, encoding='UTF-8') as f:
                 spec = toml.load(f)
         except FileNotFoundError:
             spec = {}
