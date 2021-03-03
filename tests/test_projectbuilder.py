@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+# coding=utf-8
 
 from __future__ import unicode_literals
 
@@ -352,7 +353,17 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     # we first install demo pkg inline as build dependency (as this provides a console script we can check)
     # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
     # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
-    toml = '[build-system]\nrequires = ["demo_pkg_inline"]\nbuild-backend = "build"\nbackend-path = ["."]\n'
+    toml = textwrap.dedent(u'''
+        [build-system]
+        requires = ["demo_pkg_inline"]
+        build-backend = "build"
+        backend-path = ["."]
+        
+        [project]
+        description = "Factory ⸻ A code generator 🏭"
+        authors = [{name = "Łukasz Langa"}]
+        '''
+    )
     code = textwrap.dedent(
         '''
         import os
