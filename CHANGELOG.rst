@@ -7,8 +7,11 @@ Unreleased
 ==========
 
 - Support direct usage from pipx run in 0.16.1.0+ (`PR #247`_)
+- Use UTF-8 encoding when reading pyproject.toml (`PR #251`_, Fixes `#250`_)
 
-.. _PR #247: https://github.com/pypa/build/pull/217
+.. _PR #247: https://github.com/pypa/build/pull/247
+.. _PR #251: https://github.com/pypa/build/pull/251
+.. _#250: https://github.com/pypa/build/issues/250
 
 
 
