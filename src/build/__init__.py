@@ -7,6 +7,7 @@ __version__ = '0.3.0'
 
 import contextlib
 import difflib
+import io
 import os
 import sys
 import warnings
@@ -140,7 +141,7 @@ class ProjectBuilder(object):
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
         try:
-            with open(spec_file) as f:
+            with io.open(spec_file, encoding='UTF-8') as f:
                 spec = toml.load(f)
         except FileNotFoundError:
             spec = {}
