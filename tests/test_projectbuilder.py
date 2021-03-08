@@ -243,6 +243,14 @@ def test_working_directory(tmp_dir):
         assert os.path.realpath(os.curdir) == os.path.realpath(tmp_dir)
 
 
+def test_working_directory_exc_is_not_transformed(mocker, test_flit_path, tmp_dir):
+    mocker.patch('build._working_directory', side_effect=OSError)
+
+    builder = build.ProjectBuilder(test_flit_path)
+    with pytest.raises(OSError):
+        builder._call_backend(lambda: None, tmp_dir)
+
+
 def test_build(mocker, test_flit_path, tmp_dir):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
     mocker.patch('build._working_directory', autospec=True)
