@@ -233,13 +233,13 @@ class ProjectBuilder(object):
         """
         get_requires = getattr(self._hook, 'get_requires_for_build_{}'.format(distribution))
 
-        try:
-            with _working_directory(self.srcdir):
+        with _working_directory(self.srcdir):
+            try:
                 return set(get_requires(config_settings))
-        except pep517.wrappers.BackendUnavailable:
-            raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except Exception as e:
-            raise BuildBackendException(e)
+            except pep517.wrappers.BackendUnavailable:
+                raise BuildException("Backend '{}' is not available.".format(self._backend))
+            except Exception as e:
+                raise BuildBackendException(e)
 
     def check_dependencies(self, distribution, config_settings=None):
         # type: (str, Optional[ConfigSettings]) -> Set[Tuple[str, ...]]
@@ -299,14 +299,14 @@ class ProjectBuilder(object):
         else:
             os.mkdir(outdir)
 
-        try:
-            with _working_directory(self.srcdir):
+        with _working_directory(self.srcdir):
+            try:
                 basename = callback(outdir, config_settings, **kwargs)  # type: str
                 return os.path.join(outdir, basename)
-        except pep517.wrappers.BackendUnavailable:
-            raise BuildException("Backend '{}' is not available.".format(self._backend))
-        except Exception as exception:
-            raise BuildBackendException(exception)
+            except pep517.wrappers.BackendUnavailable:
+                raise BuildException("Backend '{}' is not available.".format(self._backend))
+            except Exception as exception:
+                raise BuildBackendException(exception)
 
 
 __all__ = (
