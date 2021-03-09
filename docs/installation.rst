@@ -11,6 +11,20 @@ the artifacts from `project page`_ on PyPI.
 
    $ pip install build
 
+.. tip::
+   If you prefer, or are already using virtualenv_ in your workflow, you can
+   install ``build`` with the optional ``virtualenv`` depedency:
+
+   .. code-block:: sh
+
+      $ pip install 'build[virtualenv]'
+
+   this way, ``build`` will use virtualenv_ for isolation, instead of venv_.
+   This can be particularly useful, for example, when using automation tools
+   that rely on virtualenv_, such as tox_, or when your operating system's
+   Python package does not include venv_ in the standard installation (such as
+   some versions of Ubuntu).
+
 The recommended way is to checkout the git tags, as they are PGP signed with one
 of the following keys:
 
@@ -43,6 +57,10 @@ versions:
 .. _pipx: https://github.com/pipxproject/pipx
 .. _pip: https://github.com/pypa/pip
 .. _PyPI: https://pypi.org/
+
+.. _tox: https://tox.readthedocs.org/
+.. _virtualenv: https://virtualenv.readthedocs.org/
+.. _venv: https://docs.python.org/3/library/venv.html
 
 .. _tarball: https://github.com/pypa/build/releases
 .. _git tag: https://github.com/pypa/build/tags
