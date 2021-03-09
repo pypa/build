@@ -59,7 +59,7 @@ versions:
 .. _PyPI: https://pypi.org/
 
 .. _tox: https://tox.readthedocs.org/
-.. _virtualenv: https://virtualenv.readthedocs.org/
+.. _virtualenv: https://virtualenv.pypa.io
 .. _venv: https://docs.python.org/3/library/venv.html
 
 .. _tarball: https://github.com/pypa/build/releases
