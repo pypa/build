@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.3.1 (09-03-2021)
+==================
 
 - Support direct usage from pipx run in 0.16.1.0+ (`PR #247`_)
 - Use UTF-8 encoding when reading pyproject.toml (`PR #251`_, Fixes `#250`_)
