@@ -98,6 +98,9 @@ def get_project(name, tmp_path):
 )
 @pytest.mark.isolated
 def test_build(monkeypatch, project, args, call, tmp_path):
+    if project == 'flit' and '--no-isolation' in args:
+        pytest.xfail("can't build flit without isolation due to missing dependencies")
+
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
 
