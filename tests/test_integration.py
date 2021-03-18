@@ -69,7 +69,7 @@ def get_project(name, tmp_path):
                     request.close()
     with tarfile.open(tarball, 'r:gz') as tar_handler:
         tar_handler.extractall(str(dest))
-    return dest
+    return dest / '{}-{}'.format(name, version)
 
 
 @pytest.mark.parametrize(
