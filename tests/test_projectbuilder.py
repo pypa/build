@@ -139,10 +139,10 @@ def test_check_dependency(monkeypatch, requirement_string, expected):
 def test_bad_project(test_no_project_path):
     # Passing a nonexistent project directory
     with pytest.raises(build.BuildException):
-        build.ProjectBuilder(os.path.join(test_no_project_path, "does-not-exist"))
+        build.ProjectBuilder(os.path.join(test_no_project_path, 'does-not-exist'))
     # Passing a file as a project directory
     with pytest.raises(build.BuildException):
-        build.ProjectBuilder(os.path.join(test_no_project_path, "empty.txt"))
+        build.ProjectBuilder(os.path.join(test_no_project_path, 'empty.txt'))
     # Passing a project directory with no pyproject.toml or setup.py
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(test_no_project_path)
