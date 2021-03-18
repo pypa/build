@@ -97,6 +97,7 @@ def get_project(name, tmp_path):
     ],
 )
 @pytest.mark.isolated
+@pytest.mark.skipif(sys.version_info[0] == 2, reason='flit can only be built on Python 3')
 def test_build(monkeypatch, project, args, call, tmp_path):
     if project == 'flit' and '--no-isolation' in args:
         pytest.xfail("can't build flit without isolation due to missing dependencies")
