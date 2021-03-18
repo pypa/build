@@ -65,7 +65,7 @@ def _validate_source_directory(srcdir):
         raise BuildException('Source {} is not a directory'.format(srcdir))
     pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
     setup_py = os.path.join(srcdir, 'setup.py')
-    if not (os.path.exists(pyproject_toml) or os.path.exists(setup_py)):
+    if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
         raise BuildException('Source {} does not appear to be a Python project: no pyproject.toml or setup.py'.format(srcdir))
 
 
