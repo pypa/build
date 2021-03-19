@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+0.3.2 (XX-XX-2021)
+==================
+
+- Validate that the supplied source directory is valid (`PR #260`_, Fixes `#259`_)
+
+.. _PR #260: https://github.com/pypa/build/pull/260
+.. _#259: https://github.com/pypa/build/issues/259
+
+
+
 0.3.1 (09-03-2021)
 ==================
 

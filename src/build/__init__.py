@@ -59,6 +59,16 @@ class TypoWarning(Warning):
     """
 
 
+def _validate_source_directory(srcdir):
+    # type: (str) -> None
+    if not os.path.isdir(srcdir):
+        raise BuildException('Source {} is not a directory'.format(srcdir))
+    pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
+    setup_py = os.path.join(srcdir, 'setup.py')
+    if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
+        raise BuildException('Source {} does not appear to be a Python project: no pyproject.toml or setup.py'.format(srcdir))
+
+
 def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozenset()):
     # type: (str, Tuple[str, ...], AbstractSet[str]) -> Iterator[Tuple[str, ...]]
     """
@@ -137,6 +147,7 @@ class ProjectBuilder(object):
         :param python_executable: The python executable where the backend lives
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
+        _validate_source_directory(srcdir)
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 

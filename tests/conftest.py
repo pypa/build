@@ -136,6 +136,11 @@ def test_no_backend_path(packages_path):
 
 
 @pytest.fixture
+def test_no_project_path(packages_path):
+    return os.path.join(packages_path, 'test-no-project')
+
+
+@pytest.fixture
 def test_no_requires_path(packages_path):
     return os.path.join(packages_path, 'test-no-requires')
 
