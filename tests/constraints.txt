@@ -1,0 +1,6 @@
+importlib-metadata==0.22;python_version < "3.8"
+packaging==19.0
+pep517==0.9.1
+toml==0.10.0
+typing==3.5.2.2;python_version < "3"
+virtualenv==20.0.35;python_version < "3"
