@@ -14,6 +14,11 @@ Unreleased
 .. _#263: https://github.com/pypa/build/issues/259
 .. _#259: https://github.com/pypa/build/issues/259
 
+Breaking Changes
+----------------
+
+- As side-effect of `PR #260`_, projects not containing either a ``pyproject.toml`` or ``setup.py`` will be reported as invalid. This affects projects specifying only a ``setup.cfg``, such projects are recommended to add a ``pyptoject.toml``. The new behavior is on par with what pip currently does, so if you are affected by this, your project should not be pip installable.
+
 
 
 0.3.1 (09-03-2021)
