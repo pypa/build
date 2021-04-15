@@ -14,14 +14,14 @@ See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for more i
 
 `build` can be installed via `pip` or an equivalent via:
 
-```
+```console
 $ pip install build
 ```
 
 ### Usage
 
-```bash
-python -m build --sdist --wheel .
+```console
+$ python -m build --sdist --wheel .
 ```
 
 This will build the package in an isolated environment, generating a
