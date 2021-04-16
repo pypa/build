@@ -153,3 +153,22 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
         else:
             (uninstall_call,) = check_call.call_args_list
             assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
+
+
+@pytest.mark.isolated
+@pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
+@pytest.mark.skipif(IS_PYPY3 and os.name == 'nt', reason='Isolated tests not supported on PyPy3 + Windows')
+@pytest.mark.parametrize('has_symlink', [True, False] if os.name == 'nt' else [True])
+def test_venv_symlink(mocker, has_symlink):
+    if has_symlink:
+        mocker.patch('os.symlink')
+        mocker.patch('os.unlink')
+    else:
+        mocker.patch('os.symlink', side_effect=OSError())
+
+    # Cache must be cleared to rerun
+    build.env._fs_supports_symlink.cache_clear()
+    supports_symlink = build.env._fs_supports_symlink()
+    build.env._fs_supports_symlink.cache_clear()
+
+    assert supports_symlink is has_symlink

@@ -2,6 +2,7 @@
 Creates and manages isolated build environments.
 """
 import abc
+import functools
 import os
 import platform
 import shutil
@@ -187,6 +188,23 @@ def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
 # venv only exists on Python 3+
 if sys.version_info >= (3,):  # noqa: C901
 
+    @functools.lru_cache(maxsize=None)
+    def _fs_supports_symlink():  # type: () -> bool
+        """Return True if symlinks are supported"""
+        # Using definition used by venv.main()
+        if os.name != 'nt':
+            return True
+
+        # Windows may support symlinks (setting in Windows 10)
+        with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:
+            dest = '{}-b'.format(tmp_file)
+            try:
+                os.symlink(tmp_file.name, dest)
+                os.unlink(dest)
+                return True
+            except (OSError, NotImplementedError, AttributeError):
+                return False
+
     def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
         """
         On Python 3 we use the venv package from the standard library.
@@ -196,7 +214,7 @@ if sys.version_info >= (3,):  # noqa: C901
         """
         import venv
 
-        venv.EnvBuilder(with_pip=True).create(path)
+        venv.EnvBuilder(with_pip=True, symlinks=_fs_supports_symlink()).create(path)
         executable, script_dir, purelib = _find_executable_and_scripts(path)
 
         # Get the version of pip in the environment
