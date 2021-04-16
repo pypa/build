@@ -8,11 +8,14 @@ Unreleased
 
 - Validate that the supplied source directory is valid (`PR #260`_, Fixes `#259`_)
 - Set and test minimum versions of build's runtime dependencies (`PR #267`_, Fixes `#263`_)
+- Use symlinks on creating venv's when available (`PR #274`_, Fixes `#271`_)
 
-.. _PR #267: https://github.com/pypa/build/pull/267
 .. _PR #260: https://github.com/pypa/build/pull/260
-.. _#263: https://github.com/pypa/build/issues/259
+.. _PR #267: https://github.com/pypa/build/pull/267
+.. _PR #274: https://github.com/pypa/build/pull/274
 .. _#259: https://github.com/pypa/build/issues/259
+.. _#263: https://github.com/pypa/build/issues/263
+.. _#271: https://github.com/pypa/build/issues/271
 
 Breaking Changes
 ----------------
