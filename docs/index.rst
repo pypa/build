@@ -39,6 +39,12 @@ environment, but this behavior can be disabled with ``--no-isolation``.
    api
 
 .. toctree::
+   :caption: Contributing
+   :hidden:
+
+   test_suite
+
+.. toctree::
    :caption: Project Links
    :hidden:
 
