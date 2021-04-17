@@ -100,8 +100,6 @@ jobs:
 
   type:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     env:
       PY_COLORS: 1
       TOX_PARALLEL_NO_SPINNER: 1
