@@ -99,7 +99,6 @@ jobs:
         env:
           PYTHON: ${{ matrix.python }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./.tox/coverage.xml
           flags: tests
           env_vars: PYTHON
