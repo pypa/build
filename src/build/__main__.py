@@ -129,13 +129,13 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         '--sdist',
         '-s',
         action='store_true',
-        help='build a source distribution',
+        help='build a source distribution (enabled by default if no target is specified)',
     )
     parser.add_argument(
         '--wheel',
         '-w',
         action='store_true',
-        help='build a wheel',
+        help='build a wheel (enabled by default if no target is specified)',
     )
     parser.add_argument(
         '--outdir',
