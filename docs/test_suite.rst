@@ -36,7 +36,6 @@ environments, like checking the code with the minimum version of each
 dependency.
 
 Some examples commands for this project:
-
   - Run type checking: ``tox -e type``
   - Only run unit tests against Python 3.9: ``tox -e py39``
   - Run both unit and integration tests: ``tox -- --run-integration``
