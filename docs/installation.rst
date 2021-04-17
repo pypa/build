@@ -5,6 +5,11 @@ Installation
 You can download a tarball_ from Github, checkout the latest `git tag`_ or fetch
 the artifacts from `project page`_ on PyPI.
 
+The recommended way is to checkout the git tags, as they are PGP signed with one
+of the following keys:
+
+- |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2|_ *(Filipe Laíns)*
+
 ``build`` may also be installed via `pip`_ or an equivalent:
 
 .. code-block:: sh
@@ -24,11 +29,6 @@ the artifacts from `project page`_ on PyPI.
    that rely on virtualenv_, such as tox_, or when your operating system's
    Python package does not include venv_ in the standard installation (such as
    some versions of Ubuntu).
-
-The recommended way is to checkout the git tags, as they are PGP signed with one
-of the following keys:
-
-- |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2|_ *(Filipe Laíns)*
 
 Bootstrapping
 =============
