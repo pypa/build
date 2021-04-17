@@ -28,14 +28,15 @@ jobs:
           - macos
           - windows
         py:
-          - 3.9
-          - 3.8
-          - 3.7
-          - 3.6
-          - 3.5
-          - 2.7
-          - pypy3
-          - pypy2
+          - '3.10-dev'
+          - '3.9'
+          - '3.8'
+          - '3.7'
+          - '3.6'
+          - '3.5'
+          - '2.7'
+          - 'pypy3'
+          - 'pypy2'
 
     steps:
       - name: Setup python for tox
