@@ -46,14 +46,6 @@ jobs:
         with:
           python-version: ${{ matrix.py }}
 
-      - name: Setup python for tox
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Install tox
-        run: python -m pip install tox
-
       - name: Pick environment to run
         run: |
           import platform; import os; import sys; import codecs
@@ -65,6 +57,14 @@ jobs:
           with codecs.open(os.environ["GITHUB_ENV"], "a", "utf-8") as file_handler:
                file_handler.write(env)
         shell: python
+
+      - name: Setup python for tox
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install tox
+        run: python -m pip install tox
 
       - name: Setup test suite
         run: tox -vv --notest -e ${{env.BASE}},${{env.BASE}}-path,${{env.BASE}}-sdist,${{env.BASE}}-wheel
