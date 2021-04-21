@@ -9,7 +9,7 @@ Unreleased
 - Validate that the supplied source directory is valid (`PR #260`_, Fixes `#259`_)
 - Set and test minimum versions of build's runtime dependencies (`PR #267`_, Fixes `#263`_)
 
-.. _PR #267: https://github.com/pypa/build/pull/260
+.. _PR #267: https://github.com/pypa/build/pull/267
 .. _PR #260: https://github.com/pypa/build/pull/260
 .. _#263: https://github.com/pypa/build/issues/259
 .. _#259: https://github.com/pypa/build/issues/259
