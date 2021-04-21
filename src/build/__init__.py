@@ -233,7 +233,7 @@ class ProjectBuilder(object):
         """
         return set(self._build_system['requires'])
 
-    def get_dependencies(self, distribution, config_settings=None):  # type: (str, Optional[ConfigSettings]) -> Set[str]
+    def get_requires(self, distribution, config_settings=None):  # type: (str, Optional[ConfigSettings]) -> Set[str]
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_dependencies` for a given distribution.
@@ -256,14 +256,14 @@ class ProjectBuilder(object):
         # type: (str, Optional[ConfigSettings]) -> Set[Tuple[str, ...]]
         """
         Return the dependencies which are not satisfied from the combined set of
-        :attr:`build_dependencies` and :meth:`get_dependencies` for a given
+        :attr:`build_dependencies` and :meth:`get_requires` for a given
         distribution.
 
         :param distribution: Distribution to check (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         :returns: Set of variable-length unmet dependency tuples
         """
-        dependencies = self.get_dependencies(distribution, config_settings).union(self.build_dependencies)
+        dependencies = self.get_requires(distribution, config_settings).union(self.build_dependencies)
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(self, distribution, output_directory, config_settings=None):
