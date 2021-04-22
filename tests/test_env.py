@@ -148,7 +148,8 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     with build.env.IsolatedEnvBuilder():
         if Version(pip_version) < min_version:
             upgrade_call, uninstall_call = check_call.call_args_list
-            assert upgrade_call[0][0][1:] == ['-m', 'pip', 'install', '-U', 'pip']
+            answer = 'pip>=20.3.0' if arch == 'x86_64' else 'pip>=21.0.1'
+            assert upgrade_call[0][0][1:] == ['-m', 'pip', 'install', answer]
             assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
         else:
             (uninstall_call,) = check_call.call_args_list
