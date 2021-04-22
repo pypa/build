@@ -219,24 +219,19 @@ if sys.version_info >= (3,):  # noqa: C901
 
         # Get the version of pip in the environment
         pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
-        pip_version = packaging.version.Version(pip_distribution.version)
+        current_pip_version = packaging.version.Version(pip_distribution.version)
 
-        needs_pip_upgrade = False
-        if pip_version < packaging.version.Version('19.1'):
-            # PEP-517 and manylinux1 was first implemented in 19.1
-            needs_pip_upgrade = True
-        elif platform.system() == 'Darwin':
+        if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
             # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
             # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
+            is_apple_silicon_python = sys.version_info >= (3, 6) and platform.machine() != 'x86_64'
+            minimum_pip_version = '21.0.1' if is_apple_silicon_python else '20.3.0'
+        else:
+            # PEP-517 and manylinux1 was first implemented in 19.1
+            minimum_pip_version = '19.1.0'
 
-            if int(platform.mac_ver()[0].split('.')[0]) >= 11:
-                needs_pip_upgrade = pip_version < packaging.version.Version('20.3') or (
-                    pip_version < packaging.version.Version('21.0.1')  # Apple Silicon macOS requires 21.0.1+
-                    and sys.version_info >= (3, 6)
-                    and platform.machine() != 'x86_64'
-                )
-        if needs_pip_upgrade:
-            subprocess.check_call([executable, '-m', 'pip', 'install', '-U', 'pip'])
+        if current_pip_version < packaging.version.Version(minimum_pip_version):
+            subprocess.check_call([executable, '-m', 'pip', 'install', 'pip>={}'.format(minimum_pip_version)])
 
         # Avoid the setuptools from ensurepip to break the isolation
         subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
