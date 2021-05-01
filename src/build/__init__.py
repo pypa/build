@@ -139,12 +139,13 @@ class ProjectBuilder(object):
     The PEP 517 consumer API.
     """
 
-    def __init__(self, srcdir, python_executable=sys.executable, scripts_dir=None):
-        # type: (str, Union[bytes, Text], Optional[Union[bytes, Text]]) -> None
+    def __init__(self, srcdir, python_executable=sys.executable, scripts_dir=None, runner=pep517.default_subprocess_runner):
+        # type: (str, Union[bytes, Text], Optional[Union[bytes, Text]], Optional[Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]]) -> None
         """
         :param srcdir: The source directory
         :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
         :param python_executable: The python executable where the backend lives
+        :param runner: An alternative runner for backend subprocesses
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
         _validate_source_directory(srcdir)
@@ -180,6 +181,7 @@ class ProjectBuilder(object):
         self._build_system = build_system
         self._backend = self._build_system['build-backend']
         self._scripts_dir = scripts_dir
+        self._hook_runner = runner
         self._hook = pep517.wrappers.Pep517HookCaller(
             self.srcdir,
             self._backend,
@@ -198,7 +200,7 @@ class ProjectBuilder(object):
                 paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
             extra_environ = {} if extra_environ is None else extra_environ
             extra_environ['PATH'] = os.pathsep.join(paths)
-        pep517.default_subprocess_runner(cmd, cwd, extra_environ)
+        self._hook_runner(cmd, cwd, extra_environ)
 
     @property
     def python_executable(self):  # type: () -> Union[bytes, Text]
