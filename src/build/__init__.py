@@ -152,6 +152,16 @@ class ProjectBuilder(object):
         :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
         :param python_executable: The python executable where the backend lives
         :param runner: An alternative runner for backend subprocesses
+
+        The 'runner', if provided, must expect the following:
+            - cmd: a list of strings representing the command and arguments to
+              execute, as would be passed to e.g. 'subprocess.check_call'.
+            - cwd: a string representing the working directory that must be
+              used for the subprocess. Corresponds to the provided source_dir.
+            - extra_environ: a dict mapping environment variable names to values
+              which must be set for the subprocess execution.
+
+        The default runner simply calls the backend hooks in a subprocess, writing backend output to stdout.
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
         _validate_source_directory(srcdir)
