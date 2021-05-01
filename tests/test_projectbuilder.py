@@ -461,10 +461,11 @@ def test_prepare_not_dir_outdir(mocker, tmp_dir, test_flit_path):
     with pytest.raises(build.BuildException, match='Build path .* exists and is not a directory'):
         builder.prepare('wheel', out)
 
+
 def test_runner_user_specified(tmp_dir, test_flit_path):
     def dummy_runner(cmd, cwd=None, env=None):
-        raise RuntimeError("Runner was called")
+        raise RuntimeError('Runner was called')
 
     builder = build.ProjectBuilder(test_flit_path, runner=dummy_runner)
-    with pytest.raises(build.BuildBackendException, match="Runner was called"):
-        builder.build("wheel", tmp_dir)
+    with pytest.raises(build.BuildBackendException, match='Runner was called'):
+        builder.build('wheel', tmp_dir)
