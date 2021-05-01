@@ -20,6 +20,8 @@ import toml
 import toml.decoder
 
 
+RUNNER_TYPE = Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]
+
 if sys.version_info < (3,):
     FileNotFoundError = IOError
     PermissionError = OSError
@@ -144,7 +146,7 @@ class ProjectBuilder(object):
         srcdir,  # type: str
         python_executable=sys.executable,  # type: Union[bytes, Text]
         scripts_dir=None,  # type: Optional[Union[bytes, Text]]
-        runner=pep517.default_subprocess_runner,  # type: Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]
+        runner=pep517.default_subprocess_runner,  # type: RUNNER_TYPE
     ):
         # type: (...) -> None
         """
