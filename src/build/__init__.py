@@ -139,8 +139,14 @@ class ProjectBuilder(object):
     The PEP 517 consumer API.
     """
 
-    def __init__(self, srcdir, python_executable=sys.executable, scripts_dir=None, runner=pep517.default_subprocess_runner):
-        # type: (str, Union[bytes, Text], Optional[Union[bytes, Text]], Optional[Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]]) -> None
+    def __init__(
+        self,
+        srcdir,  # type: str
+        python_executable=sys.executable,  # type: Union[bytes, Text]
+        scripts_dir=None,  # type: Optional[Union[bytes, Text]]
+        runner=pep517.default_subprocess_runner,  # type: Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]
+    ):
+        # type: (...) -> None
         """
         :param srcdir: The source directory
         :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
