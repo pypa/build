@@ -27,6 +27,10 @@ Breaking Changes
 ----------------
 
 - As a side-effect of `PR #260`_, projects not containing either a ``pyproject.toml`` or ``setup.py`` will be reported as invalid. This affects projects specifying only a ``setup.cfg``, such projects are recommended to add a ``pyproject.toml``. The new behavior is on par with what pip currently does, so if you are affected by this, your project should not be pip installable.
+- ``ProjectBuilder.get_dependencies`` has been renamed to ``ProjectBuilder.get_requires`` (`PR #284`_, Fixes `#182`_)
+
+.. _PR #284: https://github.com/pypa/build/pull/284
+.. _#182: https://github.com/pypa/build/issues/182
 
 
 

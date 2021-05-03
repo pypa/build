@@ -55,7 +55,7 @@ def _build_in_isolated_env(builder, outdir, distributions, config_settings):
             # first install the build dependencies
             env.install(builder.build_dependencies)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
-            env.install(builder.get_dependencies(distribution))
+            env.install(builder.get_requires(distribution))
             builder.build(distribution, outdir, config_settings)
 
 
