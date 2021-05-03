@@ -10,15 +10,18 @@ Unreleased
 - Set and test minimum versions of build's runtime dependencies (`PR #267`_, Fixes `#263`_)
 - Use symlinks on creating venv's when available (`PR #274`_, Fixes `#271`_)
 - Error sooner if pip upgrade is required and fails (`PR #288`_, Fixes `#256`_)
+- Add a ``runner`` argument to ``ProjectBuilder`` (`PR #290`_, Fixes `#289`_)
 
 .. _PR #260: https://github.com/pypa/build/pull/260
 .. _PR #267: https://github.com/pypa/build/pull/267
 .. _PR #274: https://github.com/pypa/build/pull/274
 .. _PR #288: https://github.com/pypa/build/pull/288
+.. _PR #290: https://github.com/pypa/build/pull/290
 .. _#256: https://github.com/pypa/build/issues/256
 .. _#259: https://github.com/pypa/build/issues/259
 .. _#263: https://github.com/pypa/build/issues/263
 .. _#271: https://github.com/pypa/build/issues/271
+.. _#289: https://github.com/pypa/build/issues/289
 
 Breaking Changes
 ----------------
