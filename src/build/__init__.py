@@ -146,7 +146,7 @@ class ProjectBuilder(object):
         srcdir,  # type: str
         python_executable=sys.executable,  # type: Union[bytes, Text]
         scripts_dir=None,  # type: Optional[Union[bytes, Text]]
-        runner=pep517.default_subprocess_runner,  # type: RUNNER_TYPE
+        runner=pep517.wrappers.default_subprocess_runner,  # type: RUNNER_TYPE
     ):
         # type: (...) -> None
         """
@@ -155,15 +155,17 @@ class ProjectBuilder(object):
         :param python_executable: The python executable where the backend lives
         :param runner: An alternative runner for backend subprocesses
 
-        The 'runner', if provided, must expect the following:
-            - cmd: a list of strings representing the command and arguments to
-              execute, as would be passed to e.g. 'subprocess.check_call'.
-            - cwd: a string representing the working directory that must be
-              used for the subprocess. Corresponds to the provided source_dir.
-            - extra_environ: a dict mapping environment variable names to values
-              which must be set for the subprocess execution.
+        The 'runner', if provided, must accept the following arguments:
 
-        The default runner simply calls the backend hooks in a subprocess, writing backend output to stdout.
+        - cmd: a list of strings representing the command and arguments to
+          execute, as would be passed to e.g. 'subprocess.check_call'.
+        - cwd: a string representing the working directory that must be
+          used for the subprocess. Corresponds to the provided srcdir.
+        - extra_environ: a dict mapping environment variable names to values
+          which must be set for the subprocess execution.
+
+        The default runner simply calls the backend hooks in a subprocess, writing backend output
+        to stdout/stderr.
         """
         self.srcdir = os.path.abspath(srcdir)  # type: str
         _validate_source_directory(srcdir)
