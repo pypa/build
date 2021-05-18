@@ -21,7 +21,7 @@ $ pip install build
 ### Usage
 
 ```console
-$ python -m build --sdist --wheel .
+$ python -m build
 ```
 
 This will build the package in an isolated environment, generating a
