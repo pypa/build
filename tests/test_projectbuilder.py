@@ -195,19 +195,19 @@ def test_python_executable(test_flit_path, value):
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
-def test_get_dependencies_missing_backend(packages_path, distribution):
+def test_get_requires_for_build_missing_backend(packages_path, distribution):
     bad_backend_path = os.path.join(packages_path, 'test-bad-backend')
     builder = build.ProjectBuilder(bad_backend_path)
 
     with pytest.raises(build.BuildBackendException):
-        builder.get_dependencies(distribution)
+        builder.get_requires_for_build(distribution)
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
-def test_get_dependencies_missing_optional_hooks(test_optional_hooks_path, distribution):
+def test_get_requires_for_build_missing_optional_hooks(test_optional_hooks_path, distribution):
     builder = build.ProjectBuilder(test_optional_hooks_path)
 
-    assert builder.get_dependencies(distribution) == set()
+    assert builder.get_requires_for_build(distribution) == set()
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
