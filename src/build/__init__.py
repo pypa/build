@@ -22,15 +22,14 @@ import toml
 import toml.decoder
 
 
-RUNNER_TYPE = Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]
-
 if sys.version_info < (3,):
     FileNotFoundError = IOError
     PermissionError = OSError
 
 
-ConfigSettings = Mapping[str, Union[str, Sequence[str]]]
-_ExcInfo = Union[
+RunnerType = Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]
+ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
+_ExcInfoType = Union[
     Tuple[Type[BaseException], BaseException, types.TracebackType],
     Tuple[None, None, None],
 ]
@@ -54,7 +53,7 @@ class BuildBackendException(Exception):
     """
 
     def __init__(self, exception, description=None, exc_info=(None, None, None)):
-        # type: (Exception, Optional[str], _ExcInfo) -> None
+        # type: (Exception, Optional[str], _ExcInfoType) -> None
         super(BuildBackendException, self).__init__()
         self.exception = exception  # type: Exception
         self.exc_info = exc_info
@@ -157,7 +156,7 @@ class ProjectBuilder(object):
         srcdir,  # type: str
         python_executable=sys.executable,  # type: Union[bytes, Text]
         scripts_dir=None,  # type: Optional[Union[bytes, Text]]
-        runner=pep517.wrappers.default_subprocess_runner,  # type: RUNNER_TYPE
+        runner=pep517.wrappers.default_subprocess_runner,  # type: RunnerType
     ):
         # type: (...) -> None
         """
@@ -266,7 +265,7 @@ class ProjectBuilder(object):
         """
         return set(self._build_system['requires'])
 
-    def get_dependencies(self, distribution, config_settings=None):  # type: (str, Optional[ConfigSettings]) -> Set[str]
+    def get_dependencies(self, distribution, config_settings=None):  # type: (str, Optional[ConfigSettingsType]) -> Set[str]
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_dependencies` for a given distribution.
@@ -282,7 +281,7 @@ class ProjectBuilder(object):
             return set(get_requires(config_settings))
 
     def check_dependencies(self, distribution, config_settings=None):
-        # type: (str, Optional[ConfigSettings]) -> Set[Tuple[str, ...]]
+        # type: (str, Optional[ConfigSettingsType]) -> Set[Tuple[str, ...]]
         """
         Return the dependencies which are not satisfied from the combined set of
         :attr:`build_dependencies` and :meth:`get_dependencies` for a given
@@ -296,7 +295,7 @@ class ProjectBuilder(object):
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(self, distribution, output_directory, config_settings=None):
-        # type: (str, str, Optional[ConfigSettings]) -> Optional[str]
+        # type: (str, str, Optional[ConfigSettingsType]) -> Optional[str]
         """
         Prepare metadata for a distribution.
 
@@ -314,7 +313,7 @@ class ProjectBuilder(object):
             raise
 
     def build(self, distribution, output_directory, config_settings=None, metadata_directory=None):
-        # type: (str, str, Optional[ConfigSettings], Optional[str]) -> str
+        # type: (str, str, Optional[ConfigSettingsType], Optional[str]) -> str
         """
         Build a distribution.
 
@@ -330,7 +329,7 @@ class ProjectBuilder(object):
         return self._call_backend(build, output_directory, config_settings, **kwargs)
 
     def _call_backend(self, callback, outdir, config_settings=None, **kwargs):
-        # type: (Callable[...,str], str, Optional[ConfigSettings], Any) -> str
+        # type: (Callable[...,str], str, Optional[ConfigSettingsType], Any) -> str
         outdir = os.path.abspath(outdir)
 
         if os.path.exists(outdir):
@@ -363,7 +362,7 @@ class ProjectBuilder(object):
 
 __all__ = (
     '__version__',
-    'ConfigSettings',
+    'ConfigSettingsType',
     'BuildException',
     'BuildBackendException',
     'TypoWarning',
