@@ -9,6 +9,7 @@ import contextlib
 import difflib
 import io
 import os
+import subprocess
 import sys
 import warnings
 
@@ -267,9 +268,10 @@ class ProjectBuilder(object):
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        get_requires = getattr(self._hook, 'get_requires_for_build_{}'.format(distribution))
+        hook_name = 'get_requires_for_build_{}'.format(distribution)
+        get_requires = getattr(self._hook, hook_name)
 
-        with self._handle_backend():
+        with self._handle_backend(hook_name):
             return set(get_requires(config_settings))
 
     def check_dependencies(self, distribution, config_settings=None):
@@ -330,18 +332,20 @@ class ProjectBuilder(object):
         else:
             os.mkdir(outdir)
 
-        with self._handle_backend():
+        with self._handle_backend(callable.__name__):
             basename = callback(outdir, config_settings, **kwargs)  # type: str
 
         return os.path.join(outdir, basename)
 
     @contextlib.contextmanager
-    def _handle_backend(self):  # type: () -> Iterator[None]
+    def _handle_backend(self, hook):  # type: (str) -> Iterator[None]
         with _working_directory(self.srcdir):
             try:
                 yield
             except pep517.wrappers.BackendUnavailable:
                 raise BuildException("Backend '{}' is not available.".format(self._backend))
+            except subprocess.CalledProcessError as exception:
+                raise BuildBackendException(exception, 'Backend subproccess exited when trying to invoke {}'.format(hook))
             except Exception as exception:
                 raise BuildBackendException(exception)
 
