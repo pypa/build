@@ -13,7 +13,7 @@ from typing import Iterable, List, Optional, Sequence, TextIO, Type, Union
 
 import build
 
-from build import BuildBackendException, BuildException, ConfigSettings, ProjectBuilder
+from build import BuildBackendException, BuildException, ConfigSettingsType, ProjectBuilder
 from build.env import IsolatedEnvBuilder
 
 
@@ -50,7 +50,7 @@ def _format_dep_chain(dep_chain):  # type: (Sequence[str]) -> str
 
 
 def _build_in_isolated_env(builder, outdir, distributions, config_settings):
-    # type: (ProjectBuilder, str, List[str], ConfigSettings) -> None
+    # type: (ProjectBuilder, str, List[str], ConfigSettingsType) -> None
     for distribution in distributions:
         with IsolatedEnvBuilder() as env:
             builder.python_executable = env.executable
@@ -63,7 +63,7 @@ def _build_in_isolated_env(builder, outdir, distributions, config_settings):
 
 
 def _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependency_check=False):
-    # type: (ProjectBuilder, str, List[str], ConfigSettings, bool) -> None
+    # type: (ProjectBuilder, str, List[str], ConfigSettingsType, bool) -> None
     for dist in distributions:
         if not skip_dependency_check:
             missing = builder.check_dependencies(dist)
@@ -77,7 +77,7 @@ def _build_in_current_env(builder, outdir, distributions, config_settings, skip_
 
 
 def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependency_check=False):
-    # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
+    # type: (str, str, List[str], Optional[ConfigSettingsType], bool, bool) -> None
     """
     Run the build process.
 

@@ -31,6 +31,7 @@ Breaking Changes
 - As a side-effect of `PR #260`_, projects not containing either a ``pyproject.toml`` or ``setup.py`` will be reported as invalid. This affects projects specifying only a ``setup.cfg``, such projects are recommended to add a ``pyproject.toml``. The new behavior is on par with what pip currently does, so if you are affected by this, your project should not be pip installable.
 - The ``--skip-depencencies`` option has been renamed to ``--skip-dependency-check``
 - The ``skip_dependencies`` argument of ``build.__main__.build_package`` has been renamed to ``skip_dependency_check``
+- ``build.ConfigSettings`` has been renamed to ``build.ConfigSettingsType``
 
 
 
