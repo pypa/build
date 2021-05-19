@@ -103,10 +103,18 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
         if isinstance(e.exception, subprocess.CalledProcessError):
             print()
         else:
-            if sys.version_info >= (3, 5):
-                print(traceback.format_exc(-1))
+            if e.exc_info:
+                traceback.print_exception(
+                    e.exc_info[0],
+                    e.exc_info[1],
+                    e.exc_info[2],
+                    limit=-1,
+                )
             else:
-                print(traceback.format_exc())
+                if sys.version_info >= (3, 5):
+                    print(traceback.format_exc(-1))
+                else:
+                    print(traceback.format_tb())
         _error(str(e))
 
 
