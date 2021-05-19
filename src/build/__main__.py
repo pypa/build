@@ -62,10 +62,10 @@ def _build_in_isolated_env(builder, outdir, distributions, config_settings):
             builder.build(distribution, outdir, config_settings)
 
 
-def _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependencies=False):
+def _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependency_check=False):
     # type: (ProjectBuilder, str, List[str], ConfigSettings, bool) -> None
     for dist in distributions:
-        if not skip_dependencies:
+        if not skip_dependency_check:
             missing = builder.check_dependencies(dist)
             if missing:
                 _error(
@@ -76,7 +76,7 @@ def _build_in_current_env(builder, outdir, distributions, config_settings, skip_
         builder.build(dist, outdir, config_settings)
 
 
-def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependencies=False):
+def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependency_check=False):
     # type: (str, str, List[str], Optional[ConfigSettings], bool, bool) -> None
     """
     Run the build process.
@@ -86,7 +86,7 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
     :param distributions: Distributions to build (sdist and/or wheel)
     :param config_settings: Configuration settings to be passed to the backend
     :param isolation: Isolate the build in a separate environment
-    :param skip_dependencies: Do not perform the dependency check
+    :param skip_dependency_check: Do not perform the dependency check
     """
     if not config_settings:
         config_settings = {}
@@ -96,7 +96,7 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
         if isolation:
             _build_in_isolated_env(builder, outdir, distributions, config_settings)
         else:
-            _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependencies)
+            _build_in_current_env(builder, outdir, distributions, config_settings, skip_dependency_check)
     except BuildException as e:
         _error(str(e))
     except BuildBackendException as e:
@@ -158,7 +158,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
         help='output directory (defaults to {{srcdir}}{sep}dist)'.format(sep=os.sep),
     )
     parser.add_argument(
-        '--skip-dependencies',
+        '--skip-dependency-check',
         '-x',
         action='store_true',
         help='do not check that build dependencies are installed',
@@ -217,7 +217,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     # outdir is relative to srcdir only if omitted.
     outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
 
-    build_package(args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependencies)
+    build_package(args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check)
 
 
 def entrypoint():  # type: () -> None
