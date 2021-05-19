@@ -29,12 +29,16 @@ Breaking Changes
 ----------------
 
 - As a side-effect of `PR #260`_, projects not containing either a ``pyproject.toml`` or ``setup.py`` will be reported as invalid. This affects projects specifying only a ``setup.cfg``, such projects are recommended to add a ``pyproject.toml``. The new behavior is on par with what pip currently does, so if you are affected by this, your project should not be pip installable.
-- The ``--skip-depencencies`` option has been renamed to ``--skip-dependency-check``
-- The ``skip_dependencies`` argument of ``build.__main__.build_package`` has been renamed to ``skip_dependency_check``
-- ``build.ConfigSettings`` has been renamed to ``build.ConfigSettingsType``
-- ``build.ProjectBuilder.build_dependencies`` to ``build.ProjectBuilder.build_system_requires``
-- ``build.ProjectBuilder.get_dependencies`` to ``build.ProjectBuilder.get_requires_for_build``
+- The ``--skip-depencencies`` option has been renamed to ``--skip-dependency-check`` (`PR #297`_)
+- The ``skip_dependencies`` argument of ``build.__main__.build_package`` has been renamed to ``skip_dependency_check`` (`PR #297`_)
+- ``build.ConfigSettings`` has been renamed to ``build.ConfigSettingsType`` (`PR #298`_)
+- ``build.ProjectBuilder.build_dependencies`` to ``build.ProjectBuilder.build_system_requires`` (`PR #284`_, Fixes `#182`_)
+- ``build.ProjectBuilder.get_dependencies`` to ``build.ProjectBuilder.get_requires_for_build`` (`PR #284`_, Fixes `#182`_)
 
+.. _PR #284: https://github.com/pypa/build/pull/284
+.. _PR #297: https://github.com/pypa/build/pull/297
+.. _PR #298: https://github.com/pypa/build/pull/298
+.. _#182: https://github.com/pypa/build/issues/182
 
 
 0.3.1 (09-03-2021)
