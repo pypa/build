@@ -32,6 +32,7 @@ Breaking Changes
 - The ``--skip-depencencies`` option has been renamed to ``--skip-dependency-check``
 - The ``skip_dependencies`` argument of ``build.__main__.build_package`` has been renamed to ``skip_dependency_check``
 - ``build.ConfigSettings`` has been renamed to ``build.ConfigSettingsType``
+- ``build.ProjectBuilder.build_dependencies`` to ``build.ProjectBuilder.build_system_requires``
 
 
 

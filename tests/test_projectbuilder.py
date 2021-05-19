@@ -405,7 +405,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     (tmp_path / 'build.py').write_text(code)
 
     deps = {str(demo_pkg_inline)}  # we patch the requires demo_pkg_inline to refer to the wheel -> we don't need index
-    mocker.patch('build.ProjectBuilder.build_dependencies', new_callable=mocker.PropertyMock, return_value=deps)
+    mocker.patch('build.ProjectBuilder.build_system_requires', new_callable=mocker.PropertyMock, return_value=deps)
     from build.__main__ import main
 
     with pytest.raises(SystemExit):
