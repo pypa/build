@@ -11,10 +11,11 @@ import io
 import os
 import subprocess
 import sys
+import types
 import warnings
 
 from collections import OrderedDict
-from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Union
+from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Type, Union
 
 import pep517.wrappers
 import toml
@@ -29,6 +30,10 @@ if sys.version_info < (3,):
 
 
 ConfigSettings = Mapping[str, Union[str, Sequence[str]]]
+_ExcInfo = Union[
+    Tuple[Type[BaseException], BaseException, types.TracebackType],
+    Tuple[None, None, None],
+]
 
 
 _DEFAULT_BACKEND = {
@@ -48,9 +53,11 @@ class BuildBackendException(Exception):
     Exception raised when the backend fails
     """
 
-    def __init__(self, exception, description=None):  # type: (Exception, Optional[str]) -> None
+    def __init__(self, exception, description=None, exc_info=(None, None, None)):
+        # type: (Exception, Optional[str], _ExcInfo) -> None
         super(BuildBackendException, self).__init__()
         self.exception = exception  # type: Exception
+        self.exc_info = exc_info
         self._description = description
 
     def __str__(self):  # type: () -> str
