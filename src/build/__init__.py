@@ -47,11 +47,14 @@ class BuildBackendException(Exception):
     Exception raised when the backend fails
     """
 
-    def __init__(self, exception):  # type: (Exception) -> None
+    def __init__(self, exception, description=None):  # type: (Exception, Optional[str]) -> None
         super(BuildBackendException, self).__init__()
         self.exception = exception  # type: Exception
+        self._description = description
 
     def __str__(self):  # type: () -> str
+        if self._description:
+            return self._description
         return 'Backend operation failed: {!r}'.format(self.exception)
 
 
