@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import print_function
+
 import argparse
 import os
+import subprocess
 import sys
 import traceback
 import warnings
@@ -97,10 +100,13 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
     except BuildException as e:
         _error(str(e))
     except BuildBackendException as e:
-        if sys.version_info >= (3, 5):
-            print(traceback.format_exc(-1))
+        if isinstance(e.exception, subprocess.CalledProcessError):
+            print()
         else:
-            print(traceback.format_exc())
+            if sys.version_info >= (3, 5):
+                print(traceback.format_exc(-1))
+            else:
+                print(traceback.format_exc())
         _error(str(e))
 
 
