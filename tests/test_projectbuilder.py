@@ -199,7 +199,7 @@ def test_get_dependencies_missing_backend(packages_path, distribution):
     bad_backend_path = os.path.join(packages_path, 'test-bad-backend')
     builder = build.ProjectBuilder(bad_backend_path)
 
-    with pytest.raises(build.BuildException):
+    with pytest.raises(build.BuildBackendException):
         builder.get_dependencies(distribution)
 
 
@@ -215,7 +215,7 @@ def test_build_missing_backend(packages_path, distribution, tmpdir):
     bad_backend_path = os.path.join(packages_path, 'test-bad-backend')
     builder = build.ProjectBuilder(bad_backend_path)
 
-    with pytest.raises(build.BuildException):
+    with pytest.raises(build.BuildBackendException):
         builder.build(distribution, str(tmpdir))
 
 

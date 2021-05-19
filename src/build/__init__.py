@@ -349,12 +349,16 @@ class ProjectBuilder(object):
         with _working_directory(self.srcdir):
             try:
                 yield
-            except pep517.wrappers.BackendUnavailable:
-                raise BuildException("Backend '{}' is not available.".format(self._backend))
+            except pep517.wrappers.BackendUnavailable as exception:
+                raise BuildBackendException(
+                    exception,
+                    "Backend '{}' is not available.".format(self._backend),
+                    sys.exc_info(),
+                )
             except subprocess.CalledProcessError as exception:
                 raise BuildBackendException(exception, 'Backend subproccess exited when trying to invoke {}'.format(hook))
             except Exception as exception:
-                raise BuildBackendException(exception)
+                raise BuildBackendException(exception, exc_info=sys.exc_info())
 
 
 __all__ = (
