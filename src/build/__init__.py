@@ -257,7 +257,7 @@ class ProjectBuilder(object):
         self._scripts_dir = value
 
     @property
-    def build_dependencies(self):  # type: () -> Set[str]
+    def build_system_requires(self):  # type: () -> Set[str]
         """
         The dependencies defined in the ``pyproject.toml``'s
         ``build-system.requires`` field or the default build dependencies
@@ -268,7 +268,7 @@ class ProjectBuilder(object):
     def get_dependencies(self, distribution, config_settings=None):  # type: (str, Optional[ConfigSettingsType]) -> Set[str]
         """
         Return the dependencies defined by the backend in addition to
-        :attr:`build_dependencies` for a given distribution.
+        :attr:`build_system_requires` for a given distribution.
 
         :param distribution: Distribution to get the dependencies of
             (``sdist`` or ``wheel``)
@@ -284,14 +284,14 @@ class ProjectBuilder(object):
         # type: (str, Optional[ConfigSettingsType]) -> Set[Tuple[str, ...]]
         """
         Return the dependencies which are not satisfied from the combined set of
-        :attr:`build_dependencies` and :meth:`get_dependencies` for a given
+        :attr:`build_system_requires` and :meth:`get_dependencies` for a given
         distribution.
 
         :param distribution: Distribution to check (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         :returns: Set of variable-length unmet dependency tuples
         """
-        dependencies = self.get_dependencies(distribution, config_settings).union(self.build_dependencies)
+        dependencies = self.get_dependencies(distribution, config_settings).union(self.build_system_requires)
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(self, distribution, output_directory, config_settings=None):

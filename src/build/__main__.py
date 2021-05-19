@@ -56,7 +56,7 @@ def _build_in_isolated_env(builder, outdir, distributions, config_settings):
             builder.python_executable = env.executable
             builder.scripts_dir = env.scripts_dir
             # first install the build dependencies
-            env.install(builder.build_dependencies)
+            env.install(builder.build_system_requires)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
             env.install(builder.get_dependencies(distribution))
             builder.build(distribution, outdir, config_settings)
