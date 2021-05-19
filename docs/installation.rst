@@ -34,7 +34,7 @@ Bootstrapping
 =============
 
 This package can build itself with only the ``toml`` and ``pep517``
-dependencies. The ``--skip-dependencies`` flag should be used in this
+dependencies. The ``--skip-dependency-check`` flag should be used in this
 case.
 
 
