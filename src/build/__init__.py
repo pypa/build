@@ -363,6 +363,7 @@ class ProjectBuilder(object):
 __all__ = (
     '__version__',
     'ConfigSettingsType',
+    'RunnerType',
     'BuildException',
     'BuildBackendException',
     'TypoWarning',
