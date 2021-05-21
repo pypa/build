@@ -17,6 +17,14 @@ from build import BuildBackendException, BuildException, ConfigSettingsType, Pro
 from build.env import IsolatedEnvBuilder
 
 
+try:
+    import colorama
+except ImportError:
+    pass
+else:
+    colorama.init()  # fix colors on windows
+
+
 __all__ = ['build', 'main', 'main_parser']
 
 
