@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.4.0 (23-05-2021)
+==================
 
 - Validate that the supplied source directory is valid (`PR #260`_, Fixes `#259`_)
 - Set and test minimum versions of build's runtime dependencies (`PR #267`_, Fixes `#263`_)
