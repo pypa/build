@@ -9,10 +9,12 @@ import contextlib
 import difflib
 import io
 import os
+import re
 import subprocess
 import sys
 import types
 import warnings
+import zipfile
 
 from collections import OrderedDict
 from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Type, Union
@@ -33,6 +35,13 @@ _ExcInfoType = Union[
     Tuple[Type[BaseException], BaseException, types.TracebackType],
     Tuple[None, None, None],
 ]
+
+
+_WHEEL_NAME_REGEX = re.compile(
+    r'(?P<distribution>.+)-(?P<version>.+)'
+    r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
+    r'-(?P<abi_tag>.+)-(?P<platform_tag>.+)\.whl'
+)
 
 
 _DEFAULT_BACKEND = {
@@ -328,6 +337,38 @@ class ProjectBuilder(object):
         build = getattr(self._hook, 'build_{}'.format(distribution))
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(build, output_directory, config_settings, **kwargs)
+
+    def metadata_path(self, output_directory):  # type: (str) -> str
+        """
+        Generates the metadata directory of a distribution and returns its path.
+
+        If the backend does not support the ``prepare_metadata_for_build_wheel``
+        hook, a wheel will be built and the metadata extracted.
+
+        :param output_directory: Directory to put the metadata distribution in
+        """
+        # prepare_metadata hook
+        metadata = self.prepare('wheel', output_directory)
+        if metadata is not None:
+            return metadata
+
+        # fallback to build_wheel hook
+        wheel = self.build('wheel', output_directory)
+        match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
+        if not match:
+            raise ValueError('Invalid wheel')
+        distinfo = '{}-{}.dist-info'.format(
+            # Python 2 does not support match['group']
+            match.group('distribution'),
+            match.group('version'),
+        )
+        member_prefix = '{}/'.format(distinfo)
+        with zipfile.ZipFile(wheel) as w:
+            w.extractall(
+                output_directory,
+                (member for member in w.namelist() if member.startswith(member_prefix)),
+            )
+        return os.path.join(output_directory, distinfo)
 
     def _call_backend(self, callback, outdir, config_settings=None, **kwargs):
         # type: (Callable[...,str], str, Optional[ConfigSettingsType], Any) -> str
