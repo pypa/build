@@ -20,6 +20,11 @@ if sys.version_info >= (3, 8):  # pragma: no cover
 else:  # pragma: no cover
     import importlib_metadata
 
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
 if sys.version_info >= (3,):  # pragma: no cover
     build_open_owner = 'builtins'
 else:  # pragma: no cover
@@ -469,3 +474,43 @@ def test_runner_user_specified(tmp_dir, test_flit_path):
     builder = build.ProjectBuilder(test_flit_path, runner=dummy_runner)
     with pytest.raises(build.BuildBackendException, match='Runner was called'):
         builder.build('wheel', tmp_dir)
+
+
+def test_metadata_path_no_prepare(tmp_dir, test_no_prepare_path):
+    builder = build.ProjectBuilder(test_no_prepare_path)
+
+    metadata = importlib_metadata.PathDistribution(
+        pathlib.Path(builder.metadata_path(tmp_dir)),
+    ).metadata
+
+    assert metadata['name'] == 'test-no-prepare'
+    assert metadata['Version'] == '1.0.0'
+
+
+def test_metadata_path_with_prepare(tmp_dir, test_setuptools_path):
+    builder = build.ProjectBuilder(test_setuptools_path)
+
+    metadata = importlib_metadata.PathDistribution(
+        pathlib.Path(builder.metadata_path(tmp_dir)),
+    ).metadata
+
+    assert metadata['name'] == 'test-setuptools'
+    assert metadata['Version'] == '1.0.0'
+
+
+def test_metadata_path_legacy(tmp_dir, legacy_path):
+    builder = build.ProjectBuilder(legacy_path)
+
+    metadata = importlib_metadata.PathDistribution(
+        pathlib.Path(builder.metadata_path(tmp_dir)),
+    ).metadata
+
+    assert metadata['name'] == 'legacy'
+    assert metadata['Version'] == '1.0.0'
+
+
+def test_metadata_invalid_wheel(tmp_dir, test_bad_wheel_path):
+    builder = build.ProjectBuilder(test_bad_wheel_path)
+
+    with pytest.raises(ValueError, match='Invalid wheel'):
+        builder.metadata_path(tmp_dir)

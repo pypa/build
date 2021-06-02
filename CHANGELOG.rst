@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Add ``ProjectBuilder.metadata_path`` helper (`PR #303`_, Fixes `#301`_)
+
+.. _PR #303: https://github.com/pypa/build/pull/303
+.. _#301: https://github.com/pypa/build/issues/301
+
+
+
 0.4.0 (23-05-2021)
 ==================
 

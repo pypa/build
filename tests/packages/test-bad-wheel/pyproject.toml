@@ -1,0 +1,4 @@
+[build-system]
+build-backend = 'backend_bad_wheel'
+backend-path = ['.']
+requires = ['setuptools >= 42.0.0']

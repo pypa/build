@@ -156,6 +156,21 @@ def test_typo(packages_path):
 
 
 @pytest.fixture
+def test_no_prepare_path(packages_path):
+    return os.path.join(packages_path, 'test-no-prepare')
+
+
+@pytest.fixture
+def test_setuptools_path(packages_path):
+    return os.path.join(packages_path, 'test-setuptools')
+
+
+@pytest.fixture
+def test_bad_wheel_path(packages_path):
+    return os.path.join(packages_path, 'test-bad-wheel')
+
+
+@pytest.fixture
 def test_no_permission(packages_path):
     path = os.path.join(packages_path, 'test-no-permission')
     file = os.path.join(path, 'pyproject.toml')
