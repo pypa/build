@@ -265,7 +265,7 @@ def test_working_directory_exc_is_not_transformed(mocker, test_flit_path, tmp_di
 
     builder = build.ProjectBuilder(test_flit_path)
     with pytest.raises(OSError):
-        builder._call_backend(lambda: None, tmp_dir)
+        builder._call_backend('build_sdist', tmp_dir)
 
 
 def test_build(mocker, test_flit_path, tmp_dir):

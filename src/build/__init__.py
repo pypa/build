@@ -314,9 +314,13 @@ class ProjectBuilder(object):
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
-        prepare = getattr(self._hook, 'prepare_metadata_for_build_{}'.format(distribution))
         try:
-            return self._call_backend(prepare, output_directory, config_settings, _allow_fallback=False)
+            return self._call_backend(
+                'prepare_metadata_for_build_{}'.format(distribution),
+                output_directory,
+                config_settings,
+                _allow_fallback=False,
+            )
         except BuildBackendException as exception:
             if isinstance(exception.exception, pep517.wrappers.HookMissing):
                 return None
@@ -334,9 +338,8 @@ class ProjectBuilder(object):
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        build = getattr(self._hook, 'build_{}'.format(distribution))
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
-        return self._call_backend(build, output_directory, config_settings, **kwargs)
+        return self._call_backend('build_{}'.format(distribution), output_directory, config_settings, **kwargs)
 
     def metadata_path(self, output_directory):  # type: (str) -> str
         """
@@ -370,9 +373,11 @@ class ProjectBuilder(object):
             )
         return os.path.join(output_directory, distinfo)
 
-    def _call_backend(self, callback, outdir, config_settings=None, **kwargs):
-        # type: (Callable[...,str], str, Optional[ConfigSettingsType], Any) -> str
+    def _call_backend(self, hook_name, outdir, config_settings=None, **kwargs):
+        # type: (str, str, Optional[ConfigSettingsType], Any) -> str
         outdir = os.path.abspath(outdir)
+
+        callback = getattr(self._hook, hook_name)
 
         if os.path.exists(outdir):
             if not os.path.isdir(outdir):
@@ -380,7 +385,7 @@ class ProjectBuilder(object):
         else:
             os.mkdir(outdir)
 
-        with self._handle_backend(callable.__name__):
+        with self._handle_backend(hook_name):
             basename = callback(outdir, config_settings, **kwargs)  # type: str
 
         return os.path.join(outdir, basename)
