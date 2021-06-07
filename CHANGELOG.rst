@@ -7,8 +7,17 @@ Unreleased
 ==========
 
 - Add ``ProjectBuilder.metadata_path`` helper (`PR #303`_, Fixes `#301`_)
+- Added a ``build.__main__.build_package_via_sdist`` method (`PR #304`_)
+
+Breaking Changes
+----------------
+
+- Binary distributions are now built via the sdist by default in the CLI (`PR #304`_, Fixes `#257`_)
+  - ``python -m build`` will now build a sdist, extract it, and build a wheel from the source
 
 .. _PR #303: https://github.com/pypa/build/pull/303
+.. _PR #304: https://github.com/pypa/build/pull/304
+.. _#257: https://github.com/pypa/build/issues/257
 .. _#301: https://github.com/pypa/build/issues/301
 
 

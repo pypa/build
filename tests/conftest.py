@@ -171,6 +171,11 @@ def test_bad_wheel_path(packages_path):
 
 
 @pytest.fixture
+def test_cant_build_via_sdist_path(packages_path):
+    return os.path.join(packages_path, 'test-cant-build-via-sdist')
+
+
+@pytest.fixture
 def test_no_permission(packages_path):
     path = os.path.join(packages_path, 'test-no-permission')
     file = os.path.join(path, 'pyproject.toml')
