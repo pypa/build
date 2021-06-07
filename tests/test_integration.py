@@ -2,6 +2,7 @@
 
 import os
 import os.path
+import platform
 import re
 import shutil
 import subprocess
@@ -18,6 +19,11 @@ import filelock
 import pytest
 
 import build.__main__
+
+
+IS_WINDOWS = os.name == 'nt'
+IS_PYPY3 = sys.version_info[0] == 3 and platform.python_implementation() == 'PyPy'
+IS_PY35 = sys.version_info[:2] == (3, 5)
 
 
 INTEGRATION_SOURCES = {
@@ -101,6 +107,8 @@ def get_project(name, tmp_path):
 def test_build(monkeypatch, project, args, call, tmp_path):
     if project == 'flit' and '--no-isolation' in args:
         pytest.xfail("can't build flit without isolation due to missing dependencies")
+    if project == 'Solaar' and IS_WINDOWS and (IS_PYPY3 or IS_PY35):
+        pytest.xfail('Solaar fails building wheels via sdists on Windows in Python 3.5 or PyPy 3')
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
