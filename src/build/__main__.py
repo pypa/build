@@ -140,10 +140,9 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
     """
-    with _handle_build_error():
-        builder = ProjectBuilder(srcdir)
-        for distribution in distributions:
-            _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+    builder = ProjectBuilder(srcdir)
+    for distribution in distributions:
+        _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
 
 
 def build_package_via_sdist(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependency_check=False):
@@ -161,21 +160,20 @@ def build_package_via_sdist(srcdir, outdir, distributions, config_settings=None,
     if 'sdist' in distributions:
         raise ValueError('Only binary distributions are allowed but sdist was specified')
 
-    with _handle_build_error():
-        builder = ProjectBuilder(srcdir)
-        sdist = _build(isolation, builder, outdir, 'sdist', config_settings, skip_dependency_check)
+    builder = ProjectBuilder(srcdir)
+    sdist = _build(isolation, builder, outdir, 'sdist', config_settings, skip_dependency_check)
 
-        # extract sdist
-        sdist_name = os.path.basename(sdist)
-        sdist_out = tempfile.mkdtemp(dir=outdir, prefix='build-via-sdist-')
-        with tarfile.open(sdist) as t:
-            t.extractall(sdist_out)
-            builder = ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
-            for distribution in distributions:
-                _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+    # extract sdist
+    sdist_name = os.path.basename(sdist)
+    sdist_out = tempfile.mkdtemp(dir=outdir, prefix='build-via-sdist-')
+    with tarfile.open(sdist) as t:
+        t.extractall(sdist_out)
+        builder = ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
+        for distribution in distributions:
+            _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
 
-        # remove sdist source if there was no exception
-        shutil.rmtree(sdist_out, ignore_errors=True)
+    # remove sdist source if there was no exception
+    shutil.rmtree(sdist_out, ignore_errors=True)
 
 
 def main_parser():  # type: () -> argparse.ArgumentParser
@@ -259,7 +257,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     return parser
 
 
-def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
+def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None  # noqa: C901
     """
     Parse the CLI arguments and invoke the build process.
 
@@ -298,7 +296,12 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None
     else:
         build_call = build_package_via_sdist
         distributions = ['wheel']
-    build_call(args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check)
+    try:
+        with _handle_build_error():
+            build_call(args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check)
+    except Exception as e:  # pragma: no cover
+        print(traceback.format_exc())
+        _error(str(e))
 
 
 def entrypoint():  # type: () -> None

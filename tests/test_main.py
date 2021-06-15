@@ -3,6 +3,7 @@
 import contextlib
 import io
 import os
+import re
 import sys
 
 import pytest
@@ -174,24 +175,21 @@ def test_build_no_isolation_with_check_deps(mocker, test_flit_path, missing_deps
 
 @pytest.mark.isolated
 def test_build_raises_build_exception(mocker, test_flit_path):
-    error = mocker.patch('build.__main__._error')
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    build.__main__.build_package(test_flit_path, '.', ['sdist'])
-
-    error.assert_called_with('')
+    with pytest.raises(build.BuildException):
+        build.__main__.build_package(test_flit_path, '.', ['sdist'])
 
 
 @pytest.mark.isolated
 def test_build_raises_build_backend_exception(mocker, test_flit_path):
-    error = mocker.patch('build.__main__._error')
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    build.__main__.build_package(test_flit_path, '.', ['sdist'])
     msg = "Backend operation failed: Exception('a'{})".format(',' if sys.version_info < (3, 7) else '')
-    error.assert_called_with(msg)
+    with pytest.raises(build.BuildBackendException, match=re.escape(msg)):
+        build.__main__.build_package(test_flit_path, '.', ['sdist'])
 
 
 def test_build_package(tmp_dir, test_setuptools_path):
@@ -213,7 +211,7 @@ def test_build_package_via_sdist(tmp_dir, test_setuptools_path):
 
 
 def test_build_package_via_sdist_cant_build(tmp_dir, test_cant_build_via_sdist_path):
-    with pytest.raises(SystemExit):
+    with pytest.raises(build.BuildBackendException):
         build.__main__.build_package_via_sdist(test_cant_build_via_sdist_path, tmp_dir, ['wheel'])
 
 
