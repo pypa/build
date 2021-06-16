@@ -53,19 +53,30 @@ def test_isolated_environment_install(mocker):
 
 @pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
+@pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
+def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
+    mocker.patch.object(build.env, 'virtualenv', None)
+    get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
+    with build.env.IsolatedEnvBuilder():
+        pass
+    assert get_scheme_names.call_count == 1
+
+
+@pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
+@pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
     mocker.patch.object(build.env, 'virtualenv', None)
-    original_get_path = sysconfig.get_path
+    original_get_paths = sysconfig.get_paths
 
-    def _get_path(name, vars):  # noqa
+    def _get_paths(vars):  # noqa
         shutil.rmtree(vars['base'])
-        return original_get_path(name, vars=vars)
+        return original_get_paths(vars=vars)
 
-    get_path = mocker.patch('sysconfig.get_path', side_effect=_get_path)
+    get_paths = mocker.patch('sysconfig.get_paths', side_effect=_get_paths)
     with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
         with build.env.IsolatedEnvBuilder():
             pass
-    assert get_path.call_count == 1
+    assert get_paths.call_count == 1
 
 
 def test_isolated_env_abstract():

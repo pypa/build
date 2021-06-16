@@ -8,6 +8,7 @@ Unreleased
 
 - Add ``ProjectBuilder.metadata_path`` helper (`PR #303`_, Fixes `#301`_)
 - Added a ``build.__main__.build_package_via_sdist`` method (`PR #304`_)
+- Use appropriate installation scheme for Apple Python venvs (`PR #314`_, Fixes `#310`_)
 
 Breaking Changes
 ----------------
@@ -20,8 +21,10 @@ Breaking Changes
 .. _PR #303: https://github.com/pypa/build/pull/303
 .. _PR #304: https://github.com/pypa/build/pull/304
 .. _PR #312: https://github.com/pypa/build/pull/312
+.. _PR #314: https://github.com/pypa/build/pull/314
 .. _#257: https://github.com/pypa/build/issues/257
 .. _#301: https://github.com/pypa/build/issues/301
+.. _#310: https://github.com/pypa/build/issues/310
 
 
 
