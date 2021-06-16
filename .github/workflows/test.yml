@@ -19,7 +19,7 @@ jobs:
   pytest:
     runs-on: ${{ matrix.os }}-latest
     env:
-      PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10"
+      PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10 --reruns 5" # --only-rerun subprocess.CalledProcessError (only on 9.1, which does not support Python 2)
     strategy:
       fail-fast: false
       matrix:
