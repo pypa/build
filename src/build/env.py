@@ -246,20 +246,22 @@ if sys.version_info >= (3,):  # noqa: C901
         """
         config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
         config_vars['base'] = path
-        env_scripts = sysconfig.get_path('scripts', vars=config_vars)
-        if not env_scripts:
-            raise RuntimeError("Couldn't get environment scripts path")
-        exe = 'pypy3' if platform.python_implementation() == 'PyPy' else 'python'
-        if os.name == 'nt':
-            exe = '{}.exe'.format(exe)
-        executable = os.path.join(env_scripts, exe)
+        # The Python that ships with the macOS developer tools varies the
+        # default scheme depending on whether the ``sys.prefix`` is part of a framework.
+        # The framework "osx_framework_library" scheme
+        # can't be used to expand the paths in a venv, which
+        # can happen if build itself is not installed in a venv.
+        # If the Apple-custom "osx_framework_library" scheme is available
+        # we enforce "posix_prefix", the venv scheme, for isolated envs.
+        if 'osx_framework_library' in sysconfig.get_scheme_names():
+            paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
+        else:
+            paths = sysconfig.get_paths(vars=config_vars)
+        executable = os.path.join(paths['scripts'], 'python.exe' if os.name == 'nt' else 'python')
         if not os.path.exists(executable):
             raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
 
-        purelib = sysconfig.get_path('purelib', vars=config_vars)
-        if not purelib:
-            raise RuntimeError("Couldn't get environment purelib folder")
-        return executable, env_scripts, purelib
+        return executable, paths['scripts'], paths['purelib']
 
 
 __all__ = (
