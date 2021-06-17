@@ -22,14 +22,6 @@ from build import BuildBackendException, BuildException, ConfigSettingsType, Pro
 from build.env import IsolatedEnvBuilder
 
 
-try:
-    import colorama
-except ImportError:
-    pass
-else:
-    colorama.init()  # fix colors on windows
-
-
 __all__ = ['build', 'main', 'main_parser']
 
 
@@ -51,7 +43,15 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):  # 
     print('{} {}'.format(prefix, str(message)))
 
 
-warnings.showwarning = _showwarning
+def _setup_cli():  # type: () -> None
+    warnings.showwarning = _showwarning
+
+    try:
+        import colorama
+    except ImportError:
+        pass
+    else:
+        colorama.init()  # fix colors on windows
 
 
 def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
@@ -264,6 +264,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None  # no
     :param cli_args: CLI arguments
     :param prog: Program name to show in help text
     """
+    _setup_cli()
     parser = main_parser()
     if prog:
         parser.prog = prog
