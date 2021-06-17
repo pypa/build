@@ -15,9 +15,11 @@ Breaking Changes
 - Binary distributions are now built via the sdist by default in the CLI (`PR #304`_, Fixes `#257`_)
   - ``python -m build`` will now build a sdist, extract it, and build a wheel from the source
 - As a side-effect of `PR #304`_, ``build.__main__.build_package`` no longer does CLI error handling (print nice message and exit the program)
+- Importing ``build.__main__`` no longer has any side-effects, it no longer overrides ``warnings.showwarning`` or runs ``colorama.init`` on import (`PR #312`_)
 
 .. _PR #303: https://github.com/pypa/build/pull/303
 .. _PR #304: https://github.com/pypa/build/pull/304
+.. _PR #312: https://github.com/pypa/build/pull/312
 .. _#257: https://github.com/pypa/build/issues/257
 .. _#301: https://github.com/pypa/build/issues/301
 
