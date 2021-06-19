@@ -467,6 +467,28 @@ def test_prepare_not_dir_outdir(mocker, tmp_dir, test_flit_path):
         builder.prepare('wheel', out)
 
 
+def test_no_outdir_single(mocker, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller.prepare_metadata_for_build_wheel', return_value='')
+
+    builder = build.ProjectBuilder(test_flit_path)
+
+    out = os.path.join(tmp_dir, 'out')
+    builder.prepare('wheel', out)
+
+    assert os.path.isdir(out)
+
+
+def test_no_outdir_multiple(mocker, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller.prepare_metadata_for_build_wheel', return_value='')
+
+    builder = build.ProjectBuilder(test_flit_path)
+
+    out = os.path.join(tmp_dir, 'does', 'not', 'exist')
+    builder.prepare('wheel', out)
+
+    assert os.path.isdir(out)
+
+
 def test_runner_user_specified(tmp_dir, test_flit_path):
     def dummy_runner(cmd, cwd=None, env=None):
         raise RuntimeError('Runner was called')

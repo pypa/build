@@ -3,6 +3,17 @@ Changelog
 +++++++++
 
 
+
+Unreleased
+==========
+
+- Fix invoking the backend on an inexistent output directory with multiple levels (`PR #318`_, Fixes `#316`_)
+
+.. _PR #318: https://github.com/pypa/build/pull/318
+.. _#316: https://github.com/pypa/build/issues/316
+
+
+
 0.5.0 (19-06-2021)
 ==================
 
