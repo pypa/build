@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.5.0 (19-06-2021)
+==================
 
 - Add ``ProjectBuilder.metadata_path`` helper (`PR #303`_, Fixes `#301`_)
 - Added a ``build.__main__.build_package_via_sdist`` method (`PR #304`_)
