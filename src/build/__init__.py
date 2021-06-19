@@ -383,7 +383,7 @@ class ProjectBuilder(object):
             if not os.path.isdir(outdir):
                 raise BuildException("Build path '{}' exists and is not a directory".format(outdir))
         else:
-            os.mkdir(outdir)
+            os.makedirs(outdir)
 
         with self._handle_backend(hook_name):
             basename = callback(outdir, config_settings, **kwargs)  # type: str
