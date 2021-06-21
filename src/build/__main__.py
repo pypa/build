@@ -163,17 +163,17 @@ def build_package_via_sdist(srcdir, outdir, distributions, config_settings=None,
     builder = ProjectBuilder(srcdir)
     sdist = _build(isolation, builder, outdir, 'sdist', config_settings, skip_dependency_check)
 
-    # extract sdist
     sdist_name = os.path.basename(sdist)
-    sdist_out = tempfile.mkdtemp(dir=outdir, prefix='build-via-sdist-')
+    sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
+    # extract sdist
     with tarfile.open(sdist) as t:
         t.extractall(sdist_out)
-        builder = ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
-        for distribution in distributions:
-            _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
-
-    # remove sdist source if there was no exception
-    shutil.rmtree(sdist_out, ignore_errors=True)
+        try:
+            builder = ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
+            for distribution in distributions:
+                _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+        finally:
+            shutil.rmtree(sdist_out, ignore_errors=True)
 
 
 def main_parser():  # type: () -> argparse.ArgumentParser

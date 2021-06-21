@@ -8,9 +8,12 @@ Unreleased
 ==========
 
 - Fix invoking the backend on an inexistent output directory with multiple levels (`PR #318`_, Fixes `#316`_)
+- When building wheels via sdists, use an isolated temporary directory (`PR #321`_, Fixes `#320`_)
 
 .. _PR #318: https://github.com/pypa/build/pull/318
+.. _PR #321: https://github.com/pypa/build/pull/321
 .. _#316: https://github.com/pypa/build/issues/316
+.. _#320: https://github.com/pypa/build/issues/320
 
 
 
