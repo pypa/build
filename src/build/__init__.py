@@ -3,7 +3,7 @@
 """
 build - A simple, correct PEP 517 package builder
 """
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 import contextlib
 import difflib

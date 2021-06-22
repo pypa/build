@@ -4,8 +4,8 @@ Changelog
 
 
 
-Unreleased
-==========
+0.5.1 (22-06-2021)
+==================
 
 - Fix invoking the backend on an inexistent output directory with multiple levels (`PR #318`_, Fixes `#316`_)
 - When building wheels via sdists, use an isolated temporary directory (`PR #321`_, Fixes `#320`_)
