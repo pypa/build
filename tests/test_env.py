@@ -51,7 +51,7 @@ def test_isolated_environment_install(mocker):
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
-    mocker.patch.object(build.env, 'virtualenv', None)
+    mocker.patch.object(build.env, '_should_use_virtualenv', lambda: False)
     get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
     with build.env.IsolatedEnvBuilder():
         pass
@@ -60,7 +60,7 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
 
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
-    mocker.patch.object(build.env, 'virtualenv', None)
+    mocker.patch.object(build.env, '_should_use_virtualenv', lambda: False)
     original_get_paths = sysconfig.get_paths
 
     def _get_paths(vars):  # noqa
@@ -118,7 +118,7 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     mocker.patch('platform.machine', return_value=arch)
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
     mocker.patch('build.env.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
-    mocker.patch.object(build.env, 'virtualenv', None)  # hide virtualenv
+    mocker.patch.object(build.env, '_should_use_virtualenv', lambda: False)
 
     min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
     with build.env.IsolatedEnvBuilder():
