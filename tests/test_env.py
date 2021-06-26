@@ -14,9 +14,7 @@ from packaging.version import Version
 import build.env
 
 
-IS_PYPY3 = sys.version_info[0] == 3 and platform.python_implementation() == 'PyPy'
-IS_PY35 = sys.version_info[:2] == (3, 5)
-IS_PY2 = sys.version_info[0] == 2
+IS_PYPY3 = platform.python_implementation() == 'PyPy'
 
 
 @pytest.mark.isolated
@@ -37,12 +35,11 @@ def test_isolated_environment_install(mocker):
         subprocess.check_call.assert_not_called()
 
         env.install(['some', 'requirements'])
-        if not IS_PY35:
-            subprocess.check_call.assert_called()
+        subprocess.check_call.assert_called()
         args = subprocess.check_call.call_args[0][0][:-1]
         assert args == [
             env.executable,
-            '-{}m'.format('E' if IS_PY2 else 'I'),
+            '-Im',
             'pip',
             'install',
             '--use-pep517',
@@ -51,7 +48,6 @@ def test_isolated_environment_install(mocker):
         ]
 
 
-@pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
@@ -62,7 +58,6 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
     assert get_scheme_names.call_count == 1
 
 
-@pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
     mocker.patch.object(build.env, 'virtualenv', None)
@@ -115,8 +110,6 @@ def test_default_pip_is_never_too_old():
 @pytest.mark.isolated
 @pytest.mark.parametrize('pip_version', ['20.2.0', '20.3.0', '21.0.0', '21.0.1'])
 @pytest.mark.parametrize('arch', ['x86_64', 'arm64'])
-@pytest.mark.skipif(IS_PY35, reason="Python 3.5 does not run on macOS 11, and pip can't upgrade to 21 there")
-@pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
 def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
 
@@ -140,7 +133,6 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
 
 
 @pytest.mark.isolated
-@pytest.mark.skipif(IS_PY2, reason='venv module used on Python 3 only')
 @pytest.mark.skipif(IS_PYPY3 and os.name == 'nt', reason='Isolated tests not supported on PyPy3 + Windows')
 @pytest.mark.parametrize('has_symlink', [True, False] if os.name == 'nt' else [True])
 def test_venv_symlink(mocker, has_symlink):
