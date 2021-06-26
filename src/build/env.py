@@ -59,22 +59,20 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
 class IsolatedEnvBuilder(object):
     """Builder object for isolated environments."""
 
-    _has_virtualenv: Optional[str] = None
-
     def __init__(self) -> None:
         self._path: Optional[str] = None
 
-    def _should_use_virtualenv(self) -> Optional[bool]:
+    @functools.lru_cache(maxsize=None)
+    @staticmethod
+    def _should_use_virtualenv() -> bool:
         # virtualenv might be incompatible if it was installed separately
         # from build. This verifies that virtualenv and all of its
         # dependencies are installed as specified by build.
-        if self._has_virtualenv is None:
-            self.__class__._has_virtualenv = virtualenv is not None and not any(
-                packaging.requirements.Requirement(d[1]).name == 'virtualenv'
-                for d in build.check_dependency('build[virtualenv]')
-                if len(d) > 1
-            )
-        return self._has_virtualenv
+        return virtualenv is not None and not any(
+            packaging.requirements.Requirement(d[1]).name == 'virtualenv'
+            for d in build.check_dependency('build[virtualenv]')
+            if len(d) > 1
+        )
 
     def __enter__(self) -> IsolatedEnv:
         """
