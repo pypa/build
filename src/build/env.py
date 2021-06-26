@@ -56,23 +56,23 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
+@functools.lru_cache(maxsize=None)
+def _should_use_virtualenv() -> bool:
+    # virtualenv might be incompatible if it was installed separately
+    # from build. This verifies that virtualenv and all of its
+    # dependencies are installed as specified by build.
+    return virtualenv is not None and not any(
+        packaging.requirements.Requirement(d[1]).name == 'virtualenv'
+        for d in build.check_dependency('build[virtualenv]')
+        if len(d) > 1
+    )
+
+
 class IsolatedEnvBuilder(object):
     """Builder object for isolated environments."""
 
     def __init__(self) -> None:
         self._path: Optional[str] = None
-
-    @functools.lru_cache(maxsize=None)
-    @staticmethod
-    def _should_use_virtualenv() -> bool:
-        # virtualenv might be incompatible if it was installed separately
-        # from build. This verifies that virtualenv and all of its
-        # dependencies are installed as specified by build.
-        return virtualenv is not None and not any(
-            packaging.requirements.Requirement(d[1]).name == 'virtualenv'
-            for d in build.check_dependency('build[virtualenv]')
-            if len(d) > 1
-        )
 
     def __enter__(self) -> IsolatedEnv:
         """
@@ -83,7 +83,7 @@ class IsolatedEnvBuilder(object):
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
             # use virtualenv when available (as it's faster than venv)
-            if self._should_use_virtualenv():
+            if _should_use_virtualenv():
                 executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
                 executable, scripts_dir = _create_isolated_env_venv(self._path)
