@@ -21,7 +21,6 @@ from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional
 
 import pep517.wrappers
 import toml
-import toml.decoder
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
@@ -190,7 +189,7 @@ class ProjectBuilder(object):
             spec = {}
         except PermissionError as e:
             raise BuildException(f"{e.strerror}: '{e.filename}' ")
-        except toml.decoder.TomlDecodeError as e:
+        except toml.TomlDecodeError as e:
             raise BuildException(f'Failed to parse {spec_file}: {e} ')
 
         build_system = spec.get('build-system')
