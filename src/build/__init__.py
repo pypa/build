@@ -235,7 +235,7 @@ class ProjectBuilder(object):
             paths[str(self.scripts_dir)] = None
             if 'PATH' in os.environ:
                 paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
-            extra_environ = {} if extra_environ is None else extra_environ
+            extra_environ = {} if extra_environ is None else dict(extra_environ)
             extra_environ['PATH'] = os.pathsep.join(paths)
         self._hook_runner(cmd, cwd, extra_environ)
 
