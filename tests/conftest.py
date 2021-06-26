@@ -63,15 +63,8 @@ def pytest_addoption(parser):
     parser.addoption('--run-integration', action='store_true', help='run the integration tests')
     parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
 
-    # pytest-xdist does not work on Windows PyPy2 - we need to disable it
-    if platform.python_implementation() == 'PyPy' and sys.version_info[0] == 2 and os.name == 'nt':
-        # the patch here is compatible with pytest 4 + pytest-xdist 1.31 (last release on python2)
-        num_process_option_xdist = next(o for o in parser.getgroup('xdist').options if o.dest == 'numprocesses')
-        # change the type to return None -> no parallel runs
-        num_process_option_xdist._attrs['type'] = lambda s: None  # noqa
 
-
-PYPY3_WIN_VENV_BAD = platform.python_implementation() == 'PyPy' and sys.version_info[0] == 3 and os.name == 'nt'
+PYPY3_WIN_VENV_BAD = platform.python_implementation() == 'PyPy' and os.name == 'nt'
 PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
 
 
