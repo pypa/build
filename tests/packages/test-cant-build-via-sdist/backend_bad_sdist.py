@@ -7,10 +7,10 @@ import zipfile
 
 def build_sdist(sdist_directory, config_settings=None):
     name = 'test_cant_build_via_sdist-1.0.0'
-    file = '{}.tar.gz'.format(name)
+    file = f'{name}.tar.gz'
     with tarfile.open(os.path.join(sdist_directory, file), 'w') as t:
-        t.add('pyproject.toml', '{}/pyproject.toml'.format(name))
-        t.add('backend_bad_sdist.py', '{}/backend_bad_sdist.py'.format(name))
+        t.add('pyproject.toml', f'{name}/pyproject.toml')
+        t.add('backend_bad_sdist.py', f'{name}/backend_bad_sdist.py')
     return file
 
 

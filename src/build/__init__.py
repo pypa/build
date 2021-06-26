@@ -69,7 +69,7 @@ class BuildBackendException(Exception):
     def __str__(self) -> str:
         if self._description:
             return self._description
-        return 'Backend operation failed: {!r}'.format(self.exception)
+        return f'Backend operation failed: {self.exception!r}'
 
 
 class TypoWarning(Warning):
@@ -80,11 +80,11 @@ class TypoWarning(Warning):
 
 def _validate_source_directory(srcdir: str) -> None:
     if not os.path.isdir(srcdir):
-        raise BuildException('Source {} is not a directory'.format(srcdir))
+        raise BuildException(f'Source {srcdir} is not a directory')
     pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
     setup_py = os.path.join(srcdir, 'setup.py')
     if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
-        raise BuildException('Source {} does not appear to be a Python project: no pyproject.toml or setup.py'.format(srcdir))
+        raise BuildException(f'Source {srcdir} does not appear to be a Python project: no pyproject.toml or setup.py')
 
 
 def check_dependency(
@@ -136,7 +136,7 @@ def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
         for obj in dictionary:
             if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
                 warnings.warn(
-                    "Found '{}' in pyproject.toml, did you mean '{}'?".format(obj, expected),
+                    f"Found '{obj}' in pyproject.toml, did you mean '{expected}'?",
                     TypoWarning,
                 )
 
@@ -194,9 +194,9 @@ class ProjectBuilder(object):
         except FileNotFoundError:
             spec = {}
         except PermissionError as e:
-            raise BuildException("{}: '{}' ".format(e.strerror, e.filename))
+            raise BuildException(f"{e.strerror}: '{e.filename}' ")
         except toml.decoder.TomlDecodeError as e:
-            raise BuildException('Failed to parse {}: {} '.format(spec_file, e))
+            raise BuildException(f'Failed to parse {spec_file}: {e} ')
 
         build_system = spec.get('build-system')
         # if pyproject.toml is missing (per PEP 517) or [build-system] is missing (per PEP 518),
@@ -207,7 +207,7 @@ class ProjectBuilder(object):
         # if [build-system] is present, it must have a ``requires`` field (per PEP 518).
         elif 'requires' not in build_system:
             _find_typo(build_system, 'requires')
-            raise BuildException("Missing 'build-system.requires' in {}".format(spec_file))
+            raise BuildException(f"Missing 'build-system.requires' in {spec_file}")
         # if ``build-backend`` is missing, inject the legacy setuptools backend
         # but leave ``requires`` alone to emulate pip.
         elif 'build-backend' not in build_system:
@@ -281,7 +281,7 @@ class ProjectBuilder(object):
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        hook_name = 'get_requires_for_build_{}'.format(distribution)
+        hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
         with self._handle_backend(hook_name):
@@ -315,7 +315,7 @@ class ProjectBuilder(object):
         """
         try:
             return self._call_backend(
-                'prepare_metadata_for_build_{}'.format(distribution),
+                f'prepare_metadata_for_build_{distribution}',
                 output_directory,
                 config_settings,
                 _allow_fallback=False,
@@ -343,7 +343,7 @@ class ProjectBuilder(object):
         :returns: The full path to the built distribution
         """
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
-        return self._call_backend('build_{}'.format(distribution), output_directory, config_settings, **kwargs)
+        return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
     def metadata_path(self, output_directory: str) -> str:
         """
@@ -364,12 +364,9 @@ class ProjectBuilder(object):
         match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
-        distinfo = '{}-{}.dist-info'.format(
-            # Python 2 does not support match['group']
-            match.group('distribution'),
-            match.group('version'),
-        )
-        member_prefix = '{}/'.format(distinfo)
+        # Python 2 does not support match['group']
+        distinfo = f"{match.group('distribution')}-{match.group('version')}.dist-info"
+        member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
             w.extractall(
                 output_directory,
@@ -386,7 +383,7 @@ class ProjectBuilder(object):
 
         if os.path.exists(outdir):
             if not os.path.isdir(outdir):
-                raise BuildException("Build path '{}' exists and is not a directory".format(outdir))
+                raise BuildException(f"Build path '{outdir}' exists and is not a directory")
         else:
             os.makedirs(outdir)
 
@@ -403,11 +400,11 @@ class ProjectBuilder(object):
             except pep517.wrappers.BackendUnavailable as exception:
                 raise BuildBackendException(
                     exception,
-                    "Backend '{}' is not available.".format(self._backend),
+                    f"Backend '{self._backend}' is not available.",
                     sys.exc_info(),
                 )
             except subprocess.CalledProcessError as exception:
-                raise BuildBackendException(exception, 'Backend subproccess exited when trying to invoke {}'.format(hook))
+                raise BuildBackendException(exception, f'Backend subproccess exited when trying to invoke {hook}')
             except Exception as exception:
                 raise BuildBackendException(exception, exc_info=sys.exc_info())
 

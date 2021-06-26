@@ -61,9 +61,9 @@ def get_project(name, tmp_path):
         pass  # just ignore, if the creation failed we will have another failure soon that will notify the user
 
     github_org_repo, version = INTEGRATION_SOURCES[name]
-    tar_filename = '{}-{}.tar.gz'.format(name, version)
+    tar_filename = f'{name}-{version}.tar.gz'
     tarball = os.path.join(tar_store, tar_filename)
-    with filelock.FileLock(os.path.join(tar_store, '{}.lock'.format(tar_filename))):
+    with filelock.FileLock(os.path.join(tar_store, f'{tar_filename}.lock')):
         if not os.path.exists(tarball):
             url = 'https://github.com/{}/archive/{}.tar.gz'.format(github_org_repo, version)
             request = urlopen(Request(url))
@@ -75,7 +75,7 @@ def get_project(name, tmp_path):
                     request.close()
     with tarfile.open(tarball, 'r:gz') as tar_handler:
         tar_handler.extractall(str(dest))
-    return dest / '{}-{}'.format(name, version)
+    return dest / f'{name}-{version}'
 
 
 @pytest.mark.parametrize(
@@ -114,7 +114,7 @@ def test_build(monkeypatch, project, args, call, tmp_path):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
 
     if call and call[0] == 'pyproject-build':
-        exe_name = 'pyproject-build{}'.format('.exe' if os.name == 'nt' else '')
+        exe_name = f"pyproject-build{'.exe' if os.name == 'nt' else ''}"
         exe = os.path.join(os.path.dirname(sys.executable), exe_name)
         if os.path.exists(exe):
             call[0] = exe

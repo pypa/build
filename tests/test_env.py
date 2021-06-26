@@ -25,7 +25,7 @@ def test_isolation():
     with build.env.IsolatedEnvBuilder() as env:
         with pytest.raises(subprocess.CalledProcessError):
             debug = 'import sys; import os; print(os.linesep.join(sys.path));'
-            subprocess.check_call([env.executable, '-c', '{} import build.env'.format(debug)])
+            subprocess.check_call([env.executable, '-c', f'{debug} import build.env'])
 
 
 @pytest.mark.isolated
