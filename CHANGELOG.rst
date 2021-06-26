@@ -3,6 +3,12 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Dropped support for Python 2 and 3.5.
+
+
 
 0.5.1 (22-06-2021)
 ==================
