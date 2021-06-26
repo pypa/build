@@ -17,7 +17,7 @@ import warnings
 import zipfile
 
 from collections import OrderedDict
-from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Text, Tuple, Type, Union
+from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Tuple, Type, Union
 
 import pep517.wrappers
 import toml
@@ -29,12 +29,9 @@ if sys.version_info < (3,):
     PermissionError = OSError
 
 
-RunnerType = Callable[[Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]], None]
+RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
-_ExcInfoType = Union[
-    Tuple[Type[BaseException], BaseException, types.TracebackType],
-    Tuple[None, None, None],
-]
+_ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
 
 
 _WHEEL_NAME_REGEX = re.compile(
@@ -61,14 +58,15 @@ class BuildBackendException(Exception):
     Exception raised when the backend fails
     """
 
-    def __init__(self, exception, description=None, exc_info=(None, None, None)):
-        # type: (Exception, Optional[str], _ExcInfoType) -> None
-        super(BuildBackendException, self).__init__()
-        self.exception = exception  # type: Exception
-        self.exc_info = exc_info
+    def __init__(
+        self, exception: Exception, description: Optional[str] = None, exc_info: _ExcInfoType = (None, None, None)
+    ) -> None:
+        super().__init__()
+        self.exception: Exception = exception
+        self.exc_info: _ExcInfoType = exc_info
         self._description = description
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         if self._description:
             return self._description
         return 'Backend operation failed: {!r}'.format(self.exception)
@@ -80,8 +78,7 @@ class TypoWarning(Warning):
     """
 
 
-def _validate_source_directory(srcdir):
-    # type: (str) -> None
+def _validate_source_directory(srcdir: str) -> None:
     if not os.path.isdir(srcdir):
         raise BuildException('Source {} is not a directory'.format(srcdir))
     pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
@@ -90,8 +87,9 @@ def _validate_source_directory(srcdir):
         raise BuildException('Source {} does not appear to be a Python project: no pyproject.toml or setup.py'.format(srcdir))
 
 
-def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozenset()):
-    # type: (str, Tuple[str, ...], AbstractSet[str]) -> Iterator[Tuple[str, ...]]
+def check_dependency(
+    req_string: str, ancestral_req_strings: Tuple[str, ...] = (), parent_extras: AbstractSet[str] = frozenset()
+) -> Iterator[Tuple[str, ...]]:
     """
     Verify that a dependency and all of its dependencies are met.
 
@@ -133,7 +131,7 @@ def check_dependency(req_string, ancestral_req_strings=(), parent_extras=frozens
                     yield unmet_req
 
 
-def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
+def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
     if expected not in dictionary:
         for obj in dictionary:
             if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
@@ -144,7 +142,7 @@ def _find_typo(dictionary, expected):  # type: (Mapping[str, str], str) -> None
 
 
 @contextlib.contextmanager
-def _working_directory(path):  # type: (str) -> Iterator[None]
+def _working_directory(path: str) -> Iterator[None]:
     current = os.getcwd()
 
     os.chdir(path)
@@ -162,12 +160,11 @@ class ProjectBuilder(object):
 
     def __init__(
         self,
-        srcdir,  # type: str
-        python_executable=sys.executable,  # type: Union[bytes, Text]
-        scripts_dir=None,  # type: Optional[Union[bytes, Text]]
-        runner=pep517.wrappers.default_subprocess_runner,  # type: RunnerType
-    ):
-        # type: (...) -> None
+        srcdir: str,
+        python_executable: str = sys.executable,
+        scripts_dir: Optional[str] = None,
+        runner: RunnerType = pep517.wrappers.default_subprocess_runner,
+    ) -> None:
         """
         :param srcdir: The source directory
         :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
@@ -186,7 +183,7 @@ class ProjectBuilder(object):
         The default runner simply calls the backend hooks in a subprocess, writing backend output
         to stdout/stderr.
         """
-        self.srcdir = os.path.abspath(srcdir)  # type: str
+        self.srcdir: str = os.path.abspath(srcdir)
         _validate_source_directory(srcdir)
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
@@ -229,11 +226,12 @@ class ProjectBuilder(object):
             runner=self._runner,
         )
 
-    def _runner(self, cmd, cwd=None, extra_environ=None):
-        # type: (Sequence[str], Optional[Union[bytes, Text]], Optional[Dict[str, str]]) -> None
+    def _runner(
+        self, cmd: Sequence[str], cwd: Optional[str] = None, extra_environ: Optional[Mapping[str, str]] = None
+    ) -> None:
         # if script dir is specified must be inserted at the start of PATH (avoid duplicate path while doing so)
         if self.scripts_dir is not None:
-            paths = OrderedDict()  # type:  Dict[str, None]
+            paths: Dict[str, None] = OrderedDict()
             paths[str(self.scripts_dir)] = None
             if 'PATH' in os.environ:
                 paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
@@ -242,31 +240,31 @@ class ProjectBuilder(object):
         self._hook_runner(cmd, cwd, extra_environ)
 
     @property
-    def python_executable(self):  # type: () -> Union[bytes, Text]
+    def python_executable(self) -> str:
         """
         The Python executable used to invoke the backend.
         """
         # make mypy happy
-        exe = self._hook.python_executable  # type: Union[bytes, Text]
+        exe: str = self._hook.python_executable
         return exe
 
     @python_executable.setter
-    def python_executable(self, value):  # type: (Union[bytes, Text]) -> None
+    def python_executable(self, value: str) -> None:
         self._hook.python_executable = value
 
     @property
-    def scripts_dir(self):  # type: () -> Union[None, bytes, Text]
+    def scripts_dir(self) -> Optional[str]:
         """
         The folder where the scripts are stored for the python executable.
         """
         return self._scripts_dir
 
     @scripts_dir.setter
-    def scripts_dir(self, value):  # type: (Union[None, bytes, Text]) -> None
+    def scripts_dir(self, value: Optional[str]) -> None:
         self._scripts_dir = value
 
     @property
-    def build_system_requires(self):  # type: () -> Set[str]
+    def build_system_requires(self) -> Set[str]:
         """
         The dependencies defined in the ``pyproject.toml``'s
         ``build-system.requires`` field or the default build dependencies
@@ -274,8 +272,7 @@ class ProjectBuilder(object):
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(self, distribution, config_settings=None):
-        # type: (str, Optional[ConfigSettingsType]) -> Set[str]
+    def get_requires_for_build(self, distribution: str, config_settings: Optional[ConfigSettingsType] = None) -> Set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -290,8 +287,9 @@ class ProjectBuilder(object):
         with self._handle_backend(hook_name):
             return set(get_requires(config_settings))
 
-    def check_dependencies(self, distribution, config_settings=None):
-        # type: (str, Optional[ConfigSettingsType]) -> Set[Tuple[str, ...]]
+    def check_dependencies(
+        self, distribution: str, config_settings: Optional[ConfigSettingsType] = None
+    ) -> Set[Tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
         :attr:`build_system_requires` and :meth:`get_requires_for_build` for a given
@@ -304,8 +302,9 @@ class ProjectBuilder(object):
         dependencies = self.get_requires_for_build(distribution, config_settings).union(self.build_system_requires)
         return {u for d in dependencies for u in check_dependency(d)}
 
-    def prepare(self, distribution, output_directory, config_settings=None):
-        # type: (str, str, Optional[ConfigSettingsType]) -> Optional[str]
+    def prepare(
+        self, distribution: str, output_directory: str, config_settings: Optional[ConfigSettingsType] = None
+    ) -> Optional[str]:
         """
         Prepare metadata for a distribution.
 
@@ -326,8 +325,13 @@ class ProjectBuilder(object):
                 return None
             raise
 
-    def build(self, distribution, output_directory, config_settings=None, metadata_directory=None):
-        # type: (str, str, Optional[ConfigSettingsType], Optional[str]) -> str
+    def build(
+        self,
+        distribution: str,
+        output_directory: str,
+        config_settings: Optional[ConfigSettingsType] = None,
+        metadata_directory: Optional[str] = None,
+    ) -> str:
         """
         Build a distribution.
 
@@ -341,7 +345,7 @@ class ProjectBuilder(object):
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend('build_{}'.format(distribution), output_directory, config_settings, **kwargs)
 
-    def metadata_path(self, output_directory):  # type: (str) -> str
+    def metadata_path(self, output_directory: str) -> str:
         """
         Generates the metadata directory of a distribution and returns its path.
 
@@ -373,8 +377,9 @@ class ProjectBuilder(object):
             )
         return os.path.join(output_directory, distinfo)
 
-    def _call_backend(self, hook_name, outdir, config_settings=None, **kwargs):
-        # type: (str, str, Optional[ConfigSettingsType], Any) -> str
+    def _call_backend(
+        self, hook_name: str, outdir: str, config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
+    ) -> str:
         outdir = os.path.abspath(outdir)
 
         callback = getattr(self._hook, hook_name)
@@ -386,12 +391,12 @@ class ProjectBuilder(object):
             os.makedirs(outdir)
 
         with self._handle_backend(hook_name):
-            basename = callback(outdir, config_settings, **kwargs)  # type: str
+            basename: str = callback(outdir, config_settings, **kwargs)
 
         return os.path.join(outdir, basename)
 
     @contextlib.contextmanager
-    def _handle_backend(self, hook):  # type: (str) -> Iterator[None]
+    def _handle_backend(self, hook: str) -> Iterator[None]:
         with _working_directory(self.srcdir):
             try:
                 yield

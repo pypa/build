@@ -38,17 +38,17 @@ class IsolatedEnv(object):
     """Abstract base of isolated build environments, as required by the build project."""
 
     @abstractproperty
-    def executable(self):  # type: () -> str
+    def executable(self) -> str:
         """The executable of the isolated build environment."""
         raise NotImplementedError
 
     @abstractproperty
-    def scripts_dir(self):  # type: () -> str
+    def scripts_dir(self) -> str:
         """The scripts directory of the isolated build environment."""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def install(self, requirements):  # type: (Iterable[str]) -> None
+    def install(self, requirements: Iterable[str]) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
 
@@ -60,12 +60,12 @@ class IsolatedEnv(object):
 class IsolatedEnvBuilder(object):
     """Builder object for isolated environments."""
 
-    _has_virtualenv = None  # type: Optional[bool]
+    _has_virtualenv: Optional[str] = None
 
-    def __init__(self):  # type: () -> None
-        self._path = None  # type: Optional[str]
+    def __init__(self) -> None:
+        self._path: Optional[str] = None
 
-    def _should_use_virtualenv(self):  # type: () -> Optional[bool]
+    def _should_use_virtualenv(self) -> Optional[bool]:
         # virtualenv might be incompatible if it was installed separately
         # from build. This verifies that virtualenv and all of its
         # dependencies are installed as specified by build.
@@ -77,7 +77,7 @@ class IsolatedEnvBuilder(object):
             )
         return self._has_virtualenv
 
-    def __enter__(self):  # type: () -> IsolatedEnv
+    def __enter__(self) -> IsolatedEnv:
         """
         Create an isolated build environment.
 
@@ -95,8 +95,9 @@ class IsolatedEnvBuilder(object):
             self.__exit__(*sys.exc_info())
             raise
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # type: (Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]) -> None
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
         """
         Delete the created isolated build environment.
 
@@ -115,8 +116,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     Non-standard paths injected directly to sys.path will still be passed to the environment.
     """
 
-    def __init__(self, path, python_executable, scripts_dir):
-        # type: (str, str, str) -> None
+    def __init__(self, path: str, python_executable: str, scripts_dir: str) -> None:
         """
         :param path: The path where the environment exists
         :param python_executable: The python executable within the environment
@@ -126,20 +126,20 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         self._scripts_dir = scripts_dir
 
     @property
-    def path(self):  # type: () -> str
+    def path(self) -> str:
         """The location of the isolated build environment."""
         return self._path
 
     @property
-    def executable(self):  # type: () -> str
+    def executable(self) -> str:
         """The python executable of the isolated build environment."""
         return self._python_executable
 
     @property
-    def scripts_dir(self):  # type: () -> str
+    def scripts_dir(self) -> str:
         return self._scripts_dir
 
-    def install(self, requirements):  # type: (Iterable[str]) -> None
+    def install(self, requirements: Iterable[str]) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
 
@@ -171,7 +171,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
             os.unlink(req_file.name)
 
 
-def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
+def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
     """
     On Python 2 we use the virtualenv package to provision a virtual environment.
 
@@ -189,7 +189,7 @@ def _create_isolated_env_virtualenv(path):  # type: (str) -> Tuple[str, str]
 if sys.version_info >= (3,):  # noqa: C901
 
     @functools.lru_cache(maxsize=None)
-    def _fs_supports_symlink():  # type: () -> bool
+    def _fs_supports_symlink() -> bool:
         """Return True if symlinks are supported"""
         # Using definition used by venv.main()
         if os.name != 'nt':
@@ -205,7 +205,7 @@ if sys.version_info >= (3,):  # noqa: C901
             except (OSError, NotImplementedError, AttributeError):
                 return False
 
-    def _create_isolated_env_venv(path):  # type: (str) -> Tuple[str, str]
+    def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
         """
         On Python 3 we use the venv package from the standard library.
 
@@ -237,7 +237,7 @@ if sys.version_info >= (3,):  # noqa: C901
         subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
         return executable, script_dir
 
-    def _find_executable_and_scripts(path):  # type: (str) -> Tuple[str, str, str]
+    def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
         """
         Detect the Python executable and script folder of a virtual environment.
 
