@@ -14,7 +14,7 @@ import textwrap
 import traceback
 import warnings
 
-from typing import Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
+from typing import Iterable, Iterator, Optional, Sequence, TextIO, Type, Union
 
 import build
 
@@ -35,15 +35,21 @@ else:
     from textwrap import indent as _indent
 
 
-def _showwarning(message, category, filename, lineno, file=None, line=None):  # pragma: no cover
-    # type: (Union[Warning, str], Type[Warning], str, int, Optional[TextIO], Optional[str]) -> None
+def _showwarning(
+    message: Union[Warning, str],
+    category: Type[Warning],
+    filename: str,
+    lineno: int,
+    file: Optional[TextIO] = None,
+    line: Optional[str] = None,
+) -> None:  # pragma: no cover
     prefix = 'WARNING'
     if sys.stdout.isatty():
         prefix = '\33[93m' + prefix + '\33[0m'
     print('{} {}'.format(prefix, str(message)))
 
 
-def _setup_cli():  # type: () -> None
+def _setup_cli() -> None:
     warnings.showwarning = _showwarning
 
     try:
@@ -54,7 +60,7 @@ def _setup_cli():  # type: () -> None
         colorama.init()  # fix colors on windows
 
 
-def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
+def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
     """
     Print an error message and exit. Will color the output when writing to a TTY.
 
@@ -68,12 +74,13 @@ def _error(msg, code=1):  # type: (str, int) -> None  # pragma: no cover
     exit(code)
 
 
-def _format_dep_chain(dep_chain):  # type: (Sequence[str]) -> str
+def _format_dep_chain(dep_chain: Sequence[str]) -> str:
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
 
-def _build_in_isolated_env(builder, outdir, distribution, config_settings):
-    # type: (ProjectBuilder, str, str, Optional[ConfigSettingsType]) -> str
+def _build_in_isolated_env(
+    builder: ProjectBuilder, outdir: str, distribution: str, config_settings: Optional[ConfigSettingsType]
+) -> str:
     with IsolatedEnvBuilder() as env:
         builder.python_executable = env.executable
         builder.scripts_dir = env.scripts_dir
@@ -84,8 +91,13 @@ def _build_in_isolated_env(builder, outdir, distribution, config_settings):
         return builder.build(distribution, outdir, config_settings or {})
 
 
-def _build_in_current_env(builder, outdir, distribution, config_settings, skip_dependency_check=False):
-    # type: (ProjectBuilder, str, str, Optional[ConfigSettingsType], bool) -> str
+def _build_in_current_env(
+    builder: ProjectBuilder,
+    outdir: str,
+    distribution: str,
+    config_settings: Optional[ConfigSettingsType],
+    skip_dependency_check: bool = False,
+) -> str:
     if not skip_dependency_check:
         missing = builder.check_dependencies(distribution)
         if missing:
@@ -95,8 +107,14 @@ def _build_in_current_env(builder, outdir, distribution, config_settings, skip_d
     return builder.build(distribution, outdir, config_settings or {})
 
 
-def _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check):
-    # type: (bool, ProjectBuilder, str, str, Optional[ConfigSettingsType], bool) -> str
+def _build(
+    isolation: bool,
+    builder: ProjectBuilder,
+    outdir: str,
+    distribution: str,
+    config_settings: Optional[ConfigSettingsType],
+    skip_dependency_check: bool,
+) -> str:
     if isolation:
         return _build_in_isolated_env(builder, outdir, distribution, config_settings)
     else:
@@ -104,7 +122,7 @@ def _build(isolation, builder, outdir, distribution, config_settings, skip_depen
 
 
 @contextlib.contextmanager
-def _handle_build_error():  # type: () -> Iterator[None]
+def _handle_build_error() -> Iterator[None]:
     try:
         yield
     except BuildException as e:
@@ -128,8 +146,14 @@ def _handle_build_error():  # type: () -> Iterator[None]
         _error(str(e))
 
 
-def build_package(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependency_check=False):
-    # type: (str, str, List[str], Optional[ConfigSettingsType], bool, bool) -> None
+def build_package(
+    srcdir: str,
+    outdir: str,
+    distributions: Sequence[str],
+    config_settings: Optional[ConfigSettingsType] = None,
+    isolation: bool = True,
+    skip_dependency_check: bool = False,
+) -> None:
     """
     Run the build process.
 
@@ -145,8 +169,14 @@ def build_package(srcdir, outdir, distributions, config_settings=None, isolation
         _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
 
 
-def build_package_via_sdist(srcdir, outdir, distributions, config_settings=None, isolation=True, skip_dependency_check=False):
-    # type: (str, str, List[str], Optional[ConfigSettingsType], bool, bool) -> None
+def build_package_via_sdist(
+    srcdir: str,
+    outdir: str,
+    distributions: Sequence[str],
+    config_settings: Optional[ConfigSettingsType] = None,
+    isolation: bool = True,
+    skip_dependency_check: bool = False,
+) -> None:
     """
     Build a sdist and then the specified distributions from it.
 
@@ -176,13 +206,13 @@ def build_package_via_sdist(srcdir, outdir, distributions, config_settings=None,
             shutil.rmtree(sdist_out, ignore_errors=True)
 
 
-def main_parser():  # type: () -> argparse.ArgumentParser
+def main_parser() -> argparse.ArgumentParser:
     """
     Construct the main parser.
     """
     # mypy does not recognize module.__path__
     # https://github.com/python/mypy/issues/1422
-    paths = build.__path__  # type: Iterable[Optional[str]]  # type: ignore
+    paths: Iterable[str] = build.__path__  # type: ignore
     parser = argparse.ArgumentParser(
         description=_indent(  # textwrap.indent
             textwrap.dedent(
@@ -257,7 +287,7 @@ def main_parser():  # type: () -> argparse.ArgumentParser
     return parser
 
 
-def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None  # noqa: C901
+def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: C901
     """
     Parse the CLI arguments and invoke the build process.
 
@@ -305,7 +335,7 @@ def main(cli_args, prog=None):  # type: (List[str], Optional[str]) -> None  # no
         _error(str(e))
 
 
-def entrypoint():  # type: () -> None
+def entrypoint() -> None:
     main(sys.argv[1:])
 
 
