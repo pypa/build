@@ -98,7 +98,7 @@ def test_parse_args(mocker, cli_args, build_args, hook):
     elif hook == 'build_package_via_sdist':
         build.__main__.build_package_via_sdist.assert_called_with(*build_args)
     else:
-        raise ValueError('Unknown hook {}'.format(hook))  # pragma: no cover
+        raise ValueError(f'Unknown hook {hook}')  # pragma: no cover
 
 
 def test_prog():
@@ -120,7 +120,7 @@ def test_version(capsys):
         build.__main__.main(['--version'])
     out, err = capsys.readouterr()
     target = out if sys.version_info[0] == 3 else err
-    assert target.startswith('build {}'.format(build.__version__))
+    assert target.startswith(f'build {build.__version__}')
 
 
 @pytest.mark.isolated
@@ -187,7 +187,7 @@ def test_build_raises_build_backend_exception(mocker, test_flit_path):
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
     mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    msg = "Backend operation failed: Exception('a'{})".format(',' if sys.version_info < (3, 7) else '')
+    msg = f"Backend operation failed: Exception('a'{',' if sys.version_info < (3, 7) else ''})"
     with pytest.raises(build.BuildBackendException, match=re.escape(msg)):
         build.__main__.build_package(test_flit_path, '.', ['sdist'])
 

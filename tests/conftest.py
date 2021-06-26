@@ -19,7 +19,7 @@ def _build_and_reinstall_build(test_mode):
     temp = tempfile.mkdtemp()
     try:
         subprocess.check_output(
-            [sys.executable, '-m', 'build', '--{}'.format(test_mode), '--no-isolation', '--outdir', temp],
+            [sys.executable, '-m', 'build', f'--{test_mode}', '--no-isolation', '--outdir', temp],
         )
         dist_file = next(d for d in os.listdir(temp) if d.endswith('.whl' if test_mode == 'wheel' else '.tar.gz'))
         subprocess.check_call(

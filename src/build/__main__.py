@@ -46,7 +46,7 @@ def _showwarning(
     prefix = 'WARNING'
     if sys.stdout.isatty():
         prefix = '\33[93m' + prefix + '\33[0m'
-    print('{} {}'.format(prefix, str(message)))
+    print(f'{prefix} {message}')
 
 
 def _setup_cli() -> None:
@@ -70,7 +70,7 @@ def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
     prefix = 'ERROR'
     if sys.stdout.isatty():
         prefix = '\33[91m' + prefix + '\33[0m'
-    print('{} {}'.format(prefix, msg))
+    print(f'{prefix} {msg}')
     exit(code)
 
 
@@ -102,7 +102,7 @@ def _build_in_current_env(
         missing = builder.check_dependencies(distribution)
         if missing:
             dependencies = ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
-            _error('Missing dependencies:{}'.format(dependencies))
+            _error(f'Missing dependencies:{dependencies}')
 
     return builder.build(distribution, outdir, config_settings or {})
 
@@ -245,7 +245,7 @@ def main_parser() -> argparse.ArgumentParser:
         '--version',
         '-V',
         action='version',
-        version='build {} ({})'.format(build.__version__, ', '.join(path for path in paths if path)),
+        version=f"build {build.__version__} ({','.join(paths)})",
     )
     parser.add_argument(
         '--sdist',
@@ -263,7 +263,7 @@ def main_parser() -> argparse.ArgumentParser:
         '--outdir',
         '-o',
         type=str,
-        help='output directory (defaults to {{srcdir}}{sep}dist)'.format(sep=os.sep),
+        help=f'output directory (defaults to {{srcdir}}{os.sep}dist)',
     )
     parser.add_argument(
         '--skip-dependency-check',

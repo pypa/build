@@ -197,7 +197,7 @@ if sys.version_info >= (3,):  # noqa: C901
 
         # Windows may support symlinks (setting in Windows 10)
         with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:
-            dest = '{}-b'.format(tmp_file)
+            dest = f'{tmp_file}-b'
             try:
                 os.symlink(tmp_file.name, dest)
                 os.unlink(dest)
@@ -231,7 +231,7 @@ if sys.version_info >= (3,):  # noqa: C901
             minimum_pip_version = '19.1.0'
 
         if current_pip_version < packaging.version.Version(minimum_pip_version):
-            subprocess.check_call([executable, '-m', 'pip', 'install', 'pip>={}'.format(minimum_pip_version)])
+            subprocess.check_call([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
 
         # Avoid the setuptools from ensurepip to break the isolation
         subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
@@ -259,7 +259,7 @@ if sys.version_info >= (3,):  # noqa: C901
             paths = sysconfig.get_paths(vars=config_vars)
         executable = os.path.join(paths['scripts'], 'python.exe' if os.name == 'nt' else 'python')
         if not os.path.exists(executable):
-            raise RuntimeError('Virtual environment creation failed, executable {} missing'.format(executable))
+            raise RuntimeError(f'Virtual environment creation failed, executable {executable} missing')
 
         return executable, paths['scripts'], paths['purelib']
 

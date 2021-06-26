@@ -9,19 +9,19 @@ name = 'demo_pkg_inline'
 pkg_name = name.replace('_', '-')
 
 version = '1.0.0'
-dist_info = '{}-{}.dist-info'.format(name, version)
+dist_info = f'{name}-{version}.dist-info'
 
-metadata = '{}/METADATA'.format(dist_info)
-wheel = '{}/WHEEL'.format(dist_info)
-entry_points = '{}/entry_points.txt'.format(dist_info)
-record = '{}/RECORD'.format(dist_info)
-init = '{}/__init__.py'.format(name)
+metadata = f'{dist_info}/METADATA'
+wheel = f'{dist_info}/WHEEL'
+entry_points = f'{dist_info}/entry_points.txt'
+record = f'{dist_info}/RECORD'
+init = f'{name}/__init__.py'
 content = {
-    init: "def do():\n    print('greetings from {}')".format(name),
-    metadata: """
+    init: f"def do():\n    print('greetings from {name}')",
+    metadata: f"""
         Metadata-Version: 2.1
-        Name: {}
-        Version: {}
+        Name: {pkg_name}
+        Version: {version}
         Summary: Summary of package
         Home-page: Does not exists
         Author: someone
@@ -30,38 +30,32 @@ content = {
         Platform: ANY
 
         Desc
-       """.format(
-        pkg_name, version
-    ),
-    wheel: """
+       """,
+    wheel: f"""
         Wheel-Version: 1.0
-        Generator: {}-{}
+        Generator: {name}-{version}
         Root-Is-Purelib: true
         Tag: py3-none-any
-       """.format(
-        name, version
-    ),
-    '{}/top_level.txt'.format(dist_info): name,
+       """,
+    f'{dist_info}/top_level.txt': name,
     entry_points: '\n[console_scripts]\ndemo-pkg-inline = demo_pkg_inline:do',
-    record: """
-        {0}/__init__.py,,
-        {1}/METADATA,,
-        {1}/WHEEL,,
-        {1}/top_level.txt,,
-        {1}/RECORD,,
-       """.format(
-        name, dist_info
-    ),
+    record: f"""
+        {name}/__init__.py,,
+        {dist_info}/METADATA,,
+        {dist_info}/WHEEL,,
+        {dist_info}/top_level.txt,,
+        {dist_info}/RECORD,,
+       """,
 }
 
 
 def build_wheel(wheel_directory, metadata_directory=None, config_settings=None):
-    base_name = '{}-{}-py{}-none-any.whl'.format(name, version, sys.version_info.major)
+    base_name = f'{name}-{version}-py{sys.version_info.major}-none-any.whl'
     path = os.path.join(wheel_directory, base_name)
     with ZipFile(str(path), 'w') as zip_file_handler:
         for arc_name, data in content.items():
             zip_file_handler.writestr(arc_name, dedent(data).strip())
-    print('created wheel {}'.format(path))
+    print(f'created wheel {path}')
     return base_name
 
 
