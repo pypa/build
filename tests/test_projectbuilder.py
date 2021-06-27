@@ -1,13 +1,10 @@
 # SPDX-License-Identifier: MIT
-# coding=utf-8
 
-from __future__ import unicode_literals
 
 import copy
 import os
 import sys
 import textwrap
-import typing
 
 import pep517.wrappers
 import pytest
@@ -20,10 +17,8 @@ if sys.version_info >= (3, 8):  # pragma: no cover
 else:  # pragma: no cover
     import importlib_metadata
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
+import pathlib
+
 
 build_open_owner = 'builtins'
 
@@ -185,7 +180,7 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
         build.ProjectBuilder(test_bad_syntax_path)
 
 
-@pytest.mark.parametrize('value', [b'something', typing.Text('something_else')])
+@pytest.mark.parametrize('value', [b'something', 'something_else'])
 def test_python_executable(test_flit_path, value):
     builder = build.ProjectBuilder(test_flit_path)
 
