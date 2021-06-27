@@ -8,12 +8,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
-
-
-if sys.version_info[0] == 3:
-    from urllib.request import Request, urlopen
-else:
-    from urllib2 import urlopen, Request
+import urllib.request
 
 import filelock
 import pytest
@@ -65,14 +60,9 @@ def get_project(name, tmp_path):
     tarball = os.path.join(tar_store, tar_filename)
     with filelock.FileLock(os.path.join(tar_store, f'{tar_filename}.lock')):
         if not os.path.exists(tarball):
-            url = 'https://github.com/{}/archive/{}.tar.gz'.format(github_org_repo, version)
-            request = urlopen(Request(url))
-            try:
-                with open(tarball, 'wb') as file_handler:
-                    shutil.copyfileobj(request, file_handler)
-            finally:
-                if sys.version_info[0] == 3:
-                    request.close()
+            url = f'https://github.com/{github_org_repo}/archive/{version}.tar.gz'
+            with urllib.request.urlopen(url) as request, open(tarball, 'wb') as file_handler:
+                shutil.copyfileobj(request, file_handler)
     with tarfile.open(tarball, 'r:gz') as tar_handler:
         tar_handler.extractall(str(dest))
     return dest / f'{name}-{version}'

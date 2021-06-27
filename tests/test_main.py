@@ -12,11 +12,7 @@ import build
 import build.__main__
 
 
-if sys.version_info >= (3,):  # pragma: no cover
-    build_open_owner = 'builtins'
-else:  # pragma: no cover
-    build_open_owner = 'build'
-
+build_open_owner = 'builtins'
 
 cwd = os.getcwd()
 out = os.path.join(cwd, 'dist')
@@ -104,23 +100,18 @@ def test_parse_args(mocker, cli_args, build_args, hook):
 def test_prog():
     out = io.StringIO()
 
-    if sys.version_info >= (3,):  # pragma: no cover
-        with pytest.raises(SystemExit):
-            with contextlib.redirect_stdout(out):
-                build.__main__.main(['--help'], prog='something')
-
-        assert out.getvalue().startswith('usage: something [-h]')
-    else:  # pragma: no cover
-        with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit):
+        with contextlib.redirect_stdout(out):
             build.__main__.main(['--help'], prog='something')
+
+    assert out.getvalue().startswith('usage: something [-h]')
 
 
 def test_version(capsys):
     with pytest.raises(SystemExit):
         build.__main__.main(['--version'])
     out, err = capsys.readouterr()
-    target = out if sys.version_info[0] == 3 else err
-    assert target.startswith(f'build {build.__version__}')
+    assert out.startswith(f'build {build.__version__}')
 
 
 @pytest.mark.isolated

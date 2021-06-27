@@ -25,16 +25,6 @@ from build.env import IsolatedEnvBuilder
 __all__ = ['build', 'main', 'main_parser']
 
 
-if sys.version_info[0] == 2:
-
-    def _indent(text, prefix):  # type: (str, str) -> str
-        return ''.join(prefix + line for line in text.splitlines(True))
-
-
-else:
-    from textwrap import indent as _indent
-
-
 def _showwarning(
     message: Union[Warning, str],
     category: Type[Warning],
@@ -139,10 +129,7 @@ def _handle_build_error() -> Iterator[None]:
                     limit=-1,
                 )
             else:
-                if sys.version_info >= (3, 5):
-                    print(traceback.format_exc(-1))
-                else:
-                    print(traceback.format_tb())
+                print(traceback.format_exc(-1))
         _error(str(e))
 
 
@@ -214,7 +201,7 @@ def main_parser() -> argparse.ArgumentParser:
     # https://github.com/python/mypy/issues/1422
     paths: Iterable[str] = build.__path__  # type: ignore
     parser = argparse.ArgumentParser(
-        description=_indent(  # textwrap.indent
+        description=textwrap.indent(
             textwrap.dedent(
                 '''
                 A simple, correct PEP 517 package builder.

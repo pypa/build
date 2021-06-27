@@ -19,8 +19,6 @@ import packaging.version
 
 import build
 
-from ._compat import abstractproperty, add_metaclass
-
 
 if sys.version_info < (3, 8):
     import importlib_metadata as metadata
@@ -33,16 +31,17 @@ except ImportError:
     virtualenv = None
 
 
-@add_metaclass(abc.ABCMeta)
-class IsolatedEnv(object):
+class IsolatedEnv(metaclass=abc.ABCMeta):
     """Abstract base of isolated build environments, as required by the build project."""
 
-    @abstractproperty
+    @property
+    @abc.abstractmethod
     def executable(self) -> str:
         """The executable of the isolated build environment."""
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abc.abstractmethod
     def scripts_dir(self) -> str:
         """The scripts directory of the isolated build environment."""
         raise NotImplementedError
@@ -85,8 +84,8 @@ class IsolatedEnvBuilder(object):
         """
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
-            # use virtualenv on Python 2 or when valid virtualenv is available (as it's faster than venv)
-            if sys.version_info < (3,) or self._should_use_virtualenv():
+            # use virtualenv when available (as it's faster than venv)
+            if self._should_use_virtualenv():
                 executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
                 executable, scripts_dir = _create_isolated_env_venv(self._path)
@@ -158,7 +157,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         try:
             cmd = [
                 self.executable,
-                '-{}m'.format('E' if sys.version_info[0] == 2 else 'I'),
+                '-Im',
                 'pip',
                 'install',
                 '--use-pep517',
@@ -185,83 +184,82 @@ def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
     return executable, script_dir
 
 
-# venv only exists on Python 3+
-if sys.version_info >= (3,):  # noqa: C901
+@functools.lru_cache(maxsize=None)
+def _fs_supports_symlink() -> bool:
+    """Return True if symlinks are supported"""
+    # Using definition used by venv.main()
+    if os.name != 'nt':
+        return True
 
-    @functools.lru_cache(maxsize=None)
-    def _fs_supports_symlink() -> bool:
-        """Return True if symlinks are supported"""
-        # Using definition used by venv.main()
-        if os.name != 'nt':
+    # Windows may support symlinks (setting in Windows 10)
+    with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:
+        dest = f'{tmp_file}-b'
+        try:
+            os.symlink(tmp_file.name, dest)
+            os.unlink(dest)
             return True
+        except (OSError, NotImplementedError, AttributeError):
+            return False
 
-        # Windows may support symlinks (setting in Windows 10)
-        with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:
-            dest = f'{tmp_file}-b'
-            try:
-                os.symlink(tmp_file.name, dest)
-                os.unlink(dest)
-                return True
-            except (OSError, NotImplementedError, AttributeError):
-                return False
 
-    def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
-        """
-        On Python 3 we use the venv package from the standard library.
+def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
+    """
+    On Python 3 we use the venv package from the standard library.
 
-        :param path: The path where to create the isolated build environment
-        :return: The Python executable and script folder
-        """
-        import venv
+    :param path: The path where to create the isolated build environment
+    :return: The Python executable and script folder
+    """
+    import venv
 
-        venv.EnvBuilder(with_pip=True, symlinks=_fs_supports_symlink()).create(path)
-        executable, script_dir, purelib = _find_executable_and_scripts(path)
+    venv.EnvBuilder(with_pip=True, symlinks=_fs_supports_symlink()).create(path)
+    executable, script_dir, purelib = _find_executable_and_scripts(path)
 
-        # Get the version of pip in the environment
-        pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
-        current_pip_version = packaging.version.Version(pip_distribution.version)
+    # Get the version of pip in the environment
+    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
+    current_pip_version = packaging.version.Version(pip_distribution.version)
 
-        if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
-            # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
-            # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
-            is_apple_silicon_python = sys.version_info >= (3, 6) and platform.machine() != 'x86_64'
-            minimum_pip_version = '21.0.1' if is_apple_silicon_python else '20.3.0'
-        else:
-            # PEP-517 and manylinux1 was first implemented in 19.1
-            minimum_pip_version = '19.1.0'
+    if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
+        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
+        # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
+        is_apple_silicon_python = platform.machine() != 'x86_64'
+        minimum_pip_version = '21.0.1' if is_apple_silicon_python else '20.3.0'
+    else:
+        # PEP-517 and manylinux1 was first implemented in 19.1
+        minimum_pip_version = '19.1.0'
 
-        if current_pip_version < packaging.version.Version(minimum_pip_version):
-            subprocess.check_call([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
+    if current_pip_version < packaging.version.Version(minimum_pip_version):
+        subprocess.check_call([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
 
-        # Avoid the setuptools from ensurepip to break the isolation
-        subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
-        return executable, script_dir
+    # Avoid the setuptools from ensurepip to break the isolation
+    subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+    return executable, script_dir
 
-    def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
-        """
-        Detect the Python executable and script folder of a virtual environment.
 
-        :param path: The location of the virtual environment
-        :return: The Python executable, script folder, and purelib folder
-        """
-        config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
-        config_vars['base'] = path
-        # The Python that ships with the macOS developer tools varies the
-        # default scheme depending on whether the ``sys.prefix`` is part of a framework.
-        # The framework "osx_framework_library" scheme
-        # can't be used to expand the paths in a venv, which
-        # can happen if build itself is not installed in a venv.
-        # If the Apple-custom "osx_framework_library" scheme is available
-        # we enforce "posix_prefix", the venv scheme, for isolated envs.
-        if 'osx_framework_library' in sysconfig.get_scheme_names():
-            paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
-        else:
-            paths = sysconfig.get_paths(vars=config_vars)
-        executable = os.path.join(paths['scripts'], 'python.exe' if os.name == 'nt' else 'python')
-        if not os.path.exists(executable):
-            raise RuntimeError(f'Virtual environment creation failed, executable {executable} missing')
+def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
+    """
+    Detect the Python executable and script folder of a virtual environment.
 
-        return executable, paths['scripts'], paths['purelib']
+    :param path: The location of the virtual environment
+    :return: The Python executable, script folder, and purelib folder
+    """
+    config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
+    config_vars['base'] = path
+    # The Python that ships with the macOS developer tools varies the
+    # default scheme depending on whether the ``sys.prefix`` is part of a framework.
+    # The framework "osx_framework_library" scheme
+    # can't be used to expand the paths in a venv, which
+    # can happen if build itself is not installed in a venv.
+    # If the Apple-custom "osx_framework_library" scheme is available
+    # we enforce "posix_prefix", the venv scheme, for isolated envs.
+    if 'osx_framework_library' in sysconfig.get_scheme_names():
+        paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
+    else:
+        paths = sysconfig.get_paths(vars=config_vars)
+    executable = os.path.join(paths['scripts'], 'python.exe' if os.name == 'nt' else 'python')
+    if not os.path.exists(executable):
+        raise RuntimeError(f'Virtual environment creation failed, executable {executable} missing')
+
+    return executable, paths['scripts'], paths['purelib']
 
 
 __all__ = (
