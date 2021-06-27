@@ -7,7 +7,6 @@ __version__ = '0.5.1'
 
 import contextlib
 import difflib
-import io
 import os
 import re
 import subprocess
@@ -182,7 +181,7 @@ class ProjectBuilder(object):
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
         try:
-            with io.open(spec_file, encoding='UTF-8') as f:
+            with open(spec_file, encoding='UTF-8') as f:
                 spec = toml.load(f)
         except FileNotFoundError:
             spec = {}
