@@ -145,7 +145,7 @@ def _working_directory(path: str) -> Iterator[None]:
         os.chdir(current)
 
 
-class ProjectBuilder(object):
+class ProjectBuilder:
     """
     The PEP 517 consumer API.
     """
