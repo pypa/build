@@ -27,7 +27,7 @@ else:
 
 try:
     import virtualenv
-except ImportError:
+except ModuleNotFoundError:
     virtualenv = None
 
 
