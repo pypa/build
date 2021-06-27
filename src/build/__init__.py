@@ -120,9 +120,8 @@ def check_dependency(
             yield ancestral_req_strings + (req_string,)
         elif dist.requires:
             for other_req_string in dist.requires:
-                for unmet_req in check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras):
-                    # a transitive dependency is not satisfied.
-                    yield unmet_req
+                # yields transitive dependencies that are not satisfied.
+                yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras)
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
