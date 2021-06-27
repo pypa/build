@@ -24,11 +24,6 @@ import toml
 import toml.decoder
 
 
-if sys.version_info < (3,):
-    FileNotFoundError = IOError
-    PermissionError = OSError
-
-
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 _ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
@@ -364,8 +359,7 @@ class ProjectBuilder(object):
         match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
-        # Python 2 does not support match['group']
-        distinfo = f"{match.group('distribution')}-{match.group('version')}.dist-info"
+        distinfo = f"{match['distribution']}-{match['version']}.dist-info"
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
             w.extractall(

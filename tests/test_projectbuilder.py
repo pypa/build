@@ -25,12 +25,7 @@ try:
 except ImportError:
     import pathlib2 as pathlib
 
-if sys.version_info >= (3,):  # pragma: no cover
-    build_open_owner = 'builtins'
-else:  # pragma: no cover
-    build_open_owner = 'build'
-    FileNotFoundError = IOError
-    PermissionError = OSError
+build_open_owner = 'builtins'
 
 
 DEFAULT_BACKEND = {
@@ -181,7 +176,7 @@ def test_init(mocker, test_flit_path, legacy_path, test_no_permission, test_bad_
     )
 
     # PermissionError
-    if sys.version_info[0] != 2 and os.name != 'nt':  # can't correctly set the permissions required for this
+    if os.name != 'nt':  # can't correctly set the permissions required for this
         with pytest.raises(build.BuildException):
             build.ProjectBuilder(test_no_permission)
 
@@ -379,7 +374,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
     # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
     toml = textwrap.dedent(
-        u'''
+        '''
         [build-system]
         requires = ["demo_pkg_inline"]
         build-backend = "build"
@@ -393,16 +388,10 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     code = textwrap.dedent(
         '''
         import os
+        import shutil
         import sys
         print("BB " + os.environ["PATH"])
-        if sys.version_info[0] == 3:
-            import shutil
-            exe_at = shutil.which("demo-pkg-inline")
-        else:
-            paths = os.environ["PATH"].split(os.pathsep)
-            exe_at = os.path.join(paths[0], "demo-pkg-inline{}".format(".exe" if sys.platform == "win32" else ""))
-            if not os.path.exists(exe_at):
-                exe_at = None
+        exe_at = shutil.which("demo-pkg-inline")
         print("BB " + exe_at)
         '''
     )
