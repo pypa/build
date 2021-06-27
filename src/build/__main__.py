@@ -43,7 +43,7 @@ def _setup_cli() -> None:
 
     try:
         import colorama
-    except ImportError:
+    except ModuleNotFoundError:
         pass
     else:
         colorama.init()  # fix colors on windows
