@@ -68,7 +68,7 @@ def _should_use_virtualenv() -> bool:
     )
 
 
-class IsolatedEnvBuilder(object):
+class IsolatedEnvBuilder:
     """Builder object for isolated environments."""
 
     def __init__(self) -> None:
