@@ -153,6 +153,18 @@ def _handle_build_error() -> Iterator[None]:
         _error(str(e))
 
 
+def _natural_language_list(elements: Sequence[str]) -> str:
+    if len(elements) == 0:
+        raise IndexError('no elements')
+    elif len(elements) == 1:
+        return elements[0]
+    else:
+        return '{} and {}'.format(
+            ', '.join(elements[:-1]),
+            elements[-1],
+        )
+
+
 def build_package(
     srcdir: str,
     outdir: str,
@@ -207,6 +219,8 @@ def build_package_via_sdist(
         t.extractall(sdist_out)
         try:
             builder = _ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
+            if distributions:
+                builder.log(f'Building {_natural_language_list(distributions)} from sdist')
             for distribution in distributions:
                 _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
         finally:
