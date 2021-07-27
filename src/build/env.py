@@ -188,7 +188,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         if not requirements:
             return
 
-        self._log('Installing packages in isolated environment... ({})'.format(', '.join(requirements)))
+        self._log('Installing packages in isolated environment... ({})'.format(', '.join(sorted(requirements))))
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
