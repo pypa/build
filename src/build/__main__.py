@@ -32,7 +32,7 @@ _STYLES = {
 
 
 def _print(message: str) -> None:
-    color = sys.stdout.isatty()
+    color = sys.stdout.isatty() and 'NO_COLOR' not in os.environ
     for name, code in _STYLES.items():
         message = message.replace(f'[{name}]', code if color else '')
     print(message)
