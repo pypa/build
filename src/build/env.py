@@ -3,6 +3,7 @@ Creates and manages isolated build environments.
 """
 import abc
 import functools
+import logging
 import os
 import platform
 import shutil
@@ -12,7 +13,7 @@ import sysconfig
 import tempfile
 
 from types import TracebackType
-from typing import Iterable, Optional, Tuple, Type
+from typing import Callable, Iterable, Optional, Tuple, Type
 
 import packaging.requirements
 import packaging.version
@@ -29,6 +30,9 @@ try:
     import virtualenv
 except ModuleNotFoundError:
     virtualenv = None
+
+
+_logger = logging.getLogger('build.env')
 
 
 class IsolatedEnv(metaclass=abc.ABCMeta):
@@ -84,10 +88,17 @@ class IsolatedEnvBuilder:
         try:
             # use virtualenv when available (as it's faster than venv)
             if _should_use_virtualenv():
+                self.log('Creating virtualenv isolated environment...')
                 executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
+                self.log('Creating venv isolated environment...')
                 executable, scripts_dir = _create_isolated_env_venv(self._path)
-            return _IsolatedEnvVenvPip(path=self._path, python_executable=executable, scripts_dir=scripts_dir)
+            return _IsolatedEnvVenvPip(
+                path=self._path,
+                python_executable=executable,
+                scripts_dir=scripts_dir,
+                log=self.log,
+            )
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
@@ -105,6 +116,18 @@ class IsolatedEnvBuilder:
         if self._path is not None and os.path.exists(self._path):  # in case the user already deleted skip remove
             shutil.rmtree(self._path)
 
+    @staticmethod
+    def log(message: str) -> None:
+        """
+        Prints message
+
+        The default implementation uses the logging module but this function can be
+        overwritten by users to have a different implementation.
+
+        :param msg: Message to output
+        """
+        _logger.log(logging.INFO, message, stacklevel=2)
+
 
 class _IsolatedEnvVenvPip(IsolatedEnv):
     """
@@ -113,14 +136,22 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     Non-standard paths injected directly to sys.path will still be passed to the environment.
     """
 
-    def __init__(self, path: str, python_executable: str, scripts_dir: str) -> None:
+    def __init__(
+        self,
+        path: str,
+        python_executable: str,
+        scripts_dir: str,
+        log: Callable[[str], None],
+    ) -> None:
         """
         :param path: The path where the environment exists
         :param python_executable: The python executable within the environment
+        :param log: Log function
         """
         self._path = path
         self._python_executable = python_executable
         self._scripts_dir = scripts_dir
+        self._log = log
 
     @property
     def path(self) -> str:
@@ -147,6 +178,8 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
         """
         if not requirements:
             return
+
+        self._log('Installing packages in isolated environment... ({})'.format(', '.join(requirements)))
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
