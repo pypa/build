@@ -407,7 +407,7 @@ class ProjectBuilder:
                 raise BuildBackendException(exception, exc_info=sys.exc_info())
 
     @staticmethod
-    def log(message: str) -> str:
+    def log(message: str) -> None:
         """
         Prints message
 
