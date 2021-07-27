@@ -27,6 +27,7 @@ __all__ = ['build', 'main', 'main_parser']
 _STYLES = {
     'red': '\33[91m',
     'yellow': '\33[93m',
+    'bold': '\33[1m',
     'reset': '\33[0m',
 }
 
@@ -69,6 +70,12 @@ def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
     """
     _print(f'[red]ERROR[reset] {msg}')
     exit(code)
+
+
+class _ProjectBuilder(ProjectBuilder):
+    @staticmethod
+    def log(message: str) -> None:
+        _print(f'[bold]* {message}[reset]')
 
 
 def _format_dep_chain(dep_chain: Sequence[str]) -> str:
@@ -158,7 +165,7 @@ def build_package(
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
     """
-    builder = ProjectBuilder(srcdir)
+    builder = _ProjectBuilder(srcdir)
     for distribution in distributions:
         _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
 
@@ -184,7 +191,7 @@ def build_package_via_sdist(
     if 'sdist' in distributions:
         raise ValueError('Only binary distributions are allowed but sdist was specified')
 
-    builder = ProjectBuilder(srcdir)
+    builder = _ProjectBuilder(srcdir)
     sdist = _build(isolation, builder, outdir, 'sdist', config_settings, skip_dependency_check)
 
     sdist_name = os.path.basename(sdist)
@@ -193,7 +200,7 @@ def build_package_via_sdist(
     with tarfile.open(sdist) as t:
         t.extractall(sdist_out)
         try:
-            builder = ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
+            builder = _ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
             for distribution in distributions:
                 _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
         finally:
