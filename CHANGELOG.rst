@@ -6,11 +6,19 @@ Changelog
 Unreleased
 ==========
 
+- Improved output (`PR #333`_, Fixes `#142`_)
+- The CLI now honnors `NO_COLOR`_ (`PR #333`_)
+- Added logging to ``build`` and ``build.env`` (`PR #333`_)
+
 
 Breaking Changes
 ----------------
 
 - Dropped support for Python 2 and 3.5.
+
+.. _PR #333: https://github.com/pypa/build/pull/333
+.. _#142: https://github.com/pypa/build/issues/142
+.. _NO_COLOR: https://no-color.org
 
 
 
