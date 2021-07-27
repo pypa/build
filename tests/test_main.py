@@ -209,3 +209,83 @@ def test_build_package_via_sdist_cant_build(tmp_dir, test_cant_build_via_sdist_p
 def test_build_package_via_sdist_invalid_distribution(tmp_dir, test_setuptools_path):
     with pytest.raises(ValueError, match='Only binary distributions are allowed but sdist was specified'):
         build.__main__.build_package_via_sdist(test_setuptools_path, tmp_dir, ['sdist'])
+
+
+@pytest.mark.parametrize(
+    ('args', 'output'),
+    [
+        (
+            [],
+            [
+                '* Creating venv isolated environment...',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Getting dependencies for sdist...',
+                '* Building sdist...',
+                '* Building wheel from sdist',
+                '* Creating venv isolated environment...',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Getting dependencies for wheel...',
+                '* Installing packages in isolated environment... (wheel)',
+                '* Building wheel...',
+                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
+            ],
+        ),
+        (
+            ['--no-isolation'],
+            [
+                '* Getting dependencies for sdist...',
+                '* Building sdist...',
+                '* Building wheel from sdist',
+                '* Getting dependencies for wheel...',
+                '* Building wheel...',
+                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
+            ],
+        ),
+        (
+            ['--wheel'],
+            [
+                '* Creating venv isolated environment...',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Getting dependencies for wheel...',
+                '* Installing packages in isolated environment... (wheel)',
+                '* Building wheel...',
+                'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
+            ],
+        ),
+        (
+            ['--wheel', '--no-isolation'],
+            [
+                '* Getting dependencies for wheel...',
+                '* Building wheel...',
+                'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
+            ],
+        ),
+        (
+            ['--sdist', '--no-isolation'],
+            ['* Getting dependencies for sdist...', '* Building sdist...', 'Successfully built test_setuptools-1.0.0.tar.gz'],
+        ),
+        (
+            ['--sdist', '--wheel', '--no-isolation'],
+            [
+                '* Getting dependencies for sdist...',
+                '* Building sdist...',
+                '* Getting dependencies for wheel...',
+                '* Building wheel...',
+                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
+            ],
+        ),
+    ],
+    ids=[
+        'via-sdist-isolation',
+        'via-sdist-no-isolation',
+        'wheel-direct-isolation',
+        'wheel-direct-no-isolation',
+        'sdist-direct-no-isolation',
+        'sdist-and-wheel-direct-no-isolation',
+    ],
+)
+@pytest.mark.flaky(reruns=5)
+def test_output(test_setuptools_path, tmp_dir, capsys, args, output):
+    build.__main__.main([test_setuptools_path, '-o', tmp_dir] + args)
+    stdout, stderr = capsys.readouterr()
+    assert stdout.splitlines() == output
