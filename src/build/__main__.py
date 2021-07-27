@@ -13,7 +13,7 @@ import textwrap
 import traceback
 import warnings
 
-from typing import Iterable, Iterator, Optional, Sequence, TextIO, Type, Union
+from typing import Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
 
 import build
 
@@ -26,8 +26,10 @@ __all__ = ['build', 'main', 'main_parser']
 
 _STYLES = {
     'red': '\33[91m',
+    'green': '\33[92m',
     'yellow': '\33[93m',
     'bold': '\33[1m',
+    'underline': '\33[4m',
     'reset': '\33[0m',
 }
 
@@ -172,7 +174,7 @@ def build_package(
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
-) -> None:
+) -> Sequence[str]:
     """
     Run the build process.
 
@@ -183,9 +185,12 @@ def build_package(
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
     """
+    built: List[str] = []
     builder = _ProjectBuilder(srcdir)
     for distribution in distributions:
-        _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+        out = _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+        built.append(os.path.basename(out))
+    return built
 
 
 def build_package_via_sdist(
@@ -195,7 +200,7 @@ def build_package_via_sdist(
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
-) -> None:
+) -> Sequence[str]:
     """
     Build a sdist and then the specified distributions from it.
 
@@ -214,6 +219,7 @@ def build_package_via_sdist(
 
     sdist_name = os.path.basename(sdist)
     sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
+    built: List[str] = []
     # extract sdist
     with tarfile.open(sdist) as t:
         t.extractall(sdist_out)
@@ -222,9 +228,11 @@ def build_package_via_sdist(
             if distributions:
                 builder.log(f'Building {_natural_language_list(distributions)} from sdist')
             for distribution in distributions:
-                _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+                out = _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+                built.append(os.path.basename(out))
         finally:
             shutil.rmtree(sdist_out, ignore_errors=True)
+    return [sdist_name] + built
 
 
 def main_parser() -> argparse.ArgumentParser:
@@ -350,7 +358,11 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
         distributions = ['wheel']
     try:
         with _handle_build_error():
-            build_call(args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check)
+            built = build_call(
+                args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
+            )
+            artifact_list = _natural_language_list([f'[underline]{artifact}[reset][bold][green]' for artifact in built])
+            _print(f'[bold][green]Successfully built {artifact_list}')
     except Exception as e:  # pragma: no cover
         print(traceback.format_exc())
         _error(str(e))
