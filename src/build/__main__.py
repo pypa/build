@@ -24,6 +24,20 @@ from build.env import IsolatedEnvBuilder
 __all__ = ['build', 'main', 'main_parser']
 
 
+_STYLES = {
+    'red': '\33[91m',
+    'yellow': '\33[93m',
+    'reset': '\33[0m',
+}
+
+
+def _print(message: str) -> None:
+    color = sys.stdout.isatty()
+    for name, code in _STYLES.items():
+        message = message.replace(f'[{name}]', code if color else '')
+    print(message)
+
+
 def _showwarning(
     message: Union[Warning, str],
     category: Type[Warning],
@@ -32,10 +46,7 @@ def _showwarning(
     file: Optional[TextIO] = None,
     line: Optional[str] = None,
 ) -> None:  # pragma: no cover
-    prefix = 'WARNING'
-    if sys.stdout.isatty():
-        prefix = '\33[93m' + prefix + '\33[0m'
-    print(f'{prefix} {message}')
+    _print(f'[yellow]WARNING[reset] {message}')
 
 
 def _setup_cli() -> None:
@@ -56,10 +67,7 @@ def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
     :param msg: Error message
     :param code: Error code
     """
-    prefix = 'ERROR'
-    if sys.stdout.isatty():
-        prefix = '\33[91m' + prefix + '\33[0m'
-    print(f'{prefix} {msg}')
+    _print(f'[red]ERROR[reset] {msg}')
     exit(code)
 
 
