@@ -78,6 +78,12 @@ class _ProjectBuilder(ProjectBuilder):
         _print(f'[bold]* {message}[reset]')
 
 
+class _IsolatedEnvBuilder(IsolatedEnvBuilder):
+    @staticmethod
+    def log(message: str) -> None:
+        _print(f'[bold]* {message}[reset]')
+
+
 def _format_dep_chain(dep_chain: Sequence[str]) -> str:
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
@@ -85,7 +91,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 def _build_in_isolated_env(
     builder: ProjectBuilder, outdir: str, distribution: str, config_settings: Optional[ConfigSettingsType]
 ) -> str:
-    with IsolatedEnvBuilder() as env:
+    with _IsolatedEnvBuilder() as env:
         builder.python_executable = env.executable
         builder.scripts_dir = env.scripts_dir
         # first install the build dependencies
