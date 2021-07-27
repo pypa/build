@@ -29,14 +29,14 @@ def test_isolation():
 @pytest.mark.isolated
 def test_isolated_environment_install(mocker):
     with build.env.IsolatedEnvBuilder() as env:
-        mocker.patch('subprocess.check_call')
+        mocker.patch('build.env._subprocess')
 
         env.install([])
-        subprocess.check_call.assert_not_called()
+        build.env._subprocess.assert_not_called()
 
         env.install(['some', 'requirements'])
-        subprocess.check_call.assert_called()
-        args = subprocess.check_call.call_args[0][0][:-1]
+        build.env._subprocess.assert_called()
+        args = build.env._subprocess.call_args[0][0][:-1]
         assert args == [
             env.executable,
             '-Im',
@@ -113,7 +113,7 @@ def test_default_pip_is_never_too_old():
 def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
 
-    check_call = mocker.patch('subprocess.check_call')
+    _subprocess = mocker.patch('build.env._subprocess')
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.machine', return_value=arch)
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
@@ -123,12 +123,13 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
     with build.env.IsolatedEnvBuilder():
         if Version(pip_version) < min_version:
-            upgrade_call, uninstall_call = check_call.call_args_list
+            print(_subprocess.call_args_list)
+            upgrade_call, uninstall_call = _subprocess.call_args_list
             answer = 'pip>=20.3.0' if arch == 'x86_64' else 'pip>=21.0.1'
             assert upgrade_call[0][0][1:] == ['-m', 'pip', 'install', answer]
             assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
         else:
-            (uninstall_call,) = check_call.call_args_list
+            (uninstall_call,) = _subprocess.call_args_list
             assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
 
 

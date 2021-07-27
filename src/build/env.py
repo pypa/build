@@ -13,7 +13,7 @@ import sysconfig
 import tempfile
 
 from types import TracebackType
-from typing import Callable, Iterable, Optional, Tuple, Type
+from typing import Callable, Iterable, List, Optional, Tuple, Type
 
 import packaging.requirements
 import packaging.version
@@ -70,6 +70,15 @@ def _should_use_virtualenv() -> bool:
         for d in build.check_dependency('build[virtualenv]')
         if len(d) > 1
     )
+
+
+def _subprocess(cmd: List[str]) -> None:
+    """Invoke subprocess and output stdout and stderr if it fails."""
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        print(e.output.decode(), end='', file=sys.stderr)
+        raise e
 
 
 class IsolatedEnvBuilder:
@@ -196,7 +205,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
                 '-r',
                 os.path.abspath(req_file.name),
             ]
-            subprocess.check_call(cmd)
+            _subprocess(cmd)
         finally:
             os.unlink(req_file.name)
 
@@ -259,10 +268,10 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
         minimum_pip_version = '19.1.0'
 
     if current_pip_version < packaging.version.Version(minimum_pip_version):
-        subprocess.check_call([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
+        _subprocess([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
 
     # Avoid the setuptools from ensurepip to break the isolation
-    subprocess.check_call([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+    _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
     return executable, script_dir
 
 
