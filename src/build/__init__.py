@@ -7,6 +7,7 @@ __version__ = '0.5.1'
 
 import contextlib
 import difflib
+import logging
 import os
 import re
 import subprocess
@@ -38,6 +39,9 @@ _DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
     'requires': ['setuptools >= 40.8.0', 'wheel'],
 }
+
+
+_logger = logging.getLogger('build')
 
 
 class BuildException(Exception):
@@ -273,6 +277,7 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
+        self.log(f'Getting dependencies for {distribution}...')
         hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
@@ -305,6 +310,7 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
+        self.log(f'Getting metadata for {distribution}...')
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
@@ -334,6 +340,7 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
+        self.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
@@ -398,6 +405,18 @@ class ProjectBuilder:
                 raise BuildBackendException(exception, f'Backend subproccess exited when trying to invoke {hook}')
             except Exception as exception:
                 raise BuildBackendException(exception, exc_info=sys.exc_info())
+
+    @staticmethod
+    def log(message: str) -> str:
+        """
+        Prints message
+
+        The default implementation uses the logging module but this function can be
+        overwritten by users to have a different implementation.
+
+        :param msg: Message to output
+        """
+        _logger.log(logging.INFO, message, stacklevel=2)
 
 
 __all__ = (
