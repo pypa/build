@@ -84,8 +84,8 @@ out = os.path.join(cwd, 'dist')
     ],
 )
 def test_parse_args(mocker, cli_args, build_args, hook):
-    mocker.patch('build.__main__.build_package')
-    mocker.patch('build.__main__.build_package_via_sdist')
+    mocker.patch('build.__main__.build_package', return_value=['something'])
+    mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
 
     build.__main__.main(cli_args)
 
@@ -116,7 +116,7 @@ def test_version(capsys):
 
 @pytest.mark.isolated
 def test_build_isolated(mocker, test_flit_path):
-    build_cmd = mocker.patch('build.ProjectBuilder.build')
+    build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     required_cmd = mocker.patch(
         'build.ProjectBuilder.get_requires_for_build',
         side_effect=[
@@ -138,7 +138,7 @@ def test_build_isolated(mocker, test_flit_path):
 
 def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
     # check_dependencies = []
-    build_cmd = mocker.patch('build.ProjectBuilder.build')
+    build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'], isolation=False)
@@ -155,7 +155,7 @@ def test_build_no_isolation_check_deps_empty(mocker, test_flit_path):
 )
 def test_build_no_isolation_with_check_deps(mocker, test_flit_path, missing_deps, output):
     error = mocker.patch('build.__main__._error')
-    build_cmd = mocker.patch('build.ProjectBuilder.build')
+    build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=missing_deps)
 
     build.__main__.build_package(test_flit_path, '.', ['sdist'], isolation=False)
