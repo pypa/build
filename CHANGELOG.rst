@@ -6,6 +6,10 @@ Changelog
 Unreleased
 ==========
 
+
+Breaking Changes
+----------------
+
 - Dropped support for Python 2 and 3.5.
 
 
