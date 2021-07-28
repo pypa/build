@@ -289,3 +289,21 @@ def test_output(test_setuptools_path, tmp_dir, capsys, args, output):
     build.__main__.main([test_setuptools_path, '-o', tmp_dir] + args)
     stdout, stderr = capsys.readouterr()
     assert stdout.splitlines() == output
+
+
+def test_output_env_subprocess_error(test_invalid_requirements_path, tmp_dir, capsys):
+    with pytest.raises(SystemExit):
+        build.__main__.main([test_invalid_requirements_path, '-o', tmp_dir])
+    stdout, stderr = capsys.readouterr()
+    stdout, stderr = stdout.splitlines(), stderr.splitlines()
+
+    assert stdout[:4] == [
+        '* Creating venv isolated environment...',
+        '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
+        '',
+        'Traceback (most recent call last):',
+    ]
+    assert stdout[-1].startswith('ERROR ')
+
+    assert len(stderr) == 1
+    assert stderr[0].startswith('ERROR: Invalid requirement: ')
