@@ -29,6 +29,7 @@ _STYLES = {
     'green': '\33[92m',
     'yellow': '\33[93m',
     'bold': '\33[1m',
+    'dim': '\33[2m',
     'underline': '\33[4m',
     'reset': '\33[0m',
 }
@@ -144,14 +145,16 @@ def _handle_build_error() -> Iterator[None]:
             print()
         else:
             if e.exc_info:
-                traceback.print_exception(
+                tb_lines = traceback.format_exception(
                     e.exc_info[0],
                     e.exc_info[1],
                     e.exc_info[2],
                     limit=-1,
                 )
+                tb = ''.join(tb_lines)
             else:
-                print(traceback.format_exc(-1))
+                tb = traceback.format_exc(-1)
+            _print('\n[dim]{}[reset]\n'.format(tb.strip('\n')))
         _error(str(e))
 
 
@@ -364,7 +367,7 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
             artifact_list = _natural_language_list([f'[underline]{artifact}[reset][bold][green]' for artifact in built])
             _print(f'[bold][green]Successfully built {artifact_list}')
     except Exception as e:  # pragma: no cover
-        print(traceback.format_exc())
+        _print('\n[dim]{}[reset]\n'.format(traceback.format_exc().strip('\n')))
         _error(str(e))
 
 
