@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
+import importlib
 import io
 import os
 import re
@@ -291,19 +292,65 @@ def test_output(test_setuptools_path, tmp_dir, capsys, args, output):
     assert stdout.splitlines() == output
 
 
-def test_output_env_subprocess_error(test_invalid_requirements_path, tmp_dir, capsys):
+@pytest.fixture()
+def main_reload_styles():
+    try:
+        yield
+    finally:
+        importlib.reload(build.__main__)
+
+
+@pytest.mark.parametrize(
+    ('color', 'stdout_error', 'stdout_body'),
+    [
+        (
+            False,
+            'ERROR ',
+            [
+                '* Creating venv isolated environment...',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
+                '',
+                'Traceback (most recent call last):',
+            ],
+        ),
+        (
+            True,
+            '\33[91mERROR\33[0m ',
+            [
+                '\33[1m* Creating venv isolated environment...\33[0m',
+                '\33[1m* Installing packages in isolated environment... '
+                '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
+                '',
+                '\33[2mTraceback (most recent call last):',
+            ],
+        ),
+    ],
+    ids=['no-color', 'color'],
+)
+def test_output_env_subprocess_error(
+    mocker,
+    monkeypatch,
+    main_reload_styles,
+    test_invalid_requirements_path,
+    tmp_dir,
+    capsys,
+    color,
+    stdout_body,
+    stdout_error,
+):
+    mocker.patch('sys.stdout.isatty', return_value=True)
+    if not color:
+        monkeypatch.setenv('NO_COLOR', '')
+
+    importlib.reload(build.__main__)  # reload module to set _STYLES
+
     with pytest.raises(SystemExit):
         build.__main__.main([test_invalid_requirements_path, '-o', tmp_dir])
     stdout, stderr = capsys.readouterr()
     stdout, stderr = stdout.splitlines(), stderr.splitlines()
 
-    assert stdout[:4] == [
-        '* Creating venv isolated environment...',
-        '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
-        '',
-        'Traceback (most recent call last):',
-    ]
-    assert stdout[-1].startswith('ERROR ')
+    assert stdout[:4] == stdout_body
+    assert stdout[-1].startswith(stdout_error)
 
     assert len(stderr) == 1
     assert stderr[0].startswith('ERROR: Invalid requirement: ')
