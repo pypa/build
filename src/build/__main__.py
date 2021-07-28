@@ -369,7 +369,7 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
                 args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
             )
             artifact_list = _natural_language_list([f'[underline]{artifact}[reset][bold][green]' for artifact in built])
-            _print(f'[bold][green]Successfully built {artifact_list}')
+            _print(f'[bold][green]Successfully built {artifact_list}[reset]')
     except Exception as e:  # pragma: no cover
         print(_format('\n[dim]{}[reset]\n').format(traceback.format_exc().strip('\n')))
         _error(str(e))
