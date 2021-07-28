@@ -33,7 +33,7 @@ _STYLES = {
     'underline': '\33[4m',
     'reset': '\33[0m',
 }
-if not sys.stdout.isatty() or 'NO_COLOR' in os.environ:
+if 'FORCE_COLOR' not in os.environ and not sys.stdout.isatty() or 'NO_COLOR' in os.environ:
     _STYLES = {color: '' for color in _STYLES}
 
 

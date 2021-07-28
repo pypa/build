@@ -338,9 +338,7 @@ def test_output_env_subprocess_error(
     stdout_body,
     stdout_error,
 ):
-    mocker.patch('sys.stdout.isatty', return_value=True)
-    if not color:
-        monkeypatch.setenv('NO_COLOR', '')
+    monkeypatch.setenv('FORCE_COLOR' if color else 'NO_COLOR', '')
 
     importlib.reload(build.__main__)  # reload module to set _STYLES
 
