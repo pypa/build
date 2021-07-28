@@ -33,17 +33,8 @@ _STYLES = {
     'underline': '\33[4m',
     'reset': '\33[0m',
 }
-
-
-def _format(message: str) -> str:
-    color = sys.stdout.isatty() and 'NO_COLOR' not in os.environ
-    for name, code in _STYLES.items():
-        message = message.replace(f'[{name}]', code if color else '')
-    return message
-
-
-def _print(message: str) -> None:
-    print(_format(message))
+if not sys.stdout.isatty() or 'NO_COLOR' in os.environ:
+    _STYLES = {color: '' for color in _STYLES}
 
 
 def _showwarning(
@@ -54,7 +45,7 @@ def _showwarning(
     file: Optional[TextIO] = None,
     line: Optional[str] = None,
 ) -> None:  # pragma: no cover
-    _print(f'[yellow]WARNING[reset] {message}')
+    print('{yellow}WARNING{reset} {}'.format(message, **_STYLES))
 
 
 def _setup_cli() -> None:
@@ -75,20 +66,20 @@ def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
     :param msg: Error message
     :param code: Error code
     """
-    _print(f'[red]ERROR[reset] {msg}')
+    print('{red}ERROR{reset} {}'.format(msg, **_STYLES))
     exit(code)
 
 
 class _ProjectBuilder(ProjectBuilder):
     @staticmethod
     def log(message: str) -> None:
-        _print(f'[bold]* {message}[reset]')
+        print('{bold}* {}{reset}'.format(message, **_STYLES))
 
 
 class _IsolatedEnvBuilder(IsolatedEnvBuilder):
     @staticmethod
     def log(message: str) -> None:
-        _print(f'[bold]* {message}[reset]')
+        print('{bold}* {}{reset}'.format(message, **_STYLES))
 
 
 def _format_dep_chain(dep_chain: Sequence[str]) -> str:
@@ -158,7 +149,7 @@ def _handle_build_error() -> Iterator[None]:
                 tb = ''.join(tb_lines)
             else:
                 tb = traceback.format_exc(-1)
-            print(_format('\n[dim]{}[reset]\n').format(tb.strip('\n')))
+            print('\n{dim}{}{reset}\n'.format(tb.strip('\n'), **_STYLES))
         _error(str(e))
 
 
@@ -368,10 +359,13 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
             built = build_call(
                 args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
             )
-            artifact_list = _natural_language_list([f'[underline]{artifact}[reset][bold][green]' for artifact in built])
-            _print(f'[bold][green]Successfully built {artifact_list}[reset]')
+            artifact_list = _natural_language_list(
+                ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
+            )
+            print('{bold}{green}Successfully built {}{reset}'.format(artifact_list, **_STYLES))
     except Exception as e:  # pragma: no cover
-        print(_format('\n[dim]{}[reset]\n').format(traceback.format_exc().strip('\n')))
+        tb = traceback.format_exc().strip('\n')
+        print('\n{dim}{}{reset}\n'.format(tb, **_STYLES))
         _error(str(e))
 
 
