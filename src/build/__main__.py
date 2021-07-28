@@ -35,11 +35,15 @@ _STYLES = {
 }
 
 
-def _print(message: str) -> None:
+def _format(message: str) -> str:
     color = sys.stdout.isatty() and 'NO_COLOR' not in os.environ
     for name, code in _STYLES.items():
         message = message.replace(f'[{name}]', code if color else '')
-    print(message)
+    return message
+
+
+def _print(message: str) -> None:
+    print(_format(message))
 
 
 def _showwarning(
@@ -154,7 +158,7 @@ def _handle_build_error() -> Iterator[None]:
                 tb = ''.join(tb_lines)
             else:
                 tb = traceback.format_exc(-1)
-            _print('\n[dim]{}[reset]\n'.format(tb.strip('\n')))
+            print(_format('\n[dim]{}[reset]\n').format(tb.strip('\n')))
         _error(str(e))
 
 
@@ -367,7 +371,7 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
             artifact_list = _natural_language_list([f'[underline]{artifact}[reset][bold][green]' for artifact in built])
             _print(f'[bold][green]Successfully built {artifact_list}')
     except Exception as e:  # pragma: no cover
-        _print('\n[dim]{}[reset]\n'.format(traceback.format_exc().strip('\n')))
+        print(_format('\n[dim]{}[reset]\n').format(traceback.format_exc().strip('\n')))
         _error(str(e))
 
 
