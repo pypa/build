@@ -13,7 +13,7 @@ import textwrap
 import traceback
 import warnings
 
-from typing import Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
 
 import build
 
@@ -24,7 +24,7 @@ from build.env import IsolatedEnvBuilder
 __all__ = ['build', 'main', 'main_parser']
 
 
-_STYLES = {
+_COLORS = {
     'red': '\33[91m',
     'green': '\33[92m',
     'yellow': '\33[93m',
@@ -33,8 +33,20 @@ _STYLES = {
     'underline': '\33[4m',
     'reset': '\33[0m',
 }
-if 'FORCE_COLOR' not in os.environ and not sys.stdout.isatty() or 'NO_COLOR' in os.environ:
-    _STYLES = {color: '' for color in _STYLES}
+_NO_COLORS = {color: '' for color in _COLORS}
+
+
+def _init_colors() -> Dict[str, str]:
+    if 'NO_COLOR' in os.environ:
+        if 'FORCE_COLOR' in os.environ:
+            warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color')
+        return _NO_COLORS
+    elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
+        return _COLORS
+    return _NO_COLORS
+
+
+_STYLES = _init_colors()
 
 
 def _showwarning(

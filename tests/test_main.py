@@ -338,6 +338,13 @@ def test_output_env_subprocess_error(
     stdout_body,
     stdout_error,
 ):
+    try:
+        # do not inject hook to have clear output on capsys
+        mocker.patch('colorama.init')
+    except ModuleNotFoundError:  # colorama might not be available
+        pass
+
+    monkeypatch.delenv('NO_COLOR', raising=False)
     monkeypatch.setenv('FORCE_COLOR' if color else 'NO_COLOR', '')
 
     importlib.reload(build.__main__)  # reload module to set _STYLES
@@ -352,3 +359,34 @@ def test_output_env_subprocess_error(
 
     assert len(stderr) == 1
     assert stderr[0].startswith('ERROR: Invalid requirement: ')
+
+
+@pytest.mark.parametrize(
+    ('tty', 'env', 'colors'),
+    [
+        (False, {}, build.__main__._NO_COLORS),
+        (True, {}, build.__main__._COLORS),
+        (False, {'NO_COLOR': ''}, build.__main__._NO_COLORS),
+        (True, {'NO_COLOR': ''}, build.__main__._NO_COLORS),
+        (False, {'FORCE_COLOR': ''}, build.__main__._COLORS),
+        (True, {'FORCE_COLOR': ''}, build.__main__._COLORS),
+    ],
+)
+def test_colors(mocker, monkeypatch, main_reload_styles, tty, env, colors):
+    mocker.patch('sys.stdout.isatty', return_value=tty)
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+
+    importlib.reload(build.__main__)  # reload module to set _STYLES
+
+    assert build.__main__._STYLES == colors
+
+
+def test_colors_conflict(monkeypatch, main_reload_styles):
+    monkeypatch.setenv('NO_COLOR', '')
+    monkeypatch.setenv('FORCE_COLOR', '')
+
+    with pytest.warns(Warning, match='Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color'):
+        importlib.reload(build.__main__)
+
+    assert build.__main__._STYLES == build.__main__._NO_COLORS
