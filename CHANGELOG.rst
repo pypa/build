@@ -10,6 +10,7 @@ Unreleased
 - The CLI now honnors `NO_COLOR`_ (`PR #333`_)
 - The CLI can now be forced to colorize the output by setting the ``FORCE_COLOR`` environment variable (`PR #335`_)
 - Added logging to ``build`` and ``build.env`` (`PR #333`_)
+- Switch to a TOML v1 compliant parser (`PR #336`_, Fixes `#308`_)
 
 
 Breaking Changes
@@ -19,7 +20,9 @@ Breaking Changes
 
 .. _PR #333: https://github.com/pypa/build/pull/333
 .. _PR #335: https://github.com/pypa/build/pull/335
+.. _PR #336: https://github.com/pypa/build/pull/336
 .. _#142: https://github.com/pypa/build/issues/142
+.. _#308: https://github.com/pypa/build/issues/308
 .. _NO_COLOR: https://no-color.org
 
 
