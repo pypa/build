@@ -17,10 +17,35 @@ import warnings
 import zipfile
 
 from collections import OrderedDict
-from typing import AbstractSet, Any, Callable, Dict, Iterator, Mapping, Optional, Sequence, Set, Tuple, Type, Union
+from typing import (
+    AbstractSet,
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 import pep517.wrappers
-import toml
+
+
+TOMLDecodeError: Type[Exception]
+toml_loads: Callable[[str], MutableMapping[str, Any]]
+
+
+try:
+    from tomli import TOMLDecodeError
+    from tomli import loads as toml_loads
+except ModuleNotFoundError:  # pragma: no cover
+    from toml import TomlDecodeError as TOMLDecodeError  # type: ignore
+    from toml import loads as toml_loads  # type: ignore
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
@@ -185,13 +210,13 @@ class ProjectBuilder:
         spec_file = os.path.join(srcdir, 'pyproject.toml')
 
         try:
-            with open(spec_file, encoding='UTF-8') as f:
-                spec = toml.load(f)
+            with open(spec_file, 'rb') as f:
+                spec = toml_loads(f.read().decode())
         except FileNotFoundError:
             spec = {}
         except PermissionError as e:
             raise BuildException(f"{e.strerror}: '{e.filename}' ")
-        except toml.TomlDecodeError as e:
+        except TOMLDecodeError as e:
             raise BuildException(f'Failed to parse {spec_file}: {e} ')
 
         build_system = spec.get('build-system')

@@ -37,6 +37,9 @@ This package can build itself with only the ``toml`` and ``pep517``
 dependencies. The ``--skip-dependency-check`` flag should be used in this
 case.
 
+We have a dependency on tomli_, but toml_ can be used instead, which may make
+bootstraping easier.
+
 
 Compatibility
 =============
@@ -65,6 +68,9 @@ versions:
 .. _tarball: https://github.com/pypa/build/releases
 .. _git tag: https://github.com/pypa/build/tags
 .. _project page: https://pypi.org/project/build/
+
+.. _tomli: https://github.com/hukkin/tomli
+.. _toml: https://github.com/uiri/toml
 
 
 .. |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2| replace:: ``3DCE51D60930EBA47858BA4146F633CBB0EB4BF2``

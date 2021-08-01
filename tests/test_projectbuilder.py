@@ -2,6 +2,7 @@
 
 
 import copy
+import importlib
 import os
 import sys
 import textwrap
@@ -520,3 +521,27 @@ def test_metadata_invalid_wheel(tmp_dir, test_bad_wheel_path):
 
     with pytest.raises(ValueError, match='Invalid wheel'):
         builder.metadata_path(tmp_dir)
+
+
+@pytest.fixture
+def mock_tomli_not_available(mocker):
+    loads = mocker.patch('tomli.loads')
+    mocker.patch.dict(sys.modules, {'tomli': None})
+    importlib.reload(build)
+    try:
+        yield
+    finally:
+        loads.assert_not_called()
+        mocker.stopall()
+        importlib.reload(build)
+
+
+def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(test_flit_path)
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'
+
+    builder.build('sdist', '.')
+
+    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)
