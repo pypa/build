@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.6.0 (02-08-2021)
+==================
 
 - Improved output (`PR #333`_, Fixes `#142`_)
 - The CLI now honnors `NO_COLOR`_ (`PR #333`_)
