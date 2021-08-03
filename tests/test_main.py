@@ -6,6 +6,7 @@ import io
 import os
 import re
 import sys
+import warnings
 
 import pytest
 
@@ -297,7 +298,14 @@ def main_reload_styles():
     try:
         yield
     finally:
-        importlib.reload(build.__main__)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                action='ignore',
+                message='Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color',
+                category=UserWarning,
+                module=re.escape(build.__main__.__name__),
+            )
+            importlib.reload(build.__main__)
 
 
 @pytest.mark.parametrize(
