@@ -383,10 +383,14 @@ def test_colors(mocker, monkeypatch, main_reload_styles, tty, env, colors):
 
 
 def test_colors_conflict(monkeypatch, main_reload_styles):
-    monkeypatch.setenv('NO_COLOR', '')
-    monkeypatch.setenv('FORCE_COLOR', '')
+    with monkeypatch.context() as m:
+        m.setenv('NO_COLOR', '')
+        m.setenv('FORCE_COLOR', '')
 
-    with pytest.warns(Warning, match='Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color'):
-        importlib.reload(build.__main__)
+        with pytest.warns(
+            UserWarning,
+            match='Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color',
+        ):
+            importlib.reload(build.__main__)
 
-    assert build.__main__._STYLES == build.__main__._NO_COLORS
+        assert build.__main__._STYLES == build.__main__._NO_COLORS
