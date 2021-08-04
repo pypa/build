@@ -550,6 +550,7 @@ def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, test_f
 
 def test_log(mocker, caplog, test_flit_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('build.ProjectBuilder._call_backend', return_value='some_path')
     caplog.set_level(logging.DEBUG)
 
     builder = build.ProjectBuilder(test_flit_path)
