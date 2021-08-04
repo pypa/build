@@ -28,9 +28,7 @@ def test_isolation():
 
 
 @pytest.mark.isolated
-def test_isolated_environment_install(mocker, caplog):
-    # ensure the log code is used
-    caplog.set_level(logging.INFO)
+def test_isolated_environment_install(mocker):
     with build.env.IsolatedEnvBuilder() as env:
         mocker.patch('build.env._subprocess')
 
@@ -99,6 +97,22 @@ def test_isolated_env_has_install_still_abstract():
 
     with pytest.raises(TypeError):
         Env()
+
+
+def test_isolated_env_log(mocker, caplog, test_flit_path):
+    mocker.patch('build.env._subprocess')
+    caplog.set_level(logging.DEBUG)
+
+    builder = build.env.IsolatedEnvBuilder()
+    builder.log('something')
+    with builder as env:
+        env.install(['something'])
+
+    assert [(record.levelname, record.message) for record in caplog.records] == [
+        ('INFO', 'something'),
+        ('INFO', 'Creating venv isolated environment...'),
+        ('INFO', 'Installing packages in isolated environment... (something)'),
+    ]
 
 
 @pytest.mark.isolated

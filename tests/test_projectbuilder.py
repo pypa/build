@@ -3,6 +3,7 @@
 
 import copy
 import importlib
+import logging
 import os
 import sys
 import textwrap
@@ -545,3 +546,25 @@ def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, test_f
     builder.build('sdist', '.')
 
     builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)
+
+
+def test_log(mocker, caplog, test_flit_path):
+    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    caplog.set_level(logging.DEBUG)
+
+    builder = build.ProjectBuilder(test_flit_path)
+    builder.get_requires_for_build('sdist')
+    builder.get_requires_for_build('wheel')
+    builder.prepare('wheel', '.')
+    builder.build('sdist', '.')
+    builder.build('wheel', '.')
+    builder.log('something')
+
+    assert [(record.levelname, record.message) for record in caplog.records] == [
+        ('INFO', 'Getting dependencies for sdist...'),
+        ('INFO', 'Getting dependencies for wheel...'),
+        ('INFO', 'Getting metadata for wheel...'),
+        ('INFO', 'Building sdist...'),
+        ('INFO', 'Building wheel...'),
+        ('INFO', 'something'),
+    ]
