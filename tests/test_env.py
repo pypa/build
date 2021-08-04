@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 import collections
+import logging
 import os
 import platform
 import shutil
@@ -27,7 +28,9 @@ def test_isolation():
 
 
 @pytest.mark.isolated
-def test_isolated_environment_install(mocker):
+def test_isolated_environment_install(mocker, caplog):
+    # ensure the log code is used
+    caplog.set_level(logging.INFO)
     with build.env.IsolatedEnvBuilder() as env:
         mocker.patch('build.env._subprocess')
 

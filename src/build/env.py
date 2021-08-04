@@ -135,10 +135,12 @@ class IsolatedEnvBuilder:
 
         :param msg: Message to output
         """
+        # use %s as message to force formatting to run
+        # this prevents failure if the message contains a % sign
         if sys.version_info >= (3, 8):
-            _logger.log(logging.INFO, message, stacklevel=2)
+            _logger.log(logging.INFO, "%s", message, stacklevel=2)
         else:
-            _logger.log(logging.INFO, message)
+            _logger.log(logging.INFO, "%s", message)
 
 
 class _IsolatedEnvVenvPip(IsolatedEnv):
