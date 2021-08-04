@@ -135,7 +135,7 @@ class IsolatedEnvBuilder:
 
         :param msg: Message to output
         """
-        _logger.log(logging.INFO, message, stacklevel=2)
+        _logger.log(logging.INFO, message)
 
 
 class _IsolatedEnvVenvPip(IsolatedEnv):
