@@ -135,7 +135,10 @@ class IsolatedEnvBuilder:
 
         :param msg: Message to output
         """
-        _logger.log(logging.INFO, message)
+        if sys.version_info >= (3, 8):
+            _logger.log(logging.INFO, message, stacklevel=2)
+        else:
+            _logger.log(logging.INFO, message)
 
 
 class _IsolatedEnvVenvPip(IsolatedEnv):
