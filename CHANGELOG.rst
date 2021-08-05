@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.6.0.post1 (05-08-2021)
+========================
 
 - Fix compability with Python 3.6 and 3.7 (`PR #339`_, Fixes `#338`_)
 
