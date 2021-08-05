@@ -3,6 +3,14 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Add ``build.util`` module with an high-level utility API (`PR #340`_)
+
+.. _PR #340: https://github.com/pypa/build/pull/340
+
+
 0.6.0.post1 (05-08-2021)
 ========================
 
