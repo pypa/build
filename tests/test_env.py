@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 import collections
+import logging
 import os
 import platform
 import shutil
@@ -96,6 +97,24 @@ def test_isolated_env_has_install_still_abstract():
 
     with pytest.raises(TypeError):
         Env()
+
+
+def test_isolated_env_log(mocker, caplog, test_flit_path):
+    mocker.patch('build.env._subprocess')
+    caplog.set_level(logging.DEBUG)
+
+    builder = build.env.IsolatedEnvBuilder()
+    builder.log('something')
+    with builder as env:
+        env.install(['something'])
+
+    assert [(record.levelname, record.message) for record in caplog.records] == [
+        ('INFO', 'something'),
+        ('INFO', 'Creating venv isolated environment...'),
+        ('INFO', 'Installing packages in isolated environment... (something)'),
+    ]
+    if sys.version_info >= (3, 8):  # stacklevel
+        assert [(record.lineno) for record in caplog.records] == [107, 103, 194]
 
 
 @pytest.mark.isolated
