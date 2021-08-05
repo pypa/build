@@ -174,6 +174,11 @@ def test_invalid_requirements_path(packages_path):
 
 
 @pytest.fixture
+def test_metadata(packages_path):
+    return os.path.join(packages_path, 'test-metadata')
+
+
+@pytest.fixture
 def test_no_permission(packages_path):
     path = os.path.join(packages_path, 'test-no-permission')
     file = os.path.join(path, 'pyproject.toml')
