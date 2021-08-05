@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Fix compability with Python 3.6 and 3.7 (`PR #339`_, Fixes `#338`_)
+
+.. _PR #339: https://github.com/pypa/build/pull/339
+.. _#338: https://github.com/pypa/build/issues/338
+
+
+
 0.6.0 (02-08-2021)
 ==================
 
