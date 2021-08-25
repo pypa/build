@@ -10,18 +10,6 @@ on:
     - cron: "0 8 * * *"
 
 jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: Setup python for pre-commit
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - uses: pre-commit/action@v2.0.0
-
   docs:
     runs-on: ubuntu-latest
     env:
