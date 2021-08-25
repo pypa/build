@@ -162,7 +162,7 @@ def test_build_no_isolation_with_check_deps(mocker, test_flit_path, missing_deps
     build.__main__.build_package(test_flit_path, '.', ['sdist'], isolation=False)
 
     build_cmd.assert_called_with('sdist', '.', {})
-    error.assert_called_with('\nMissing dependencies:' + output)
+    error.assert_called_with('Missing dependencies:' + output)
 
 
 @pytest.mark.isolated

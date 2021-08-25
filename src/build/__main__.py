@@ -122,7 +122,8 @@ def _build_in_current_env(
         missing = builder.check_dependencies(distribution)
         if missing:
             dependencies = ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
-            _error(f'\nMissing dependencies:{dependencies}')
+            print()
+            _error(f'Missing dependencies:{dependencies}')
 
     return builder.build(distribution, outdir, config_settings or {})
 
