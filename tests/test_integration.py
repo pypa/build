@@ -99,7 +99,7 @@ def test_build(monkeypatch, project, args, call, tmp_path):
         pytest.xfail('Solaar fails building wheels via sdists on Windows on PyPy 3')
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', 'dummy')  # for the projects that use setuptools_scm
+    monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', '0+dummy')  # for the projects that use setuptools_scm
 
     if call and call[0] == 'pyproject-build':
         exe_name = f"pyproject-build{'.exe' if os.name == 'nt' else ''}"
