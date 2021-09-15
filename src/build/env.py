@@ -258,7 +258,7 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
     # Get the version of pip in the environment
-    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
+    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))  # type: ignore[no-untyped-call]
     current_pip_version = packaging.version.Version(pip_distribution.version)
 
     if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
