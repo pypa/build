@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.7.0 (16-09-2021)
+==================
 
 - Add ``build.util`` module with an high-level utility API (`PR #340`_)
 
