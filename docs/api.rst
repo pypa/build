@@ -18,3 +18,11 @@ This project exposes 2 modules:
    :members:
    :undoc-members:
    :show-inheritance:
+
+``build.util`` module
+---------------------
+
+.. automodule:: build.util
+   :members:
+   :undoc-members:
+   :show-inheritance:
