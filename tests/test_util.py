@@ -14,6 +14,13 @@ def test_wheel_metadata(test_setuptools_path, isolated):
 
 
 def test_wheel_metadata_isolation(test_flit_path):
+    try:
+        import flit_core  # noqa: F401
+    except ModuleNotFoundError:
+        pass
+    else:
+        pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
+
     metadata = build.util.project_wheel_metadata(test_flit_path)
 
     assert metadata['name'] == 'test_flit'

@@ -124,12 +124,11 @@ def test_build(monkeypatch, project, args, call, tmp_path):
 
 def test_isolation(tmp_dir, test_flit_path, mocker):
     try:
-        # if flit is available, we can't properly test the isolation - skip the test in those cases
         import flit_core  # noqa: F401
-
-        pytest.xfail('flit_core is available')  # pragma: no cover
-    except:  # noqa: E722
+    except ModuleNotFoundError:
         pass
+    else:
+        pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
     mocker.patch('build.__main__._error')
 
