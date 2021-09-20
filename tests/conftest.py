@@ -14,6 +14,8 @@ import pytest
 
 from filelock import FileLock
 
+import build.env
+
 
 def _build_and_reinstall_build(test_mode):
     temp = tempfile.mkdtemp()
@@ -198,3 +200,8 @@ def tmp_dir():
     yield path
 
     shutil.rmtree(path)
+
+
+@pytest.fixture(autouse=True)
+def force_venv(mocker):
+    mocker.patch.object(build.env, '_should_use_virtualenv', lambda: False)
