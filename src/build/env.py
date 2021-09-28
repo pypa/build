@@ -13,7 +13,7 @@ import sysconfig
 import tempfile
 
 from types import TracebackType
-from typing import Callable, Iterable, List, Optional, Tuple, Type
+from typing import Callable, Collection, List, Optional, Tuple, Type
 
 import packaging.requirements
 import packaging.version
@@ -51,7 +51,7 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def install(self, requirements: Iterable[str]) -> None:
+    def install(self, requirements: Collection[str]) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
 
@@ -179,7 +179,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
     def scripts_dir(self) -> str:
         return self._scripts_dir
 
-    def install(self, requirements: Iterable[str]) -> None:
+    def install(self, requirements: Collection[str]) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
 
