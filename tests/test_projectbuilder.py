@@ -571,3 +571,62 @@ def test_log(mocker, caplog, test_flit_path):
     ]
     if sys.version_info >= (3, 8):  # stacklevel
         assert [(record.lineno) for record in caplog.records] == [305, 305, 338, 368, 368, 562]
+
+
+@pytest.mark.parametrize(
+    ('pyproject_toml', 'parse_output'),
+    [
+        (
+            {'build-system': {'requires': ['foo']}},
+            {'requires': ['foo'], 'build-backend': 'setuptools.build_meta:__legacy__'},
+        ),
+        (
+            {'build-system': {'requires': ['foo'], 'build-backend': 'bar'}},
+            {'requires': ['foo'], 'build-backend': 'bar'},
+        ),
+        (
+            {'build-system': {'requires': ['foo'], 'build-backend': 'bar', 'backend-path': ['baz']}},
+            {'requires': ['foo'], 'build-backend': 'bar', 'backend-path': ['baz']},
+        ),
+    ],
+)
+def test_parse_valid_build_system_table_type(pyproject_toml, parse_output):
+    assert build._parse_build_system_table(pyproject_toml) == parse_output
+
+
+@pytest.mark.parametrize(
+    ('pyproject_toml', 'error_message'),
+    [
+        (
+            {'build-system': {}},
+            '`requires` is a required property',
+        ),
+        (
+            {'build-system': {'requires': 'not an array'}},
+            '`requires` must be an array of strings',
+        ),
+        (
+            {'build-system': {'requires': [1]}},
+            '`requires` must be an array of strings',
+        ),
+        (
+            {'build-system': {'requires': ['foo'], 'build-backend': ['not a string']}},
+            '`build-backend` must be a string',
+        ),
+        (
+            {'build-system': {'requires': ['foo'], 'backend-path': 'not an array'}},
+            '`backend-path` must be an array of strings',
+        ),
+        (
+            {'build-system': {'requires': ['foo'], 'backend-path': [1]}},
+            '`backend-path` must be an array of strings',
+        ),
+        (
+            {'build-system': {'requires': ['foo'], 'unknown-prop': False}},
+            'Unknown properties: unknown-prop',
+        ),
+    ],
+)
+def test_parse_invalid_build_system_table_type(pyproject_toml, error_message):
+    with pytest.raises(build.BuildSystemTableValidationError, match=error_message):
+        build._parse_build_system_table(pyproject_toml)
