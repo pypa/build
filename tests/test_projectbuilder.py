@@ -570,7 +570,7 @@ def test_log(mocker, caplog, test_flit_path):
         ('INFO', 'something'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [305, 305, 338, 368, 368, 562]
+        assert caplog.records[-1].lineno == 562
 
 
 @pytest.mark.parametrize(
