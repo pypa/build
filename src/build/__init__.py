@@ -94,10 +94,31 @@ class BuildBackendException(Exception):
         return f'Backend operation failed: {self.exception!r}'
 
 
+class BuildSystemTableValidationError(BuildException):
+    """
+    Exception raised when the ``[build-system]`` table in pyproject.toml is invalid.
+    """
+
+    def __str__(self) -> str:
+        return f'Failed to validate `build-system` in pyproject.toml: {self.args[0]}'
+
+
 class TypoWarning(Warning):
     """
     Warning raised when a potential typo is found
     """
+
+
+@contextlib.contextmanager
+def _working_directory(path: str) -> Iterator[None]:
+    current = os.getcwd()
+
+    os.chdir(path)
+
+    try:
+        yield
+    finally:
+        os.chdir(current)
 
 
 def _validate_source_directory(srcdir: str) -> None:
@@ -153,25 +174,51 @@ def check_dependency(
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
-    if expected not in dictionary:
-        for obj in dictionary:
-            if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
-                warnings.warn(
-                    f"Found '{obj}' in pyproject.toml, did you mean '{expected}'?",
-                    TypoWarning,
-                )
+    for obj in dictionary:
+        if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
+            warnings.warn(
+                f"Found '{obj}' in pyproject.toml, did you mean '{expected}'?",
+                TypoWarning,
+            )
 
 
-@contextlib.contextmanager
-def _working_directory(path: str) -> Iterator[None]:
-    current = os.getcwd()
+def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Dict[str, Any]:
+    # If pyproject.toml is missing (per PEP 517) or [build-system] is missing
+    # (per PEP 518), use default values
+    if 'build-system' not in pyproject_toml:
+        _find_typo(pyproject_toml, 'build-system')
+        return _DEFAULT_BACKEND
 
-    os.chdir(path)
+    build_system_table = dict(pyproject_toml['build-system'])
 
-    try:
-        yield
-    finally:
-        os.chdir(current)
+    # If [build-system] is present, it must have a ``requires`` field (per PEP 518)
+    if 'requires' not in build_system_table:
+        _find_typo(build_system_table, 'requires')
+        raise BuildSystemTableValidationError('`requires` is a required property')
+    elif not isinstance(build_system_table['requires'], list) or not all(
+        isinstance(i, str) for i in build_system_table['requires']
+    ):
+        raise BuildSystemTableValidationError('`requires` must be an array of strings')
+
+    if 'build-backend' not in build_system_table:
+        _find_typo(build_system_table, 'build-backend')
+        # If ``build-backend`` is missing, inject the legacy setuptools backend
+        # but leave ``requires`` intact to emulate pip
+        build_system_table['build-backend'] = _DEFAULT_BACKEND['build-backend']
+    elif not isinstance(build_system_table['build-backend'], str):
+        raise BuildSystemTableValidationError('`build-backend` must be a string')
+
+    if 'backend-path' in build_system_table and (
+        not isinstance(build_system_table['backend-path'], list)
+        or not all(isinstance(i, str) for i in build_system_table['backend-path'])
+    ):
+        raise BuildSystemTableValidationError('`backend-path` must be an array of strings')
+
+    unknown_props = build_system_table.keys() - {'requires', 'build-backend', 'backend-path'}
+    if unknown_props:
+        raise BuildSystemTableValidationError(f'Unknown properties: {", ".join(unknown_props)}')
+
+    return build_system_table
 
 
 class ProjectBuilder:
@@ -219,23 +266,7 @@ class ProjectBuilder:
         except TOMLDecodeError as e:
             raise BuildException(f'Failed to parse {spec_file}: {e} ')
 
-        build_system = spec.get('build-system')
-        # if pyproject.toml is missing (per PEP 517) or [build-system] is missing (per PEP 518),
-        # use default values.
-        if build_system is None:
-            _find_typo(spec, 'build-system')
-            build_system = _DEFAULT_BACKEND
-        # if [build-system] is present, it must have a ``requires`` field (per PEP 518).
-        elif 'requires' not in build_system:
-            _find_typo(build_system, 'requires')
-            raise BuildException(f"Missing 'build-system.requires' in {spec_file}")
-        # if ``build-backend`` is missing, inject the legacy setuptools backend
-        # but leave ``requires`` alone to emulate pip.
-        elif 'build-backend' not in build_system:
-            _find_typo(build_system, 'build-backend')
-            build_system['build-backend'] = _DEFAULT_BACKEND['build-backend']
-
-        self._build_system = build_system
+        self._build_system = _parse_build_system_table(spec)
         self._backend = self._build_system['build-backend']
         self._scripts_dir = scripts_dir
         self._hook_runner = runner

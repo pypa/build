@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Add schema validation for ``build-system`` table to check conformity
+  with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
+
+.. _PR #365: https://github.com/pypa/build/pull/365
+.. _#364: https://github.com/pypa/build/issues/364
+
+
 0.7.0 (16-09-2021)
 ==================
 
