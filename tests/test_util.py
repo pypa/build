@@ -33,8 +33,8 @@ def test_wheel_metadata_isolation(test_flit_path):
         build.util.project_wheel_metadata(test_flit_path, isolated=False)
 
 
-def test_with_get_requires(test_metadata):
-    metadata = build.util.project_wheel_metadata(test_metadata)
+def test_with_get_requires(test_metadata_path):
+    metadata = build.util.project_wheel_metadata(test_metadata_path)
 
     assert metadata['name'] == 'test-metadata'
     assert str(metadata['version']) == '1.0.0'
