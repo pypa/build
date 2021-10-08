@@ -137,8 +137,8 @@ package_names = [
 
 # Generate path fixtures dynamically.
 for package_name in package_names:
-    package_name = package_name.replace('-', '_')
-    fixture_name = f'{package_name}_path'
+    normalized_name = package_name.replace('-', '_')
+    fixture_name = f'{normalized_name}_path'
     globals()[fixture_name] = generate_package_path_fixture(package_name)
 
 
