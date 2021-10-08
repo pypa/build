@@ -110,74 +110,36 @@ def packages_path():
     return os.path.realpath(os.path.join(__file__, '..', 'packages'))
 
 
-@pytest.fixture
-def legacy_path(packages_path):
-    return os.path.join(packages_path, 'legacy')
+def generate_package_path_fixture(package_name):
+    @pytest.fixture
+    def fixture(packages_path):
+        return os.path.join(packages_path, package_name)
+
+    return fixture
 
 
-@pytest.fixture
-def test_flit_path(packages_path):
-    return os.path.join(packages_path, 'test-flit')
+package_names = [
+    'legacy',
+    'test-flit',
+    'test-bad-syntax',
+    'test-no-backend',
+    'test-no-project',
+    'test-no-requires',
+    'test-optional-hooks',
+    'test-typo',
+    'test-no-prepare',
+    'test-setuptools',
+    'test-bad-wheel',
+    'test-cant-build-via-sdist',
+    'test-invalid-requirements',
+    'test-metadata',
+]
 
-
-@pytest.fixture
-def test_bad_syntax_path(packages_path):
-    return os.path.join(packages_path, 'test-bad-syntax')
-
-
-@pytest.fixture
-def test_no_backend_path(packages_path):
-    return os.path.join(packages_path, 'test-no-backend')
-
-
-@pytest.fixture
-def test_no_project_path(packages_path):
-    return os.path.join(packages_path, 'test-no-project')
-
-
-@pytest.fixture
-def test_no_requires_path(packages_path):
-    return os.path.join(packages_path, 'test-no-requires')
-
-
-@pytest.fixture
-def test_optional_hooks_path(packages_path):
-    return os.path.join(packages_path, 'test-optional-hooks')
-
-
-@pytest.fixture
-def test_typo(packages_path):
-    return os.path.join(packages_path, 'test-typo')
-
-
-@pytest.fixture
-def test_no_prepare_path(packages_path):
-    return os.path.join(packages_path, 'test-no-prepare')
-
-
-@pytest.fixture
-def test_setuptools_path(packages_path):
-    return os.path.join(packages_path, 'test-setuptools')
-
-
-@pytest.fixture
-def test_bad_wheel_path(packages_path):
-    return os.path.join(packages_path, 'test-bad-wheel')
-
-
-@pytest.fixture
-def test_cant_build_via_sdist_path(packages_path):
-    return os.path.join(packages_path, 'test-cant-build-via-sdist')
-
-
-@pytest.fixture
-def test_invalid_requirements_path(packages_path):
-    return os.path.join(packages_path, 'test-invalid-requirements')
-
-
-@pytest.fixture
-def test_metadata(packages_path):
-    return os.path.join(packages_path, 'test-metadata')
+# Generate path fixtures dynamically.
+for package_name in package_names:
+    package_name = package_name.replace('-', '_')
+    fixture_name = f'{package_name}_path'
+    globals()[fixture_name] = generate_package_path_fixture(package_name)
 
 
 @pytest.fixture
