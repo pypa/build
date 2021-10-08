@@ -309,11 +309,11 @@ def test_missing_requires(mocker, test_no_requires_path):
         build.ProjectBuilder(test_no_requires_path)
 
 
-def test_build_system_typo(mocker, test_typo):
+def test_build_system_typo(mocker, test_typo_path):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
     with pytest.warns(build.TypoWarning):
-        build.ProjectBuilder(test_typo)
+        build.ProjectBuilder(test_typo_path)
 
 
 def test_missing_outdir(mocker, tmp_dir, test_flit_path):
