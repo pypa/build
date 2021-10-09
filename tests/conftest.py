@@ -118,24 +118,8 @@ def generate_package_path_fixture(package_name):
     return fixture
 
 
-package_names = [
-    'legacy',
-    'test-flit',
-    'test-bad-syntax',
-    'test-no-backend',
-    'test-no-project',
-    'test-no-requires',
-    'test-optional-hooks',
-    'test-typo',
-    'test-no-prepare',
-    'test-setuptools',
-    'test-bad-wheel',
-    'test-cant-build-via-sdist',
-    'test-invalid-requirements',
-    'test-metadata',
-]
-
 # Generate path fixtures dynamically.
+package_names = os.listdir(os.path.realpath(os.path.join(__file__, '..', 'packages')))
 for package_name in package_names:
     normalized_name = package_name.replace('-', '_')
     fixture_name = f'{normalized_name}_path'
