@@ -122,7 +122,7 @@ def generate_package_path_fixture(package_name):
 package_names = os.listdir(os.path.join(os.path.dirname(__file__), 'packages'))
 for package_name in package_names:
     normalized_name = package_name.replace('-', '_')
-    fixture_name = f'{normalized_name}_path'
+    fixture_name = f'package_{normalized_name}'
     globals()[fixture_name] = generate_package_path_fixture(package_name)
 
 
