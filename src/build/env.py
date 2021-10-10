@@ -13,7 +13,7 @@ import sysconfig
 import tempfile
 
 from types import TracebackType
-from typing import Callable, Iterable, List, Optional, Tuple, Type
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type
 
 import packaging.requirements
 import packaging.version
@@ -84,8 +84,17 @@ def _subprocess(cmd: List[str]) -> None:
 class IsolatedEnvBuilder:
     """Builder object for isolated environments."""
 
+    _ENV_VARS_TO_CLEAR = (
+        'PYTHONHOME',
+        'PYTHONPATH',
+        'PYTHONPLATLIBDIR',
+        'PYTHONSTARTUP',
+        'PYTHONNOUSERSITE',
+    )
+
     def __init__(self) -> None:
         self._path: Optional[str] = None
+        self._old_env_values: Dict[str, Optional[str]] = {}
 
     def __enter__(self) -> IsolatedEnv:
         """
@@ -102,15 +111,18 @@ class IsolatedEnvBuilder:
             else:
                 self.log('Creating venv isolated environment...')
                 executable, scripts_dir = _create_isolated_env_venv(self._path)
-            return _IsolatedEnvVenvPip(
-                path=self._path,
-                python_executable=executable,
-                scripts_dir=scripts_dir,
-                log=self.log,
-            )
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
+
+        self._old_env_values = {name: os.environ.pop(name, None) for name in self._ENV_VARS_TO_CLEAR}
+
+        return _IsolatedEnvVenvPip(
+            path=self._path,
+            python_executable=executable,
+            scripts_dir=scripts_dir,
+            log=self.log,
+        )
 
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
@@ -122,6 +134,10 @@ class IsolatedEnvBuilder:
         :param exc_val: The value of exception raised (if any)
         :param exc_tb: The traceback of exception raised (if any)
         """
+        for name, old_value in self._old_env_values.items():
+            if old_value is not None:
+                os.environ[name] = old_value
+        self._old_env_values = {}
         if self._path is not None and os.path.exists(self._path):  # in case the user already deleted skip remove
             shutil.rmtree(self._path)
 

@@ -112,7 +112,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [105, 103, 194]
+        assert [(record.lineno) for record in caplog.records] == [105, 112, 210]
 
 
 @pytest.mark.isolated
@@ -165,3 +165,24 @@ def test_venv_symlink(mocker, has_symlink):
     build.env._fs_supports_symlink.cache_clear()
 
     assert supports_symlink is has_symlink
+
+
+def test_clear_env_vars(monkeypatch, mocker):
+    mocker.patch('build.env._create_isolated_env_venv', return_value=(None, None))
+
+    keys = (
+        'PYTHONHOME',
+        'PYTHONPATH',
+        'PYTHONPLATLIBDIR',
+        'PYTHONSTARTUP',
+        'PYTHONNOUSERSITE',
+    )
+    for key in keys:
+        monkeypatch.setenv(key, 'hello!')
+
+    with build.env.IsolatedEnvBuilder():
+        for key in keys:
+            assert key not in os.environ
+
+    for key in keys:
+        assert os.environ[key] == 'hello!'
