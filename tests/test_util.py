@@ -6,14 +6,14 @@ import build.util
 
 
 @pytest.mark.parametrize('isolated', [False, True])
-def test_wheel_metadata(test_setuptools_path, isolated):
-    metadata = build.util.project_wheel_metadata(test_setuptools_path, isolated)
+def test_wheel_metadata(package_test_setuptools, isolated):
+    metadata = build.util.project_wheel_metadata(package_test_setuptools, isolated)
 
     assert metadata['name'] == 'test-setuptools'
     assert metadata['version'] == '1.0.0'
 
 
-def test_wheel_metadata_isolation(test_flit_path):
+def test_wheel_metadata_isolation(package_test_flit):
     try:
         import flit_core  # noqa: F401
     except ModuleNotFoundError:
@@ -21,7 +21,7 @@ def test_wheel_metadata_isolation(test_flit_path):
     else:
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
-    metadata = build.util.project_wheel_metadata(test_flit_path)
+    metadata = build.util.project_wheel_metadata(package_test_flit)
 
     assert metadata['name'] == 'test_flit'
     assert metadata['version'] == '1.0.0'
@@ -30,11 +30,11 @@ def test_wheel_metadata_isolation(test_flit_path):
         build.BuildBackendException,
         match="Backend 'flit_core.buildapi' is not available.",
     ):
-        build.util.project_wheel_metadata(test_flit_path, isolated=False)
+        build.util.project_wheel_metadata(package_test_flit, isolated=False)
 
 
-def test_with_get_requires(test_metadata):
-    metadata = build.util.project_wheel_metadata(test_metadata)
+def test_with_get_requires(package_test_metadata):
+    metadata = build.util.project_wheel_metadata(package_test_metadata)
 
     assert metadata['name'] == 'test-metadata'
     assert str(metadata['version']) == '1.0.0'

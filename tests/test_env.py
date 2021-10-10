@@ -97,7 +97,7 @@ def test_isolated_env_has_install_still_abstract():
         Env()
 
 
-def test_isolated_env_log(mocker, caplog, test_flit_path):
+def test_isolated_env_log(mocker, caplog, package_test_flit):
     mocker.patch('build.env._subprocess')
     caplog.set_level(logging.DEBUG)
 

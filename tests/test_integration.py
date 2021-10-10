@@ -122,7 +122,7 @@ def test_build(monkeypatch, project, args, call, tmp_path):
     assert list(filter(_WHEEL.match, pkg_names))
 
 
-def test_isolation(tmp_dir, test_flit_path, mocker):
+def test_isolation(tmp_dir, package_test_flit, mocker):
     try:
         import flit_core  # noqa: F401
     except ModuleNotFoundError:
@@ -132,5 +132,5 @@ def test_isolation(tmp_dir, test_flit_path, mocker):
 
     mocker.patch('build.__main__._error')
 
-    build.__main__.main([test_flit_path, '-o', tmp_dir, '--no-isolation'])
+    build.__main__.main([package_test_flit, '-o', tmp_dir, '--no-isolation'])
     build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available.")
