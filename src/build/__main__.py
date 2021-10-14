@@ -257,7 +257,7 @@ def main_parser() -> argparse.ArgumentParser:
         description=textwrap.indent(
             textwrap.dedent(
                 '''
-                A simple, correct PEP 517 package builder.
+                A simple, correct PEP 517 build frontend.
 
                 By default, a source distribution (sdist) is built from {srcdir}
                 and a binary distribution (wheel) is built from the sdist.
