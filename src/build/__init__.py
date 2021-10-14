@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-build - A simple, correct PEP 517 package builder
+build - A simple, correct PEP 517 build frontend
 """
 __version__ = '0.7.0'
 
