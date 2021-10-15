@@ -33,7 +33,7 @@ jobs:
           - '3.8'
           - '3.7'
           - '3.6'
-          - 'pypy3'
+          - 'pypy-3.7'
         include:
           - os: ubuntu
             py: '3.11-dev'
