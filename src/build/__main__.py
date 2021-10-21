@@ -259,15 +259,16 @@ def main_parser() -> argparse.ArgumentParser:
                 '''
                 A simple, correct PEP 517 build frontend.
 
-                By default, a source distribution (sdist) is built from {srcdir}
-                and a binary distribution (wheel) is built from the sdist.
-                This is recommended as it will ensure the sdist can be used
+                By default, a source distribution (``sdist``) is built from ``{srcdir}``
+                and a binary distribution (``wheel``) is built from the ``sdist``.
+                This is recommended as it will ensure the ``sdist`` can be used
                 to build wheels.
 
-                Pass -s/--sdist and/or -w/--wheel to build a specific distribution.
-                If you do this, the default behavior will be disabled, and all
-                artifacts will be built from {srcdir} (even if you combine
-                -w/--wheel with -s/--sdist, the wheel will be built from {srcdir}).
+                Pass ``-s``/``--sdist`` and/or ``-w``/``--wheel`` to build a specific
+                distribution. If you do this, the default behavior will be disabled, and
+                all artifacts will be built from ``{srcdir}`` (even if you combine
+                ``-w``/``--wheel`` with ``-s``/``--sdist``, the wheel will be built from
+                ``{srcdir}``).
                 '''
             ).strip(),
             '    ',
