@@ -6,7 +6,8 @@ Changelog
 Unreleased
 ==========
 
-- Accept `os.PathLike[str]` in addition to str for paths in public API (`PR #TODO`_, Fixes `#372`_)
+- Accept `os.PathLike[str]` in addition to str for paths in public API
+  and rename `output_directory` to `outdir` (`PR #TODO`_, Fixes `#372`_)
 
 .. _PR #TODO: https://github.com/pypa/build/pull/TODO
 .. _#372: https://github.com/pypa/build/issues/372
