@@ -6,6 +6,11 @@ Changelog
 Unreleased
 ==========
 
+- Accept `os.PathLike[str]` in addition to str for paths in public API (`PR #TODO`_, Fixes `#372`_)
+
+.. _PR #TODO: https://github.com/pypa/build/pull/TODO
+.. _#372: https://github.com/pypa/build/issues/372
+
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
 
