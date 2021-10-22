@@ -50,6 +50,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
+PathType = Union[str, 'os.PathLike[str]']
 _ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
 
 
@@ -121,7 +122,7 @@ def _working_directory(path: str) -> Iterator[None]:
         os.chdir(current)
 
 
-def _validate_source_directory(srcdir: str) -> None:
+def _validate_source_directory(srcdir: PathType) -> None:
     if not os.path.isdir(srcdir):
         raise BuildException(f'Source {srcdir} is not a directory')
     pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
@@ -228,7 +229,7 @@ class ProjectBuilder:
 
     def __init__(
         self,
-        srcdir: str,
+        srcdir: PathType,
         python_executable: str = sys.executable,
         scripts_dir: Optional[str] = None,
         runner: RunnerType = pep517.wrappers.default_subprocess_runner,
@@ -356,7 +357,7 @@ class ProjectBuilder:
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(
-        self, distribution: str, output_directory: str, config_settings: Optional[ConfigSettingsType] = None
+        self, distribution: str, output_directory: PathType, config_settings: Optional[ConfigSettingsType] = None
     ) -> Optional[str]:
         """
         Prepare metadata for a distribution.
@@ -382,7 +383,7 @@ class ProjectBuilder:
     def build(
         self,
         distribution: str,
-        output_directory: str,
+        output_directory: PathType,
         config_settings: Optional[ConfigSettingsType] = None,
         metadata_directory: Optional[str] = None,
     ) -> str:
@@ -400,7 +401,7 @@ class ProjectBuilder:
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
-    def metadata_path(self, output_directory: str) -> str:
+    def metadata_path(self, output_directory: PathType) -> str:
         """
         Generates the metadata directory of a distribution and returns its path.
 
@@ -429,7 +430,7 @@ class ProjectBuilder:
         return os.path.join(output_directory, distinfo)
 
     def _call_backend(
-        self, hook_name: str, outdir: str, config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
+        self, hook_name: str, outdir: PathType, config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
     ) -> str:
         outdir = os.path.abspath(outdir)
 

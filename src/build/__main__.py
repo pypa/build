@@ -17,7 +17,7 @@ from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, T
 
 import build
 
-from build import BuildBackendException, BuildException, ConfigSettingsType, ProjectBuilder
+from build import BuildBackendException, BuildException, ConfigSettingsType, PathType, ProjectBuilder
 from build.env import IsolatedEnvBuilder
 
 
@@ -99,7 +99,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    builder: ProjectBuilder, outdir: str, distribution: str, config_settings: Optional[ConfigSettingsType]
+    builder: ProjectBuilder, outdir: PathType, distribution: str, config_settings: Optional[ConfigSettingsType]
 ) -> str:
     with _IsolatedEnvBuilder() as env:
         builder.python_executable = env.executable
@@ -113,7 +113,7 @@ def _build_in_isolated_env(
 
 def _build_in_current_env(
     builder: ProjectBuilder,
-    outdir: str,
+    outdir: PathType,
     distribution: str,
     config_settings: Optional[ConfigSettingsType],
     skip_dependency_check: bool = False,
@@ -131,7 +131,7 @@ def _build_in_current_env(
 def _build(
     isolation: bool,
     builder: ProjectBuilder,
-    outdir: str,
+    outdir: PathType,
     distribution: str,
     config_settings: Optional[ConfigSettingsType],
     skip_dependency_check: bool,
@@ -179,8 +179,8 @@ def _natural_language_list(elements: Sequence[str]) -> str:
 
 
 def build_package(
-    srcdir: str,
-    outdir: str,
+    srcdir: PathType,
+    outdir: PathType,
     distributions: Sequence[str],
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
@@ -205,8 +205,8 @@ def build_package(
 
 
 def build_package_via_sdist(
-    srcdir: str,
-    outdir: str,
+    srcdir: PathType,
+    outdir: PathType,
     distributions: Sequence[str],
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,

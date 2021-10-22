@@ -5,8 +5,6 @@ import pathlib
 import sys
 import tempfile
 
-from typing import Union
-
 import pep517
 
 import build
@@ -27,7 +25,7 @@ def _project_wheel_metadata(builder: build.ProjectBuilder) -> 'importlib_metadat
 
 
 def project_wheel_metadata(
-    srcdir: Union[str, 'os.PathLike[str]'],
+    srcdir: build.PathType,
     isolated: bool = True,
 ) -> 'importlib_metadata.PackageMetadata':
     """
