@@ -121,7 +121,7 @@ def _working_directory(path: str) -> Iterator[None]:
         os.chdir(current)
 
 
-def _validate_source_directory(srcdir: str) -> None:
+def _validate_source_directory(srcdir: Union[str, os.PathLike[str]]) -> None:
     if not os.path.isdir(srcdir):
         raise BuildException(f'Source {srcdir} is not a directory')
     pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
@@ -228,7 +228,7 @@ class ProjectBuilder:
 
     def __init__(
         self,
-        srcdir: str,
+        srcdir: Union[str, os.PathLike[str]],
         python_executable: str = sys.executable,
         scripts_dir: Optional[str] = None,
         runner: RunnerType = pep517.wrappers.default_subprocess_runner,
@@ -356,13 +356,13 @@ class ProjectBuilder:
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(
-        self, distribution: str, output_directory: str, config_settings: Optional[ConfigSettingsType] = None
+        self, distribution: str, outdir: Union[str, os.PathLike[str]], config_settings: Optional[ConfigSettingsType] = None
     ) -> Optional[str]:
         """
         Prepare metadata for a distribution.
 
         :param distribution: Distribution to build (must be ``wheel``)
-        :param output_directory: Directory to put the prepared metadata in
+        :param outdir: Directory to put the prepared metadata in
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
@@ -370,7 +370,7 @@ class ProjectBuilder:
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
-                output_directory,
+                outdir,
                 config_settings,
                 _allow_fallback=False,
             )
@@ -382,7 +382,7 @@ class ProjectBuilder:
     def build(
         self,
         distribution: str,
-        output_directory: str,
+        outdir: Union[str, os.PathLike[str]],
         config_settings: Optional[ConfigSettingsType] = None,
         metadata_directory: Optional[str] = None,
     ) -> str:
@@ -390,7 +390,7 @@ class ProjectBuilder:
         Build a distribution.
 
         :param distribution: Distribution to build (``sdist`` or ``wheel``)
-        :param output_directory: Directory to put the built distribution in
+        :param outdir: Directory to put the built distribution in
         :param config_settings: Config settings for the build backend
         :param metadata_directory: If provided, should be the return value of a
             previous ``prepare`` call on the same ``distribution`` kind
@@ -398,24 +398,24 @@ class ProjectBuilder:
         """
         self.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
-        return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
+        return self._call_backend(f'build_{distribution}', outdir, config_settings, **kwargs)
 
-    def metadata_path(self, output_directory: str) -> str:
+    def metadata_path(self, outdir: Union[str, os.PathLike[str]]) -> str:
         """
         Generates the metadata directory of a distribution and returns its path.
 
         If the backend does not support the ``prepare_metadata_for_build_wheel``
         hook, a wheel will be built and the metadata extracted.
 
-        :param output_directory: Directory to put the metadata distribution in
+        :param outdir: Directory to put the metadata distribution in
         """
         # prepare_metadata hook
-        metadata = self.prepare('wheel', output_directory)
+        metadata = self.prepare('wheel', outdir)
         if metadata is not None:
             return metadata
 
         # fallback to build_wheel hook
-        wheel = self.build('wheel', output_directory)
+        wheel = self.build('wheel', outdir)
         match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
@@ -423,13 +423,13 @@ class ProjectBuilder:
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
             w.extractall(
-                output_directory,
+                outdir,
                 (member for member in w.namelist() if member.startswith(member_prefix)),
             )
-        return os.path.join(output_directory, distinfo)
+        return os.path.join(outdir, distinfo)
 
     def _call_backend(
-        self, hook_name: str, outdir: str, config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
+        self, hook_name: str, outdir: Union[str, os.PathLike[str]], config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
     ) -> str:
         outdir = os.path.abspath(outdir)
 

@@ -27,7 +27,7 @@ def _project_wheel_metadata(builder: build.ProjectBuilder) -> 'importlib_metadat
 
 
 def project_wheel_metadata(
-    srcdir: Union[str, 'os.PathLike[str]'],
+    srcdir: Union[str, os.PathLike[str]],
     isolated: bool = True,
 ) -> 'importlib_metadata.PackageMetadata':
     """
