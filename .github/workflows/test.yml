@@ -32,15 +32,22 @@ jobs:
           - macos
           - windows
         py:
+          - 'pypy-3.7'
+          - '3.11-dev'
           - '3.10'
           - '3.9'
           - '3.8'
           - '3.7'
           - '3.6'
-          - 'pypy-3.7'
-        include:
-          - os: ubuntu
-            py: '3.11-dev'
+        tox-target:
+          - 'tox'
+          - 'path'
+          - 'sdist'
+          - 'wheel'
+          - 'min'
+        exclude:
+          - { py: '3.11-dev', os: macos }
+          - { py: '3.11-dev', os: windows }
 
     steps:
       - uses: actions/checkout@v2
@@ -74,25 +81,24 @@ jobs:
       - name: Install tox
         run: python -m pip install tox
 
-      - name: Setup test suite
-        run: tox -vv --notest -e ${{env.BASE}},${{env.BASE}}-path,${{env.BASE}}-sdist,${{env.BASE}}-wheel
-
       - name: Run test suite via tox
-        run: tox -e ${{env.BASE}} --skip-pkg-install
+        if: matrix.tox-target == 'tox'
+        run: |
+          tox -vv --notest -e ${{env.BASE}}
+          tox -e ${{env.BASE}} --skip-pkg-install
 
-      - name: Run test suite via path
-        run: tox -e ${{env.BASE}}-path --skip-pkg-install
-
-      - name: Run test suite via sdist
-        run: tox -e ${{env.BASE}}-sdist --skip-pkg-install
-
-      - name: Run test suite via wheel
-        run: tox -e ${{env.BASE}}-wheel --skip-pkg-install
+      - name: Run test suite via ${{ matrix.tox-target }}
+        if: matrix.tox-target != 'tox' && matrix.tox-target != 'min'
+        run: |
+          tox -vv --notest -e ${{env.BASE}}-${{ matrix.tox-target }}
+          tox -e ${{env.BASE}}-${{ matrix.tox-target }} --skip-pkg-install
 
       - name: Run minimum version test
-        run: tox -e ${{env.BASE}}-min
+        if: matrix.tox-target == 'min'
+        run: tox -e ${{env.BASE}}-${{ matrix.tox-target }}
 
       - name: Rename coverage report file
+        if: matrix.tox-target == 'tox'
         run: mv ".tox/coverage.${BASE}.xml" .tox/coverage.xml
         shell: bash
 
