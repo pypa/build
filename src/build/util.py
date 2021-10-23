@@ -5,8 +5,6 @@ import pathlib
 import sys
 import tempfile
 
-from typing import Union
-
 import pep517
 
 import build
