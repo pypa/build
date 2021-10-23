@@ -112,7 +112,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [105, 103, 194]
+        assert [(record.lineno) for record in caplog.records] == [105, 102, 193]
 
 
 @pytest.mark.isolated

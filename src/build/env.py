@@ -15,9 +15,6 @@ import tempfile
 from types import TracebackType
 from typing import Callable, Iterable, List, Optional, Tuple, Type
 
-import packaging.requirements
-import packaging.version
-
 import build
 
 
@@ -62,6 +59,8 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
 
 @functools.lru_cache(maxsize=None)
 def _should_use_virtualenv() -> bool:
+    import packaging.requirements
+
     # virtualenv might be incompatible if it was installed separately
     # from build. This verifies that virtualenv and all of its
     # dependencies are installed as specified by build.
@@ -253,6 +252,8 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     :return: The Python executable and script folder
     """
     import venv
+
+    import packaging.version
 
     venv.EnvBuilder(with_pip=True, symlinks=_fs_supports_symlink()).create(path)
     executable, script_dir, purelib = _find_executable_and_scripts(path)
