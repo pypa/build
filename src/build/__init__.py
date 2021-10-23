@@ -50,7 +50,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
-PathType = Union[str, os.PathLike[str]]
+PathType = Union[str, 'os.PathLike[str]']
 _ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
 
 
