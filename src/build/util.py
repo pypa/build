@@ -55,4 +55,6 @@ def project_wheel_metadata(
         return _project_wheel_metadata(builder)
 
 
-__all__ = ('project_wheel_metadata',)
+__all__ = [
+    'project_wheel_metadata',
+]
