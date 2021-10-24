@@ -509,6 +509,7 @@ class ProjectBuilder:
 
 __all__ = [
     '__version__',
+    'BuildSystemTableValidationError',
     'BuildBackendException',
     'BuildException',
     'ConfigSettingsType',
