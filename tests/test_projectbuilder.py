@@ -151,14 +151,22 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     # correct flit pyproject.toml
     builder = build.ProjectBuilder(package_test_flit)
     pep517.wrappers.Pep517HookCaller.assert_called_with(
-        package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable, runner=builder._runner
+        package_test_flit,
+        'flit_core.buildapi',
+        backend_path=None,
+        python_executable=sys.executable,
+        runner=pep517.wrappers.default_subprocess_runner,
     )
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # custom python
     builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
     pep517.wrappers.Pep517HookCaller.assert_called_with(
-        package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
+        package_test_flit,
+        'flit_core.buildapi',
+        backend_path=None,
+        python_executable='some-python',
+        runner=pep517.wrappers.default_subprocess_runner,
     )
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
@@ -169,7 +177,7 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
         'setuptools.build_meta:__legacy__',
         backend_path=None,
         python_executable=sys.executable,
-        runner=builder._runner,
+        runner=pep517.wrappers.default_subprocess_runner,
     )
 
     # PermissionError
@@ -180,15 +188,6 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     # TomlDecodeError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(package_test_bad_syntax)
-
-
-@pytest.mark.parametrize('value', [b'something', 'something_else'])
-def test_python_executable(package_test_flit, value):
-    builder = build.ProjectBuilder(package_test_flit)
-
-    builder.python_executable = value
-    assert builder.python_executable == value
-    assert builder._hook.python_executable == value
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
@@ -213,7 +212,7 @@ def test_build_missing_backend(packages_path, distribution, tmpdir):
     builder = build.ProjectBuilder(bad_backend_path)
 
     with pytest.raises(build.BuildBackendException):
-        builder.build(distribution, str(tmpdir))
+        builder.build(distribution, tmpdir)
 
 
 def test_check_dependencies(mocker, package_test_flit):
@@ -356,9 +355,9 @@ def test_build_not_dir_outdir(mocker, tmp_dir, package_test_flit):
 def demo_pkg_inline(tmp_path_factory):
     # builds a wheel without any dependencies and with a console script demo-pkg-inline
     tmp_path = tmp_path_factory.mktemp('demo-pkg-inline')
-    builder = build.ProjectBuilder(srcdir=os.path.join(os.path.dirname(__file__), 'packages', 'inline'))
+    builder = build.ProjectBuilder(os.path.join(os.path.dirname(__file__), 'packages', 'inline'))
     out = tmp_path / 'dist'
-    builder.build('wheel', str(out))
+    builder.build('wheel', out)
     return next(out.iterdir())
 
 

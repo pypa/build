@@ -125,7 +125,7 @@ def test_build_isolated(mocker, package_test_flit):
         ],
     )
     mocker.patch('build.__main__._error')
-    install = mocker.patch('build.env._IsolatedEnvVenvPip.install')
+    install = mocker.patch('build.env._DefaultIsolatedEnv.install_packages')
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
@@ -168,7 +168,7 @@ def test_build_no_isolation_with_check_deps(mocker, package_test_flit, missing_d
 @pytest.mark.isolated
 def test_build_raises_build_exception(mocker, package_test_flit):
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
-    mocker.patch('build.env._IsolatedEnvVenvPip.install')
+    mocker.patch('build.env._DefaultIsolatedEnv.install_packages')
 
     with pytest.raises(build.BuildException):
         build.__main__.build_package(package_test_flit, '.', ['sdist'])
@@ -177,7 +177,7 @@ def test_build_raises_build_exception(mocker, package_test_flit):
 @pytest.mark.isolated
 def test_build_raises_build_backend_exception(mocker, package_test_flit):
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
-    mocker.patch('build.env._IsolatedEnvVenvPip.install')
+    mocker.patch('build.env._DefaultIsolatedEnv.install_packages')
 
     msg = f"Backend operation failed: Exception('a'{',' if sys.version_info < (3, 7) else ''})"
     with pytest.raises(build.BuildBackendException, match=re.escape(msg)):
@@ -218,15 +218,15 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         (
             [],
             [
-                '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Creating isolated environment (venv)...',
+                '* Installing build dependencies... (setuptools >= 42.0.0, wheel >= 0.36.0)',
                 '* Getting dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
-                '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Creating isolated environment (venv)...',
+                '* Installing build dependencies... (setuptools >= 42.0.0, wheel >= 0.36.0)',
                 '* Getting dependencies for wheel...',
-                '* Installing packages in isolated environment... (wheel)',
+                '* Installing build dependencies... (wheel)',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -245,10 +245,10 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         (
             ['--wheel'],
             [
-                '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Creating isolated environment (venv)...',
+                '* Installing build dependencies... (setuptools >= 42.0.0, wheel >= 0.36.0)',
                 '* Getting dependencies for wheel...',
-                '* Installing packages in isolated environment... (wheel)',
+                '* Installing build dependencies... (wheel)',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -285,7 +285,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         'sdist-and-wheel-direct-no-isolation',
     ],
 )
-@pytest.mark.flaky(reruns=5)
+# @pytest.mark.flaky(reruns=5)
 def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
     build.__main__.main([package_test_setuptools, '-o', tmp_dir] + args)
     stdout, stderr = capsys.readouterr()
@@ -307,8 +307,8 @@ def main_reload_styles():
             False,
             'ERROR ',
             [
-                '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
+                '* Creating isolated environment (venv)...',
+                '* Installing build dependencies... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
                 '',
                 'Traceback (most recent call last):',
             ],
@@ -317,9 +317,8 @@ def main_reload_styles():
             True,
             '\33[91mERROR\33[0m ',
             [
-                '\33[1m* Creating venv isolated environment...\33[0m',
-                '\33[1m* Installing packages in isolated environment... '
-                '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
+                '\33[1m* Creating isolated environment (venv)...\33[0m',
+                '\33[1m* Installing build dependencies... ' '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
                 '',
                 '\33[2mTraceback (most recent call last):',
             ],
@@ -354,7 +353,7 @@ def test_output_env_subprocess_error(
     stdout, stderr = capsys.readouterr()
     stdout, stderr = stdout.splitlines(), stderr.splitlines()
 
-    assert stdout[:4] == stdout_body
+    assert stdout[:6] == stdout_body
     assert stdout[-1].startswith(stdout_error)
 
     assert len(stderr) == 1
