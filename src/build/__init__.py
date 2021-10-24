@@ -479,7 +479,7 @@ class ProjectBuilder:
             _logger.log(logging.INFO, message)
 
 
-__all__ = (
+__all__ = [
     '__version__',
     'ConfigSettingsType',
     'RunnerType',
@@ -489,4 +489,4 @@ __all__ = (
     'TypoWarning',
     'check_dependency',
     'ProjectBuilder',
-)
+]

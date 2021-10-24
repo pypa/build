@@ -311,7 +311,7 @@ def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
     return executable, paths['scripts'], paths['purelib']
 
 
-__all__ = (
+__all__ = [
     'IsolatedEnvBuilder',
     'IsolatedEnv',
-)
+]
