@@ -21,9 +21,6 @@ from build import BuildBackendException, BuildException, ConfigSettingsType, Fai
 from build.env import IsolatedEnvBuilder
 
 
-__all__ = ['build', 'main', 'main_parser']
-
-
 _COLORS = {
     'red': '\33[91m',
     'green': '\33[92m',
@@ -386,3 +383,10 @@ def entrypoint() -> None:
 
 if __name__ == '__main__':  # pragma: no cover
     main(sys.argv[1:], 'python -m build')
+
+
+__all__ = [
+    'build',
+    'main',
+    'main_parser',
+]
