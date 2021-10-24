@@ -484,6 +484,7 @@ __all__ = (
     'ConfigSettingsType',
     'RunnerType',
     'BuildException',
+    'BuildSystemTableValidationError',
     'BuildBackendException',
     'TypoWarning',
     'check_dependency',
