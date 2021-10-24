@@ -78,13 +78,13 @@ _logger = logging.getLogger(__name__)
 
 class BuildException(Exception):
     """
-    Exception raised by ProjectBuilder
+    Exception raised by :class:`ProjectBuilder`.
     """
 
 
 class BuildBackendException(Exception):
     """
-    Exception raised when the backend fails
+    Exception raised when a backend operation fails.
     """
 
     def __init__(
@@ -112,7 +112,7 @@ class BuildSystemTableValidationError(BuildException):
 
 class TypoWarning(Warning):
     """
-    Warning raised when a potential typo is found
+    Warning raised when a possible typo is found.
     """
 
 
@@ -240,8 +240,9 @@ class ProjectBuilder:
         runner: RunnerType = pep517.wrappers.default_subprocess_runner,
     ) -> None:
         """
-        :param srcdir: The source directory
-        :param python_executable: The python executable where the backend lives
+        :param srcdir: The project source directory
+        :param python_executable: Path of Python executable used to invoke
+            PEP 517 hooks
         :param runner: An alternative runner for backend subprocesses
 
         The 'runner', if provided, must accept the following arguments:
@@ -309,20 +310,18 @@ class ProjectBuilder:
     @property
     def build_system_requires(self) -> Set[str]:
         """
-        The dependencies defined in the ``pyproject.toml``'s
-        ``build-system.requires`` field or the default build dependencies
-        if ``pyproject.toml`` is missing or ``build-system`` is undefined.
+        The dependencies specified in the project's ``build-system.requires``
+        field or the default build dependencies if unspecified.
         """
         return self._requires
 
     def get_requires_for_build(self, distribution: str, config_settings: Optional[ConfigSettingsType] = None) -> Set[str]:
         """
-        Return the dependencies defined by the backend in addition to
-        :attr:`build_system_requires` for a given distribution.
+        Get the build dependencies requested by the backend for
+        a given distribution.
 
-        :param distribution: Distribution to get the dependencies of
-            (``sdist`` or ``wheel``)
-        :param config_settings: Config settings for the build backend
+        :param distribution: Distribution (``sdist`` or ``wheel``)
+        :param config_settings: Config settings passed to the backend
         """
         self.log(f'Getting dependencies for {distribution}...')
         hook_name = f'get_requires_for_build_{distribution}'
@@ -335,13 +334,13 @@ class ProjectBuilder:
         self, distribution: str, config_settings: Optional[ConfigSettingsType] = None
     ) -> Set[Tuple[str, ...]]:
         """
-        Return the dependencies which are not satisfied from the combined set of
-        :attr:`build_system_requires` and :meth:`get_requires_for_build` for a given
-        distribution.
+        Check that the :attr:`build_system_requires` and :meth:`get_requires_for_build`
+        dependencies for a given distribution are satisfied and return the dependency
+        chain of those which aren't.  The unmet dependency is the last value in the chain.
 
-        :param distribution: Distribution to check (``sdist`` or ``wheel``)
-        :param config_settings: Config settings for the build backend
-        :returns: Set of variable-length unmet dependency tuples
+        :param distribution: Distribution (``sdist`` or ``wheel``)
+        :param config_settings: Config settings passed to the backend
+        :returns: Unmet dependencies in the PEP 508 format
         """
         dependencies = self.get_requires_for_build(distribution, config_settings).union(self.build_system_requires)
         return {u for d in dependencies for u in check_dependency(d)}
@@ -352,10 +351,10 @@ class ProjectBuilder:
         """
         Prepare metadata for a distribution.
 
-        :param distribution: Distribution to build (must be ``wheel``)
+        :param distribution: Distribution (must be ``wheel``)
         :param output_directory: Directory to put the prepared metadata in
-        :param config_settings: Config settings for the build backend
-        :returns: The full path to the prepared metadata directory
+        :param config_settings: Config settings passed to the backend
+        :returns: The path of the metadata directory
         """
         self.log(f'Getting metadata for {distribution}...')
         try:
@@ -380,12 +379,12 @@ class ProjectBuilder:
         """
         Build a distribution.
 
-        :param distribution: Distribution to build (``sdist`` or ``wheel``)
+        :param distribution: Distribution (``sdist`` or ``wheel``)
         :param output_directory: Directory to put the built distribution in
-        :param config_settings: Config settings for the build backend
+        :param config_settings: Config settings passed to the backend
         :param metadata_directory: If provided, should be the return value of a
-            previous ``prepare`` call on the same ``distribution`` kind
-        :returns: The full path to the built distribution
+            previous ``prepare`` call for the same ``distribution`` type
+        :returns: The path of the built distribution
         """
         self.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
@@ -393,12 +392,13 @@ class ProjectBuilder:
 
     def metadata_path(self, output_directory: PathType) -> str:
         """
-        Generates the metadata directory of a distribution and returns its path.
+        Generate the metadata directory of a distribution and return its path.
 
         If the backend does not support the ``prepare_metadata_for_build_wheel``
-        hook, a wheel will be built and the metadata extracted.
+        hook, a wheel will be built and the metadata will be extracted from it.
 
         :param output_directory: Directory to put the metadata distribution in
+        :returns: The path of the metadata directory
         """
         # prepare_metadata hook
         metadata = self.prepare('wheel', output_directory)
@@ -456,12 +456,12 @@ class ProjectBuilder:
     @staticmethod
     def log(message: str) -> None:
         """
-        Prints message
+        Log a message.
 
         The default implementation uses the logging module but this function can be
-        overwritten by users to have a different implementation.
+        overridden by users to have a different implementation.
 
-        :param msg: Message to output
+        :param message: Message to output
         """
         if sys.version_info >= (3, 8):
             _logger.log(logging.INFO, message, stacklevel=2)
