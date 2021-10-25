@@ -186,7 +186,7 @@ def build_package(
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
-) -> Sequence[str]:
+) -> List[str]:
     """
     Run the build process.
 
@@ -211,7 +211,7 @@ def build_package_via_sdist(
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
-) -> Sequence[str]:
+) -> List[str]:
     """
     Build a sdist and then the specified distributions from it.
 
