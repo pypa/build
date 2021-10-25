@@ -17,6 +17,7 @@ Unreleased
 .. _#364: https://github.com/pypa/build/issues/364
 .. _#372: https://github.com/pypa/build/issues/372
 
+
 0.7.0 (16-09-2021)
 ==================
 
