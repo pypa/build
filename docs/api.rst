@@ -1,8 +1,6 @@
 API Documentation
 =================
 
-This project exposes 2 modules:
-
 ``build`` module
 ----------------
 
