@@ -6,8 +6,8 @@ Changelog
 Unreleased
 ==========
 
-- Accept ``os.PathLike[str]`` in addition to ``str`` for paths in public API
-  and rename ``output_directory`` to ``outdir`` (`PR #392`_, Fixes `#372`_)
+- Accept ``os.PathLike[str]`` in addition to ``str`` for paths in public
+  API (`PR #392`_, Fixes `#372`_)
 
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)

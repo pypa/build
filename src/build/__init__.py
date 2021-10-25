@@ -357,13 +357,13 @@ class ProjectBuilder:
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(
-        self, distribution: str, outdir: PathType, config_settings: Optional[ConfigSettingsType] = None
+        self, distribution: str, output_directory: PathType, config_settings: Optional[ConfigSettingsType] = None
     ) -> Optional[str]:
         """
         Prepare metadata for a distribution.
 
         :param distribution: Distribution to build (must be ``wheel``)
-        :param outdir: Directory to put the prepared metadata in
+        :param output_directory: Directory to put the prepared metadata in
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
@@ -371,7 +371,7 @@ class ProjectBuilder:
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
-                outdir,
+                output_directory,
                 config_settings,
                 _allow_fallback=False,
             )
@@ -383,7 +383,7 @@ class ProjectBuilder:
     def build(
         self,
         distribution: str,
-        outdir: PathType,
+        output_directory: PathType,
         config_settings: Optional[ConfigSettingsType] = None,
         metadata_directory: Optional[str] = None,
     ) -> str:
@@ -391,7 +391,7 @@ class ProjectBuilder:
         Build a distribution.
 
         :param distribution: Distribution to build (``sdist`` or ``wheel``)
-        :param outdir: Directory to put the built distribution in
+        :param output_directory: Directory to put the built distribution in
         :param config_settings: Config settings for the build backend
         :param metadata_directory: If provided, should be the return value of a
             previous ``prepare`` call on the same ``distribution`` kind
@@ -399,24 +399,24 @@ class ProjectBuilder:
         """
         self.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
-        return self._call_backend(f'build_{distribution}', outdir, config_settings, **kwargs)
+        return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
-    def metadata_path(self, outdir: PathType) -> str:
+    def metadata_path(self, output_directory: PathType) -> str:
         """
         Generates the metadata directory of a distribution and returns its path.
 
         If the backend does not support the ``prepare_metadata_for_build_wheel``
         hook, a wheel will be built and the metadata extracted.
 
-        :param outdir: Directory to put the metadata distribution in
+        :param output_directory: Directory to put the metadata distribution in
         """
         # prepare_metadata hook
-        metadata = self.prepare('wheel', outdir)
+        metadata = self.prepare('wheel', output_directory)
         if metadata is not None:
             return metadata
 
         # fallback to build_wheel hook
-        wheel = self.build('wheel', outdir)
+        wheel = self.build('wheel', output_directory)
         match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
@@ -424,10 +424,10 @@ class ProjectBuilder:
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
             w.extractall(
-                outdir,
+                output_directory,
                 (member for member in w.namelist() if member.startswith(member_prefix)),
             )
-        return os.path.join(outdir, distinfo)
+        return os.path.join(output_directory, distinfo)
 
     def _call_backend(
         self, hook_name: str, outdir: PathType, config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
