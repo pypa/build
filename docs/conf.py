@@ -10,19 +10,20 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import build
-
 
 # -- Project information -----------------------------------------------------
+
+import importlib.metadata
+
 
 project = 'build'
 copyright = '2020, Filipe Laíns'
 author = 'Filipe Laíns'
 
 # The short X.Y version
-version = build.__version__
+version = importlib.metadata.version('build')
 # The full version, including alpha/beta/rc tags
-release = build.__version__
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -67,3 +68,5 @@ html_title = f'build {version}'
 autoclass_content = 'both'
 
 autodoc_preserve_defaults = True
+
+set_type_checking_flag = True
