@@ -65,3 +65,5 @@ html_title = f'build {version}'
 # html_static_path = ['_static']
 
 autoclass_content = 'both'
+
+autodoc_preserve_defaults = True
