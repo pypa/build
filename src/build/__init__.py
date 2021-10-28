@@ -197,7 +197,7 @@ class ProjectBuilder:
             PEP 517 hooks
         :param runner: Callback for executing PEP 517 hooks in a subprocess
         """
-        self.srcdir = _parse_source_dir(srcdir)
+        self._srcdir = _parse_source_dir(srcdir)
         self._python_executable = python_executable
         self._build_system = _parse_build_system_table(_load_pyproject_toml(self.srcdir))
         self._requires = set(self._build_system['requires'])
@@ -227,6 +227,11 @@ class ProjectBuilder:
             subprocess.check_call(cmd, cwd=cwd, env=env)
 
         return cls(srcdir, python_executable=isolated_env.python_executable, runner=runner)
+
+    @property
+    def srcdir(self) -> str:
+        """Project source directory."""
+        return self._srcdir
 
     @property
     def python_executable(self) -> str:
