@@ -54,10 +54,27 @@ except ModuleNotFoundError:  # pragma: no cover
     from toml import loads as toml_loads  # type: ignore
 
 
-RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
 _ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Protocol
+
+    class RunnerType(Protocol):
+        def __call__(
+            self, cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None
+        ) -> None:
+            """
+            Run a command in a Python subprocess.
+
+            The parameters mirror those of ``subprocess.run``.
+
+            :param cmd: The command to execute
+            :param cwd: The working directory
+            :param extra_environ: Variables to be exported to the environment
+            """
 
 
 _WHEEL_NAME_REGEX = re.compile(
@@ -254,25 +271,13 @@ class ProjectBuilder:
         self,
         srcdir: PathType,
         python_executable: str = sys.executable,
-        runner: RunnerType = pep517.wrappers.default_subprocess_runner,
+        runner: 'RunnerType' = pep517.wrappers.default_subprocess_runner,
     ) -> None:
         """
         :param srcdir: The project source directory
         :param python_executable: Path of Python executable used to invoke
             PEP 517 hooks
-        :param runner: An alternative runner for backend subprocesses
-
-        The 'runner', if provided, must accept the following arguments:
-
-        - cmd: a list of strings representing the command and arguments to
-          execute, as would be passed to e.g. 'subprocess.check_call'.
-        - cwd: a string representing the working directory that must be
-          used for the subprocess. Corresponds to the provided srcdir.
-        - extra_environ: a dict mapping environment variable names to values
-          which must be set for the subprocess execution.
-
-        The default runner simply calls the backend hooks in a subprocess, writing backend output
-        to stdout/stderr.
+        :param runner: Callback for executing PEP 517 hooks in a subprocess
         """
         self.srcdir = _parse_source_dir(srcdir)
         self._python_executable = python_executable
