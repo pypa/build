@@ -386,7 +386,6 @@ if __name__ == '__main__':  # pragma: no cover
 
 
 __all__ = [
-    'build',
     'main',
     'main_parser',
 ]
