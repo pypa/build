@@ -3,6 +3,7 @@
 """
 build - A simple, correct PEP 517 build frontend
 """
+
 __version__ = '0.7.0'
 
 import contextlib
@@ -16,8 +17,8 @@ import types
 import warnings
 import zipfile
 
-from collections import OrderedDict
 from typing import (
+    TYPE_CHECKING,
     AbstractSet,
     Any,
     Callable,
@@ -34,6 +35,11 @@ from typing import (
 )
 
 import pep517.wrappers
+
+
+if TYPE_CHECKING:
+    # Avoid import cycle.
+    from . import env
 
 
 TOMLDecodeError: Type[Exception]
@@ -231,12 +237,10 @@ class ProjectBuilder:
         self,
         srcdir: PathType,
         python_executable: str = sys.executable,
-        scripts_dir: Optional[str] = None,
         runner: RunnerType = pep517.wrappers.default_subprocess_runner,
     ) -> None:
         """
         :param srcdir: The source directory
-        :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
         :param python_executable: The python executable where the backend lives
         :param runner: An alternative runner for backend subprocesses
 
@@ -268,53 +272,39 @@ class ProjectBuilder:
             raise BuildException(f'Failed to parse {spec_file}: {e} ')
 
         self._build_system = _parse_build_system_table(spec)
+        self._python_executable = python_executable
+        self._requires = set(self._build_system['requires'])
         self._backend = self._build_system['build-backend']
-        self._scripts_dir = scripts_dir
-        self._hook_runner = runner
         self._hook = pep517.wrappers.Pep517HookCaller(
             self.srcdir,
             self._backend,
             backend_path=self._build_system.get('backend-path'),
-            python_executable=python_executable,
-            runner=self._runner,
+            runner=runner,
+            python_executable=self._python_executable,
         )
 
-    def _runner(
-        self, cmd: Sequence[str], cwd: Optional[str] = None, extra_environ: Optional[Mapping[str, str]] = None
-    ) -> None:
-        # if script dir is specified must be inserted at the start of PATH (avoid duplicate path while doing so)
-        if self.scripts_dir is not None:
-            paths: Dict[str, None] = OrderedDict()
-            paths[str(self.scripts_dir)] = None
-            if 'PATH' in os.environ:
-                paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
-            extra_environ = {} if extra_environ is None else dict(extra_environ)
-            extra_environ['PATH'] = os.pathsep.join(paths)
-        self._hook_runner(cmd, cwd, extra_environ)
+    @classmethod
+    def from_isolated_env(cls, isolated_env: 'env.IsolatedEnv', srcdir: PathType) -> 'ProjectBuilder':
+        """
+        Instantiate the builder from an isolated environment.
+
+        :param isolated_env: The isolated environment instance
+        :param srcdir: The project source directory
+        """
+
+        def runner(cmd: Sequence[str], cwd: Optional[str] = None, extra_environ: Optional[Mapping[str, str]] = None) -> None:
+            env = dict(isolated_env.prepare_environ())
+            if extra_environ:
+                env.update(extra_environ)
+
+            subprocess.check_call(cmd, cwd=cwd, env=env)
+
+        return cls(srcdir, python_executable=isolated_env.python_executable, runner=runner)
 
     @property
     def python_executable(self) -> str:
-        """
-        The Python executable used to invoke the backend.
-        """
-        # make mypy happy
-        exe: str = self._hook.python_executable
-        return exe
-
-    @python_executable.setter
-    def python_executable(self, value: str) -> None:
-        self._hook.python_executable = value
-
-    @property
-    def scripts_dir(self) -> Optional[str]:
-        """
-        The folder where the scripts are stored for the python executable.
-        """
-        return self._scripts_dir
-
-    @scripts_dir.setter
-    def scripts_dir(self, value: Optional[str]) -> None:
-        self._scripts_dir = value
+        """Path of Python executable used to invoke PEP 517 hooks."""
+        return self._python_executable
 
     @property
     def build_system_requires(self) -> Set[str]:
@@ -323,7 +313,7 @@ class ProjectBuilder:
         ``build-system.requires`` field or the default build dependencies
         if ``pyproject.toml`` is missing or ``build-system`` is undefined.
         """
-        return set(self._build_system['requires'])
+        return self._requires
 
     def get_requires_for_build(self, distribution: str, config_settings: Optional[ConfigSettingsType] = None) -> Set[str]:
         """

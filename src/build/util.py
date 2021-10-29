@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: MIT
 
-import os
 import pathlib
 import sys
 import tempfile
 
 import pep517
 
-import build
-import build.env
+from . import PathType, ProjectBuilder
+from .env import IsolatedEnvManager
 
 
 if sys.version_info >= (3, 8):
@@ -17,7 +16,7 @@ else:
     import importlib_metadata
 
 
-def _project_wheel_metadata(builder: build.ProjectBuilder) -> 'importlib_metadata.PackageMetadata':
+def _project_wheel_metadata(builder: ProjectBuilder) -> 'importlib_metadata.PackageMetadata':
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
         # https://github.com/python/importlib_metadata/pull/343
@@ -25,7 +24,7 @@ def _project_wheel_metadata(builder: build.ProjectBuilder) -> 'importlib_metadat
 
 
 def project_wheel_metadata(
-    srcdir: build.PathType,
+    srcdir: PathType,
     isolated: bool = True,
 ) -> 'importlib_metadata.PackageMetadata':
     """
@@ -39,19 +38,14 @@ def project_wheel_metadata(
                      environment or to create an isolated one and invoke it
                      there.
     """
-    builder = build.ProjectBuilder(
-        os.fspath(srcdir),
-        runner=pep517.quiet_subprocess_runner,
-    )
-
     if not isolated:
+        builder = ProjectBuilder(srcdir, runner=pep517.quiet_subprocess_runner)
         return _project_wheel_metadata(builder)
 
-    with build.env.IsolatedEnvBuilder() as env:
-        builder.python_executable = env.executable
-        builder.scripts_dir = env.scripts_dir
-        env.install(builder.build_system_requires)
-        env.install(builder.get_requires_for_build('wheel'))
+    with IsolatedEnvManager() as env:
+        builder = ProjectBuilder.from_isolated_env(env, srcdir)
+        env.install_packages(builder.build_system_requires)
+        env.install_packages(builder.get_requires_for_build('wheel'))
         return _project_wheel_metadata(builder)
 
 
