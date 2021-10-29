@@ -17,20 +17,7 @@ import types
 import warnings
 import zipfile
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Mapping, MutableMapping, Optional, Set, Tuple, Type, Union
 
 import pep517.wrappers
 
@@ -39,7 +26,7 @@ from ._helpers import ConfigSettingsType, PathType, check_dependency
 
 
 if TYPE_CHECKING:
-    from ._helpers import RunnerType
+    from ._helpers import Distribution, RunnerType, WheelDistribution
 
 
 TOMLDecodeError: Type[Exception]
@@ -260,12 +247,14 @@ class ProjectBuilder:
         """
         return self._requires
 
-    def get_requires_for_build(self, distribution: str, config_settings: Optional[ConfigSettingsType] = None) -> Set[str]:
+    def get_requires_for_build(
+        self, distribution: 'Distribution', config_settings: Optional[ConfigSettingsType] = None
+    ) -> Set[str]:
         """
         Get the build dependencies requested by the backend for
         a given distribution.
 
-        :param distribution: Distribution (``sdist`` or ``wheel``)
+        :param distribution: Distribution to build
         :param config_settings: Config settings passed to the backend
         """
         self.log(f'Getting dependencies for {distribution}...')
@@ -276,14 +265,14 @@ class ProjectBuilder:
             return set(get_requires(config_settings))
 
     def check_dependencies(
-        self, distribution: str, config_settings: Optional[ConfigSettingsType] = None
+        self, distribution: 'Distribution', config_settings: Optional[ConfigSettingsType] = None
     ) -> Set[Tuple[str, ...]]:
         """
         Check that the :attr:`build_system_requires` and :meth:`get_requires_for_build`
         dependencies for a given distribution are satisfied and return the dependency
         chain of those which aren't.  The unmet dependency is the last value in the chain.
 
-        :param distribution: Distribution (``sdist`` or ``wheel``)
+        :param distribution: Distribution to build
         :param config_settings: Config settings passed to the backend
         :returns: Unmet dependencies in the PEP 508 format
         """
@@ -291,12 +280,15 @@ class ProjectBuilder:
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(
-        self, distribution: str, output_directory: PathType, config_settings: Optional[ConfigSettingsType] = None
+        self,
+        distribution: 'WheelDistribution',
+        output_directory: PathType,
+        config_settings: Optional[ConfigSettingsType] = None,
     ) -> Optional[str]:
         """
         Prepare metadata for a distribution.
 
-        :param distribution: Distribution (must be ``wheel``)
+        :param distribution: Distribution to build
         :param output_directory: Directory to put the prepared metadata in
         :param config_settings: Config settings passed to the backend
         :returns: The path of the metadata directory
@@ -316,7 +308,7 @@ class ProjectBuilder:
 
     def build(
         self,
-        distribution: str,
+        distribution: 'Distribution',
         output_directory: PathType,
         config_settings: Optional[ConfigSettingsType] = None,
         metadata_directory: Optional[str] = None,
@@ -324,7 +316,7 @@ class ProjectBuilder:
         """
         Build a distribution.
 
-        :param distribution: Distribution (``sdist`` or ``wheel``)
+        :param distribution: Distribution to build
         :param output_directory: Directory to put the built distribution in
         :param config_settings: Config settings passed to the backend
         :param metadata_directory: If provided, should be the return value of a
