@@ -42,7 +42,7 @@ def project_wheel_metadata(
         return _project_wheel_metadata(builder)
 
     with IsolatedEnvManager() as env:
-        builder = ProjectBuilder.from_isolated_env(env, srcdir)
+        builder = ProjectBuilder.from_isolated_env(env, srcdir, runner=quiet_runner)
         env.install_packages(builder.build_system_requires)
         env.install_packages(builder.get_requires_for_build('wheel'))
         return _project_wheel_metadata(builder)
