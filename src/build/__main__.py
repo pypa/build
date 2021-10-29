@@ -79,7 +79,7 @@ def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
     :param msg: Error message
     :param code: Error code
     """
-    print('{red}ERROR{reset} {}'.format(msg, **_STYLES))
+    print('{red}ERROR{reset} {}'.format(msg, **_STYLES), file=sys.stderr)
     exit(code)
 
 
@@ -163,7 +163,11 @@ def _handle_build_error() -> Iterator[None]:
                 tb = ''.join(tb_lines)
             else:
                 tb = traceback.format_exc(-1)
-            print('\n{dim}{}{reset}\n'.format(tb.strip('\n'), **_STYLES))
+            print('\n{dim}{}{reset}\n'.format(tb.strip('\n'), **_STYLES), file=sys.stderr)
+        _error(str(e))
+    except Exception as e:  # pragma: no cover
+        tb = traceback.format_exc().strip('\n')
+        print('\n{dim}{}{reset}\n'.format(tb, **_STYLES), file=sys.stderr)
         _error(str(e))
 
 
@@ -372,19 +376,14 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
     else:
         build_call = build_package_via_sdist
         distributions = ['wheel']
-    try:
-        with _handle_build_error():
-            built = build_call(
-                args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
-            )
-            artifact_list = _natural_language_list(
-                ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
-            )
-            print('{bold}{green}Successfully built {}{reset}'.format(artifact_list, **_STYLES))
-    except Exception as e:  # pragma: no cover
-        tb = traceback.format_exc().strip('\n')
-        print('\n{dim}{}{reset}\n'.format(tb, **_STYLES))
-        _error(str(e))
+    with _handle_build_error():
+        built = build_call(
+            args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
+        )
+        artifact_list = _natural_language_list(
+            ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
+        )
+        print('{bold}{green}Successfully built {}{reset}'.format(artifact_list, **_STYLES))
 
 
 def entrypoint() -> None:
