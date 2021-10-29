@@ -16,7 +16,8 @@ from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, T
 
 import build
 
-from build import BuildBackendException, BuildException, ConfigSettingsType, PathType, ProjectBuilder
+from build import BuildBackendException, BuildException, ProjectBuilder
+from build._helpers import ConfigSettingsType, PathType
 from build.env import IsolatedEnvManager
 
 
