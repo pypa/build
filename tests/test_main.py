@@ -301,27 +301,23 @@ def main_reload_styles():
 
 
 @pytest.mark.parametrize(
-    ('color', 'stdout_error', 'stdout_body'),
+    ('color', 'stdout_content', 'stderr_content'),
     [
         (
             False,
-            'ERROR ',
             [
                 '* Creating isolated environment (venv)...',
                 '* Installing build dependencies... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
-                '',
-                'Traceback (most recent call last):',
             ],
+            'ERROR ',
         ),
         (
             True,
-            '\33[91mERROR\33[0m ',
             [
                 '\33[1m* Creating isolated environment (venv)...\33[0m',
                 '\33[1m* Installing build dependencies... ' '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
-                '',
-                '\33[2mTraceback (most recent call last):',
             ],
+            '\33[91mERROR\33[0m ',
         ),
     ],
     ids=['no-color', 'color'],
@@ -334,8 +330,8 @@ def test_output_env_subprocess_error(
     tmp_dir,
     capsys,
     color,
-    stdout_body,
-    stdout_error,
+    stdout_content,
+    stderr_content,
 ):
     try:
         # do not inject hook to have clear output on capsys
@@ -353,11 +349,8 @@ def test_output_env_subprocess_error(
     stdout, stderr = capsys.readouterr()
     stdout, stderr = stdout.splitlines(), stderr.splitlines()
 
-    assert stdout[:6] == stdout_body
-    assert stdout[-1].startswith(stdout_error)
-
-    assert len(stderr) == 1
-    assert stderr[0].startswith('ERROR: Invalid requirement: ')
+    assert stdout == stdout_content
+    assert stderr[-1].startswith(stderr_content)
 
 
 @pytest.mark.parametrize(
