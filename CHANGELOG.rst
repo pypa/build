@@ -8,10 +8,21 @@ Unreleased
 
 - Accept ``os.PathLike[str]`` in addition to ``str`` for paths in public
   API (`PR #392`_, Fixes `#372`_)
-
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
 
+Breaking changes
+----------------
+
+- The isolated environment interface has been redesigned for ``IsolatedEnv``\s
+  to subsume virtual environment creation (`PR #361`_)
+
+  - The runner callback's signature has changed
+  - ``IsolatedEnvBuilder`` was renamed to ``IsolatedEnvManager``
+  - The ``ProjectBuiler.from_isolated_env`` constructor was added to
+    initialise a builder from an isolated environment
+
+.. _PR #361: https://github.com/pypa/build/pull/361
 .. _PR #365: https://github.com/pypa/build/pull/365
 .. _PR #392: https://github.com/pypa/build/pull/392
 .. _#364: https://github.com/pypa/build/issues/364
