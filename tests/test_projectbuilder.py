@@ -151,7 +151,7 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     mocker.patch('pep517.wrappers.Pep517HookCaller')
 
     # correct flit pyproject.toml
-    builder = build.ProjectBuilder(package_test_flit)
+    build.ProjectBuilder(package_test_flit)
     pep517.wrappers.Pep517HookCaller.assert_called_with(
         package_test_flit,
         'flit_core.buildapi',
@@ -162,7 +162,7 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # custom python
-    builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
+    build.ProjectBuilder(package_test_flit, python_executable='some-python')
     pep517.wrappers.Pep517HookCaller.assert_called_with(
         package_test_flit,
         'flit_core.buildapi',
@@ -173,7 +173,7 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
     # FileNotFoundError
-    builder = build.ProjectBuilder(package_legacy)
+    build.ProjectBuilder(package_legacy)
     pep517.wrappers.Pep517HookCaller.assert_called_with(
         package_legacy,
         'setuptools.build_meta:__legacy__',
