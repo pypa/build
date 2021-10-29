@@ -8,7 +8,10 @@ ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
 
 if TYPE_CHECKING:
-    from typing_extensions import Protocol
+    from typing_extensions import Literal, Protocol
+
+    Distribution = Literal['sdist', 'wheel']
+    WheelDistribution = Literal['wheel']
 
     class RunnerType(Protocol):
         def __call__(
