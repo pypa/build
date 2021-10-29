@@ -29,7 +29,7 @@ except ModuleNotFoundError:
     virtualenv = None
 
 
-_logger = logging.getLogger('build.env')
+_logger = logging.getLogger(__name__)
 
 
 class IsolatedEnv(metaclass=abc.ABCMeta):
