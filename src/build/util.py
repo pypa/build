@@ -6,7 +6,8 @@ import tempfile
 
 import pep517
 
-from . import PathType, ProjectBuilder
+from . import ProjectBuilder
+from ._helpers import PathType
 from .env import IsolatedEnvManager
 
 
