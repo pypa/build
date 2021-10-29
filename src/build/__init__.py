@@ -73,7 +73,7 @@ _DEFAULT_BACKEND = {
 }
 
 
-_logger = logging.getLogger('build')
+_logger = logging.getLogger(__name__)
 
 
 class BuildException(Exception):
