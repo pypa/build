@@ -18,7 +18,7 @@ from typing import Dict, Iterable, List, Tuple
 from . import check_dependency
 
 
-_logger = logging.getLogger('build.env')
+_logger = logging.getLogger(__name__)
 
 _cache = functools.partial(functools.lru_cache, maxsize=None)
 
