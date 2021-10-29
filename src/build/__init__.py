@@ -17,7 +17,7 @@ import types
 import warnings
 import zipfile
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Mapping, MutableMapping, Optional, Set, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, Mapping, Optional, Set, Tuple, Type, Union
 
 import pep517.wrappers
 
@@ -28,18 +28,12 @@ from ._helpers import ConfigSettingsType, PathType, check_dependency
 if TYPE_CHECKING:
     from ._helpers import Distribution, RunnerType, WheelDistribution
 
-
-TOMLDecodeError: Type[Exception]
-toml_loads: Callable[[str], MutableMapping[str, Any]]
-
-
 try:
     from tomli import TOMLDecodeError
     from tomli import loads as toml_loads
 except ModuleNotFoundError:  # pragma: no cover
     from toml import TomlDecodeError as TOMLDecodeError  # type: ignore
     from toml import loads as toml_loads  # type: ignore
-
 
 _ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
 
