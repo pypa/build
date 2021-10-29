@@ -128,15 +128,6 @@ def _working_directory(path: str) -> Iterator[None]:
         os.chdir(current)
 
 
-def _validate_source_directory(srcdir: PathType) -> None:
-    if not os.path.isdir(srcdir):
-        raise BuildException(f'Source {srcdir} is not a directory')
-    pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
-    setup_py = os.path.join(srcdir, 'setup.py')
-    if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
-        raise BuildException(f'Source {srcdir} does not appear to be a Python project: no pyproject.toml or setup.py')
-
-
 def check_dependency(
     req_string: str, ancestral_req_strings: Tuple[str, ...] = (), parent_extras: AbstractSet[str] = frozenset()
 ) -> Iterator[Tuple[str, ...]]:
@@ -178,6 +169,32 @@ def check_dependency(
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
                 yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras)
+
+
+def _parse_source_dir(source_dir: PathType) -> str:
+    source_dir = os.path.abspath(source_dir)
+    if not os.path.isdir(source_dir):
+        raise BuildException(f'Source {source_dir} is not a directory')
+
+    pyproject_toml = os.path.join(source_dir, 'pyproject.toml')
+    setup_py = os.path.join(source_dir, 'setup.py')
+    if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
+        raise BuildException(f'Source {source_dir} does not appear to be a Python project: no pyproject.toml or setup.py')
+
+    return source_dir
+
+
+def _load_pyproject_toml(source_dir: PathType) -> Mapping[str, Any]:
+    pyproject_toml = os.path.join(source_dir, 'pyproject.toml')
+    try:
+        with open(pyproject_toml, 'rb') as f:
+            return toml_loads(f.read().decode())
+    except FileNotFoundError:
+        return {}
+    except PermissionError as e:
+        raise BuildException(f"{e.strerror}: '{e.filename}'")
+    except TOMLDecodeError as e:
+        raise BuildException(f'Failed to parse {pyproject_toml}: {e}')
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
@@ -257,23 +274,9 @@ class ProjectBuilder:
         The default runner simply calls the backend hooks in a subprocess, writing backend output
         to stdout/stderr.
         """
-        self.srcdir: str = os.path.abspath(srcdir)
-        _validate_source_directory(srcdir)
-
-        spec_file = os.path.join(srcdir, 'pyproject.toml')
-
-        try:
-            with open(spec_file, 'rb') as f:
-                spec = toml_loads(f.read().decode())
-        except FileNotFoundError:
-            spec = {}
-        except PermissionError as e:
-            raise BuildException(f"{e.strerror}: '{e.filename}' ")
-        except TOMLDecodeError as e:
-            raise BuildException(f'Failed to parse {spec_file}: {e} ')
-
-        self._build_system = _parse_build_system_table(spec)
+        self.srcdir = _parse_source_dir(srcdir)
         self._python_executable = python_executable
+        self._build_system = _parse_build_system_table(_load_pyproject_toml(self.srcdir))
         self._requires = set(self._build_system['requires'])
         self._backend = self._build_system['build-backend']
         self._hook = pep517.wrappers.Pep517HookCaller(
