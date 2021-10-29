@@ -12,6 +12,8 @@ import pep517.wrappers
 import pytest
 
 import build
+import build._helpers
+import build.env
 
 
 if sys.version_info >= (3, 8):  # pragma: no cover
@@ -188,6 +190,32 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     # TomlDecodeError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(package_test_bad_syntax)
+
+
+@pytest.mark.isolated
+def test_init_from_isolated_env(mocker, package_test_flit):
+    mocker.patch('build.ProjectBuilder.__init__')
+    build.ProjectBuilder.__init__.return_value = None
+
+    # default subprocess runner
+    with build.env.IsolatedEnvManager() as env:
+        build.ProjectBuilder.from_isolated_env(env, package_test_flit)
+        build.ProjectBuilder.__init__.assert_called_with(
+            package_test_flit,
+            python_executable=env.python_executable,
+            runner=(build.default_runner, env.prepare_environ()),
+        )
+    build.ProjectBuilder.__init__.reset_mock()
+
+    # custom subprocess runner
+    with build.env.IsolatedEnvManager() as env:
+        build.ProjectBuilder.from_isolated_env(env, package_test_flit, build._helpers.quiet_runner)
+        build.ProjectBuilder.__init__.assert_called_with(
+            package_test_flit,
+            python_executable=env.python_executable,
+            runner=(build._helpers.quiet_runner, env.prepare_environ()),
+        )
+    build.ProjectBuilder.__init__.reset_mock()
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
