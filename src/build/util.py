@@ -18,8 +18,8 @@ else:
 def _project_wheel_metadata(builder: ProjectBuilder) -> 'importlib_metadata.PackageMetadata':
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        # https://github.com/python/importlib_metadata/pull/343
-        return importlib_metadata.PathDistribution(path).metadata  # type: ignore
+        # https://github.com/python/importlib_metadata/pull/342
+        return importlib_metadata.PathDistribution(path).metadata  # type: ignore[arg-type]
 
 
 def project_wheel_metadata(
