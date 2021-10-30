@@ -3,7 +3,6 @@ Creates and manages isolated build environments.
 """
 
 import abc
-import functools
 import logging
 import os
 import platform
@@ -14,12 +13,10 @@ import tempfile
 
 from typing import Dict, Iterable, Sequence, Tuple
 
-from ._helpers import check_dependency, default_runner
+from ._helpers import cache, check_dependency, default_runner
 
 
 _logger = logging.getLogger(__name__)
-
-_cache = functools.partial(functools.lru_cache, maxsize=None)
 
 
 class IsolatedEnv(metaclass=abc.ABCMeta):
@@ -47,7 +44,7 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-@_cache()
+@cache
 def _fs_supports_symlinks() -> bool:
     """Check if symlinks are supported."""
     # Using definition used by venv.main()
@@ -115,7 +112,7 @@ def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
     return executable, script_dir
 
 
-@_cache()
+@cache
 def _should_use_virtualenv() -> bool:
     import packaging.requirements
 
@@ -127,7 +124,7 @@ def _should_use_virtualenv() -> bool:
     )
 
 
-@_cache()
+@cache
 def _get_min_pip_version() -> str:
     if platform.system() == 'Darwin':
         release, _, machine = platform.mac_ver()

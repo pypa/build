@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-from typing import TYPE_CHECKING, AbstractSet, Iterator, Mapping, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, AbstractSet, Callable, Iterator, Mapping, Optional, Sequence, Tuple, TypeVar, Union
 
 
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
@@ -106,3 +106,12 @@ def check_dependency(
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
                 yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras)
+
+
+if sys.version_info >= (3, 9):
+    cache = functools.cache
+else:
+    _C = TypeVar('_C', bound=Callable[..., object])
+
+    def cache(fn: _C) -> _C:
+        return functools.lru_cache(maxsize=None)(fn)  # type: ignore
