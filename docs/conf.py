@@ -66,7 +66,7 @@ html_title = f'build {version}'
 # html_static_path = ['_static']
 
 autoclass_content = 'both'
-
+autodoc_member_order = 'bysource'
 autodoc_preserve_defaults = True
 
 set_type_checking_flag = True
