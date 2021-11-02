@@ -137,6 +137,27 @@ def _should_use_virtualenv() -> bool:
     )
 
 
+@_cache()
+def _get_min_pip_version() -> str:
+    if platform.system() == 'Darwin':
+        release, _, machine = platform.mac_ver()
+
+        # Apple Silicon support for wheels shipped with packaging 20.9,
+        # vendored in pip 21.0.1.
+        if machine == 'arm64':
+            return '21.0.1'
+
+        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can
+        # be told to report 10.16 for backwards compatibility;
+        # but that also fixes earlier versions of pip so this is only needed for 11+.
+        major_version = int(release[: release.find('.')])
+        if major_version >= 11:
+            return '20.3'
+
+    # PEP 517 and manylinux1 were first implemented in 19.1
+    return '19.1'
+
+
 class _DefaultIsolatedEnv(IsolatedEnv):
     """An isolated environment which combines venv or virtualenv with pip."""
 
@@ -169,28 +190,18 @@ class _DefaultIsolatedEnv(IsolatedEnv):
         import packaging.version
 
         if sys.version_info >= (3, 8):
-            from importlib import metadata
+            from importlib.metadata import distributions
         else:
-            import importlib_metadata as metadata
+            from importlib_metadata import distributions
 
-        # Get the version of pip in the environment
-        pip_distribution = next(iter(metadata.distributions(name='pip', path=[version])))  # type: ignore[no-untyped-call]
-        current_pip_version = packaging.version.Version(pip_distribution.version)
+        cur_pip_version = next(
+            d.version for d in distributions(name='pip', path=[venv_purelib])  # type: ignore[no-untyped-call]
+        )
+        min_pip_version = _get_min_pip_version()
+        if packaging.version.Version(cur_pip_version) < packaging.version.Version(min_pip_version):
+            _subprocess([self.python_executable, '-m', 'pip', 'install', f'pip>={min_pip_version}'])
 
-        if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
-            # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
-            # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
-            is_apple_silicon_python = platform.machine() != 'x86_64'
-            minimum_pip_version = '21.0.1' if is_apple_silicon_python else '20.3.0'
-        else:
-            # PEP-517 and manylinux1 was first implemented in 19.1
-            minimum_pip_version = '19.1.0'
-
-        if current_pip_version < packaging.version.Version(minimum_pip_version):
-            _subprocess([self.python_executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
-
-        # Avoid the setuptools from ensurepip to break the isolation
-        _subprocess([self.python_executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+        _subprocess([self.python_executable, '-m', 'pip', 'uninstall', '-y', 'setuptools'])
 
     def install_packages(self, requirements: Iterable[str]) -> None:
         """
