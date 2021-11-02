@@ -18,11 +18,6 @@ from typing import Callable, Collection, List, Optional, Tuple, Type
 import build
 
 
-if sys.version_info < (3, 8):
-    import importlib_metadata as metadata
-else:
-    from importlib import metadata
-
 try:
     import virtualenv
 except ModuleNotFoundError:
@@ -259,6 +254,11 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     import venv
 
     import packaging.version
+
+    if sys.version_info < (3, 8):
+        import importlib_metadata as metadata
+    else:
+        from importlib import metadata
 
     symlinks = _fs_supports_symlink()
     try:
