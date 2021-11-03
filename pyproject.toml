@@ -12,6 +12,7 @@ source = [
 exclude_lines = [
   '\#\s*pragma: no cover',
   '^\s*raise NotImplementedError\b',
+  "if TYPE_CHECKING:",
 ]
 
 [tool.coverage.paths]
