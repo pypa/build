@@ -1,11 +1,56 @@
 [build-system]
-requires = ['setuptools >= 40.8.0', 'wheel']
-build-backend = 'setuptools.build_meta'
+requires = ["setuptools >= 40.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.coverage.run]
+source = [
+  "build",
+  "tests",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  '\#\s*pragma: no cover',
+  '^\s*raise NotImplementedError\b',
+]
+
+[tool.coverage.paths]
+build = [
+  "src",
+  "*/site-packages",
+  '*\site-packages',
+]
+
+[tool.coverage.html]
+show_contexts = true
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+xfail_strict = true
+junit_family = "xunit2"
+norecursedirs = "tests/integration/*"
+markers = [
+  "isolated",
+]
+filterwarnings = [
+  "error",
+]
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+  "colorama",   # Optional dependency
+  "pep517.*",   # Untyped
+  "virtualenv", # Optional dependency
+]
+ignore_missing_imports = true
 
 [tool.black]
 line-length = 127
 skip-string-normalization = true
-target-version = ['py39', 'py38', 'py37', 'py36']
+target-version = ["py39", "py38", "py37", "py36"]
 
 [tool.isort]
 profile = "black"
