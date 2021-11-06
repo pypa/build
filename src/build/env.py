@@ -11,7 +11,7 @@ import sys
 import sysconfig
 import tempfile
 
-from typing import Dict, Iterable, Sequence, Tuple
+from typing import Dict, Iterable, Optional, Sequence, Tuple
 
 from ._helpers import cache, check_dependency, default_runner
 
@@ -32,7 +32,7 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def prepare_environ(self) -> Dict[str, str]:
+    def prepare_environ(self) -> Optional[Dict[str, str]]:
         """
         Modify environment variables.
         """
