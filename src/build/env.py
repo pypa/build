@@ -8,14 +8,13 @@ import logging
 import os
 import platform
 import shutil
-import subprocess
 import sys
 import sysconfig
 import tempfile
 
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, Sequence, Tuple
 
-from . import check_dependency
+from ._helpers import check_dependency, default_runner
 
 
 _logger = logging.getLogger(__name__)
@@ -46,15 +45,6 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
     def python_executable(self) -> str:
         """The isolated environment's Python executable."""
         raise NotImplementedError
-
-
-def _subprocess(cmd: List[str]) -> None:
-    """Invoke subprocess and output stdout and stderr if it fails."""
-    try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        print(e.output.decode(), end='', file=sys.stderr)
-        raise e
 
 
 @_cache()
@@ -165,6 +155,9 @@ class _DefaultIsolatedEnv(IsolatedEnv):
         self._log = isolated_env_manager.log
         self._env_created = False
 
+    def _run(self, cmd: Sequence[str]) -> None:
+        return default_runner(cmd, env=self.prepare_environ())
+
     def create(self, path: str) -> None:
         if self._env_created:
             return
@@ -193,9 +186,9 @@ class _DefaultIsolatedEnv(IsolatedEnv):
         )
         min_pip_version = _get_min_pip_version()
         if packaging.version.Version(cur_pip_version) < packaging.version.Version(min_pip_version):
-            _subprocess([self.python_executable, '-m', 'pip', 'install', f'pip>={min_pip_version}'])
+            self._run([self.python_executable, '-m', 'pip', 'install', f'pip>={min_pip_version}'])
 
-        _subprocess([self.python_executable, '-m', 'pip', 'uninstall', '-y', 'setuptools'])
+        self._run([self.python_executable, '-m', 'pip', 'uninstall', '-y', 'setuptools'])
 
     def install_packages(self, requirements: Iterable[str]) -> None:
         """
@@ -221,7 +214,7 @@ class _DefaultIsolatedEnv(IsolatedEnv):
 
         try:
             self._log(f'Installing build dependencies... ({", ".join(req_list)})')
-            _subprocess(
+            self._run(
                 [
                     self.python_executable,
                     '-m',

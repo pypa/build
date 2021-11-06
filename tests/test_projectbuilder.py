@@ -154,8 +154,8 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
         package_test_flit,
         'flit_core.buildapi',
         backend_path=None,
+        runner=build.ProjectBuilder._default_rewrapped_runner,
         python_executable=sys.executable,
-        runner=pep517.wrappers.default_subprocess_runner,
     )
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
@@ -165,8 +165,8 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
         package_test_flit,
         'flit_core.buildapi',
         backend_path=None,
+        runner=build.ProjectBuilder._default_rewrapped_runner,
         python_executable='some-python',
-        runner=pep517.wrappers.default_subprocess_runner,
     )
     pep517.wrappers.Pep517HookCaller.reset_mock()
 
@@ -176,8 +176,8 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
         package_legacy,
         'setuptools.build_meta:__legacy__',
         backend_path=None,
+        runner=build.ProjectBuilder._default_rewrapped_runner,
         python_executable=sys.executable,
-        runner=pep517.wrappers.default_subprocess_runner,
     )
 
     # PermissionError

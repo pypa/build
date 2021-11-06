@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, Mapping, Optional, Set, T
 import pep517.wrappers
 
 from . import env
-from ._helpers import ConfigSettingsType, PathType, check_dependency
+from ._helpers import ConfigSettingsType, PathType, check_dependency, default_runner, rewrap_runner_for_pep517_lib
 
 
 if TYPE_CHECKING:
@@ -185,11 +185,13 @@ class ProjectBuilder:
     The PEP 517 consumer API.
     """
 
+    _default_rewrapped_runner = staticmethod(rewrap_runner_for_pep517_lib(default_runner))
+
     def __init__(
         self,
         srcdir: PathType,
         python_executable: str = sys.executable,
-        runner: 'RunnerType' = pep517.wrappers.default_subprocess_runner,
+        runner: Optional[Union['RunnerType', Tuple['RunnerType', Optional[Mapping[str, str]]]]] = None,
     ) -> None:
         """
         :param srcdir: The project source directory
@@ -206,27 +208,29 @@ class ProjectBuilder:
             self.srcdir,
             self._backend,
             backend_path=self._build_system.get('backend-path'),
-            runner=runner,
+            runner=self._default_rewrapped_runner if runner is None else rewrap_runner_for_pep517_lib(runner),
             python_executable=self._python_executable,
         )
 
     @classmethod
-    def from_isolated_env(cls, isolated_env: 'env.IsolatedEnv', srcdir: PathType) -> 'ProjectBuilder':
+    def from_isolated_env(
+        cls,
+        isolated_env: 'env.IsolatedEnv',
+        srcdir: PathType,
+        runner: Optional['RunnerType'] = None,
+    ) -> 'ProjectBuilder':
         """
         Instantiate the builder from an isolated environment.
 
         :param isolated_env: The isolated environment instance
         :param srcdir: The project source directory
+        :param runner: Callback for executing PEP 517 hooks in a subprocess
         """
-
-        def runner(cmd: Sequence[str], cwd: Optional[str] = None, extra_environ: Optional[Mapping[str, str]] = None) -> None:
-            env = dict(isolated_env.prepare_environ())
-            if extra_environ:
-                env.update(extra_environ)
-
-            subprocess.check_call(cmd, cwd=cwd, env=env)
-
-        return cls(srcdir, python_executable=isolated_env.python_executable, runner=runner)
+        return cls(
+            srcdir,
+            python_executable=isolated_env.python_executable,
+            runner=(default_runner if runner is None else runner, isolated_env.prepare_environ()),
+        )
 
     @property
     def srcdir(self) -> str:
