@@ -315,7 +315,7 @@ def main_reload_styles():
             True,
             [
                 '\33[1m* Creating isolated environment (venv)...\33[0m',
-                '\33[1m* Installing build dependencies... ' '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
+                '\33[1m* Installing build dependencies... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
             ],
             '\33[91mERROR\33[0m ',
         ),
