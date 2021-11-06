@@ -29,13 +29,12 @@ def project_wheel_metadata(
     """
     Return the wheel metadata for a project.
 
-    Uses the ``prepare_metadata_for_build_wheel`` hook if availablable,
+    Uses the ``prepare_metadata_for_build_wheel`` hook if available,
     otherwise ``build_wheel``.
 
     :param srcdir: Project source directory
-    :param isolated: Wether or not to run invoke the backend in the current
-                     environment or to create an isolated one and invoke it
-                     there.
+    :param isolated: Whether to invoke the backend in the current environment
+        or create an isolated environment and invoke it there
     """
     if not isolated:
         builder = ProjectBuilder(srcdir, runner=quiet_runner)
