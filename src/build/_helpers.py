@@ -1,4 +1,6 @@
+import functools
 import os
+import subprocess
 import sys
 
 from typing import TYPE_CHECKING, AbstractSet, Iterator, Mapping, Optional, Sequence, Tuple, Union
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
 
     class RunnerType(Protocol):
         def __call__(
-            self, cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None
+            self, cmd: Sequence[str], cwd: Optional[PathType] = None, env: Optional[Mapping[str, str]] = None
         ) -> None:
             """
             Run a command in a Python subprocess.
@@ -24,8 +26,42 @@ if TYPE_CHECKING:
 
             :param cmd: The command to execute
             :param cwd: The working directory
-            :param extra_environ: Variables to be exported to the environment
+            :param env: Variables to be exported to the environment
             """
+
+    class _Pep517CallbackType(Protocol):
+        def __call__(
+            self, cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None
+        ) -> None:
+            ...
+
+
+def default_runner(cmd: Sequence[str], cwd: Optional[PathType] = None, env: Optional[Mapping[str, str]] = None) -> None:
+    subprocess.run(cmd, check=True, cwd=cwd, env=env)
+
+
+def quiet_runner(cmd: Sequence[str], cwd: Optional[PathType] = None, env: Optional[Mapping[str, str]] = None) -> None:
+    subprocess.run(cmd, check=True, cwd=cwd, env=env, stdout=subprocess.DEVNULL)
+
+
+def rewrap_runner_for_pep517_lib(
+    values: Union['RunnerType', Tuple['RunnerType', Optional[Mapping[str, str]]]]
+) -> '_Pep517CallbackType':
+    if isinstance(values, tuple):
+        runner, env = values
+    else:
+        runner = values
+        env = None
+
+    @functools.wraps(runner)
+    def inner(cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None) -> None:
+        local_env = os.environ.copy() if env is None else dict(env)
+        if extra_environ:
+            local_env.update(extra_environ)
+
+        runner(cmd, cwd=cwd, env=local_env)
+
+    return inner
 
 
 def check_dependency(

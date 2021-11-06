@@ -4,10 +4,8 @@ import pathlib
 import sys
 import tempfile
 
-import pep517
-
 from . import ProjectBuilder
-from ._helpers import PathType
+from ._helpers import PathType, quiet_runner
 from .env import IsolatedEnvManager
 
 
@@ -40,7 +38,7 @@ def project_wheel_metadata(
                      there.
     """
     if not isolated:
-        builder = ProjectBuilder(srcdir, runner=pep517.quiet_subprocess_runner)
+        builder = ProjectBuilder(srcdir, runner=quiet_runner)
         return _project_wheel_metadata(builder)
 
     with IsolatedEnvManager() as env:
