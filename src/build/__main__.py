@@ -18,7 +18,7 @@ import build
 
 from build import BuildBackendException, BuildException, ProjectBuilder
 from build._helpers import ConfigSettingsType, PathType
-from build.env import IsolatedEnvManager
+from build.env import IsolatedEnvManager, _DefaultIsolatedEnv
 
 
 if TYPE_CHECKING:
@@ -89,7 +89,7 @@ class _ProjectBuilder(ProjectBuilder):
         print('{bold}* {}{reset}'.format(message, **_STYLES))
 
 
-class _IsolatedEnvManager(IsolatedEnvManager):
+class _IsolatedEnv(_DefaultIsolatedEnv):
     @staticmethod
     def log(message: str) -> None:
         print('{bold}* {}{reset}'.format(message, **_STYLES))
@@ -102,7 +102,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 def _build_in_isolated_env(
     srcdir: PathType, outdir: PathType, distribution: 'Distribution', config_settings: Optional[ConfigSettingsType]
 ) -> str:
-    with _IsolatedEnvManager() as env:
+    with IsolatedEnvManager(_IsolatedEnv()) as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
         # first install the build dependencies
         env.install_packages(builder.build_system_requires)
