@@ -10,6 +10,8 @@ Unreleased
   API (`PR #392`_, Fixes `#372`_)
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
+- Fixed issue with Python env vars from the enclosing environment leaking
+  into the isolated environment (`PR #406`_, Fixes `#405`_)
 
 Breaking changes
 ----------------
@@ -25,8 +27,10 @@ Breaking changes
 .. _PR #361: https://github.com/pypa/build/pull/361
 .. _PR #365: https://github.com/pypa/build/pull/365
 .. _PR #392: https://github.com/pypa/build/pull/392
+.. _PR #406: https://github.com/pypa/build/pull/392
 .. _#364: https://github.com/pypa/build/issues/364
 .. _#372: https://github.com/pypa/build/issues/372
+.. _#405: https://github.com/pypa/build/issues/405
 
 
 0.7.0 (16-09-2021)
