@@ -11,12 +11,14 @@ import sys
 import sysconfig
 import tempfile
 
-from typing import Dict, Iterable, Optional, Sequence, Tuple
+from typing import Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
 
 from ._helpers import cache, check_dependency, default_runner
 
 
 _logger = logging.getLogger(__name__)
+
+IsolatedEnvType = TypeVar('IsolatedEnvType', bound='IsolatedEnv')  #: :class:`IsolatedEnv` type alias.
 
 
 class IsolatedEnv(metaclass=abc.ABCMeta):
@@ -148,8 +150,7 @@ def _get_min_pip_version() -> str:
 class _DefaultIsolatedEnv(IsolatedEnv):
     """An isolated environment which combines venv or virtualenv with pip."""
 
-    def __init__(self, isolated_env_manager: 'IsolatedEnvManager') -> None:
-        self._log = isolated_env_manager.log
+    def __init__(self) -> None:
         self._env_created = False
 
     def _run(self, cmd: Sequence[str]) -> None:
@@ -160,10 +161,10 @@ class _DefaultIsolatedEnv(IsolatedEnv):
             return
 
         if _should_use_virtualenv():
-            self._log('Creating isolated environment (virtualenv)...')
+            self.log('Creating isolated environment (virtualenv)...')
             self._python_executable, self._scripts_dir = _create_isolated_env_virtualenv(path)
         else:
-            self._log('Creating isolated environment (venv)...')
+            self.log('Creating isolated environment (venv)...')
             # Call ``realpath`` to prevent spurious warning from being emitted
             # that the venv location has changed on Windows. The username is
             # DOS-encoded in the output of tempfile - the location is the same
@@ -216,7 +217,7 @@ class _DefaultIsolatedEnv(IsolatedEnv):
             req_file.write(os.linesep.join(req_list))
 
         try:
-            self._log(f'Installing build dependencies... ({", ".join(req_list)})')
+            self.log(f'Installing build dependencies... ({", ".join(req_list)})')
             self._run(
                 [
                     self.python_executable,
@@ -246,11 +247,32 @@ class _DefaultIsolatedEnv(IsolatedEnv):
     def python_executable(self) -> str:
         return self._python_executable
 
+    @staticmethod
+    def log(message: str) -> None:
+        if sys.version_info >= (3, 8):
+            _logger.log(logging.INFO, message, stacklevel=2)
+        else:
+            _logger.log(logging.INFO, message)
 
-class IsolatedEnvManager:
+
+class IsolatedEnvManager(Generic[IsolatedEnvType]):
     """Create and dispose of isolated build environments."""
 
-    def __enter__(self) -> _DefaultIsolatedEnv:
+    @overload
+    def __init__(self: 'IsolatedEnvManager[_DefaultIsolatedEnv]', isolated_env: None = None) -> None:
+        ...
+
+    @overload
+    def __init__(self, isolated_env: IsolatedEnvType) -> None:
+        ...
+
+    def __init__(self, isolated_env: Optional[IsolatedEnvType] = None) -> None:
+        """
+        :param isolated_env: The isolated environment
+        """
+        self._isolated_env = isolated_env
+
+    def __enter__(self) -> IsolatedEnvType:
         """
         Create an isolated build environment.
 
@@ -258,7 +280,7 @@ class IsolatedEnvManager:
         """
         self._path = tempfile.mkdtemp(prefix='build-env-')
         try:
-            isolated_env = _DefaultIsolatedEnv(self)
+            isolated_env = cast(IsolatedEnvType, _DefaultIsolatedEnv()) if self._isolated_env is None else self._isolated_env
             isolated_env.create(self._path)
             return isolated_env
         except Exception:  # Delete folder if creation fails
@@ -269,23 +291,9 @@ class IsolatedEnvManager:
         if os.path.exists(self._path):
             shutil.rmtree(self._path)
 
-    @staticmethod
-    def log(message: str) -> None:
-        """
-        Log a message.
-
-        The default implementation uses the logging module but this function can be
-        overridden by users to have a different implementation.
-
-        :param message: Message to log
-        """
-        if sys.version_info >= (3, 8):
-            _logger.log(logging.INFO, message, stacklevel=2)
-        else:
-            _logger.log(logging.INFO, message)
-
 
 __all__ = [
-    'IsolatedEnvManager',
     'IsolatedEnv',
+    'IsolatedEnvType',
+    'IsolatedEnvManager',
 ]

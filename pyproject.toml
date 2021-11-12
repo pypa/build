@@ -13,6 +13,7 @@ exclude_lines = [
   '\#\s*pragma: no cover',
   '^\s*raise NotImplementedError\b',
   "if TYPE_CHECKING:",
+  "@overload",
 ]
 
 [tool.coverage.paths]

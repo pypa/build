@@ -101,13 +101,13 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
     caplog.set_level(logging.DEBUG)
 
     builder = build.env.IsolatedEnvManager()
-    builder.log('something')
     with builder as env:
+        env.log('something')
         env.install_packages(['something'])
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
-        ('INFO', 'something'),
         ('INFO', 'Creating isolated environment (venv)...'),
+        ('INFO', 'something'),
         ('INFO', 'Installing build dependencies... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
