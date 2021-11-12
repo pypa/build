@@ -150,6 +150,16 @@ def _get_min_pip_version() -> str:
 class _DefaultIsolatedEnv(IsolatedEnv):
     """An isolated environment which combines venv or virtualenv with pip."""
 
+    _ENVVAR_OVERRIDES = frozenset(
+        {
+            ('PYTHONHOME', None),
+            ('PYTHONPATH', None),
+            ('PYTHONPLATLIBDIR', None),
+            ('PYTHONSTARTUP', None),
+            ('PYTHONNOUSERSITE', '1'),
+        }
+    )
+
     def __init__(self) -> None:
         self._env_created = False
 
@@ -230,6 +240,12 @@ class _DefaultIsolatedEnv(IsolatedEnv):
 
     def prepare_environ(self) -> Dict[str, str]:
         environ = os.environ.copy()
+
+        for name, value in self._ENVVAR_OVERRIDES:
+            if value is None:
+                environ.pop(name, None)
+            else:
+                environ[name] = value
 
         # Make the virtual environment's scripts available to the project's build dependecies.
         path = environ.get('PATH')

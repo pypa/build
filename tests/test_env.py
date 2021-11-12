@@ -152,3 +152,40 @@ def test_venv_symlink(mocker, has_symlink):
     build.env._fs_supports_symlinks.cache_clear()
 
     assert supports_symlinks is has_symlink
+
+
+def test_leaky_env_var_overrides(monkeypatch):
+    envvars = [
+        ('PYTHONHOME', 'a', None),
+        ('PYTHONPATH', 'b', None),
+        ('PYTHONPLATLIBDIR', 'c', None),
+        ('PYTHONSTARTUP', 'd', None),
+        ('PYTHONNOUSERSITE', '0', '1'),
+    ]
+
+    class DummyEnv(build.env._DefaultIsolatedEnv):  # noqa
+        def prepare_environ(self):
+            return os.environ.copy()
+
+    # negative case
+    with build.env.IsolatedEnvManager(DummyEnv()) as env:
+        with monkeypatch.context() as m:
+            for k, o, _ in envvars:
+                m.setenv(k, o)
+
+            environ = env.prepare_environ()
+            for k, o, _ in envvars:
+                assert environ[k] == o
+
+    # positive case
+    with build.env.IsolatedEnvManager() as env:
+        with monkeypatch.context() as m:
+            for k, o, _ in envvars:
+                m.setenv(k, o)
+
+            environ = env.prepare_environ()
+            for k, _, n in envvars:
+                if n is None:
+                    assert k not in environ
+                else:
+                    assert environ[k] == n
