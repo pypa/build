@@ -77,25 +77,6 @@ def test_isolated_env_abstract():
         build.env.IsolatedEnv()
 
 
-def test_isolated_env_has_executable_still_abstract():
-    class Env(build.env.IsolatedEnv):  # noqa
-        @property
-        def executable(self):
-            raise NotImplementedError
-
-    with pytest.raises(TypeError):
-        Env()
-
-
-def test_isolated_env_has_install_still_abstract():
-    class Env(build.env.IsolatedEnv):  # noqa
-        def install(self, requirements):
-            raise NotImplementedError
-
-    with pytest.raises(TypeError):
-        Env()
-
-
 def test_isolated_env_log(mocker, caplog, package_test_flit):
     mocker.patch('build.env._DefaultIsolatedEnv._run')
     caplog.set_level(logging.DEBUG)
