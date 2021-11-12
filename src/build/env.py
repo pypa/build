@@ -11,9 +11,13 @@ import sys
 import sysconfig
 import tempfile
 
-from typing import Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
 
 from ._helpers import cache, check_dependency, default_runner
+
+
+if TYPE_CHECKING:
+    from ._helpers import RunnerType
 
 
 _logger = logging.getLogger(__name__)
@@ -46,25 +50,6 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-@cache
-def _fs_supports_symlinks() -> bool:
-    """Check if symlinks are supported."""
-    # Using definition used by venv.main()
-    if os.name != 'nt':
-        return True
-
-    # Windows may support symlinks (setting in Windows 10)
-    with tempfile.TemporaryDirectory(prefix='build-try-symlink-') as temp_dir:
-        try:
-            os.symlink(
-                os.path.join(temp_dir, 'foo'),
-                os.path.join(temp_dir, 'bar'),
-            )
-            return True
-        except (OSError, NotImplementedError, AttributeError):
-            return False
-
-
 def _get_isolated_env_executable_and_paths(path: str) -> Tuple[str, Dict[str, str]]:
     """
     :param path: venv path on disk
@@ -89,14 +74,16 @@ def _get_isolated_env_executable_and_paths(path: str) -> Tuple[str, Dict[str, st
     return executable, paths
 
 
-def _create_isolated_env_venv(path: str) -> Tuple[str, Dict[str, str]]:
+def _create_isolated_env_venv(path: str, runner: 'RunnerType') -> Tuple[str, Dict[str, str]]:
     """
     :param path: venv path on disk
     :returns: The Python executable and scripts folder
     """
-    import venv
-
-    venv.EnvBuilder(symlinks=_fs_supports_symlinks(), with_pip=True).create(path)
+    env = os.environ.copy()
+    # If pip is on path via `PYTHONPATH` it will not be installed in the isolated env.
+    # ensurepip does not isolate pip from the enclosing environment.
+    env.pop('PYTHONPATH', None)
+    runner([sys.executable, '-m', 'venv', path], env=env)
     return _get_isolated_env_executable_and_paths(path)
 
 
@@ -162,9 +149,10 @@ class _DefaultIsolatedEnv(IsolatedEnv):
 
     def __init__(self) -> None:
         self._env_created = False
+        self._runner = default_runner
 
     def _run(self, cmd: Sequence[str]) -> None:
-        return default_runner(cmd, env=self.prepare_environ())
+        return self._runner(cmd, env=self.prepare_environ())
 
     def create(self, path: str) -> None:
         if self._env_created:
@@ -175,7 +163,7 @@ class _DefaultIsolatedEnv(IsolatedEnv):
             self._python_executable, self._scripts_dir = _create_isolated_env_virtualenv(path)
         else:
             self.log('Creating isolated environment (venv)...')
-            self._python_executable, paths = _create_isolated_env_venv(path)
+            self._python_executable, paths = _create_isolated_env_venv(path, self._runner)
             self._scripts_dir = paths['scripts']
             self._patch_up_venv(paths['purelib'])
 

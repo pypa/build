@@ -136,24 +136,6 @@ def test_pip_needs_upgrade_mac_os_11(mocker, arch, pip_version):
             assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', '-y', 'setuptools']
 
 
-@pytest.mark.isolated
-@pytest.mark.skipif(IS_PYPY3 and os.name == 'nt', reason='Isolated tests not supported on PyPy3 + Windows')
-@pytest.mark.parametrize('has_symlink', [True, False] if os.name == 'nt' else [True])
-def test_venv_symlink(mocker, has_symlink):
-    if has_symlink:
-        mocker.patch('os.symlink')
-        mocker.patch('os.unlink')
-    else:
-        mocker.patch('os.symlink', side_effect=OSError())
-
-    # Cache must be cleared to rerun
-    build.env._fs_supports_symlinks.cache_clear()
-    supports_symlinks = build.env._fs_supports_symlinks()
-    build.env._fs_supports_symlinks.cache_clear()
-
-    assert supports_symlinks is has_symlink
-
-
 def test_leaky_env_var_overrides(monkeypatch):
     envvars = [
         ('PYTHONHOME', 'a', None),
@@ -189,3 +171,10 @@ def test_leaky_env_var_overrides(monkeypatch):
                     assert k not in environ
                 else:
                     assert environ[k] == n
+
+
+def test_create_env_with_pip_on_pythonpath(monkeypatch):
+    pip = pytest.importorskip('pip')
+    monkeypatch.setenv('PYTHONPATH', os.path.dirname(os.path.dirname(pip.__file__)))
+    with build.env.IsolatedEnvManager():
+        pass
