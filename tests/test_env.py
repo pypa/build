@@ -92,7 +92,11 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Installing build dependencies... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [105, 107, 198]
+        assert [record.lineno for record in caplog.records] == [
+            build.env._DefaultIsolatedEnv.create.__code__.co_firstlineno + 8,
+            test_isolated_env_log.__code__.co_firstlineno + 6,
+            build.env._DefaultIsolatedEnv.install_packages.__code__.co_firstlineno + 23,
+        ]
 
 
 @pytest.mark.isolated
