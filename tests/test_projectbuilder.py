@@ -597,7 +597,7 @@ def test_log(mocker, caplog, package_test_flit):
         ('INFO', 'something'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert caplog.records[-1].lineno == 562
+        assert caplog.records[-1].lineno == test_log.__code__.co_firstlineno + 11
 
 
 @pytest.mark.parametrize(
