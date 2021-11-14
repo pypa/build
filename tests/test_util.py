@@ -2,6 +2,7 @@
 
 import pytest
 
+import build
 import build.util
 
 
@@ -9,8 +10,8 @@ import build.util
 def test_wheel_metadata(package_test_setuptools, isolated):
     metadata = build.util.project_wheel_metadata(package_test_setuptools, isolated)
 
-    assert metadata['name'] == 'test-setuptools'
-    assert metadata['version'] == '1.0.0'
+    assert metadata.metadata['name'] == 'test-setuptools'
+    assert metadata.metadata['version'] == '1.0.0'
 
 
 def test_wheel_metadata_isolation(package_test_flit):
@@ -23,8 +24,8 @@ def test_wheel_metadata_isolation(package_test_flit):
 
     metadata = build.util.project_wheel_metadata(package_test_flit)
 
-    assert metadata['name'] == 'test_flit'
-    assert metadata['version'] == '1.0.0'
+    assert metadata.metadata['name'] == 'test_flit'
+    assert metadata.metadata['version'] == '1.0.0'
 
     with pytest.raises(
         build.BuildBackendException,
@@ -36,6 +37,7 @@ def test_wheel_metadata_isolation(package_test_flit):
 def test_with_get_requires(package_test_metadata):
     metadata = build.util.project_wheel_metadata(package_test_metadata)
 
-    assert metadata['name'] == 'test-metadata'
-    assert str(metadata['version']) == '1.0.0'
-    assert metadata['summary'] == 'hello!'
+    assert metadata.metadata['name'] == 'test-metadata'
+    assert metadata.metadata['version'] == '1.0.0'
+    assert metadata.version == '1.0.0'
+    assert metadata.metadata['summary'] == 'hello!'

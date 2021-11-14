@@ -22,9 +22,13 @@ Breaking changes
   - The ``ProjectBuiler.from_isolated_env`` constructor was added to
     initialise a builder from an isolated environment
 
+- ``project_wheel_metadata`` now returns an ``importlib.metadata.Distribution``
+  object (`PR #XXX`_)
+
 .. _PR #361: https://github.com/pypa/build/pull/361
 .. _PR #365: https://github.com/pypa/build/pull/365
 .. _PR #392: https://github.com/pypa/build/pull/392
+.. _PR #XXX: https://github.com/pypa/build/pull/XXX
 .. _#364: https://github.com/pypa/build/issues/364
 .. _#372: https://github.com/pypa/build/issues/372
 
