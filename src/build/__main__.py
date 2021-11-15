@@ -230,24 +230,18 @@ def build_package_via_sdist(
     sdist_name = os.path.basename(sdist)
     sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
     built: List[str] = []
-    # extract sdist
-    with tarfile.open(sdist) as t:
-        t.extractall(sdist_out)
-        try:
-            if distributions:
+    if distributions:
+        # extract sdist
+        with tarfile.open(sdist) as t:
+            t.extractall(sdist_out)
+            try:
                 _ProjectBuilder.log(f'Building {_natural_language_list(distributions)} from sdist')
-            for distribution in distributions:
-                out = _build(
-                    isolation,
-                    os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]),
-                    outdir,
-                    distribution,
-                    config_settings,
-                    skip_dependency_check,
-                )
-                built.append(os.path.basename(out))
-        finally:
-            shutil.rmtree(sdist_out, ignore_errors=True)
+                srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
+                for distribution in distributions:
+                    out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
+                    built.append(os.path.basename(out))
+            finally:
+                shutil.rmtree(sdist_out, ignore_errors=True)
     return [sdist_name] + built
 
 
