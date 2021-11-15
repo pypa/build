@@ -3,37 +3,36 @@ import os
 import subprocess
 import sys
 
-from typing import TYPE_CHECKING, AbstractSet, Callable, Iterator, Mapping, Optional, Sequence, Tuple, TypeVar, Union
+from typing import AbstractSet, Iterator, Mapping, Optional, Sequence, Tuple, Union
+
+from ._compat import Literal, Protocol
 
 
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal, Protocol
+Distribution = Literal['sdist', 'wheel']
+WheelDistribution = Literal['wheel']
 
-    Distribution = Literal['sdist', 'wheel']
-    WheelDistribution = Literal['wheel']
 
-    class RunnerType(Protocol):
-        def __call__(
-            self, cmd: Sequence[str], cwd: Optional[PathType] = None, env: Optional[Mapping[str, str]] = None
-        ) -> None:
-            """
-            Run a command in a Python subprocess.
+class RunnerType(Protocol):
+    def __call__(self, cmd: Sequence[str], cwd: Optional[PathType] = None, env: Optional[Mapping[str, str]] = None) -> None:
+        """
+        Run a command in a Python subprocess.
 
-            The parameters mirror those of ``subprocess.run``.
+        The parameters mirror those of ``subprocess.run``.
 
-            :param cmd: The command to execute
-            :param cwd: The working directory
-            :param env: Variables to be exported to the environment
-            """
+        :param cmd: The command to execute
+        :param cwd: The working directory
+        :param env: Variables to be exported to the environment
+        """
 
-    class _Pep517CallbackType(Protocol):
-        def __call__(
-            self, cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None
-        ) -> None:
-            ...
+
+class _Pep517CallbackType(Protocol):
+    def __call__(
+        self, cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None
+    ) -> None:
+        ...
 
 
 def default_runner(cmd: Sequence[str], cwd: Optional[PathType] = None, env: Optional[Mapping[str, str]] = None) -> None:
@@ -45,7 +44,7 @@ def quiet_runner(cmd: Sequence[str], cwd: Optional[PathType] = None, env: Option
 
 
 def rewrap_runner_for_pep517_lib(
-    values: Union['RunnerType', Tuple['RunnerType', Optional[Mapping[str, str]]]]
+    values: Union[RunnerType, Tuple[RunnerType, Optional[Mapping[str, str]]]]
 ) -> '_Pep517CallbackType':
     if isinstance(values, tuple):
         runner, env = values
@@ -106,12 +105,3 @@ def check_dependency(
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
                 yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras)
-
-
-if sys.version_info >= (3, 9):
-    cache = functools.cache
-else:
-    _C = TypeVar('_C', bound=Callable[..., object])
-
-    def cache(fn: _C) -> _C:
-        return functools.lru_cache(maxsize=None)(fn)  # type: ignore

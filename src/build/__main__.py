@@ -12,17 +12,13 @@ import textwrap
 import traceback
 import warnings
 
-from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
 
 import build
 
 from build import BuildBackendException, BuildException, ProjectBuilder
-from build._helpers import ConfigSettingsType, PathType
+from build._helpers import ConfigSettingsType, Distribution, PathType
 from build.env import IsolatedEnvManager, _DefaultIsolatedEnv
-
-
-if TYPE_CHECKING:
-    from ._helpers import Distribution
 
 
 _COLORS = {
@@ -100,7 +96,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    srcdir: PathType, outdir: PathType, distribution: 'Distribution', config_settings: Optional[ConfigSettingsType]
+    srcdir: PathType, outdir: PathType, distribution: Distribution, config_settings: Optional[ConfigSettingsType]
 ) -> str:
     with IsolatedEnvManager(_IsolatedEnv()) as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
@@ -114,7 +110,7 @@ def _build_in_isolated_env(
 def _build_in_current_env(
     srcdir: PathType,
     outdir: PathType,
-    distribution: 'Distribution',
+    distribution: Distribution,
     config_settings: Optional[ConfigSettingsType],
     skip_dependency_check: bool = False,
 ) -> str:
@@ -133,7 +129,7 @@ def _build(
     isolation: bool,
     srcdir: PathType,
     outdir: PathType,
-    distribution: 'Distribution',
+    distribution: Distribution,
     config_settings: Optional[ConfigSettingsType],
     skip_dependency_check: bool,
 ) -> str:
@@ -186,7 +182,7 @@ def _natural_language_list(elements: Sequence[str]) -> str:
 def build_package(
     srcdir: PathType,
     outdir: PathType,
-    distributions: Sequence['Distribution'],
+    distributions: Sequence[Distribution],
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
@@ -211,7 +207,7 @@ def build_package(
 def build_package_via_sdist(
     srcdir: PathType,
     outdir: PathType,
-    distributions: Sequence['Distribution'],
+    distributions: Sequence[Distribution],
     config_settings: Optional[ConfigSettingsType] = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
@@ -349,7 +345,7 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
         parser.prog = prog
     args = parser.parse_args(cli_args)
 
-    distributions: List['Distribution'] = []
+    distributions: List[Distribution] = []
     config_settings = {}
 
     if args.config_setting:

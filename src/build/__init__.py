@@ -17,16 +17,22 @@ import types
 import warnings
 import zipfile
 
-from typing import TYPE_CHECKING, Any, Dict, Iterator, Mapping, Optional, Set, Tuple, Type, Union
+from typing import Any, Dict, Iterator, Mapping, Optional, Set, Tuple, Type, Union
 
 import pep517.wrappers
 
 from . import env
-from ._helpers import ConfigSettingsType, PathType, check_dependency, default_runner, rewrap_runner_for_pep517_lib
+from ._helpers import (
+    ConfigSettingsType,
+    Distribution,
+    PathType,
+    RunnerType,
+    WheelDistribution,
+    check_dependency,
+    default_runner,
+    rewrap_runner_for_pep517_lib,
+)
 
-
-if TYPE_CHECKING:
-    from ._helpers import Distribution, RunnerType, WheelDistribution
 
 try:
     from tomli import TOMLDecodeError
@@ -191,7 +197,7 @@ class ProjectBuilder:
         self,
         srcdir: PathType,
         python_executable: str = sys.executable,
-        runner: Optional[Union['RunnerType', Tuple['RunnerType', Optional[Mapping[str, str]]]]] = None,
+        runner: Optional[Union[RunnerType, Tuple[RunnerType, Optional[Mapping[str, str]]]]] = None,
     ) -> None:
         """
         :param srcdir: The project source directory
@@ -217,7 +223,7 @@ class ProjectBuilder:
         cls,
         isolated_env: 'env.IsolatedEnv',
         srcdir: PathType,
-        runner: Optional['RunnerType'] = None,
+        runner: Optional[RunnerType] = None,
     ) -> 'ProjectBuilder':
         """
         Instantiate the builder from an isolated environment.
@@ -251,7 +257,7 @@ class ProjectBuilder:
         return self._requires
 
     def get_requires_for_build(
-        self, distribution: 'Distribution', config_settings: Optional[ConfigSettingsType] = None
+        self, distribution: Distribution, config_settings: Optional[ConfigSettingsType] = None
     ) -> Set[str]:
         """
         Get the build dependencies requested by the backend for
@@ -268,7 +274,7 @@ class ProjectBuilder:
             return set(get_requires(config_settings))
 
     def check_dependencies(
-        self, distribution: 'Distribution', config_settings: Optional[ConfigSettingsType] = None
+        self, distribution: Distribution, config_settings: Optional[ConfigSettingsType] = None
     ) -> Set[Tuple[str, ...]]:
         """
         Check that the :attr:`build_system_requires` and :meth:`get_requires_for_build`
@@ -284,7 +290,7 @@ class ProjectBuilder:
 
     def prepare(
         self,
-        distribution: 'WheelDistribution',
+        distribution: WheelDistribution,
         output_directory: PathType,
         config_settings: Optional[ConfigSettingsType] = None,
     ) -> Optional[str]:
@@ -311,7 +317,7 @@ class ProjectBuilder:
 
     def build(
         self,
-        distribution: 'Distribution',
+        distribution: Distribution,
         output_directory: PathType,
         config_settings: Optional[ConfigSettingsType] = None,
         metadata_directory: Optional[str] = None,

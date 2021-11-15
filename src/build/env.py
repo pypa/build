@@ -13,7 +13,8 @@ import tempfile
 
 from typing import Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
 
-from ._helpers import cache, check_dependency, default_runner
+from ._compat import cache
+from ._helpers import check_dependency, default_runner
 
 
 _logger = logging.getLogger(__name__)
