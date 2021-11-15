@@ -40,7 +40,8 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def python_executable(self) -> str:
         """The isolated environment's Python executable."""
         raise NotImplementedError
