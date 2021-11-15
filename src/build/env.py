@@ -13,7 +13,7 @@ import tempfile
 
 from typing import Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
 
-from ._compat import cache, importlib_metadata
+from ._compat import Protocol, cache, importlib_metadata, runtime_checkable
 from ._helpers import check_dependency, default_runner
 
 
@@ -22,8 +22,9 @@ _logger = logging.getLogger(__name__)
 IsolatedEnvType = TypeVar('IsolatedEnvType', bound='IsolatedEnv')  #: :class:`IsolatedEnv` type alias.
 
 
-class IsolatedEnv(metaclass=abc.ABCMeta):
-    """ABC for isolated build environments."""
+@runtime_checkable
+class IsolatedEnv(Protocol):
+    """Protocol for isolated build environments."""
 
     @abc.abstractmethod
     def create(self, path: str) -> None:

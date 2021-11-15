@@ -3,9 +3,9 @@ import sys
 
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol
+    from typing import Literal, Protocol, runtime_checkable
 else:
-    from typing_extensions import Literal, Protocol
+    from typing_extensions import Literal, Protocol, runtime_checkable
 
 if sys.version_info >= (3, 8):
     import importlib.metadata as importlib_metadata
@@ -27,6 +27,7 @@ else:
 __all__ = [
     'Literal',
     'Protocol',
+    'runtime_checkable',
     'importlib_metadata',
     'cache',
 ]
