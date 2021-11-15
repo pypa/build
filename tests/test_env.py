@@ -117,8 +117,10 @@ def test_pip_needs_upgrade_mac_os_11(mocker, arch, pip_version):
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), arch))
 
-    target = 'importlib.metadata' if sys.version_info >= (3, 8) else 'importlib_metadata'
-    mocker.patch(f'{target}.distributions', return_value=iter((types.SimpleNamespace(version=pip_version),)))
+    mocker.patch(
+        'build._compat.importlib_metadata.distributions',
+        return_value=iter([types.SimpleNamespace(version=pip_version)]),
+    )
 
     # Cache must be cleared to rerun
     build.env._get_min_pip_version.cache_clear()

@@ -1,18 +1,12 @@
 # SPDX-License-Identifier: MIT
 
 import pathlib
-import sys
 import tempfile
 
 from . import ProjectBuilder
+from ._compat import importlib_metadata
 from ._helpers import PathType, quiet_runner
 from .env import IsolatedEnvManager
-
-
-if sys.version_info >= (3, 8):
-    import importlib.metadata as importlib_metadata
-else:
-    import importlib_metadata
 
 
 def _project_wheel_metadata(builder: ProjectBuilder) -> 'importlib_metadata.PackageMetadata':

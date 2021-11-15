@@ -1,11 +1,10 @@
 import functools
 import os
 import subprocess
-import sys
 
 from typing import AbstractSet, Iterator, Mapping, Optional, Sequence, Tuple, Union
 
-from ._compat import Literal, Protocol
+from ._compat import Literal, Protocol, importlib_metadata
 
 
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
@@ -75,11 +74,6 @@ def check_dependency(
     :yields: Unmet dependencies
     """
     import packaging.requirements
-
-    if sys.version_info >= (3, 8):
-        import importlib.metadata as importlib_metadata
-    else:
-        import importlib_metadata
 
     req = packaging.requirements.Requirement(req_string)
 

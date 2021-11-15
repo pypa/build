@@ -7,6 +7,11 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, Protocol
 
+if sys.version_info >= (3, 8):
+    import importlib.metadata as importlib_metadata
+else:
+    import importlib_metadata
+
 if sys.version_info >= (3, 9):
     cache = functools.cache
 
@@ -22,5 +27,6 @@ else:
 __all__ = [
     'Literal',
     'Protocol',
+    'importlib_metadata',
     'cache',
 ]

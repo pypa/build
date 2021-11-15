@@ -13,7 +13,7 @@ import tempfile
 
 from typing import Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
 
-from ._compat import cache
+from ._compat import cache, importlib_metadata
 from ._helpers import check_dependency, default_runner
 
 
@@ -182,13 +182,9 @@ class _DefaultIsolatedEnv(IsolatedEnv):
     def _patch_up_venv(self, venv_purelib: str) -> None:
         import packaging.version
 
-        if sys.version_info >= (3, 8):
-            from importlib.metadata import distributions
-        else:
-            from importlib_metadata import distributions
-
         cur_pip_version = next(
-            d.version for d in distributions(name='pip', path=[venv_purelib])  # type: ignore[no-untyped-call]
+            d.version
+            for d in importlib_metadata.distributions(name='pip', path=[venv_purelib])  # type: ignore[no-untyped-call]
         )
         min_pip_version = _get_min_pip_version()
         if packaging.version.Version(cur_pip_version) < packaging.version.Version(min_pip_version):
