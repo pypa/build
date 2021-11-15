@@ -6,7 +6,7 @@ import tempfile
 from . import ProjectBuilder
 from ._compat import importlib_metadata
 from ._helpers import PathType, quiet_runner
-from .env import IsolatedEnvManager
+from .env import DefaultIsolatedEnv
 
 
 def _project_wheel_metadata(builder: ProjectBuilder) -> 'importlib_metadata.PackageMetadata':
@@ -34,7 +34,7 @@ def project_wheel_metadata(
         builder = ProjectBuilder(srcdir, runner=quiet_runner)
         return _project_wheel_metadata(builder)
 
-    with IsolatedEnvManager() as env:
+    with DefaultIsolatedEnv.with_temp_dir() as env:
         builder = ProjectBuilder.from_isolated_env(env, srcdir, runner=quiet_runner)
         env.install_packages(builder.build_system_requires)
         env.install_packages(builder.get_requires_for_build('wheel'))

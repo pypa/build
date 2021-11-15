@@ -125,7 +125,7 @@ def test_build_isolated(mocker, package_test_flit):
         ],
     )
     mocker.patch('build.__main__._error')
-    install = mocker.patch('build.env._DefaultIsolatedEnv.install_packages')
+    install = mocker.patch('build.env.DefaultIsolatedEnv.install_packages')
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
@@ -168,7 +168,7 @@ def test_build_no_isolation_with_check_deps(mocker, package_test_flit, missing_d
 @pytest.mark.isolated
 def test_build_raises_build_exception(mocker, package_test_flit):
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
-    mocker.patch('build.env._DefaultIsolatedEnv.install_packages')
+    mocker.patch('build.env.DefaultIsolatedEnv.install_packages')
 
     with pytest.raises(build.BuildException):
         build.__main__.build_package(package_test_flit, '.', ['sdist'])
@@ -177,7 +177,7 @@ def test_build_raises_build_exception(mocker, package_test_flit):
 @pytest.mark.isolated
 def test_build_raises_build_backend_exception(mocker, package_test_flit):
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
-    mocker.patch('build.env._DefaultIsolatedEnv.install_packages')
+    mocker.patch('build.env.DefaultIsolatedEnv.install_packages')
 
     msg = f"Backend operation failed: Exception('a'{',' if sys.version_info < (3, 7) else ''})"
     with pytest.raises(build.BuildBackendException, match=re.escape(msg)):

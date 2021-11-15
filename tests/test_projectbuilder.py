@@ -148,37 +148,40 @@ def test_bad_project(package_test_no_project):
 
 
 def test_init(mocker, package_test_flit, package_legacy, test_no_permission, package_test_bad_syntax):
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    hook = mocker.patch('pep517.wrappers.Pep517HookCaller')
+    rewrap_runner_for_pep517_lib = mocker.patch('build.rewrap_runner_for_pep517_lib', side_effect=lambda r, e=None: (r, e))
 
     # correct flit pyproject.toml
     build.ProjectBuilder(package_test_flit)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(
+    hook.assert_called_with(
         package_test_flit,
         'flit_core.buildapi',
         backend_path=None,
-        runner=build.ProjectBuilder._default_rewrapped_runner,
+        runner=(build.default_runner, None),
         python_executable=sys.executable,
     )
-    pep517.wrappers.Pep517HookCaller.reset_mock()
+    hook.reset_mock()
+    rewrap_runner_for_pep517_lib.reset_mock()
 
     # custom python
     build.ProjectBuilder(package_test_flit, python_executable='some-python')
-    pep517.wrappers.Pep517HookCaller.assert_called_with(
+    hook.assert_called_with(
         package_test_flit,
         'flit_core.buildapi',
         backend_path=None,
-        runner=build.ProjectBuilder._default_rewrapped_runner,
+        runner=(build.default_runner, None),
         python_executable='some-python',
     )
-    pep517.wrappers.Pep517HookCaller.reset_mock()
+    hook.reset_mock()
+    rewrap_runner_for_pep517_lib.reset_mock()
 
     # FileNotFoundError
     build.ProjectBuilder(package_legacy)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(
+    hook.assert_called_with(
         package_legacy,
         'setuptools.build_meta:__legacy__',
         backend_path=None,
-        runner=build.ProjectBuilder._default_rewrapped_runner,
+        runner=(build.default_runner, None),
         python_executable=sys.executable,
     )
 
@@ -194,28 +197,33 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
 
 @pytest.mark.isolated
 def test_init_from_isolated_env(mocker, package_test_flit):
-    mocker.patch('build.ProjectBuilder.__init__')
-    build.ProjectBuilder.__init__.return_value = None
+    hook = mocker.patch('pep517.wrappers.Pep517HookCaller')
+    rewrap_runner_for_pep517_lib = mocker.patch('build.rewrap_runner_for_pep517_lib', side_effect=lambda r, e=None: (r, e))
 
     # default subprocess runner
-    with build.env.IsolatedEnvManager() as env:
+    with build.env.DefaultIsolatedEnv.with_temp_dir() as env:
         build.ProjectBuilder.from_isolated_env(env, package_test_flit)
-        build.ProjectBuilder.__init__.assert_called_with(
+        hook.assert_called_with(
             package_test_flit,
+            'flit_core.buildapi',
+            backend_path=None,
+            runner=(build.default_runner, env.environ),
             python_executable=env.python_executable,
-            runner=(build.default_runner, env.prepare_environ()),
         )
-    build.ProjectBuilder.__init__.reset_mock()
+
+    hook.reset_mock()
+    rewrap_runner_for_pep517_lib.reset_mock()
 
     # custom subprocess runner
-    with build.env.IsolatedEnvManager() as env:
-        build.ProjectBuilder.from_isolated_env(env, package_test_flit, build._helpers.quiet_runner)
-        build.ProjectBuilder.__init__.assert_called_with(
+    with build.env.DefaultIsolatedEnv.with_temp_dir() as env:
+        build.ProjectBuilder.from_isolated_env(env, package_test_flit, runner=build._helpers.quiet_runner)
+        hook.assert_called_with(
             package_test_flit,
+            'flit_core.buildapi',
+            backend_path=None,
+            runner=(build._helpers.quiet_runner, env.environ),
             python_executable=env.python_executable,
-            runner=(build._helpers.quiet_runner, env.prepare_environ()),
         )
-    build.ProjectBuilder.__init__.reset_mock()
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])

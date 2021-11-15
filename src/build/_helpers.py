@@ -42,15 +42,7 @@ def quiet_runner(cmd: Sequence[str], cwd: Optional[PathType] = None, env: Option
     subprocess.run(cmd, check=True, cwd=cwd, env=env, stdout=subprocess.DEVNULL)
 
 
-def rewrap_runner_for_pep517_lib(
-    values: Union[RunnerType, Tuple[RunnerType, Optional[Mapping[str, str]]]]
-) -> '_Pep517CallbackType':
-    if isinstance(values, tuple):
-        runner, env = values
-    else:
-        runner = values
-        env = None
-
+def rewrap_runner_for_pep517_lib(runner: RunnerType, env: Optional[Mapping[str, str]] = None) -> '_Pep517CallbackType':
     @functools.wraps(runner)
     def inner(cmd: Sequence[str], cwd: Optional[PathType] = None, extra_environ: Optional[Mapping[str, str]] = None) -> None:
         local_env = os.environ.copy() if env is None else dict(env)

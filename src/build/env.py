@@ -3,15 +3,15 @@ Creates and manages isolated build environments.
 """
 
 import abc
+import contextlib
 import logging
 import os
 import platform
-import shutil
 import sys
 import sysconfig
 import tempfile
 
-from typing import Dict, Generic, Iterable, Optional, Sequence, Tuple, TypeVar, cast, overload
+from typing import Dict, Iterable, Iterator, Optional, Sequence, Tuple
 
 from ._compat import Protocol, cache, importlib_metadata, runtime_checkable
 from ._helpers import check_dependency, default_runner
@@ -19,27 +19,15 @@ from ._helpers import check_dependency, default_runner
 
 _logger = logging.getLogger(__name__)
 
-IsolatedEnvType = TypeVar('IsolatedEnvType', bound='IsolatedEnv')  #: :class:`IsolatedEnv` type alias.
-
 
 @runtime_checkable
 class IsolatedEnv(Protocol):
     """Protocol for isolated build environments."""
 
+    @property
     @abc.abstractmethod
-    def create(self, path: str) -> None:
-        """
-        Create the isolated environment.
-
-        This method should be idempotent.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def prepare_environ(self) -> Optional[Dict[str, str]]:
-        """
-        Modify environment variables.
-        """
+    def environ(self) -> Optional[Dict[str, str]]:
+        """The isolated environment's environment variables."""
         raise NotImplementedError
 
     @property
@@ -110,7 +98,7 @@ def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
     """
     import virtualenv
 
-    cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
+    cmd = [path, '--no-setuptools', '--no-wheel', '--activators', '']
     result = virtualenv.cli_run(cmd, setup_logging=False)
     executable = str(result.creator.exe)
     script_dir = str(result.creator.script_dir)
@@ -150,22 +138,14 @@ def _get_min_pip_version() -> str:
     return '19.1'
 
 
-class _DefaultIsolatedEnv(IsolatedEnv):
-    """An isolated environment which combines venv or virtualenv with pip."""
+class DefaultIsolatedEnv(IsolatedEnv):
+    """An isolated environment which combines either venv or virtualenv with pip."""
 
-    def __init__(self) -> None:
-        self._env_created = False
-
-    def _run(self, cmd: Sequence[str]) -> None:
-        return default_runner(cmd, env=self.prepare_environ())
-
-    def create(self, path: str) -> None:
-        if self._env_created:
-            return
-
+    def _create(self, path: str) -> None:
         if _should_use_virtualenv():
             self.log('Creating isolated environment (virtualenv)...')
-            self._python_executable, self._scripts_dir = _create_isolated_env_virtualenv(path)
+            self._python_executable, scripts_dir = _create_isolated_env_virtualenv(path)
+            self._environ = self._prepare_environ(scripts_dir)
         else:
             self.log('Creating isolated environment (venv)...')
             # Call ``realpath`` to prevent spurious warning from being emitted
@@ -175,10 +155,21 @@ class _DefaultIsolatedEnv(IsolatedEnv):
             # Ref: https://bugs.python.org/issue46171
             path = os.path.realpath(tempfile.mkdtemp(prefix='build-env-'))
             self._python_executable, paths = _create_isolated_env_venv(path)
-            self._scripts_dir = paths['scripts']
+            self._environ = self._prepare_environ(paths['scripts'])
             self._patch_up_venv(paths['purelib'])
 
-        self._env_created = True
+    @staticmethod
+    def _prepare_environ(scripts_dir: str) -> Dict[str, str]:
+        environ = os.environ.copy()
+
+        # Make the virtual environment's scripts available to the project's build dependecies.
+        path = environ.get('PATH')
+        environ['PATH'] = os.pathsep.join([scripts_dir, path]) if path is not None else scripts_dir
+
+        return environ
+
+    def _run(self, cmd: Sequence[str]) -> None:
+        return default_runner(cmd, env=self.environ)
 
     def _patch_up_venv(self, venv_purelib: str) -> None:
         import packaging.version
@@ -192,6 +183,14 @@ class _DefaultIsolatedEnv(IsolatedEnv):
             self._run([self.python_executable, '-m', 'pip', 'install', f'pip>={min_pip_version}'])
 
         self._run([self.python_executable, '-m', 'pip', 'uninstall', '-y', 'setuptools'])
+
+    @classmethod
+    @contextlib.contextmanager
+    def with_temp_dir(cls) -> Iterator['DefaultIsolatedEnv']:
+        with tempfile.TemporaryDirectory(prefix='build-env') as temp_dir:
+            self = cls()
+            self._create(temp_dir)
+            yield self
 
     def install_packages(self, requirements: Iterable[str]) -> None:
         """
@@ -233,19 +232,6 @@ class _DefaultIsolatedEnv(IsolatedEnv):
         finally:
             os.unlink(req_file.name)
 
-    def prepare_environ(self) -> Dict[str, str]:
-        environ = os.environ.copy()
-
-        # Make the virtual environment's scripts available to the project's build dependecies.
-        path = environ.get('PATH')
-        environ['PATH'] = os.pathsep.join([self._scripts_dir, path]) if path is not None else self._scripts_dir
-
-        return environ
-
-    @property
-    def python_executable(self) -> str:
-        return self._python_executable
-
     @staticmethod
     def log(message: str) -> None:
         if sys.version_info >= (3, 8):
@@ -253,46 +239,16 @@ class _DefaultIsolatedEnv(IsolatedEnv):
         else:
             _logger.log(logging.INFO, message)
 
+    @property
+    def environ(self) -> Dict[str, str]:
+        return self._environ
 
-class IsolatedEnvManager(Generic[IsolatedEnvType]):
-    """Create and dispose of isolated build environments."""
-
-    @overload
-    def __init__(self: 'IsolatedEnvManager[_DefaultIsolatedEnv]', isolated_env: None = None) -> None:
-        ...
-
-    @overload
-    def __init__(self, isolated_env: IsolatedEnvType) -> None:
-        ...
-
-    def __init__(self, isolated_env: Optional[IsolatedEnvType] = None) -> None:
-        """
-        :param isolated_env: The isolated environment
-        """
-        self._isolated_env = isolated_env
-
-    def __enter__(self) -> IsolatedEnvType:
-        """
-        Create an isolated build environment.
-
-        :returns: The isolated environment
-        """
-        self._path = tempfile.mkdtemp(prefix='build-env-')
-        try:
-            isolated_env = cast(IsolatedEnvType, _DefaultIsolatedEnv()) if self._isolated_env is None else self._isolated_env
-            isolated_env.create(self._path)
-            return isolated_env
-        except Exception:  # Delete folder if creation fails
-            self.__exit__(*sys.exc_info())
-            raise
-
-    def __exit__(self, *exc_info: object) -> None:
-        if os.path.exists(self._path):
-            shutil.rmtree(self._path)
+    @property
+    def python_executable(self) -> str:
+        return self._python_executable
 
 
 __all__ = [
     'IsolatedEnv',
-    'IsolatedEnvType',
-    'IsolatedEnvManager',
+    'DefaultIsolatedEnv',
 ]

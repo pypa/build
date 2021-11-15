@@ -187,55 +187,59 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Dict[str, An
 
 
 class ProjectBuilder:
-    """
-    The PEP 517 consumer API.
-    """
-
-    _default_rewrapped_runner = staticmethod(rewrap_runner_for_pep517_lib(default_runner))
+    """The PEP 517 consumer API."""
 
     def __init__(
         self,
         srcdir: PathType,
+        *,
         python_executable: str = sys.executable,
-        runner: Optional[Union[RunnerType, Tuple[RunnerType, Optional[Mapping[str, str]]]]] = None,
+        runner: RunnerType = default_runner,
+        runner_environ: Optional[Dict[str, str]] = None,
     ) -> None:
         """
-        :param srcdir: The project source directory
-        :param python_executable: Path of Python executable used to invoke
-            PEP 517 hooks
+        :param srcdir: Project source directory
+        :param python_executable: Path of Python executable used to invoke PEP 517 hooks
         :param runner: Callback for executing PEP 517 hooks in a subprocess
+        :param runner_environ: Environment variables to be passed to the runner
         """
         self._srcdir = _parse_source_dir(srcdir)
+
         self._python_executable = python_executable
+        pep517_runner = rewrap_runner_for_pep517_lib(runner, runner_environ)
+
         self._build_system = _parse_build_system_table(_load_pyproject_toml(self.srcdir))
-        self._requires = set(self._build_system['requires'])
-        self._backend = self._build_system['build-backend']
+        self._build_system_requires = set(self._build_system['requires'])
+        self._build_backend = self._build_system['build-backend']
+
         self._hook = pep517.wrappers.Pep517HookCaller(
             self.srcdir,
-            self._backend,
+            self._build_backend,
             backend_path=self._build_system.get('backend-path'),
-            runner=self._default_rewrapped_runner if runner is None else rewrap_runner_for_pep517_lib(runner),
+            runner=pep517_runner,
             python_executable=self._python_executable,
         )
 
     @classmethod
     def from_isolated_env(
         cls,
-        isolated_env: 'env.IsolatedEnv',
+        isolated_env: env.IsolatedEnv,
         srcdir: PathType,
-        runner: Optional[RunnerType] = None,
+        *,
+        runner: RunnerType = default_runner,
     ) -> 'ProjectBuilder':
         """
         Instantiate the builder from an isolated environment.
 
-        :param isolated_env: The isolated environment instance
-        :param srcdir: The project source directory
+        :param isolated_env: Isolated environment
+        :param srcdir: Project source directory
         :param runner: Callback for executing PEP 517 hooks in a subprocess
         """
         return cls(
             srcdir,
             python_executable=isolated_env.python_executable,
-            runner=(default_runner if runner is None else runner, isolated_env.prepare_environ()),
+            runner=runner,
+            runner_environ=isolated_env.environ,
         )
 
     @property
@@ -254,7 +258,7 @@ class ProjectBuilder:
         The dependencies specified in the project's ``build-system.requires``
         field or the default build dependencies if unspecified.
         """
-        return self._requires
+        return self._build_system_requires
 
     def get_requires_for_build(
         self, distribution: Distribution, config_settings: Optional[ConfigSettingsType] = None
@@ -391,7 +395,7 @@ class ProjectBuilder:
             except pep517.wrappers.BackendUnavailable as exception:
                 raise BuildBackendException(
                     exception,
-                    f"Backend '{self._backend}' is not available.",
+                    f"Backend '{self._build_backend}' is not available.",
                     sys.exc_info(),
                 )
             except subprocess.CalledProcessError as exception:

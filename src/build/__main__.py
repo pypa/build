@@ -18,7 +18,7 @@ import build
 
 from build import BuildBackendException, BuildException, ProjectBuilder
 from build._helpers import ConfigSettingsType, Distribution, PathType
-from build.env import IsolatedEnvManager, _DefaultIsolatedEnv
+from build.env import DefaultIsolatedEnv
 
 
 _COLORS = {
@@ -85,7 +85,7 @@ class _ProjectBuilder(ProjectBuilder):
         print('{bold}* {}{reset}'.format(message, **_STYLES))
 
 
-class _IsolatedEnv(_DefaultIsolatedEnv):
+class _IsolatedEnv(DefaultIsolatedEnv):
     @staticmethod
     def log(message: str) -> None:
         print('{bold}* {}{reset}'.format(message, **_STYLES))
@@ -98,7 +98,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 def _build_in_isolated_env(
     srcdir: PathType, outdir: PathType, distribution: Distribution, config_settings: Optional[ConfigSettingsType]
 ) -> str:
-    with IsolatedEnvManager(_IsolatedEnv()) as env:
+    with _IsolatedEnv.with_temp_dir() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
         # first install the build dependencies
         env.install_packages(builder.build_system_requires)
