@@ -12,6 +12,19 @@ Unreleased
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
 
+Breaking changes
+----------------
+
+- The isolated environment interface was redesigned (`PR #361`_)
+
+  - ``IsolatedEnvBuilder`` removed and its functionality taken over by
+    ``DefaultIsolatedEnv.with_temp_dir``
+  - ``ProjectBuiler.from_isolated_env`` added to initialise a builder from
+    an isolated environment
+  - ``RunnerType`` callback signature changed to allow modifying the
+    ``os.environ`` wholesale
+
+.. _PR #361: https://github.com/pypa/build/pull/361
 .. _PR #365: https://github.com/pypa/build/pull/365
 .. _PR #392: https://github.com/pypa/build/pull/392
 .. _#364: https://github.com/pypa/build/issues/364
