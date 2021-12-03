@@ -5,7 +5,7 @@ Mission Statement
 In the Python ecosystem, the build system tools and the package management
 are very intertwined. While it might be useful for user to be able to access
 all this capabilities in a single project (such as pip_), there are several
-usecases where this is not desirable. The main being custom environments
+use cases where this is not desirable. The main being custom environments
 (outside PyPI_) or situations where the user does its own package management,
 such as Linux distributions.
 

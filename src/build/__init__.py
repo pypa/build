@@ -459,7 +459,7 @@ class ProjectBuilder:
                     sys.exc_info(),
                 )
             except subprocess.CalledProcessError as exception:
-                raise BuildBackendException(exception, f'Backend subproccess exited when trying to invoke {hook}')
+                raise BuildBackendException(exception, f'Backend subprocess exited when trying to invoke {hook}')
             except Exception as exception:
                 raise BuildBackendException(exception, exc_info=sys.exc_info())
 
