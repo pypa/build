@@ -38,7 +38,7 @@ dependencies. The ``--skip-dependency-check`` flag should be used in this
 case.
 
 We have a dependency on tomli_, but toml_ can be used instead, which may make
-bootstraping easier.
+bootstrapping easier.
 
 
 Compatibility
