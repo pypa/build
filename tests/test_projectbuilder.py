@@ -5,6 +5,7 @@ import copy
 import importlib
 import logging
 import os
+import pathlib
 import sys
 import textwrap
 
@@ -18,8 +19,6 @@ if sys.version_info >= (3, 8):  # pragma: no cover
     from importlib import metadata as importlib_metadata
 else:  # pragma: no cover
     import importlib_metadata
-
-import pathlib
 
 
 build_open_owner = 'builtins'
@@ -131,6 +130,18 @@ Version: 1.0.1a0
 def test_check_dependency(monkeypatch, requirement_string, expected):
     monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
+
+
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_build_no_isolation_circular_requirements(monkeypatch, package_test_circular_requirements, distribution):
+    monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
+    msg = (
+        'Failed to validate `build-system` in pyproject.toml, dependency cycle detected: `recursive_unmet_dep` -> '
+        '`recursive_dep` -> `recursive_unmet_dep`'
+    )
+    builder = build.ProjectBuilder(package_test_circular_requirements)
+    with pytest.raises(build.CircularBuildSystemDependencyError, match=msg):
+        builder.check_dependencies(distribution)
 
 
 def test_bad_project(package_test_no_project):
@@ -400,7 +411,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     from build.__main__ import main
 
     with pytest.raises(SystemExit):
-        main(['--wheel', '--outdir', str(tmp_path / 'dist'), str(tmp_path)])
+        main(['--wheel', '--skip-dependency-check', '--outdir', str(tmp_path / 'dist'), str(tmp_path)])
 
     out, err = capfd.readouterr()
     lines = [line[3:] for line in out.splitlines() if line.startswith('BB ')]  # filter for our markers
@@ -570,7 +581,7 @@ def test_log(mocker, caplog, package_test_flit):
         ('INFO', 'something'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert caplog.records[-1].lineno == 562
+        assert caplog.records[-1].lineno == test_log.__code__.co_firstlineno + 11
 
 
 @pytest.mark.parametrize(

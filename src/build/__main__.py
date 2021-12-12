@@ -99,16 +99,29 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    builder: ProjectBuilder, outdir: PathType, distribution: str, config_settings: Optional[ConfigSettingsType]
+    builder: ProjectBuilder,
+    outdir: PathType,
+    distribution: str,
+    config_settings: Optional[ConfigSettingsType],
+    skip_dependency_check: bool = False,
 ) -> str:
     with _IsolatedEnvBuilder() as env:
         builder.python_executable = env.executable
         builder.scripts_dir = env.scripts_dir
         # first install the build dependencies
         env.install(builder.build_system_requires)
+        # validate build system dependencies
+        revalidate = False
+        if not skip_dependency_check:
+            builder.check_dependencies(distribution)
+            if builder.project_name is None:
+                revalidate = True
         # then get the extra required dependencies from the backend (which was installed in the call above :P)
-        env.install(builder.get_requires_for_build(distribution))
-        return builder.build(distribution, outdir, config_settings or {})
+        env.install(builder.get_cache_requires_for_build(distribution))
+        build_result = builder.build(distribution, outdir, config_settings or {})
+        if revalidate and builder.project_name is not None:
+            builder.check_dependencies(distribution)
+        return build_result
 
 
 def _build_in_current_env(
@@ -118,14 +131,22 @@ def _build_in_current_env(
     config_settings: Optional[ConfigSettingsType],
     skip_dependency_check: bool = False,
 ) -> str:
+    revalidate = False
     if not skip_dependency_check:
         missing = builder.check_dependencies(distribution)
         if missing:
             dependencies = ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
             print()
             _error(f'Missing dependencies:{dependencies}')
+        elif builder.project_name is None:
+            revalidate = True
 
-    return builder.build(distribution, outdir, config_settings or {})
+    build_result = builder.build(distribution, outdir, config_settings or {})
+
+    if revalidate and builder.project_name is not None:
+        builder.check_dependencies(distribution)
+
+    return build_result
 
 
 def _build(
@@ -137,7 +158,7 @@ def _build(
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
-        return _build_in_isolated_env(builder, outdir, distribution, config_settings)
+        return _build_in_isolated_env(builder, outdir, distribution, config_settings, skip_dependency_check)
     else:
         return _build_in_current_env(builder, outdir, distribution, config_settings, skip_dependency_check)
 

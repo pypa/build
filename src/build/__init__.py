@@ -54,6 +54,9 @@ PathType = Union[str, 'os.PathLike[str]']
 _ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
 
 
+_SDIST_NAME_REGEX = re.compile(r'(?P<distribution>.+)-(?P<version>.+)\.tar.gz')
+
+
 _WHEEL_NAME_REGEX = re.compile(
     r'(?P<distribution>.+)-(?P<version>.+)'
     r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
@@ -104,6 +107,30 @@ class BuildSystemTableValidationError(BuildException):
         return f'Failed to validate `build-system` in pyproject.toml: {self.args[0]}'
 
 
+class CircularBuildSystemDependencyError(BuildException):
+    """
+    Exception raised when a ``[build-system]`` requirement in pyproject.toml is circular.
+    """
+
+    def __init__(
+        self, project_name: str, ancestral_req_strings: Tuple[str, ...], req_string: str, backend: Optional[str]
+    ) -> None:
+        super().__init__()
+        self.project_name: str = project_name
+        self.ancestral_req_strings: Tuple[str, ...] = ancestral_req_strings
+        self.req_string: str = req_string
+        self.backend: Optional[str] = backend
+
+    def __str__(self) -> str:
+        cycle_err_str = f'`{self.project_name}`'
+        if self.backend:
+            cycle_err_str += f' -> `{self.backend}`'
+        for dep in self.ancestral_req_strings:
+            cycle_err_str += f' -> `{dep}`'
+        cycle_err_str += f' -> `{self.req_string}`'
+        return f'Failed to validate `build-system` in pyproject.toml, dependency cycle detected: {cycle_err_str}'
+
+
 class TypoWarning(Warning):
     """
     Warning raised when a potential typo is found
@@ -131,8 +158,17 @@ def _validate_source_directory(srcdir: PathType) -> None:
         raise BuildException(f'Source {srcdir} does not appear to be a Python project: no pyproject.toml or setup.py')
 
 
+# https://www.python.org/dev/peps/pep-0503/#normalized-names
+def _normalize(name: str) -> str:
+    return re.sub(r'[-_.]+', '-', name).lower()
+
+
 def check_dependency(
-    req_string: str, ancestral_req_strings: Tuple[str, ...] = (), parent_extras: AbstractSet[str] = frozenset()
+    req_string: str,
+    ancestral_req_strings: Tuple[str, ...] = (),
+    parent_extras: AbstractSet[str] = frozenset(),
+    project_name: Optional[str] = None,
+    backend: Optional[str] = None,
 ) -> Iterator[Tuple[str, ...]]:
     """
     Verify that a dependency and all of its dependencies are met.
@@ -159,6 +195,12 @@ def check_dependency(
             # dependency is satisfied.
             return
 
+    # Front ends SHOULD check explicitly for requirement cycles, and
+    # terminate the build with an informative message if one is found.
+    # https://www.python.org/dev/peps/pep-0517/#build-requirements
+    if project_name is not None and _normalize(req.name) == _normalize(project_name):
+        raise CircularBuildSystemDependencyError(project_name, ancestral_req_strings, req_string, backend)
+
     try:
         dist = importlib_metadata.distribution(req.name)  # type: ignore[no-untyped-call]
     except importlib_metadata.PackageNotFoundError:
@@ -171,7 +213,7 @@ def check_dependency(
         elif dist.requires:
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
-                yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras)
+                yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras, project_name)
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
@@ -222,6 +264,23 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Dict[str, An
     return build_system_table
 
 
+def _parse_project_name(pyproject_toml: Mapping[str, Any]) -> Optional[str]:
+    if 'project' not in pyproject_toml:
+        return None
+
+    project_table = dict(pyproject_toml['project'])
+
+    # If [project] is present, it must have a ``name`` field (per PEP 621)
+    if 'name' not in project_table:
+        return None
+
+    project_name = project_table['name']
+    if not isinstance(project_name, str):
+        return None
+
+    return project_name
+
+
 class ProjectBuilder:
     """
     The PEP 517 consumer API.
@@ -267,8 +326,10 @@ class ProjectBuilder:
         except TOMLDecodeError as e:
             raise BuildException(f'Failed to parse {spec_file}: {e} ')
 
+        self.project_name: Optional[str] = _parse_project_name(spec)
         self._build_system = _parse_build_system_table(spec)
         self._backend = self._build_system['build-backend']
+        self._requires_for_build_cache: dict[str, Optional[Set[str]]] = {'wheel': None, 'sdist': None}
         self._scripts_dir = scripts_dir
         self._hook_runner = runner
         self._hook = pep517.wrappers.Pep517HookCaller(
@@ -341,6 +402,35 @@ class ProjectBuilder:
         with self._handle_backend(hook_name):
             return set(get_requires(config_settings))
 
+    def get_cache_requires_for_build(
+        self, distribution: str, config_settings: Optional[ConfigSettingsType] = None
+    ) -> Set[str]:
+        """
+        Return the dependencies defined by the backend in addition to
+        :attr:`build_system_requires` for a given distribution.
+
+        :param distribution: Distribution to get the dependencies of
+            (``sdist`` or ``wheel``)
+        :param config_settings: Config settings for the build backend
+        """
+        requires_for_build: Set[str]
+        requires_for_build_cache: Optional[Set[str]] = self._requires_for_build_cache[distribution]
+        if requires_for_build_cache is not None:
+            requires_for_build = requires_for_build_cache
+        else:
+            requires_for_build = self.get_requires_for_build(distribution, config_settings)
+            self._requires_for_build_cache[distribution] = requires_for_build
+        return requires_for_build
+
+    def check_build_dependencies(self) -> Set[Tuple[str, ...]]:
+        """
+        Return the dependencies which are not satisfied from
+        :attr:`build_system_requires`
+
+        :returns: Set of variable-length unmet dependency tuples
+        """
+        return {u for d in self.build_system_requires for u in check_dependency(d, project_name=self.project_name)}
+
     def check_dependencies(
         self, distribution: str, config_settings: Optional[ConfigSettingsType] = None
     ) -> Set[Tuple[str, ...]]:
@@ -353,8 +443,20 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: Set of variable-length unmet dependency tuples
         """
-        dependencies = self.get_requires_for_build(distribution, config_settings).union(self.build_system_requires)
-        return {u for d in dependencies for u in check_dependency(d)}
+        build_system_dependencies = self.check_build_dependencies()
+        requires_for_build: Set[str]
+        requires_for_build_cache: Optional[Set[str]] = self._requires_for_build_cache[distribution]
+        if requires_for_build_cache is not None:
+            requires_for_build = requires_for_build_cache
+        else:
+            requires_for_build = self.get_requires_for_build(distribution, config_settings)
+            # cache if build system dependencies are fully satisfied
+            if len(build_system_dependencies) == 0:
+                self._requires_for_build_cache[distribution] = requires_for_build
+        dependencies = {
+            u for d in requires_for_build for u in check_dependency(d, project_name=self.project_name, backend=self._backend)
+        }
+        return dependencies.union(build_system_dependencies)
 
     def prepare(
         self, distribution: str, output_directory: PathType, config_settings: Optional[ConfigSettingsType] = None
@@ -399,7 +501,15 @@ class ProjectBuilder:
         """
         self.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
-        return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
+        basename = self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
+        match = None
+        if distribution == 'wheel':
+            match = _WHEEL_NAME_REGEX.match(os.path.basename(basename))
+        elif distribution == 'sdist':
+            match = _SDIST_NAME_REGEX.match(os.path.basename(basename))
+        if match:
+            self.project_name = match['distribution']
+        return basename
 
     def metadata_path(self, output_directory: PathType) -> str:
         """
@@ -413,6 +523,9 @@ class ProjectBuilder:
         # prepare_metadata hook
         metadata = self.prepare('wheel', output_directory)
         if metadata is not None:
+            match = _WHEEL_NAME_REGEX.match(os.path.basename(metadata))
+            if match:
+                self.project_name = match['distribution']
             return metadata
 
         # fallback to build_wheel hook
@@ -420,6 +533,7 @@ class ProjectBuilder:
         match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
+        self.project_name = match['distribution']
         distinfo = f"{match['distribution']}-{match['version']}.dist-info"
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:

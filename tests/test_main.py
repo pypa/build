@@ -127,11 +127,11 @@ def test_build_isolated(mocker, package_test_flit):
     mocker.patch('build.__main__._error')
     install = mocker.patch('build.env._IsolatedEnvVenvPip.install')
 
-    build.__main__.build_package(package_test_flit, '.', ['sdist'])
+    build.__main__.build_package(package_test_flit, '.', ['sdist'], skip_dependency_check=True)
 
     install.assert_any_call({'flit_core >=2,<3'})
 
-    required_cmd.assert_called_with('sdist')
+    required_cmd.assert_called_with('sdist', None)
     install.assert_any_call(['dep1', 'dep2'])
 
     build_cmd.assert_called_with('sdist', '.', {})
