@@ -105,7 +105,11 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    srcdir: PathType, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
+    srcdir: PathType,
+    outdir: PathType,
+    distribution: str,
+    config_settings: ConfigSettingsType | None,
+    skip_dependency_check: bool = False,
 ) -> str:
     with _DefaultIsolatedEnv() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
@@ -113,7 +117,11 @@ def _build_in_isolated_env(
         env.install(builder.build_system_requires)
         # then get the extra required dependencies from the backend (which was installed in the call above :P)
         env.install(builder.get_requires_for_build(distribution))
-        return builder.build(distribution, outdir, config_settings or {})
+        build_result = builder.build(distribution, outdir, config_settings or {})
+        # validate build system dependencies
+        if not skip_dependency_check:
+            builder.check_dependencies(distribution)
+        return build_result
 
 
 def _build_in_current_env(
@@ -132,7 +140,10 @@ def _build_in_current_env(
             _cprint()
             _error(f'Missing dependencies:{dependencies}')
 
-    return builder.build(distribution, outdir, config_settings or {})
+    build_result = builder.build(distribution, outdir, config_settings or {})
+    builder.finalize_check_dependencies(distribution)
+
+    return build_result
 
 
 def _build(
@@ -144,7 +155,7 @@ def _build(
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
-        return _build_in_isolated_env(srcdir, outdir, distribution, config_settings)
+        return _build_in_isolated_env(srcdir, outdir, distribution, config_settings, skip_dependency_check)
     else:
         return _build_in_current_env(srcdir, outdir, distribution, config_settings, skip_dependency_check)
 

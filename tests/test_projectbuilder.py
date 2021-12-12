@@ -4,6 +4,7 @@
 import copy
 import logging
 import os
+import pathlib
 import sys
 import textwrap
 
@@ -17,8 +18,6 @@ if sys.version_info >= (3, 8):  # pragma: no cover
     from importlib import metadata as importlib_metadata
 else:  # pragma: no cover
     import importlib_metadata
-
-import pathlib
 
 
 build_open_owner = 'builtins'
@@ -169,6 +168,67 @@ class NestedCircularMockDistribution(MockDistribution):
 def test_check_dependency(monkeypatch, requirement_string, expected):
     monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
+
+
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_build_no_isolation_circular_get_requires(monkeypatch, package_test_circular_get_requires, distribution):
+    monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
+    msg = (
+        'Failed to validate `build-system` in pyproject.toml, dependency cycle detected: `recursive_unmet_dep` -> '
+        '`recursive_dep` -> `recursive_unmet_dep`'
+    )
+    builder = build.ProjectBuilder(package_test_circular_get_requires)
+    with pytest.raises(build.CircularBuildDependencyError, match=msg):
+        builder.check_dependencies(distribution)
+
+
+def test_build_no_isolation_circular_metadata(monkeypatch, package_test_circular_metadata, tmp_dir):
+    monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
+    msg = (
+        'Failed to validate `build-system` in pyproject.toml, dependency cycle detected: `recursive_unmet_dep` -> '
+        '`recursive_dep` -> `recursive_unmet_dep`'
+    )
+    builder = build.ProjectBuilder(package_test_circular_metadata)
+    assert builder.project_name is None
+    with pytest.raises(build.CircularBuildDependencyError, match=msg):
+        builder.metadata_path(tmp_dir)
+        assert builder.project_name == 'recursive-unmet-dep'
+        builder.check_dependencies('wheel')
+
+
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_build_no_isolation_circular_requirements(monkeypatch, package_test_circular_requirements, distribution):
+    monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
+    msg = (
+        'Failed to validate `build-system` in pyproject.toml, dependency cycle detected: `recursive_unmet_dep` -> '
+        '`recursive_dep` -> `recursive_unmet_dep`'
+    )
+    builder = build.ProjectBuilder(package_test_circular_requirements)
+    with pytest.raises(build.CircularBuildDependencyError, match=msg):
+        builder.check_dependencies(distribution)
+
+
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+def test_build_no_isolation_circular_wheel(monkeypatch, package_test_circular_wheel, distribution, tmp_dir):
+    msg = (
+        'Failed to validate `build-system` in pyproject.toml, dependency cycle detected: `wheel` -> '
+        '`setuptools.build_meta` -> `wheel`'
+    )
+    builder = build.ProjectBuilder(package_test_circular_wheel)
+    with pytest.raises(build.CircularBuildDependencyError, match=msg):
+        builder.build(distribution, tmp_dir)
+        builder.check_dependencies(distribution)
+
+
+def test_build_no_isolation_metadata_invalid_name(monkeypatch, package_test_metadata_invalid_name, tmp_dir):
+    msg = (
+        'Failed to validate project name: `test_metadata_prepare_metadata_name` from '
+        '`prepare_metadata_for_build_wheel` does not match `test-metadata-project-name` '
+        'from `pyproject.toml \\[project\\] table`'
+    )
+    builder = build.ProjectBuilder(package_test_metadata_invalid_name)
+    with pytest.raises(build.ProjectNameValidationError, match=msg):
+        builder.metadata_path(tmp_dir)
 
 
 def test_bad_project(package_test_no_project):
@@ -395,6 +455,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
         backend-path = ["."]
 
         [project]
+        name = "inline_test"
         description = "Factory ⸻ A code generator 🏭"
         authors = [{name = "Łukasz Langa"}]
         '''
@@ -417,7 +478,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     from build.__main__ import main
 
     with pytest.raises(SystemExit):
-        main(['--wheel', '--outdir', str(tmp_path / 'dist'), str(tmp_path)])
+        main(['--wheel', '--skip-dependency-check', '--outdir', str(tmp_path / 'dist'), str(tmp_path)])
 
     out, err = capfd.readouterr()
     lines = [line[3:] for line in out.splitlines() if line.startswith('BB ')]  # filter for our markers
@@ -619,3 +680,21 @@ def test_parse_valid_build_system_table_type(pyproject_toml, parse_output):
 def test_parse_invalid_build_system_table_type(pyproject_toml, error_message):
     with pytest.raises(build.BuildSystemTableValidationError, match=error_message):
         build._parse_build_system_table(pyproject_toml)
+
+
+@pytest.mark.parametrize(
+    ('pyproject_toml', 'error_message'),
+    [
+        (
+            {'build-system': {'requires': ['foo']}, 'project': {}},
+            '`project` must have a `name` field',
+        ),
+        (
+            {'build-system': {'requires': ['foo']}, 'project': {'name': 1}},
+            '`name` field in `project` must be a string',
+        ),
+    ],
+)
+def test_parse_invalid_project_name(pyproject_toml, error_message):
+    with pytest.raises(build.ProjectTableValidationError, match=error_message):
+        build._parse_project_name(pyproject_toml)

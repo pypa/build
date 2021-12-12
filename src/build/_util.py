@@ -1,9 +1,17 @@
 from __future__ import annotations
 
+import os
 import re
 import sys
 
 from collections.abc import Iterator, Set
+
+from ._exceptions import CircularBuildDependencyError
+
+_DISTINFO_FOLDERNAME_REGEX = re.compile(r'(?P<distribution>.+)-(?P<version>.+)\.dist-info')
+
+
+_SDIST_FILENAME_REGEX = re.compile(r'(?P<distribution>.+)-(?P<version>.+)\.tar.gz')
 
 
 _WHEEL_FILENAME_REGEX = re.compile(
@@ -13,8 +21,25 @@ _WHEEL_FILENAME_REGEX = re.compile(
 )
 
 
-def check_dependency(
-    req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: Set[str] = frozenset()
+def project_name_from_path(basename: str, pathtype: str) -> str | None:
+    match = None
+    if pathtype == 'wheel':
+        match = _WHEEL_FILENAME_REGEX.match(os.path.basename(basename))
+    elif pathtype == 'sdist':
+        match = _SDIST_FILENAME_REGEX.match(os.path.basename(basename))
+    elif pathtype == 'distinfo':
+        match = _DISTINFO_FOLDERNAME_REGEX.match(os.path.basename(basename))
+    if match:
+        return match['distribution']
+    return None
+
+
+def check_dependency(  # noqa: C901
+    req_string: str,
+    ancestral_req_strings: tuple[str, ...] = (),
+    parent_extras: Set[str] = frozenset(),
+    project_name: str | None = None,
+    backend: str | None = None,
 ) -> Iterator[tuple[str, ...]]:
     """
     Verify that a dependency and all of its dependencies are met.
@@ -24,6 +49,7 @@ def check_dependency(
     :yields: Unmet dependencies
     """
     import packaging.requirements
+    import packaging.utils
 
     if sys.version_info >= (3, 8):
         import importlib.metadata as importlib_metadata
@@ -48,6 +74,14 @@ def check_dependency(
             # dependency is satisfied.
             return
 
+    # Front ends SHOULD check explicitly for requirement cycles, and
+    # terminate the build with an informative message if one is found.
+    # https://www.python.org/dev/peps/pep-0517/#build-requirements
+    if project_name is not None and packaging.utils.canonicalize_name(req.name) == packaging.utils.canonicalize_name(
+        project_name
+    ):
+        raise CircularBuildDependencyError(project_name, ancestral_req_strings, req_string, backend)
+
     try:
         dist = importlib_metadata.distribution(req.name)  # type: ignore[no-untyped-call]
     except importlib_metadata.PackageNotFoundError:
@@ -60,7 +94,9 @@ def check_dependency(
         elif dist.requires:
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
-                yield from check_dependency(other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras)
+                yield from check_dependency(
+                    other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras, project_name
+                )
 
 
 def parse_wheel_filename(filename: str) -> re.Match[str] | None:

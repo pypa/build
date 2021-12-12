@@ -1,0 +1,7 @@
+[build-system]
+requires = ["recursive_dep"]
+
+[project]
+name = "recursive_unmet_dep"
+version = "1.0.0"
+description = "circular project"

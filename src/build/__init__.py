@@ -21,6 +21,7 @@ import zipfile
 from collections.abc import Iterator
 from typing import Any, Callable, Mapping, Optional, Sequence, TypeVar, Union
 
+import packaging.utils
 import pyproject_hooks
 
 from . import env
@@ -28,11 +29,13 @@ from ._exceptions import (
     BuildBackendException,
     BuildException,
     BuildSystemTableValidationError,
+    CircularBuildDependencyError,
     FailedProcessError,
+    ProjectTableValidationError,
     TypoWarning,
+    ProjectNameValidationError,
 )
-from ._util import check_dependency, parse_wheel_filename
-
+from ._util import check_dependency, parse_wheel_filename, project_name_from_path
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -126,6 +129,23 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
     return build_system_table
 
 
+def _parse_project_name(pyproject_toml: Mapping[str, Any]) -> str | None:
+    if 'project' not in pyproject_toml:
+        return None
+
+    project_table = dict(pyproject_toml['project'])
+
+    # If [project] is present, it must have a ``name`` field (per PEP 621)
+    if 'name' not in project_table:
+        raise ProjectTableValidationError('`project` must have a `name` field')
+
+    project_name = project_table['name']
+    if not isinstance(project_name, str):
+        raise ProjectTableValidationError('`name` field in `project` must be a string')
+
+    return project_name
+
+
 def _wrap_subprocess_runner(runner: RunnerType, env: env.IsolatedEnv) -> RunnerType:
     def _invoke_wrapped_runner(cmd: Sequence[str], cwd: str | None, extra_environ: Mapping[str, str] | None) -> None:
         runner(cmd, cwd, {**(env.make_extra_environ() or {}), **(extra_environ or {})})
@@ -168,9 +188,17 @@ class ProjectBuilder:
         self._runner = runner
 
         pyproject_toml_path = os.path.join(source_dir, 'pyproject.toml')
-        self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
+        pyproject_toml = _read_pyproject_toml(pyproject_toml_path)
+        self._build_system = _parse_build_system_table(pyproject_toml)
 
+        self._project_name: str | None = None
+        self._project_name_source: str | None = None
+        project_name = _parse_project_name(pyproject_toml)
+        if project_name:
+            self._update_project_name(project_name, 'pyproject.toml [project] table')
         self._backend = self._build_system['build-backend']
+
+        self._check_dependencies_incomplete: dict[str, bool] = {'wheel': False, 'sdist': False}
 
         self._hook = pyproject_hooks.BuildBackendHookCaller(
             self._source_dir,
@@ -199,6 +227,15 @@ class ProjectBuilder:
         return self._source_dir
 
     @property
+    def project_name(self) -> str | None:
+        """
+        The canonicalized project name.
+        """
+        if self._project_name is not None:
+            return packaging.utils.canonicalize_name(self._project_name)
+        return None
+
+    @property
     def python_executable(self) -> str:
         """
         The Python executable used to invoke the backend.
@@ -214,7 +251,9 @@ class ProjectBuilder:
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(self, distribution: str, config_settings: ConfigSettingsType | None = None) -> set[str]:
+    def get_requires_for_build(
+        self, distribution: str, config_settings: ConfigSettingsType | None = None, finalize: bool = False
+    ) -> set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -223,14 +262,26 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        self.log(f'Getting build dependencies for {distribution}...')
+        if not finalize:
+            self.log(f'Getting build dependencies for {distribution}...')
         hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
         with self._handle_backend(hook_name):
             return set(get_requires(config_settings))
 
-    def check_dependencies(self, distribution: str, config_settings: ConfigSettingsType | None = None) -> set[tuple[str, ...]]:
+    def check_build_system_dependencies(self) -> set[tuple[str, ...]]:
+        """
+        Return the dependencies which are not satisfied from
+        :attr:`build_system_requires`
+
+        :returns: Set of variable-length unmet dependency tuples
+        """
+        return {u for d in self.build_system_requires for u in check_dependency(d, project_name=self._project_name)}
+
+    def check_dependencies(
+        self, distribution: str, config_settings: ConfigSettingsType | None = None, finalize: bool = False
+    ) -> set[tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
         :attr:`build_system_requires` and :meth:`get_requires_for_build` for a given
@@ -240,8 +291,19 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: Set of variable-length unmet dependency tuples
         """
-        dependencies = self.get_requires_for_build(distribution, config_settings).union(self.build_system_requires)
-        return {u for d in dependencies for u in check_dependency(d)}
+        if self._project_name is None:
+            self._check_dependencies_incomplete[distribution] = True
+        build_system_dependencies = self.check_build_system_dependencies()
+        requires_for_build = self.get_requires_for_build(distribution, config_settings, finalize=finalize)
+        dependencies = {
+            u for d in requires_for_build for u in check_dependency(d, project_name=self._project_name, backend=self._backend)
+        }
+        return dependencies.union(build_system_dependencies)
+
+    def finalize_check_dependencies(self, distribution: str, config_settings: ConfigSettingsType | None = None) -> None:
+        if self._check_dependencies_incomplete[distribution] and self._project_name is not None:
+            self.check_dependencies(distribution, config_settings, finalize=True)
+        self._check_dependencies_incomplete[distribution] = False
 
     def prepare(
         self, distribution: str, output_directory: PathType, config_settings: ConfigSettingsType | None = None
@@ -286,7 +348,11 @@ class ProjectBuilder:
         """
         self.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
-        return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
+        basename = self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
+        project_name = project_name_from_path(basename, distribution)
+        if project_name:
+            self._update_project_name(project_name, f'build_{distribution}')
+        return basename
 
     def metadata_path(self, output_directory: PathType) -> str:
         """
@@ -301,6 +367,9 @@ class ProjectBuilder:
         # prepare_metadata hook
         metadata = self.prepare('wheel', output_directory)
         if metadata is not None:
+            project_name = project_name_from_path(metadata, 'distinfo')
+            if project_name:
+                self._update_project_name(project_name, 'prepare_metadata_for_build_wheel')
             return metadata
 
         # fallback to build_wheel hook
@@ -308,6 +377,7 @@ class ProjectBuilder:
         match = parse_wheel_filename(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
+        self._update_project_name(match['distribution'], 'build_wheel')
         distinfo = f"{match['distribution']}-{match['version']}.dist-info"
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
@@ -352,6 +422,16 @@ class ProjectBuilder:
         except Exception as exception:
             raise BuildBackendException(exception, exc_info=sys.exc_info())  # noqa: B904 # use raise from
 
+    def _update_project_name(self, name: str, source: str) -> None:
+        if (
+            self._project_name is not None
+            and self._project_name_source is not None
+            and packaging.utils.canonicalize_name(self._project_name) != packaging.utils.canonicalize_name(name)
+        ):
+            raise ProjectNameValidationError(self._project_name, self._project_name_source, name, source)
+        self._project_name = name
+        self._project_name_source = source
+
     @staticmethod
     def log(message: str) -> None:
         """
@@ -373,9 +453,12 @@ __all__ = [
     'BuildSystemTableValidationError',
     'BuildBackendException',
     'BuildException',
+    'CircularBuildDependencyError',
     'ConfigSettingsType',
     'FailedProcessError',
     'ProjectBuilder',
+    'ProjectNameValidationError',
+    'ProjectTableValidationError',
     'RunnerType',
     'TypoWarning',
     'check_dependency',

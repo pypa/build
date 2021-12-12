@@ -131,7 +131,7 @@ def test_build_isolated(mocker, package_test_flit):
     mocker.patch('build.__main__._error')
     install = mocker.patch('build.env.DefaultIsolatedEnv.install')
 
-    build.__main__.build_package(package_test_flit, '.', ['sdist'])
+    build.__main__.build_package(package_test_flit, '.', ['sdist'], skip_dependency_check=True)
 
     install.assert_any_call({'flit_core >=2,<3'})
 
@@ -230,12 +230,14 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
+                '* Getting build dependencies for sdist...',
                 '* Building wheel from sdist',
                 '* Creating venv isolated environment...',
                 '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
                 '* Getting build dependencies for wheel...',
                 '* Installing packages in isolated environment... (wheel)',
                 '* Building wheel...',
+                '* Getting build dependencies for wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
         ),
@@ -258,6 +260,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Getting build dependencies for wheel...',
                 '* Installing packages in isolated environment... (wheel)',
                 '* Building wheel...',
+                '* Getting build dependencies for wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
         ),
