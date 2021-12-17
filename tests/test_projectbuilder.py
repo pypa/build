@@ -570,7 +570,9 @@ def test_log(mocker, caplog, package_test_flit):
         ('INFO', 'something'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert caplog.records[-1].lineno == 562
+        from inspect import currentframe, getframeinfo
+
+        assert caplog.records[-1].lineno == getframeinfo(currentframe()).lineno - 13
 
 
 @pytest.mark.parametrize(
