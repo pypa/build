@@ -92,7 +92,9 @@ class IsolatedEnvBuilder:
 
         :return: The isolated build environment
         """
-        self._path = tempfile.mkdtemp(prefix='build-env-')
+        # ``realpath`` is used to prevent warning from being emitted that
+        # the venv location has moved on Windows.
+        self._path = os.path.realpath(tempfile.mkdtemp(prefix='build-env-'))
         try:
             # use virtualenv when available (as it's faster than venv)
             if _should_use_virtualenv():
