@@ -29,7 +29,7 @@ Unreleased
 0.6.0.post1 (05-08-2021)
 ========================
 
-- Fix compability with Python 3.6 and 3.7 (`PR #339`_, Fixes `#338`_)
+- Fix compatibility with Python 3.6 and 3.7 (`PR #339`_, Fixes `#338`_)
 
 .. _PR #339: https://github.com/pypa/build/pull/339
 .. _#338: https://github.com/pypa/build/issues/338
@@ -40,7 +40,7 @@ Unreleased
 ==================
 
 - Improved output (`PR #333`_, Fixes `#142`_)
-- The CLI now honnors `NO_COLOR`_ (`PR #333`_)
+- The CLI now honors `NO_COLOR`_ (`PR #333`_)
 - The CLI can now be forced to colorize the output by setting the ``FORCE_COLOR`` environment variable (`PR #335`_)
 - Added logging to ``build`` and ``build.env`` (`PR #333`_)
 - Switch to a TOML v1 compliant parser (`PR #336`_, Fixes `#308`_)
@@ -126,7 +126,7 @@ Breaking Changes
 ----------------
 
 - As a side-effect of `PR #260`_, projects not containing either a ``pyproject.toml`` or ``setup.py`` will be reported as invalid. This affects projects specifying only a ``setup.cfg``, such projects are recommended to add a ``pyproject.toml``. The new behavior is on par with what pip currently does, so if you are affected by this, your project should not be pip installable.
-- The ``--skip-depencencies`` option has been renamed to ``--skip-dependency-check`` (`PR #297`_)
+- The ``--skip-dependencies`` option has been renamed to ``--skip-dependency-check`` (`PR #297`_)
 - The ``skip_dependencies`` argument of ``build.__main__.build_package`` has been renamed to ``skip_dependency_check`` (`PR #297`_)
 - ``build.ConfigSettings`` has been renamed to ``build.ConfigSettingsType`` (`PR #298`_)
 - ``build.ProjectBuilder.build_dependencies`` to ``build.ProjectBuilder.build_system_requires`` (`PR #284`_, Fixes `#182`_)
@@ -229,7 +229,7 @@ Breaking changes
 - Added --version/-V option to the CLI
 - Added support for Python 3.9
 - Added py.typed marker
-- Various miscelaneous fixes in the virtual environment creation
+- Various miscellaneous fixes in the virtual environment creation
 - Many general improvements in the documentation
 - Documentation moved to the furo theme
 - Updated the CoC to the PSF CoC, which PyPA has adopted

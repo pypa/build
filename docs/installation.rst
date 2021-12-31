@@ -18,7 +18,7 @@ of the following keys:
 
 .. tip::
    If you prefer, or are already using virtualenv_ in your workflow, you can
-   install ``build`` with the optional ``virtualenv`` depedency:
+   install ``build`` with the optional ``virtualenv`` dependency:
 
    .. code-block:: sh
 
