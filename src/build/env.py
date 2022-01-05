@@ -92,7 +92,12 @@ class IsolatedEnvBuilder:
 
         :return: The isolated build environment
         """
-        self._path = tempfile.mkdtemp(prefix='build-env-')
+        # Call ``realpath`` to prevent spurious warning from being emitted
+        # that the venv location has changed on Windows. The username is
+        # DOS-encoded in the output of tempfile - the location is the same
+        # but the representation of it is different, which confuses venv.
+        # Ref: https://bugs.python.org/issue46171
+        self._path = os.path.realpath(tempfile.mkdtemp(prefix='build-env-'))
         try:
             # use virtualenv when available (as it's faster than venv)
             if _should_use_virtualenv():
