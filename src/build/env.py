@@ -13,14 +13,13 @@ import tempfile
 
 from typing import Dict, Iterable, Iterator, Optional, Sequence, Tuple
 
-from ._compat import Protocol, cache, importlib_metadata, runtime_checkable
+from ._compat import Protocol, cache, importlib_metadata
 from ._helpers import check_dependency, default_runner
 
 
 _logger = logging.getLogger(__name__)
 
 
-@runtime_checkable
 class IsolatedEnv(Protocol):
     """Protocol for isolated build environments."""
 

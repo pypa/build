@@ -1,11 +1,30 @@
 import functools
 import sys
 
+from typing import TYPE_CHECKING
+
+
+class _GenericGetitemMeta(type):
+    # ``__class_getitem__`` was added in 3.7.
+    # TODO: Merge into ``_GenericGetitem`` when we drop support for Python 3.6.
+    def __getitem__(self, value: object) -> None:
+        ...
+
+
+class _GenericGetitem(metaclass=_GenericGetitemMeta):
+    pass
+
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, runtime_checkable
+    from typing import Literal, Protocol
 else:
-    from typing_extensions import Literal, Protocol, runtime_checkable
+    if TYPE_CHECKING:
+        from typing_extensions import Literal, Protocol
+    else:
+        from abc import ABC as Protocol
+
+        Literal = _GenericGetitem
+
 
 if sys.version_info >= (3, 8):
     import importlib.metadata as importlib_metadata
@@ -27,7 +46,6 @@ else:
 __all__ = [
     'Literal',
     'Protocol',
-    'runtime_checkable',
     'importlib_metadata',
     'cache',
 ]
