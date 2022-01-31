@@ -310,9 +310,10 @@ def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
     # But it does not (yet) set the "venv" scheme.
     # If the Apple-custom "osx_framework_library" scheme is available but "venv"
     # is not, we use "posix_prefix" instead which is venv-compatible there.
-    if 'venv' in sysconfig.get_scheme_names():
+    scheme_names = sysconfig.get_scheme_names()
+    if 'venv' in scheme_names:
         paths = sysconfig.get_paths(scheme='venv', vars=config_vars)
-    elif 'osx_framework_library' in sysconfig.get_scheme_names():
+    elif 'osx_framework_library' in scheme_names:
         paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
     else:
         paths = sysconfig.get_paths(vars=config_vars)
