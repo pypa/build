@@ -293,22 +293,21 @@ def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
     """
     config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
     config_vars['base'] = path
-    # Python distributors with custom default installation scheme can set a
-    # scheme that can't be used to expand the paths in a venv.
-    # This can happen if build itself is not installed in a venv.
-    # The distributors are encouraged to set a "venv" scheme to be used for this.
-    # See https://bugs.python.org/issue45413
-    # and https://github.com/pypa/virtualenv/issues/2208
-    #
-    # The Python that ships with the macOS developer tools varies the
-    # default scheme depending on whether the ``sys.prefix`` is part of a framework.
-    # But it does not (yet) set the "venv" scheme.
-    # If the Apple-custom "osx_framework_library" scheme is available but "venv"
-    # is not, we use "posix_prefix" instead which is venv-compatible there.
     scheme_names = sysconfig.get_scheme_names()
     if 'venv' in scheme_names:
+        # Python distributors with custom default installation scheme can set a
+        # scheme that can't be used to expand the paths in a venv.
+        # This can happen if build itself is not installed in a venv.
+        # The distributors are encouraged to set a "venv" scheme to be used for this.
+        # See https://bugs.python.org/issue45413
+        # and https://github.com/pypa/virtualenv/issues/2208
         paths = sysconfig.get_paths(scheme='venv', vars=config_vars)
     elif 'osx_framework_library' in scheme_names:
+        # The Python that ships with the macOS developer tools varies the
+        # default scheme depending on whether the ``sys.prefix`` is part of a framework.
+        # But it does not (yet) set the "venv" scheme.
+        # If the Apple-custom "osx_framework_library" scheme is available but "venv"
+        # is not, we use "posix_prefix" instead which is venv-compatible there.
         paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
     else:
         paths = sysconfig.get_paths(vars=config_vars)
