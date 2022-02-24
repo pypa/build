@@ -74,7 +74,7 @@ def _should_use_virtualenv() -> bool:
 def _subprocess(cmd: List[str]) -> None:
     """Invoke subprocess and output stdout and stderr if it fails."""
     try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         print(e.output.decode(), end='', file=sys.stderr)
         raise e
