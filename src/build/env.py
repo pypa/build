@@ -260,7 +260,12 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
 
     import packaging.version
 
-    venv.EnvBuilder(with_pip=True, symlinks=_fs_supports_symlink()).create(path)
+    simlinks = _fs_supports_symlink()
+    try:
+        venv.EnvBuilder(with_pip=True, symlinks=simlinks).create(path)
+    except subprocess.CalledProcessError as exc:
+        raise build.FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.')
+
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
     # Get the version of pip in the environment

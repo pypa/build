@@ -13,11 +13,11 @@ import textwrap
 import traceback
 import warnings
 
-from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, Type, Union
+from typing import Dict, Iterable, Iterator, List, NoReturn, Optional, Sequence, TextIO, Type, Union
 
 import build
 
-from build import BuildBackendException, BuildException, ConfigSettingsType, PathType, ProjectBuilder
+from build import BuildBackendException, BuildException, ConfigSettingsType, FailedProcessError, PathType, ProjectBuilder
 from build.env import IsolatedEnvBuilder
 
 
@@ -71,7 +71,7 @@ def _setup_cli() -> None:
         colorama.init()  # fix colors on windows
 
 
-def _error(msg: str, code: int = 1) -> None:  # pragma: no cover
+def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     """
     Print an error message and exit. Will color the output when writing to a TTY.
 
@@ -146,23 +146,24 @@ def _build(
 def _handle_build_error() -> Iterator[None]:
     try:
         yield
-    except BuildException as e:
+    except (BuildException, FailedProcessError) as e:
         _error(str(e))
     except BuildBackendException as e:
         if isinstance(e.exception, subprocess.CalledProcessError):
             print()
+            _error(str(e))
+
+        if e.exc_info:
+            tb_lines = traceback.format_exception(
+                e.exc_info[0],
+                e.exc_info[1],
+                e.exc_info[2],
+                limit=-1,
+            )
+            tb = ''.join(tb_lines)
         else:
-            if e.exc_info:
-                tb_lines = traceback.format_exception(
-                    e.exc_info[0],
-                    e.exc_info[1],
-                    e.exc_info[2],
-                    limit=-1,
-                )
-                tb = ''.join(tb_lines)
-            else:
-                tb = traceback.format_exc(-1)
-            print('\n{dim}{}{reset}\n'.format(tb.strip('\n'), **_STYLES))
+            tb = traceback.format_exc(-1)
+        print('\n{dim}{}{reset}\n'.format(tb.strip('\n'), **_STYLES))
         _error(str(e))
 
 
