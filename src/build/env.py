@@ -264,7 +264,7 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     try:
         venv.EnvBuilder(with_pip=True, symlinks=simlinks).create(path)
     except subprocess.CalledProcessError as exc:
-        raise build.FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.')
+        raise build.FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
