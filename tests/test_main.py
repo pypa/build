@@ -5,7 +5,9 @@ import importlib
 import io
 import os
 import re
+import subprocess
 import sys
+import venv
 
 import pytest
 
@@ -399,3 +401,31 @@ def test_colors_conflict(monkeypatch, main_reload_styles):
             importlib.reload(build.__main__)
 
         assert build.__main__._STYLES == build.__main__._NO_COLORS
+
+
+def raise_called_process_err(*args, **kwargs):
+    raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
+
+
+def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
+    monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)
+    monkeypatch.setenv('NO_COLOR', '')
+
+    with pytest.raises(SystemExit):
+        build.__main__.main([package_test_flit, '-o', tmp_dir])
+
+    stdout, stderr = capsys.readouterr()
+
+    assert (
+        stdout
+        == '''\
+* Creating venv isolated environment...
+ERROR Failed to create venv. Maybe try installing virtualenv.
+  Command 'test args' failed with return code 1
+  stdout:
+    stdoutput
+  stderr:
+    stderror
+'''
+    )
+    assert stderr == ''

@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import textwrap
 import types
 import warnings
 import zipfile
@@ -115,13 +116,13 @@ class FailedProcessError(Exception):
         self._description = description
 
     def __str__(self) -> str:
-        description = (
-            f"{self._description}\nCommand '{self.exception.cmd}' failed with return code {self.exception.returncode}"
-        )
-        if self.exception.stdout:
-            description += f'\nstdout:\n{self.exception.stdout}'
-        if self.exception.stderr:
-            description += f'\nstderr:\n{self.exception.stderr}'
+        cmd = ' '.join(self.exception.cmd)
+        description = f"{self._description}\n  Command '{cmd}' failed with return code {self.exception.returncode}"
+        for stream_name in ('stdout', 'stderr'):
+            stream = getattr(self.exception, stream_name)
+            if stream:
+                description += f'\n  {stream_name}:\n'
+                description += textwrap.indent(stream.decode(), '    ')
         return description
 
 
