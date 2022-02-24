@@ -85,8 +85,8 @@ class BuildBackendException(Exception):
         self, exception: Exception, description: Optional[str] = None, exc_info: _ExcInfoType = (None, None, None)
     ) -> None:
         super().__init__()
-        self.exception: Exception = exception
-        self.exc_info: _ExcInfoType = exc_info
+        self.exception = exception
+        self.exc_info = exc_info
         self._description = description
 
     def __str__(self) -> str:
