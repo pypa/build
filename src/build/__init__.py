@@ -104,6 +104,27 @@ class BuildSystemTableValidationError(BuildException):
         return f'Failed to validate `build-system` in pyproject.toml: {self.args[0]}'
 
 
+class FailedProcessError(Exception):
+    """
+    Exception raised when an setup or prepration operation fails.
+    """
+
+    def __init__(self, exception: subprocess.CalledProcessError, description: str) -> None:
+        super().__init__()
+        self.exception = exception
+        self._description = description
+
+    def __str__(self) -> str:
+        description = (
+            f"{self._description}\nCommand '{self.exception.cmd}' failed with return code {self.exception.returncode}"
+        )
+        if self.exception.stdout:
+            description += f'\nstdout:\n{self.exception.stdout}'
+        if self.exception.stderr:
+            description += f'\nstderr:\n{self.exception.stderr}'
+        return description
+
+
 class TypoWarning(Warning):
     """
     Warning raised when a potential typo is found
@@ -481,11 +502,12 @@ class ProjectBuilder:
 
 __all__ = (
     '__version__',
-    'ConfigSettingsType',
-    'RunnerType',
-    'BuildException',
     'BuildBackendException',
+    'BuildException',
+    'ConfigSettingsType',
+    'FailedProcessError',
+    'ProjectBuilder',
+    'RunnerType',
     'TypoWarning',
     'check_dependency',
-    'ProjectBuilder',
 )
