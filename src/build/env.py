@@ -219,7 +219,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
 
 def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
     """
-    On Python 2 we use the virtualenv package to provision a virtual environment.
+    We optionally can use the virtualenv package to provision a virtual environment.
 
     :param path: The path where to create the isolated build environment
     :return: The Python executable and script folder
