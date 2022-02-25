@@ -13,7 +13,7 @@ import textwrap
 import traceback
 import warnings
 
-from typing import Dict, Iterable, Iterator, List, NoReturn, Optional, Sequence, TextIO, Type, Union
+from typing import Dict, Iterator, List, NoReturn, Optional, Sequence, TextIO, Type, Union
 
 import build
 
@@ -251,9 +251,6 @@ def main_parser() -> argparse.ArgumentParser:
     """
     Construct the main parser.
     """
-    # mypy does not recognize module.__path__
-    # https://github.com/python/mypy/issues/1422
-    paths: Iterable[str] = build.__path__  # type: ignore
     parser = argparse.ArgumentParser(
         description=textwrap.indent(
             textwrap.dedent(
@@ -286,7 +283,7 @@ def main_parser() -> argparse.ArgumentParser:
         '--version',
         '-V',
         action='version',
-        version=f"build {build.__version__} ({','.join(paths)})",
+        version=f"build {build.__version__} ({','.join(build.__path__)})",
     )
     parser.add_argument(
         '--sdist',

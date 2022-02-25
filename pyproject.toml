@@ -39,6 +39,9 @@ filterwarnings = [
 ]
 
 [tool.mypy]
+files = "src"
+python_version = "3.6"
+warn_unused_configs = true
 strict = true
 
 [[tool.mypy.overrides]]
