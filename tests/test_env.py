@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 import collections
+import inspect
 import logging
-import os
 import platform
 import shutil
 import subprocess
@@ -103,8 +103,9 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
     caplog.set_level(logging.DEBUG)
 
     builder = build.env.IsolatedEnvBuilder()
+    frameinfo = inspect.getframeinfo(inspect.currentframe())
     builder.log('something')  # line number 106
-    with builder as env:  # line number 107
+    with builder as env:
         env.install(['something'])
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
@@ -113,7 +114,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [106, 107, 198]
+        assert [(record.lineno) for record in caplog.records] == [frameinfo.lineno + 1, 107, 198]
 
 
 @pytest.mark.isolated
@@ -151,8 +152,8 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
 
 
 @pytest.mark.isolated
-@pytest.mark.skipif(IS_PYPY3 and os.name == 'nt', reason='Isolated tests not supported on PyPy3 + Windows')
-@pytest.mark.parametrize('has_symlink', [True, False] if os.name == 'nt' else [True])
+@pytest.mark.skipif(IS_PYPY3 and sys.platform.startswith('win'), reason='Isolated tests not supported on PyPy3 + Windows')
+@pytest.mark.parametrize('has_symlink', [True, False] if sys.platform.startswith('win') else [True])
 def test_venv_symlink(mocker, has_symlink):
     if has_symlink:
         mocker.patch('os.symlink')
