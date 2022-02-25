@@ -66,7 +66,7 @@ def pytest_addoption(parser):
     parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
 
 
-PYPY3_WIN_VENV_BAD = platform.python_implementation() == 'PyPy' and os.name == 'nt'
+PYPY3_WIN_VENV_BAD = platform.python_implementation() == 'PyPy' and sys.platform.startswith('win')
 PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
 
 

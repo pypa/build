@@ -235,7 +235,7 @@ def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
 def _fs_supports_symlink() -> bool:
     """Return True if symlinks are supported"""
     # Using definition used by venv.main()
-    if os.name != 'nt':
+    if not sys.platform.startswith('win'):
         return True
 
     # Windows may support symlinks (setting in Windows 10)
@@ -309,7 +309,7 @@ def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
         paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
     else:
         paths = sysconfig.get_paths(vars=config_vars)
-    executable = os.path.join(paths['scripts'], 'python.exe' if os.name == 'nt' else 'python')
+    executable = os.path.join(paths['scripts'], 'python.exe' if sys.platform.startswith('win') else 'python')
     if not os.path.exists(executable):
         raise RuntimeError(f'Virtual environment creation failed, executable {executable} missing')
 

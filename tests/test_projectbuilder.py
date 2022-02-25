@@ -173,7 +173,7 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
     )
 
     # PermissionError
-    if os.name != 'nt':  # can't correctly set the permissions required for this
+    if not sys.platform.startswith('win'):  # can't correctly set the permissions required for this
         with pytest.raises(build.BuildException):
             build.ProjectBuilder(test_no_permission)
 
