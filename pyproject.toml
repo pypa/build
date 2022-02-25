@@ -31,6 +31,7 @@ junit_family = "xunit2"
 norecursedirs = "tests/integration/*"
 markers = [
   "isolated",
+  "pypy3323bug",
 ]
 filterwarnings = [
   "error",

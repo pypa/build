@@ -5,6 +5,7 @@ import pytest
 import build.util
 
 
+@pytest.mark.pypy3323bug
 @pytest.mark.parametrize('isolated', [False, True])
 def test_wheel_metadata(package_test_setuptools, isolated):
     metadata = build.util.project_wheel_metadata(package_test_setuptools, isolated)
@@ -13,6 +14,7 @@ def test_wheel_metadata(package_test_setuptools, isolated):
     assert metadata['version'] == '1.0.0'
 
 
+@pytest.mark.pypy3323bug
 def test_wheel_metadata_isolation(package_test_flit):
     try:
         import flit_core  # noqa: F401
@@ -33,6 +35,7 @@ def test_wheel_metadata_isolation(package_test_flit):
         build.util.project_wheel_metadata(package_test_flit, isolated=False)
 
 
+@pytest.mark.pypy3323bug
 def test_with_get_requires(package_test_metadata):
     metadata = build.util.project_wheel_metadata(package_test_metadata)
 
