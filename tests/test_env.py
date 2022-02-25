@@ -103,8 +103,8 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
     caplog.set_level(logging.DEBUG)
 
     builder = build.env.IsolatedEnvBuilder()
-    builder.log('something')
-    with builder as env:
+    builder.log('something')  # line number 106
+    with builder as env:  # line number 107
         env.install(['something'])
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
@@ -113,7 +113,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [105, 107, 198]
+        assert [(record.lineno) for record in caplog.records] == [106, 107, 198]
 
 
 @pytest.mark.isolated
