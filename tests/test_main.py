@@ -184,6 +184,7 @@ def test_build_raises_build_backend_exception(mocker, package_test_flit):
         build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
 
+@pytest.mark.pypy3323bug
 def test_build_package(tmp_dir, package_test_setuptools):
     build.__main__.build_package(package_test_setuptools, tmp_dir, ['sdist', 'wheel'])
 
@@ -193,6 +194,7 @@ def test_build_package(tmp_dir, package_test_setuptools):
     ]
 
 
+@pytest.mark.pypy3323bug
 def test_build_package_via_sdist(tmp_dir, package_test_setuptools):
     build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['wheel'])
 
@@ -202,6 +204,7 @@ def test_build_package_via_sdist(tmp_dir, package_test_setuptools):
     ]
 
 
+@pytest.mark.pypy3323bug
 def test_build_package_via_sdist_cant_build(tmp_dir, package_test_cant_build_via_sdist):
     with pytest.raises(build.BuildBackendException):
         build.__main__.build_package_via_sdist(package_test_cant_build_via_sdist, tmp_dir, ['wheel'])
@@ -212,6 +215,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['sdist'])
 
 
+@pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
     ('args', 'output'),
     [
@@ -300,6 +304,7 @@ def main_reload_styles():
         importlib.reload(build.__main__)
 
 
+@pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
     ('color', 'stdout_error', 'stdout_body'),
     [

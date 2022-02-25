@@ -97,6 +97,7 @@ def test_isolated_env_has_install_still_abstract():
         Env()
 
 
+@pytest.mark.pypy3323bug
 def test_isolated_env_log(mocker, caplog, package_test_flit):
     mocker.patch('build.env._subprocess')
     caplog.set_level(logging.DEBUG)
