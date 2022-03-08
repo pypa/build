@@ -37,8 +37,8 @@ This package can build itself with only the ``toml`` and ``pep517``
 dependencies. The ``--skip-dependency-check`` flag should be used in this
 case.
 
-We have a dependency on tomli_, but toml_ can be used instead, which may make
-bootstrapping easier.
+On Python 3.10 and older, we have a dependency on tomli_, but toml_ can be
+used instead, which may make bootstrapping easier.
 
 
 Compatibility
