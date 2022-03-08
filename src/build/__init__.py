@@ -40,10 +40,10 @@ import pep517.wrappers
 TOMLDecodeError: Type[Exception]
 toml_loads: Callable[[str], MutableMapping[str, Any]]
 
-try:
-    from tomllib import TOMLDecodeError  # type: ignore
-    from tomllib import loads as toml_loads  # type: ignore
-except ModuleNotFoundError:
+if sys.version_info >= (3, 11):
+    from tomllib import TOMLDecodeError
+    from tomllib import loads as toml_loads
+else:
     try:
         from tomli import TOMLDecodeError
         from tomli import loads as toml_loads
