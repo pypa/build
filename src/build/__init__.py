@@ -40,13 +40,16 @@ import pep517.wrappers
 TOMLDecodeError: Type[Exception]
 toml_loads: Callable[[str], MutableMapping[str, Any]]
 
-
 try:
-    from tomli import TOMLDecodeError
-    from tomli import loads as toml_loads
-except ModuleNotFoundError:  # pragma: no cover
-    from toml import TomlDecodeError as TOMLDecodeError  # type: ignore
-    from toml import loads as toml_loads  # type: ignore
+    from tomllib import TOMLDecodeError  # type: ignore
+    from tomllib import loads as toml_loads  # type: ignore
+except ModuleNotFoundError:
+    try:
+        from tomli import TOMLDecodeError
+        from tomli import loads as toml_loads
+    except ModuleNotFoundError:  # pragma: no cover
+        from toml import TomlDecodeError as TOMLDecodeError  # type: ignore
+        from toml import loads as toml_loads  # type: ignore
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
