@@ -18,7 +18,7 @@ repos:
   - id: trailing-whitespace
   - id: double-quote-string-fixer
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.31.0
+  rev: v2.31.1
   hooks:
   - id: pyupgrade
     args: ["--py36-plus"]
