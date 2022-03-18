@@ -62,9 +62,9 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
 def test_executable_missing_post_creation(mocker):
     original_get_paths = sysconfig.get_paths
 
-    def _get_paths(vars):  # noqa
-        shutil.rmtree(vars['base'])
-        return original_get_paths(vars=vars)
+    def _get_paths(*args, **kwargs):  # noqa
+        shutil.rmtree(kwargs['vars']['base'])
+        return original_get_paths(*args, **kwargs)
 
     get_paths = mocker.patch('sysconfig.get_paths', side_effect=_get_paths)
     with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
