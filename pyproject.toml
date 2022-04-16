@@ -25,7 +25,9 @@ build = [
 show_contexts = true
 
 [tool.pytest.ini_options]
+minversion = "6.0"
 addopts = ["--strict-config", "--strict-markers"]
+testpaths = ["tests"]
 xfail_strict = true
 junit_family = "xunit2"
 norecursedirs = "tests/integration/*"
