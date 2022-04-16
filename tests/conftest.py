@@ -4,58 +4,13 @@ import os
 import os.path
 import shutil
 import stat
-import subprocess
 import sys
 import sysconfig
 import tempfile
 
 import pytest
 
-from filelock import FileLock
-
 import build.env
-
-
-def _build_and_reinstall_build(test_mode):
-    temp = tempfile.mkdtemp()
-    try:
-        subprocess.check_output(
-            [sys.executable, '-m', 'build', f'--{test_mode}', '--no-isolation', '--outdir', temp],
-        )
-        dist_file = next(d for d in os.listdir(temp) if d.endswith('.whl' if test_mode == 'wheel' else '.tar.gz'))
-        subprocess.check_call(
-            [
-                sys.executable,
-                '-m',
-                'pip',
-                'install',
-                '--upgrade',  # ``--upgrade`` will uninstall build prior to installing the ``dist_file``
-                os.path.join(temp, dist_file),
-            ],
-        )
-    finally:
-        shutil.rmtree(temp)
-
-
-def _one_time_setup():
-    test_mode = os.environ.get('TEST_MODE')
-    if not test_mode:
-        return
-
-    if test_mode == 'path':
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        sys.path.insert(0, os.path.join(project_root, 'src'))
-    elif test_mode in {'sdist', 'wheel'}:
-        status_marker_file = os.path.join(os.environ['TEST_STATUS_DIR'], 'status-marker')
-        with FileLock(status_marker_file + '.lock'):
-            if not os.path.exists(status_marker_file):
-                _build_and_reinstall_build(test_mode)
-
-                with open(status_marker_file, 'wb'):
-                    pass
-
-
-_one_time_setup()
 
 
 def pytest_addoption(parser):
