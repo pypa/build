@@ -60,13 +60,12 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
 
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
-    original_get_paths = sysconfig.get_paths
-
     def _get_paths(*args, **kwargs):  # noqa
-        shutil.rmtree(kwargs['vars']['base'])
-        return original_get_paths(*args, **kwargs)
+        bound = inspect.signature(sysconfig.get_paths).bind(*args, **kwargs)
+        shutil.rmtree(bound.arguments['vars']['base'], ignore_errors=True)
+        return sysconfig.get_paths(*args, **kwargs)
 
-    get_paths = mocker.patch('sysconfig.get_paths', side_effect=_get_paths)
+    get_paths = mocker.patch('build.env._sysconfig_get_paths', side_effect=_get_paths)
     with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
         with build.env.IsolatedEnvBuilder():
             pass
