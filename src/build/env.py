@@ -289,6 +289,7 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     return executable, script_dir
 
 
+# Alias is used for mocking in tests
 _sysconfig_get_paths = sysconfig.get_paths
 
 

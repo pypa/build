@@ -58,7 +58,6 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
     assert get_scheme_names.call_count == 1
 
 
-@pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 def test_executable_missing_post_creation(mocker):
     def _get_paths(*args, **kwargs):  # noqa
         bound = inspect.signature(sysconfig.get_paths).bind(*args, **kwargs)
