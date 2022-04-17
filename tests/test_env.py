@@ -3,10 +3,8 @@ import collections
 import inspect
 import logging
 import platform
-import shutil
 import subprocess
 import sys
-import sysconfig
 
 import pytest
 
