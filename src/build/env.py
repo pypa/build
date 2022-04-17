@@ -289,10 +289,6 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     return executable, script_dir
 
 
-# Alias is used for mocking in tests
-_sysconfig_get_paths = sysconfig.get_paths
-
-
 def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
     """
     Detect the Python executable and script folder of a virtual environment.
@@ -310,16 +306,16 @@ def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
         # The distributors are encouraged to set a "venv" scheme to be used for this.
         # See https://bugs.python.org/issue45413
         # and https://github.com/pypa/virtualenv/issues/2208
-        paths = _sysconfig_get_paths(scheme='venv', vars=config_vars)
+        paths = sysconfig.get_paths(scheme='venv', vars=config_vars)
     elif 'osx_framework_library' in scheme_names:
         # The Python that ships with the macOS developer tools varies the
         # default scheme depending on whether the ``sys.prefix`` is part of a framework.
         # But it does not (yet) set the "venv" scheme.
         # If the Apple-custom "osx_framework_library" scheme is available but "venv"
         # is not, we use "posix_prefix" instead which is venv-compatible there.
-        paths = _sysconfig_get_paths(scheme='posix_prefix', vars=config_vars)
+        paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
     else:
-        paths = _sysconfig_get_paths(vars=config_vars)
+        paths = sysconfig.get_paths(vars=config_vars)
     executable = os.path.join(paths['scripts'], 'python.exe' if sys.platform.startswith('win') else 'python')
     if not os.path.exists(executable):
         raise RuntimeError(f'Virtual environment creation failed, executable {executable} missing')
