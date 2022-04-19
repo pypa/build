@@ -41,8 +41,10 @@ filterwarnings = [
 [tool.mypy]
 files = "src"
 python_version = "3.6"
-warn_unused_configs = true
 strict = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
+
 
 [[tool.mypy.overrides]]
 module = [

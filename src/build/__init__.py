@@ -48,8 +48,8 @@ else:
         from tomli import TOMLDecodeError
         from tomli import loads as toml_loads
     except ModuleNotFoundError:  # pragma: no cover
-        from toml import TomlDecodeError as TOMLDecodeError  # type: ignore
-        from toml import loads as toml_loads  # type: ignore
+        from toml import TomlDecodeError as TOMLDecodeError  # type: ignore[import,no-redef]
+        from toml import loads as toml_loads  # type: ignore[no-redef]
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
