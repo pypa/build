@@ -5,6 +5,7 @@ import logging
 import platform
 import subprocess
 import sys
+import sysconfig
 
 import pytest
 
@@ -54,6 +55,17 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
     with build.env.IsolatedEnvBuilder():
         pass
     assert get_scheme_names.call_count == 1
+
+
+@pytest.mark.skipif('posix_local' not in sysconfig.get_scheme_names(), reason='workaround for Debian/Ubuntu Python')
+def test_can_get_venv_paths_with_posix_local_default_scheme(mocker):
+    get_paths = mocker.spy(sysconfig, 'get_paths')
+    # We should never call this, but we patch it to ensure failure if we do
+    get_default_scheme = mocker.patch('sysconfig.get_default_scheme', return_value='posix_local')
+    with build.env.IsolatedEnvBuilder():
+        pass
+    get_paths.assert_called_once_with(scheme='posix_prefix', vars=mocker.ANY)
+    assert get_default_scheme.call_count == 0
 
 
 def test_executable_missing_post_creation(mocker):
