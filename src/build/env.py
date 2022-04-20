@@ -307,6 +307,13 @@ def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
         # See https://bugs.python.org/issue45413
         # and https://github.com/pypa/virtualenv/issues/2208
         paths = sysconfig.get_paths(scheme='venv', vars=config_vars)
+    elif 'posix_local' in scheme_names:
+        # The Python that ships on Debian/Ubuntu varies the default scheme to
+        # install to /usr/local
+        # But it does not (yet) set the "venv" scheme.
+        # If we're the Debian "posix_local" scheme is available, but "venv"
+        # is not, we use "posix_prefix" instead which is venv-compatible there.
+        paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
     elif 'osx_framework_library' in scheme_names:
         # The Python that ships with the macOS developer tools varies the
         # default scheme depending on whether the ``sys.prefix`` is part of a framework.
