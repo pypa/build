@@ -2,7 +2,6 @@
 
 import os
 import os.path
-import platform
 import shutil
 import stat
 import subprocess
@@ -66,7 +65,9 @@ def pytest_addoption(parser):
     parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
 
 
-PYPY3_WIN_VENV_BAD = platform.python_implementation() == 'PyPy' and sys.platform.startswith('win')
+PYPY3_WIN_VENV_BAD = (
+    sys.implementation.name == 'pypy' and sys.implementation.version < (7, 3, 9) and sys.platform.startswith('win')
+)
 PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
 
 
