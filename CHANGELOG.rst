@@ -12,10 +12,23 @@ Unreleased
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
 
+- Better support for Python 3.11 (sysconfig schemes `PR #434`_,  `PR #463`_, tomllib `PR #443`_, warnings `PR #420`_)
+
+- Improved error printouts (`PR #442`_)
+
+- Avoid importing packaging unless needed (`PR #395`_, Fixes `#393`_)
+
 .. _PR #365: https://github.com/pypa/build/pull/365
 .. _PR #392: https://github.com/pypa/build/pull/392
+.. _PR #395: https://github.com/pypa/build/pull/395
+.. _PR #420: https://github.com/pypa/build/pull/420
+.. _PR #434: https://github.com/pypa/build/pull/434
+.. _PR #442: https://github.com/pypa/build/pull/442
+.. _PR #443: https://github.com/pypa/build/pull/443
+.. _PR #463: https://github.com/pypa/build/pull/463
 .. _#364: https://github.com/pypa/build/issues/364
 .. _#372: https://github.com/pypa/build/issues/372
+.. _#393: https://github.com/pypa/build/pull/393
 
 
 0.7.0 (16-09-2021)
