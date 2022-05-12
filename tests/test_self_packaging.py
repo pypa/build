@@ -18,17 +18,6 @@ sdist_files = {
     'PKG-INFO',
     'README.md',
     'pyproject.toml',
-    'setup.cfg',
-    'setup.py',
-    'src',
-    'src/build',
-    'src/build.egg-info',
-    'src/build.egg-info/PKG-INFO',
-    'src/build.egg-info/SOURCES.txt',
-    'src/build.egg-info/dependency_links.txt',
-    'src/build.egg-info/entry_points.txt',
-    'src/build.egg-info/requires.txt',
-    'src/build.egg-info/top_level.txt',
     'src/build/__init__.py',
     'src/build/__main__.py',
     'src/build/env.py',
@@ -47,7 +36,6 @@ wheel_files = {
     'dist-info/RECORD',
     'dist-info/WHEEL',
     'dist-info/entry_points.txt',
-    'dist-info/top_level.txt',
 }
 
 
@@ -70,7 +58,7 @@ def test_build_sdist(monkeypatch, tmpdir):
     (sdist,) = tmpdir.visit('*.tar.gz')
 
     with tarfile.open(str(sdist), 'r:gz') as tar:
-        simpler = {n.split('/', 1)[-1] for n in tar.getnames()[1:]}
+        simpler = {n.split('/', 1)[-1] for n in tar.getnames()}
 
     assert simpler == sdist_files
 

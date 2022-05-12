@@ -93,8 +93,8 @@ def get_project(name, tmp_path):
 )
 @pytest.mark.isolated
 def test_build(monkeypatch, project, args, call, tmp_path):
-    if project == 'flit' and '--no-isolation' in args:
-        pytest.xfail("can't build flit without isolation due to missing dependencies")
+    if project in {'build', 'flit'} and '--no-isolation' in args:
+        pytest.xfail(f"can't build {project} without isolation due to missing dependencies")
     if project == 'Solaar' and IS_WINDOWS and IS_PYPY3:
         pytest.xfail('Solaar fails building wheels via sdists on Windows on PyPy 3')
 
