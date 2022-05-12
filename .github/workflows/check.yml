@@ -29,5 +29,5 @@ jobs:
       - name: Setup run environment
         run: tox -vv --notest -e docs
 
-      - name: Run check for type
+      - name: Run check for docs
         run: tox -e docs --skip-pkg-install

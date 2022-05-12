@@ -3,6 +3,7 @@
 """
 build - A simple, correct PEP 517 build frontend
 """
+
 __version__ = '0.7.0'
 
 import contextlib
@@ -24,6 +25,7 @@ from typing import (
     Callable,
     Dict,
     Iterator,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -71,18 +73,18 @@ _DEFAULT_BACKEND = {
 }
 
 
-_logger = logging.getLogger('build')
+_logger = logging.getLogger(__name__)
 
 
 class BuildException(Exception):
     """
-    Exception raised by ProjectBuilder
+    Exception raised by :class:`ProjectBuilder`
     """
 
 
 class BuildBackendException(Exception):
     """
-    Exception raised when the backend fails
+    Exception raised when a backend operation fails
     """
 
     def __init__(
@@ -131,7 +133,7 @@ class FailedProcessError(Exception):
 
 class TypoWarning(Warning):
     """
-    Warning raised when a potential typo is found
+    Warning raised when a possible typo is found
     """
 
 
@@ -428,12 +430,13 @@ class ProjectBuilder:
 
     def metadata_path(self, output_directory: PathType) -> str:
         """
-        Generates the metadata directory of a distribution and returns its path.
+        Generate the metadata directory of a distribution and return its path.
 
         If the backend does not support the ``prepare_metadata_for_build_wheel``
-        hook, a wheel will be built and the metadata extracted.
+        hook, a wheel will be built and the metadata will be extracted from it.
 
         :param output_directory: Directory to put the metadata distribution in
+        :returns: The path of the metadata directory
         """
         # prepare_metadata hook
         metadata = self.prepare('wheel', output_directory)
@@ -491,12 +494,12 @@ class ProjectBuilder:
     @staticmethod
     def log(message: str) -> None:
         """
-        Prints message
+        Log a message.
 
         The default implementation uses the logging module but this function can be
-        overwritten by users to have a different implementation.
+        overridden by users to have a different implementation.
 
-        :param msg: Message to output
+        :param message: Message to output
         """
         if sys.version_info >= (3, 8):
             _logger.log(logging.INFO, message, stacklevel=2)
@@ -504,7 +507,7 @@ class ProjectBuilder:
             _logger.log(logging.INFO, message)
 
 
-__all__ = (
+__all__ = [
     '__version__',
     'BuildBackendException',
     'BuildException',
@@ -514,4 +517,8 @@ __all__ = (
     'RunnerType',
     'TypoWarning',
     'check_dependency',
-)
+]
+
+
+def __dir__() -> List[str]:
+    return __all__
