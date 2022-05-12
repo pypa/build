@@ -79,7 +79,7 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     :param code: Error code
     """
     print('{red}ERROR{reset} {}'.format(msg, **_STYLES))
-    exit(code)
+    raise SystemExit(code)
 
 
 class _ProjectBuilder(ProjectBuilder):
