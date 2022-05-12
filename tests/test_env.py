@@ -82,7 +82,7 @@ def test_isolated_env_abstract():
 
 
 def test_isolated_env_has_executable_still_abstract():
-    class Env(build.env.IsolatedEnv):  # noqa
+    class Env(build.env.IsolatedEnv):
         @property
         def executable(self):
             raise NotImplementedError
@@ -92,7 +92,7 @@ def test_isolated_env_has_executable_still_abstract():
 
 
 def test_isolated_env_has_install_still_abstract():
-    class Env(build.env.IsolatedEnv):  # noqa
+    class Env(build.env.IsolatedEnv):
         def install(self, requirements):
             raise NotImplementedError
 
