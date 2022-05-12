@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Change build backend from ``setuptools`` to ``flit``
+  (`PR #470`_, Fixes `#394`_)
+
+.. _PR #470: https://github.com/pypa/build/pull/470
+.. _#394: https://github.com/pypa/build/issues/394
+
+
 0.9.0 (2022-10-27)
 ==================
 
