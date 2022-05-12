@@ -50,10 +50,10 @@ jobs:
           - { py: '3.11-dev', os: windows }
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup python for test ${{ matrix.py }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.py }}
 
@@ -74,7 +74,7 @@ jobs:
         shell: python
 
       - name: Setup python for tox
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.9
 
@@ -116,10 +116,10 @@ jobs:
       PY_COLORS: 1
       TOX_PARALLEL_NO_SPINNER: 1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.9
 
