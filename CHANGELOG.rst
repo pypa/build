@@ -31,7 +31,7 @@ Unreleased
 .. _#393: https://github.com/pypa/build/pull/393
 
 
-0.7.0 (16-09-2021)
+0.7.0 (2021-09-16)
 ==================
 
 - Add ``build.util`` module with an high-level utility API (`PR #340`_)
@@ -39,7 +39,7 @@ Unreleased
 .. _PR #340: https://github.com/pypa/build/pull/340
 
 
-0.6.0.post1 (05-08-2021)
+0.6.0.post1 (2021-08-05)
 ========================
 
 - Fix compatibility with Python 3.6 and 3.7 (`PR #339`_, Fixes `#338`_)
@@ -49,7 +49,7 @@ Unreleased
 
 
 
-0.6.0 (02-08-2021)
+0.6.0 (2021-08-02)
 ==================
 
 - Improved output (`PR #333`_, Fixes `#142`_)
@@ -73,7 +73,7 @@ Breaking Changes
 
 
 
-0.5.1 (22-06-2021)
+0.5.1 (2021-06-22)
 ==================
 
 - Fix invoking the backend on an inexistent output directory with multiple levels (`PR #318`_, Fixes `#316`_)
@@ -86,7 +86,7 @@ Breaking Changes
 
 
 
-0.5.0 (19-06-2021)
+0.5.0 (2021-06-19)
 ==================
 
 - Add ``ProjectBuilder.metadata_path`` helper (`PR #303`_, Fixes `#301`_)
@@ -111,7 +111,7 @@ Breaking Changes
 
 
 
-0.4.0 (23-05-2021)
+0.4.0 (2021-05-23)
 ==================
 
 - Validate that the supplied source directory is valid (`PR #260`_, Fixes `#259`_)
@@ -152,7 +152,7 @@ Breaking Changes
 
 
 
-0.3.1 (09-03-2021)
+0.3.1 (2021-03-09)
 ==================
 
 - Support direct usage from pipx run in 0.16.1.0+ (`PR #247`_)
@@ -164,7 +164,7 @@ Breaking Changes
 
 
 
-0.3.0 (19-02-2021)
+0.3.0 (2021-02-19)
 ==================
 
 - Upgrade pip based on venv pip version, avoids error on Debian Python 3.6.5-3.8 or issues installing wheels on Big Sur (`PR #229`_, `PR #230`_, Fixes `#228`_)
@@ -183,7 +183,7 @@ Breaking Changes
 
 
 
-0.2.1 (09-02-2021)
+0.2.1 (2021-02-09)
 ==================
 
 - Fix error from unrecognised pip flag on Python 3.6.0 to 3.6.5 (`PR #227`_, Fixes `#226`_)
@@ -193,7 +193,7 @@ Breaking Changes
 
 
 
-0.2.0 (07-02-2021)
+0.2.0 (2021-02-07)
 ==================
 
 - Check dependencies recursively (`PR #183`_, Fixes `#25`_)
@@ -231,7 +231,7 @@ Breaking changes
 
 
 
-0.1.0 (29-10-2020)
+0.1.0 (2020-10-29)
 ==================
 
 - Moved the upstream to PyPA
@@ -259,7 +259,7 @@ Breaking changes
 
 
 
-0.0.4 (08-09-2020)
+0.0.4 (2020-09-08)
 ==================
 
 - Packages are now built in isolation by default
@@ -275,7 +275,7 @@ Breaking changes
 
 
 
-0.0.3.1 (10-06-2020)
+0.0.3.1 (2020-06-10)
 ====================
 
 - Fix bug preventing the CLI from being invoked
@@ -283,7 +283,7 @@ Breaking changes
 
 
 
-0.0.3 (09-06-2020)
+0.0.3 (2020-06-09)
 ==================
 
 - Misc improvements
@@ -291,7 +291,7 @@ Breaking changes
 
 
 
-0.0.2 (29-05-2020)
+0.0.2 (2020-05-29)
 ==================
 
 - Add setuptools as a default fallback backend
@@ -299,7 +299,7 @@ Breaking changes
 
 
 
-0.0.1 (17-05-2020)
+0.0.1 (2020-05-17)
 ==================
 
 - Initial release
