@@ -4,14 +4,14 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
-      - '*.md'
+      - "docs/**"
+      - "*.md"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
-      - '*.md'
+      - "docs/**"
+      - "*.md"
   schedule:
     - cron: "0 8 * * *"
   workflow_dispatch:
@@ -33,21 +33,21 @@ jobs:
           - macos
           - windows
         py:
-          - 'pypy-3.7'
-          - 'pypy-3.8'
-          - 'pypy-3.9'
-          - '3.11-dev'
-          - '3.10'
-          - '3.9'
-          - '3.8'
-          - '3.7'
-          - '3.6'
+          - "pypy-3.7"
+          - "pypy-3.8"
+          - "pypy-3.9"
+          - "3.11-dev"
+          - "3.10"
+          - "3.9"
+          - "3.8"
+          - "3.7"
+          - "3.6"
         tox-target:
-          - 'tox'
-          - 'min'
+          - "tox"
+          - "min"
         exclude:
-          - { py: '3.11-dev', os: macos }
-          - { py: '3.11-dev', os: windows }
+          - { py: "3.11-dev", os: macos }
+          - { py: "3.11-dev", os: windows }
 
     steps:
       - uses: actions/checkout@v3
