@@ -43,6 +43,12 @@ class IsolatedEnv(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
+    def path(self) -> str:
+        """The base path of the isolated build environment."""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
     def scripts_dir(self) -> str:
         """The scripts directory of the isolated build environment."""
         raise NotImplementedError
