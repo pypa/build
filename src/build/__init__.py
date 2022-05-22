@@ -4,7 +4,7 @@
 build - A simple, correct PEP 517 build frontend
 """
 
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 
 import contextlib
 import difflib

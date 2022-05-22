@@ -3,20 +3,23 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.8.0 (2021-05-22)
+==================
 
 - Accept ``os.PathLike[str]`` in addition to ``str`` for paths in public
   API (`PR #392`_, Fixes `#372`_)
-
 - Add schema validation for ``build-system`` table to check conformity
   with PEP 517 and PEP 518 (`PR #365`_, Fixes `#364`_)
-
 - Better support for Python 3.11 (sysconfig schemes `PR #434`_,  `PR #463`_, tomllib `PR #443`_, warnings `PR #420`_)
-
 - Improved error printouts (`PR #442`_)
-
 - Avoid importing packaging unless needed (`PR #395`_, Fixes `#393`_)
+
+
+Breaking Changes
+----------------
+
+- Failure to create a virtual environment in the ``build.env`` module now raises
+  ``build.FailedProcessError`` (`PR #442`_)
 
 .. _PR #365: https://github.com/pypa/build/pull/365
 .. _PR #392: https://github.com/pypa/build/pull/392
