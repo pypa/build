@@ -3,7 +3,7 @@ Changelog
 +++++++++
 
 
-0.8.0 (2021-05-22)
+0.8.0 (2022-05-22)
 ==================
 
 - Accept ``os.PathLike[str]`` in addition to ``str`` for paths in public
