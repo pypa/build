@@ -279,7 +279,7 @@ class ProjectBuilder:
         The default runner simply calls the backend hooks in a subprocess, writing backend output
         to stdout/stderr.
         """
-        self.srcdir: str = os.path.abspath(srcdir)
+        self._srcdir: str = os.path.abspath(srcdir)
         _validate_source_directory(srcdir)
 
         spec_file = os.path.join(srcdir, 'pyproject.toml')
@@ -318,6 +318,11 @@ class ProjectBuilder:
             extra_environ = {} if extra_environ is None else dict(extra_environ)
             extra_environ['PATH'] = os.pathsep.join(paths)
         self._hook_runner(cmd, cwd, extra_environ)
+
+    @property
+    def srcdir(self) -> str:
+        """Project source directory."""
+        return self._srcdir
 
     @property
     def python_executable(self) -> str:
