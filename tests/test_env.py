@@ -117,7 +117,11 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [frameinfo.lineno + 1, 107, 198]
+        assert [(record.lineno) for record in caplog.records] == [
+            frameinfo.lineno + 1,
+            frameinfo.lineno - 7,
+            frameinfo.lineno + 84,
+        ]
 
 
 @pytest.mark.isolated
@@ -140,7 +144,7 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     mocker.patch('platform.machine', return_value=arch)
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
     metadata_name = 'importlib_metadata' if sys.version_info < (3, 8) else 'importlib.metadata'
-    mocker.patch(metadata_name+'.distributions', return_value=(SimpleNamespace(version=pip_version),))
+    mocker.patch(metadata_name + '.distributions', return_value=(SimpleNamespace(version=pip_version),))
 
     min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
     with build.env.IsolatedEnvBuilder():
