@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup python for test ${{ matrix.py }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
 
@@ -74,7 +74,7 @@ jobs:
         shell: python
 
       - name: Setup python for tox
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
@@ -119,7 +119,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup Python 3.9
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
