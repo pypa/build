@@ -4,6 +4,7 @@
 import argparse
 import contextlib
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -60,12 +61,14 @@ def _showwarning(
 def _setup_cli() -> None:
     warnings.showwarning = _showwarning
 
-    try:
-        import colorama
-    except ModuleNotFoundError:
-        pass
-    else:
-        colorama.init()  # fix colors on windows
+    if platform.system() == 'Windows':
+        # try to enable colors
+        try:
+            import colorama
+
+            colorama.init()
+        except ModuleNotFoundError:
+            pass
 
 
 def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
