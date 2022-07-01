@@ -47,8 +47,8 @@ def _init_colors() -> Dict[str, str]:
 _STYLES = _init_colors()
 
 
-def _cprint(msg):
-    print(msg.format(**_STYLES), flush=True)
+def _cprint(fmt='', msg=''):
+    print(fmt.format(msg, **_STYLES), flush=True)
 
 
 def _showwarning(
@@ -59,7 +59,7 @@ def _showwarning(
     file: Optional[TextIO] = None,
     line: Optional[str] = None,
 ) -> None:  # pragma: no cover
-    _cprint('{yellow}WARNING{reset} ' + message)
+    _cprint('{yellow}WARNING{reset} {}', message)
 
 
 def _setup_cli() -> None:
@@ -81,20 +81,20 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     :param msg: Error message
     :param code: Error code
     """
-    _cprint('{red}ERROR{reset} ' + msg)
+    _cprint('{red}ERROR{reset} {}', msg)
     raise SystemExit(code)
 
 
 class _ProjectBuilder(ProjectBuilder):
     @staticmethod
     def log(message: str) -> None:
-        _cprint('{bold}* ' + message + '{reset}')
+        _cprint('{bold}* {}{reset}', message)
 
 
 class _IsolatedEnvBuilder(IsolatedEnvBuilder):
     @staticmethod
     def log(message: str) -> None:
-        _cprint('{bold}* ' + message + '{reset}')
+        _cprint('{bold}* {}{reset}', message)
 
 
 def _format_dep_chain(dep_chain: Sequence[str]) -> str:
@@ -125,7 +125,7 @@ def _build_in_current_env(
         missing = builder.check_dependencies(distribution)
         if missing:
             dependencies = ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
-            _cprint('')
+            _cprint()
             _error(f'Missing dependencies:{dependencies}')
 
     return builder.build(distribution, outdir, config_settings or {})
@@ -153,7 +153,7 @@ def _handle_build_error() -> Iterator[None]:
         _error(str(e))
     except BuildBackendException as e:
         if isinstance(e.exception, subprocess.CalledProcessError):
-            _cprint('')
+            _cprint()
             _error(str(e))
 
         if e.exc_info:
@@ -166,7 +166,7 @@ def _handle_build_error() -> Iterator[None]:
             tb = ''.join(tb_lines)
         else:
             tb = traceback.format_exc(-1)
-        _cprint('\n{dim}' + tb.strip('\n') + '{reset}\n')
+        _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _error(str(e))
 
 
@@ -376,10 +376,10 @@ def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: 
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
             )
-            _cprint('{bold}{green}Successfully built ' + artifact_list + '{reset}')
+            _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
     except Exception as e:  # pragma: no cover
         tb = traceback.format_exc().strip('\n')
-        _cprint('\n{dim}' + tb + '{reset}\n')
+        _cprint('\n{dim}{}{reset}\n', tb)
         _error(str(e))
 
 
