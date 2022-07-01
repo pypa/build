@@ -48,7 +48,7 @@ _STYLES = _init_colors()
 
 
 def cprint(msg):
-    print('{red}ERROR{reset} {}'.format(msg, **_STYLES), flush=True)
+    print(msg.format(**_STYLES), flush=True)
 
 
 def _showwarning(
