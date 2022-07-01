@@ -47,7 +47,7 @@ def _init_colors() -> Dict[str, str]:
 _STYLES = _init_colors()
 
 
-def _cprint(fmt='', msg=''):
+def _cprint(fmt: str = '', msg: str = '') -> None:
     print(fmt.format(msg, **_STYLES), flush=True)
 
 
@@ -59,7 +59,7 @@ def _showwarning(
     file: Optional[TextIO] = None,
     line: Optional[str] = None,
 ) -> None:  # pragma: no cover
-    _cprint('{yellow}WARNING{reset} {}', message)
+    _cprint('{yellow}WARNING{reset} {}', str(message))
 
 
 def _setup_cli() -> None:
