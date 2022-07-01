@@ -63,12 +63,9 @@ def _setup_cli() -> None:
 
     if platform.system() == 'Windows':
         # try to enable colors
-        try:
-            import colorama
+        import colorama
 
-            colorama.init()
-        except ModuleNotFoundError:
-            pass
+        colorama.init()
 
 
 def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
