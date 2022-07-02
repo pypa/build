@@ -91,6 +91,10 @@ jobs:
         if: matrix.tox-target == 'min'
         run: tox -e ${{env.BASE}}-${{ matrix.tox-target }}
 
+      - name: Run path test
+        if: matrix.tox-target == 'tox' && matrix.py == '3.10'
+        run: tox -e path
+
       - name: Rename coverage report file
         if: matrix.tox-target == 'tox'
         run: mv ".tox/coverage.${BASE}.xml" .tox/coverage.xml
@@ -105,10 +109,6 @@ jobs:
           flags: tests
           env_vars: PYTHON
           name: ${{ matrix.py }} - ${{ matrix.os }}
-
-      - name: Run path test
-        if: matrix.tox-target == 'tox' && matrix.py == '3.10'
-        run: tox -e path
 
   type:
     runs-on: ubuntu-latest
