@@ -290,9 +290,9 @@ class ProjectBuilder:
         except FileNotFoundError:
             spec = {}
         except PermissionError as e:
-            raise BuildException(f"{e.strerror}: '{e.filename}' ")
+            raise BuildException(f"{e.strerror}: '{e.filename}' ")  # noqa: B904 # use raise from
         except TOMLDecodeError as e:
-            raise BuildException(f'Failed to parse {spec_file}: {e} ')
+            raise BuildException(f'Failed to parse {spec_file}: {e} ')  # noqa: B904 # use raise from
 
         self._build_system = _parse_build_system_table(spec)
         self._backend = self._build_system['build-backend']
@@ -486,15 +486,17 @@ class ProjectBuilder:
             try:
                 yield
             except pep517.wrappers.BackendUnavailable as exception:
-                raise BuildBackendException(
+                raise BuildBackendException(  # noqa: B904 # use raise from
                     exception,
                     f"Backend '{self._backend}' is not available.",
                     sys.exc_info(),
                 )
             except subprocess.CalledProcessError as exception:
-                raise BuildBackendException(exception, f'Backend subprocess exited when trying to invoke {hook}')
+                raise BuildBackendException(  # noqa: B904 # use raise from
+                    exception, f'Backend subprocess exited when trying to invoke {hook}'
+                )
             except Exception as exception:
-                raise BuildBackendException(exception, exc_info=sys.exc_info())
+                raise BuildBackendException(exception, exc_info=sys.exc_info())  # noqa: B904 # use raise from
 
     @staticmethod
     def log(message: str) -> None:
