@@ -133,24 +133,24 @@ Requires-Dist: circular_dep
         ('extras_dep[extra_without_associated_deps]', None),
         (
             'extras_dep[extra_with_unmet_deps]',
-            ('extras_dep[extra_with_unmet_deps]', "unmet_dep; extra == 'extra_with_unmet_deps'"),
+            ('extras_dep[extra_with_unmet_deps]', 'unmet_dep; extra == "extra_with_unmet_deps"'),
         ),
         (
             'extras_dep[recursive_extra_with_unmet_deps]',
             (
                 'extras_dep[recursive_extra_with_unmet_deps]',
-                "recursive_dep; extra == 'recursive_extra_with_unmet_deps'",
+                'recursive_dep; extra == "recursive_extra_with_unmet_deps"',
                 'recursive_unmet_dep',
             ),
         ),
         ('extras_dep[extra_with_met_deps]', None),
         ('missing_dep; python_version>"10"', None),
         ('missing_dep; python_version<="1"', None),
-        ('missing_dep; python_version>="1"', ('missing_dep; python_version>="1"',)),
+        ('missing_dep; python_version>="1"', ('missing_dep; python_version >= "1"',)),
         ('extras_dep == 1.0.0', None),
-        ('extras_dep == 2.0.0', ('extras_dep == 2.0.0',)),
+        ('extras_dep == 2.0.0', ('extras_dep==2.0.0',)),
         ('extras_dep[extra_without_associated_deps] == 1.0.0', None),
-        ('extras_dep[extra_without_associated_deps] == 2.0.0', ('extras_dep[extra_without_associated_deps] == 2.0.0',)),
+        ('extras_dep[extra_without_associated_deps] == 2.0.0', ('extras_dep[extra_without_associated_deps]==2.0.0',)),
         ('prerelease_dep >= 1.0.0', None),
         ('circular_dep', None),
     ],
@@ -259,12 +259,12 @@ def test_check_dependencies(mocker, package_test_flit):
     builder._hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
-    assert builder.check_dependencies('sdist') == {('flit_core >=2,<3',)}
-    assert builder.check_dependencies('wheel') == {('flit_core >=2,<3',)}
+    assert builder.check_dependencies('sdist') == {('flit_core<3,>=2',)}
+    assert builder.check_dependencies('wheel') == {('flit_core<3,>=2',)}
 
     # requires = ['something']
-    assert builder.check_dependencies('sdist') == {('flit_core >=2,<3',), ('something',)}
-    assert builder.check_dependencies('wheel') == {('flit_core >=2,<3',), ('something',)}
+    assert builder.check_dependencies('sdist') == {('flit_core<3,>=2',), ('something',)}
+    assert builder.check_dependencies('wheel') == {('flit_core<3,>=2',), ('something',)}
 
     # BackendUnavailable
     with pytest.raises(build.BuildBackendException):

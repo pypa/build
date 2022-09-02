@@ -176,6 +176,13 @@ def check_dependency(
         import importlib_metadata
 
     req = packaging.requirements.Requirement(req_string)
+    normalised_req_string = str(req)
+
+    # ``Requirement`` doesn't implement ``__eq__`` so we cannot compare reqs for
+    # equality directly but the string representation is stable.
+    if normalised_req_string in ancestral_req_strings:
+        # cyclical dependency, already checked.
+        return
 
     if req.marker:
         extras = frozenset(('',)).union(parent_extras)
@@ -190,15 +197,15 @@ def check_dependency(
         dist = importlib_metadata.distribution(req.name)  # type: ignore[no-untyped-call]
     except importlib_metadata.PackageNotFoundError:
         # dependency is not installed in the environment.
-        yield ancestral_req_strings + (req_string,)
+        yield ancestral_req_strings + (normalised_req_string,)
     else:
         if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
             # the installed version is incompatible.
-            yield ancestral_req_strings + (req_string,)
+            yield ancestral_req_strings + (normalised_req_string,)
         elif dist.requires:
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
-                yield from check_dependency(other_req_string, ancestral_req_strings + (req_string,), req.extras)
+                yield from check_dependency(other_req_string, ancestral_req_strings + (normalised_req_string,), req.extras)
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
