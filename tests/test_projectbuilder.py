@@ -45,6 +45,10 @@ class MockDistribution(importlib_metadata.Distribution):
             return RecursiveMockDistribution()
         elif name == 'prerelease_dep':
             return PrereleaseMockDistribution()
+        elif name == 'circular_dep':
+            return CircularMockDistribution()
+        elif name == 'nested_circular_dep':
+            return NestedCircularMockDistribution()
         raise importlib_metadata.PackageNotFoundError
 
 
@@ -96,6 +100,28 @@ Version: 1.0.1a0
 """.strip()
 
 
+class CircularMockDistribution(MockDistribution):
+    def read_text(self, filename):
+        if filename == 'METADATA':
+            return """
+Metadata-Version: 2.2
+Name: circular_dep
+Version: 1.0.0
+Requires-Dist: nested_circular_dep
+""".strip()
+
+
+class NestedCircularMockDistribution(MockDistribution):
+    def read_text(self, filename):
+        if filename == 'METADATA':
+            return """
+Metadata-Version: 2.2
+Name: nested_circular_dep
+Version: 1.0.0
+Requires-Dist: circular_dep
+""".strip()
+
+
 @pytest.mark.parametrize(
     ('requirement_string', 'expected'),
     [
@@ -126,6 +152,7 @@ Version: 1.0.1a0
         ('extras_dep[extra_without_associated_deps] == 1.0.0', None),
         ('extras_dep[extra_without_associated_deps] == 2.0.0', ('extras_dep[extra_without_associated_deps] == 2.0.0',)),
         ('prerelease_dep >= 1.0.0', None),
+        ('circular_dep', None),
     ],
 )
 def test_check_dependency(monkeypatch, requirement_string, expected):
