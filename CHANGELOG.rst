@@ -3,6 +3,16 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Fix infinite recursion error in ``check_dependency`` with circular
+  dependencies (`PR #512`_, Fixes `#511`_)
+
+.. _PR #512: https://github.com/pypa/build/pull/512
+.. _#511: https://github.com/pypa/build/issues/511
+
+
 0.8.0 (2022-05-22)
 ==================
 
