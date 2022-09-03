@@ -55,71 +55,83 @@ class MockDistribution(importlib_metadata.Distribution):
 class ExtraMockDistribution(MockDistribution):
     def read_text(self, filename):
         if filename == 'METADATA':
-            return """
-Metadata-Version: 2.2
-Name: extras_dep
-Version: 1.0.0
-Provides-Extra: extra_without_associated_deps
-Provides-Extra: extra_with_unmet_deps
-Requires-Dist: unmet_dep; extra == 'extra_with_unmet_deps'
-Provides-Extra: extra_with_met_deps
-Requires-Dist: extras_dep; extra == 'extra_with_met_deps'
-Provides-Extra: recursive_extra_with_unmet_deps
-Requires-Dist: recursive_dep; extra == 'recursive_extra_with_unmet_deps'
-""".strip()
+            return textwrap.dedent(
+                """
+                Metadata-Version: 2.2
+                Name: extras_dep
+                Version: 1.0.0
+                Provides-Extra: extra_without_associated_deps
+                Provides-Extra: extra_with_unmet_deps
+                Requires-Dist: unmet_dep; extra == 'extra_with_unmet_deps'
+                Provides-Extra: extra_with_met_deps
+                Requires-Dist: extras_dep; extra == 'extra_with_met_deps'
+                Provides-Extra: recursive_extra_with_unmet_deps
+                Requires-Dist: recursive_dep; extra == 'recursive_extra_with_unmet_deps'
+                """
+            ).strip()
 
 
 class RequirelessMockDistribution(MockDistribution):
     def read_text(self, filename):
         if filename == 'METADATA':
-            return """
-Metadata-Version: 2.2
-Name: requireless_dep
-Version: 1.0.0
-""".strip()
+            return textwrap.dedent(
+                """
+                Metadata-Version: 2.2
+                Name: requireless_dep
+                Version: 1.0.0
+                """
+            ).strip()
 
 
 class RecursiveMockDistribution(MockDistribution):
     def read_text(self, filename):
         if filename == 'METADATA':
-            return """
-Metadata-Version: 2.2
-Name: recursive_dep
-Version: 1.0.0
-Requires-Dist: recursive_unmet_dep
-""".strip()
+            return textwrap.dedent(
+                """
+                Metadata-Version: 2.2
+                Name: recursive_dep
+                Version: 1.0.0
+                Requires-Dist: recursive_unmet_dep
+                """
+            ).strip()
 
 
 class PrereleaseMockDistribution(MockDistribution):
     def read_text(self, filename):
         if filename == 'METADATA':
-            return """
-Metadata-Version: 2.2
-Name: prerelease_dep
-Version: 1.0.1a0
-""".strip()
+            return textwrap.dedent(
+                """
+                Metadata-Version: 2.2
+                Name: prerelease_dep
+                Version: 1.0.1a0
+                """
+            ).strip()
 
 
 class CircularMockDistribution(MockDistribution):
     def read_text(self, filename):
         if filename == 'METADATA':
-            return """
-Metadata-Version: 2.2
-Name: circular_dep
-Version: 1.0.0
-Requires-Dist: nested_circular_dep
-""".strip()
+            return textwrap.dedent(
+                """
+                Metadata-Version: 2.2
+                Name: circular_dep
+                Version: 1.0.0
+                Requires-Dist: nested_circular_dep
+                """
+            ).strip()
 
 
 class NestedCircularMockDistribution(MockDistribution):
     def read_text(self, filename):
         if filename == 'METADATA':
-            return """
-Metadata-Version: 2.2
-Name: nested_circular_dep
-Version: 1.0.0
-Requires-Dist: circular_dep
-""".strip()
+            return textwrap.dedent(
+                """
+                Metadata-Version: 2.2
+                Name: nested_circular_dep
+                Version: 1.0.0
+                Requires-Dist: circular_dep
+                """
+            ).strip()
 
 
 @pytest.mark.parametrize(
