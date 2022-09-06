@@ -226,12 +226,12 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             [
                 '* Creating venv isolated environment...',
                 '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
-                '* Getting dependencies for sdist...',
+                '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
                 '* Creating venv isolated environment...',
                 '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
-                '* Getting dependencies for wheel...',
+                '* Getting build dependencies for wheel...',
                 '* Installing packages in isolated environment... (wheel)',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
@@ -240,10 +240,10 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         (
             ['--no-isolation'],
             [
-                '* Getting dependencies for sdist...',
+                '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
-                '* Getting dependencies for wheel...',
+                '* Getting build dependencies for wheel...',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -253,7 +253,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             [
                 '* Creating venv isolated environment...',
                 '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
-                '* Getting dependencies for wheel...',
+                '* Getting build dependencies for wheel...',
                 '* Installing packages in isolated environment... (wheel)',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
@@ -262,21 +262,25 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         (
             ['--wheel', '--no-isolation'],
             [
-                '* Getting dependencies for wheel...',
+                '* Getting build dependencies for wheel...',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
         ),
         (
             ['--sdist', '--no-isolation'],
-            ['* Getting dependencies for sdist...', '* Building sdist...', 'Successfully built test_setuptools-1.0.0.tar.gz'],
+            [
+                '* Getting build dependencies for sdist...',
+                '* Building sdist...',
+                'Successfully built test_setuptools-1.0.0.tar.gz',
+            ],
         ),
         (
             ['--sdist', '--wheel', '--no-isolation'],
             [
-                '* Getting dependencies for sdist...',
+                '* Getting build dependencies for sdist...',
                 '* Building sdist...',
-                '* Getting dependencies for wheel...',
+                '* Getting build dependencies for wheel...',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],

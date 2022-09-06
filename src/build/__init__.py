@@ -373,7 +373,7 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        self.log(f'Getting dependencies for {distribution}...')
+        self.log(f'Getting build dependencies for {distribution}...')
         hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
