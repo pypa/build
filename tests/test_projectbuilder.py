@@ -601,8 +601,8 @@ def test_log(mocker, caplog, package_test_flit):
     builder.log('something')
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
-        ('INFO', 'Getting dependencies for sdist...'),
-        ('INFO', 'Getting dependencies for wheel...'),
+        ('INFO', 'Getting build dependencies for sdist...'),
+        ('INFO', 'Getting build dependencies for wheel...'),
         ('INFO', 'Getting metadata for wheel...'),
         ('INFO', 'Building sdist...'),
         ('INFO', 'Building wheel...'),
