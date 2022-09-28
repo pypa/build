@@ -20,3 +20,6 @@ tests/integration/
 .integration-sources
 .tox
 Dockerfile
+
+# Restore src/build in case user ignores 'build'
+!src/build
