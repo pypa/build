@@ -415,6 +415,8 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
     monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)
     monkeypatch.setenv('NO_COLOR', '')
 
+    importlib.reload(build.__main__)  # reload module to set _STYLES
+
     with pytest.raises(SystemExit):
         build.__main__.main([package_test_flit, '-o', tmp_dir])
 
