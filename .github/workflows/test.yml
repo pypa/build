@@ -51,6 +51,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v4
@@ -95,10 +97,9 @@ jobs:
         if: matrix.tox-target == 'tox' && matrix.py == '3.10'
         run: tox -e path
 
-      - name: Rename coverage report file
-        if: matrix.tox-target == 'tox'
-        run: mv ".tox/coverage.${BASE}.xml" .tox/coverage.xml
-        shell: bash
+      - name: Combine coverage files
+        if: always()
+        run: tox -e coverage
 
       - uses: codecov/codecov-action@v3
         if: always()
