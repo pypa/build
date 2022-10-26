@@ -576,6 +576,7 @@ def mock_tomli_not_available(mocker):
         importlib.reload(build)
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 11), reason='No need to test old toml support on 3.11+')
 def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, package_test_flit):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
 
@@ -609,7 +610,7 @@ def test_log(mocker, caplog, package_test_flit):
         ('INFO', 'something'),
     ]
     if sys.version_info >= (3, 8):  # stacklevel
-        assert caplog.records[-1].lineno == 601
+        assert caplog.records[-1].lineno == 602
 
 
 @pytest.mark.parametrize(
