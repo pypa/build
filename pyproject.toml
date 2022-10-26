@@ -39,6 +39,7 @@ markers = [
 filterwarnings = [
   "error",
   "ignore:path is deprecated.:DeprecationWarning",
+  "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
 ]
 
 [tool.mypy]
