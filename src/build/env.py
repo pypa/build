@@ -11,6 +11,7 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
+import warnings
 
 from types import TracebackType
 from typing import Callable, Collection, List, Optional, Tuple, Type
@@ -262,7 +263,10 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
 
     symlinks = _fs_supports_symlink()
     try:
-        venv.EnvBuilder(with_pip=True, symlinks=symlinks).create(path)
+        with warnings.catch_warnings():
+            if sys.version_info[:3] == (3, 11, 0):
+                warnings.filterwarnings('ignore', 'check_home argument is deprecated and ignored.', DeprecationWarning)
+            venv.EnvBuilder(with_pip=True, symlinks=symlinks).create(path)
     except subprocess.CalledProcessError as exc:
         raise build.FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
