@@ -3,22 +3,16 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.9.0 (2022-10-27)
+==================
 
 - Hide a Python 3.11.0 unavoidable warning with venv (`PR #527`_)
-
 - Fix infinite recursion error in ``check_dependency`` with circular
   dependencies (`PR #512`_, Fixes `#511`_)
-
 - Only import colorama on Windows (`PR #494`_, Fixes `#493`_)
-
 - Flush output more often to reduce interleaved output (`PR #494`_)
-
 - Small API cleanup, like better ``__all__`` and srcdir being read only. (`PR #477`_)
-
 - Only use ``importlib_metadata`` when needed (`PR #401`_)
-
 - Clarify in printout when build dependencies are being installed (`PR #514`_)
 
 .. _PR #401: https://github.com/pypa/build/pull/401
