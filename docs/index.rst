@@ -43,6 +43,7 @@ environment, but this behavior can be disabled with ``--no-isolation``.
    :hidden:
 
    test_suite
+   release
 
 .. toctree::
    :caption: Project Links
