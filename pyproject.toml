@@ -7,7 +7,7 @@ name = "build"
 version = "0.9.0"
 description = "A simple, correct PEP 517 build frontend"
 readme = "README.md"
-requires-python = ">= 3.6"
+requires-python = ">= 3.7"
 license.file = "LICENSE"
 authors = [
   { name = "Filipe Laíns", email = "lains@riseup.net" },
@@ -19,7 +19,6 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.6",
   "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
@@ -117,7 +116,7 @@ filterwarnings = [
 
 [tool.mypy]
 files = "src"
-python_version = "3.6"
+python_version = "3.7"
 strict = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
@@ -133,7 +132,7 @@ ignore_missing_imports = true
 [tool.black]
 line-length = 127
 skip-string-normalization = true
-target-version = ["py39", "py38", "py37", "py36"]
+target-version = ["py311", "py310", "py39", "py38", "py37"]
 
 [tool.isort]
 profile = "black"
