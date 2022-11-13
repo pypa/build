@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 import collections
-import inspect
 import logging
 import platform
 import subprocess
@@ -106,7 +105,6 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
     caplog.set_level(logging.DEBUG)
 
     builder = build.env.IsolatedEnvBuilder()
-    frameinfo = inspect.getframeinfo(inspect.currentframe())
     builder.log('something')  # line number 106
     with builder as env:
         env.install(['something'])
@@ -116,12 +114,6 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Creating venv isolated environment...'),
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
-    if sys.version_info >= (3, 8):  # stacklevel
-        assert [(record.lineno) for record in caplog.records] == [
-            frameinfo.lineno + 1,
-            frameinfo.lineno - 6,
-            frameinfo.lineno + 85,
-        ]
 
 
 @pytest.mark.isolated
