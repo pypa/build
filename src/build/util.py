@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import os
 import pathlib
 import sys
@@ -17,7 +19,7 @@ else:
     import importlib_metadata
 
 
-def _project_wheel_metadata(builder: build.ProjectBuilder) -> 'importlib_metadata.PackageMetadata':
+def _project_wheel_metadata(builder: build.ProjectBuilder) -> importlib_metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
         # https://github.com/python/importlib_metadata/pull/343
@@ -27,7 +29,7 @@ def _project_wheel_metadata(builder: build.ProjectBuilder) -> 'importlib_metadat
 def project_wheel_metadata(
     srcdir: build.PathType,
     isolated: bool = True,
-) -> 'importlib_metadata.PackageMetadata':
+) -> importlib_metadata.PackageMetadata:
     """
     Return the wheel metadata for a project.
 

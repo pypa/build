@@ -4,6 +4,9 @@
 build - A simple, correct PEP 517 build frontend
 """
 
+from __future__ import annotations
+
+
 __version__ = '0.9.0'
 
 import contextlib
@@ -19,27 +22,13 @@ import warnings
 import zipfile
 
 from collections import OrderedDict
-from typing import (
-    AbstractSet,
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from collections.abc import Iterator, Set
+from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence, Tuple, Type, Union
 
 import pep517.wrappers
 
 
-TOMLDecodeError: Type[Exception]
+TOMLDecodeError: type[Exception]
 toml_loads: Callable[[str], MutableMapping[str, Any]]
 
 if sys.version_info >= (3, 11):
@@ -88,7 +77,7 @@ class BuildBackendException(Exception):
     """
 
     def __init__(
-        self, exception: Exception, description: Optional[str] = None, exc_info: _ExcInfoType = (None, None, None)
+        self, exception: Exception, description: str | None = None, exc_info: _ExcInfoType = (None, None, None)
     ) -> None:
         super().__init__()
         self.exception = exception
@@ -159,8 +148,8 @@ def _validate_source_directory(srcdir: PathType) -> None:
 
 
 def check_dependency(
-    req_string: str, ancestral_req_strings: Tuple[str, ...] = (), parent_extras: AbstractSet[str] = frozenset()
-) -> Iterator[Tuple[str, ...]]:
+    req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: Set[str] = frozenset()
+) -> Iterator[tuple[str, ...]]:
     """
     Verify that a dependency and all of its dependencies are met.
 
@@ -217,7 +206,7 @@ def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
             )
 
 
-def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Dict[str, Any]:
+def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> dict[str, Any]:
     # If pyproject.toml is missing (per PEP 517) or [build-system] is missing
     # (per PEP 518), use default values
     if 'build-system' not in pyproject_toml:
@@ -265,7 +254,7 @@ class ProjectBuilder:
         self,
         srcdir: PathType,
         python_executable: str = sys.executable,
-        scripts_dir: Optional[str] = None,
+        scripts_dir: str | None = None,
         runner: RunnerType = pep517.wrappers.default_subprocess_runner,
     ) -> None:
         """
@@ -313,12 +302,10 @@ class ProjectBuilder:
             runner=self._runner,
         )
 
-    def _runner(
-        self, cmd: Sequence[str], cwd: Optional[str] = None, extra_environ: Optional[Mapping[str, str]] = None
-    ) -> None:
+    def _runner(self, cmd: Sequence[str], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None) -> None:
         # if script dir is specified must be inserted at the start of PATH (avoid duplicate path while doing so)
         if self.scripts_dir is not None:
-            paths: Dict[str, None] = OrderedDict()
+            paths: dict[str, None] = OrderedDict()
             paths[str(self.scripts_dir)] = None
             if 'PATH' in os.environ:
                 paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
@@ -345,18 +332,18 @@ class ProjectBuilder:
         self._hook.python_executable = value
 
     @property
-    def scripts_dir(self) -> Optional[str]:
+    def scripts_dir(self) -> str | None:
         """
         The folder where the scripts are stored for the python executable.
         """
         return self._scripts_dir
 
     @scripts_dir.setter
-    def scripts_dir(self, value: Optional[str]) -> None:
+    def scripts_dir(self, value: str | None) -> None:
         self._scripts_dir = value
 
     @property
-    def build_system_requires(self) -> Set[str]:
+    def build_system_requires(self) -> set[str]:
         """
         The dependencies defined in the ``pyproject.toml``'s
         ``build-system.requires`` field or the default build dependencies
@@ -364,7 +351,7 @@ class ProjectBuilder:
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(self, distribution: str, config_settings: Optional[ConfigSettingsType] = None) -> Set[str]:
+    def get_requires_for_build(self, distribution: str, config_settings: ConfigSettingsType | None = None) -> set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -380,9 +367,7 @@ class ProjectBuilder:
         with self._handle_backend(hook_name):
             return set(get_requires(config_settings))
 
-    def check_dependencies(
-        self, distribution: str, config_settings: Optional[ConfigSettingsType] = None
-    ) -> Set[Tuple[str, ...]]:
+    def check_dependencies(self, distribution: str, config_settings: ConfigSettingsType | None = None) -> set[tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
         :attr:`build_system_requires` and :meth:`get_requires_for_build` for a given
@@ -396,8 +381,8 @@ class ProjectBuilder:
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(
-        self, distribution: str, output_directory: PathType, config_settings: Optional[ConfigSettingsType] = None
-    ) -> Optional[str]:
+        self, distribution: str, output_directory: PathType, config_settings: ConfigSettingsType | None = None
+    ) -> str | None:
         """
         Prepare metadata for a distribution.
 
@@ -423,8 +408,8 @@ class ProjectBuilder:
         self,
         distribution: str,
         output_directory: PathType,
-        config_settings: Optional[ConfigSettingsType] = None,
-        metadata_directory: Optional[str] = None,
+        config_settings: ConfigSettingsType | None = None,
+        metadata_directory: str | None = None,
     ) -> str:
         """
         Build a distribution.
@@ -470,7 +455,7 @@ class ProjectBuilder:
         return os.path.join(output_directory, distinfo)
 
     def _call_backend(
-        self, hook_name: str, outdir: PathType, config_settings: Optional[ConfigSettingsType] = None, **kwargs: Any
+        self, hook_name: str, outdir: PathType, config_settings: ConfigSettingsType | None = None, **kwargs: Any
     ) -> str:
         outdir = os.path.abspath(outdir)
 
@@ -535,5 +520,5 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__

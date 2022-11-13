@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
 
 import argparse
 import contextlib
@@ -14,7 +15,8 @@ import textwrap
 import traceback
 import warnings
 
-from typing import Dict, Iterator, List, NoReturn, Optional, Sequence, TextIO, Type, Union
+from collections.abc import Iterator, Sequence
+from typing import NoReturn, TextIO
 
 import build
 
@@ -34,7 +36,7 @@ _COLORS = {
 _NO_COLORS = {color: '' for color in _COLORS}
 
 
-def _init_colors() -> Dict[str, str]:
+def _init_colors() -> dict[str, str]:
     if 'NO_COLOR' in os.environ:
         if 'FORCE_COLOR' in os.environ:
             warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color')
@@ -52,12 +54,12 @@ def _cprint(fmt: str = '', msg: str = '') -> None:
 
 
 def _showwarning(
-    message: Union[Warning, str],
-    category: Type[Warning],
+    message: Warning | str,
+    category: type[Warning],
     filename: str,
     lineno: int,
-    file: Optional[TextIO] = None,
-    line: Optional[str] = None,
+    file: TextIO | None = None,
+    line: str | None = None,
 ) -> None:  # pragma: no cover
     _cprint('{yellow}WARNING{reset} {}', str(message))
 
@@ -102,7 +104,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    builder: ProjectBuilder, outdir: PathType, distribution: str, config_settings: Optional[ConfigSettingsType]
+    builder: ProjectBuilder, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
 ) -> str:
     with _IsolatedEnvBuilder() as env:
         builder.python_executable = env.executable
@@ -118,7 +120,7 @@ def _build_in_current_env(
     builder: ProjectBuilder,
     outdir: PathType,
     distribution: str,
-    config_settings: Optional[ConfigSettingsType],
+    config_settings: ConfigSettingsType | None,
     skip_dependency_check: bool = False,
 ) -> str:
     if not skip_dependency_check:
@@ -136,7 +138,7 @@ def _build(
     builder: ProjectBuilder,
     outdir: PathType,
     distribution: str,
-    config_settings: Optional[ConfigSettingsType],
+    config_settings: ConfigSettingsType | None,
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
@@ -186,7 +188,7 @@ def build_package(
     srcdir: PathType,
     outdir: PathType,
     distributions: Sequence[str],
-    config_settings: Optional[ConfigSettingsType] = None,
+    config_settings: ConfigSettingsType | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -200,7 +202,7 @@ def build_package(
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
     """
-    built: List[str] = []
+    built: list[str] = []
     builder = _ProjectBuilder(srcdir)
     for distribution in distributions:
         out = _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
@@ -212,7 +214,7 @@ def build_package_via_sdist(
     srcdir: PathType,
     outdir: PathType,
     distributions: Sequence[str],
-    config_settings: Optional[ConfigSettingsType] = None,
+    config_settings: ConfigSettingsType | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -234,7 +236,7 @@ def build_package_via_sdist(
 
     sdist_name = os.path.basename(sdist)
     sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
-    built: List[str] = []
+    built: list[str] = []
     # extract sdist
     with tarfile.open(sdist) as t:
         t.extractall(sdist_out)
@@ -328,7 +330,7 @@ def main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(cli_args: Sequence[str], prog: Optional[str] = None) -> None:  # noqa: C901
+def main(cli_args: Sequence[str], prog: str | None = None) -> None:  # noqa: C901
     """
     Parse the CLI arguments and invoke the build process.
 
