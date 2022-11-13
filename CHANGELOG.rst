@@ -8,8 +8,10 @@ Unreleased
 
 - Change build backend from ``setuptools`` to ``flit``
   (`PR #470`_, Fixes `#394`_)
+- Dropped support for Python 3.6 (`PR #532`_)
 
 .. _PR #470: https://github.com/pypa/build/pull/470
+.. _PR #532: https://github.com/pypa/build/pull/532
 .. _#394: https://github.com/pypa/build/issues/394
 
 
