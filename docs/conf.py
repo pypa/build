@@ -65,3 +65,8 @@ html_title = f'build {version}'
 # html_static_path = ['_static']
 
 autoclass_content = 'both'
+
+nitpick_ignore = [
+    # https://github.com/python/importlib_metadata/issues/316
+    ('py:class', 'importlib.metadata._meta.PackageMetadata'),
+]
