@@ -127,9 +127,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
 @pytest.mark.isolated
 def test_default_pip_is_never_too_old():
     with build.env.IsolatedEnvBuilder() as env:
-        version = subprocess.check_output(
-            [env.executable, '-c', 'import pip; print(pip.__version__)'], universal_newlines=True
-        ).strip()
+        version = subprocess.check_output([env.executable, '-c', 'import pip; print(pip.__version__)'], text=True).strip()
         assert Version(version) >= Version('19.1')
 
 

@@ -1,6 +1,9 @@
 """
 Creates and manages isolated build environments.
 """
+
+from __future__ import annotations
+
 import abc
 import functools
 import logging
@@ -13,8 +16,8 @@ import sysconfig
 import tempfile
 import warnings
 
+from collections.abc import Callable, Collection
 from types import TracebackType
-from typing import Callable, Collection, List, Optional, Tuple, Type
 
 import build
 
@@ -67,7 +70,7 @@ def _should_use_virtualenv() -> bool:
     )
 
 
-def _subprocess(cmd: List[str]) -> None:
+def _subprocess(cmd: list[str]) -> None:
     """Invoke subprocess and output stdout and stderr if it fails."""
     try:
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -80,7 +83,7 @@ class IsolatedEnvBuilder:
     """Builder object for isolated environments."""
 
     def __init__(self) -> None:
-        self._path: Optional[str] = None
+        self._path: str | None = None
 
     def __enter__(self) -> IsolatedEnv:
         """
@@ -113,7 +116,7 @@ class IsolatedEnvBuilder:
             raise
 
     def __exit__(
-        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         """
         Delete the created isolated build environment.
@@ -213,7 +216,7 @@ class _IsolatedEnvVenvPip(IsolatedEnv):
             os.unlink(req_file.name)
 
 
-def _create_isolated_env_virtualenv(path: str) -> Tuple[str, str]:
+def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     """
     We optionally can use the virtualenv package to provision a virtual environment.
 
@@ -245,7 +248,7 @@ def _fs_supports_symlink() -> bool:
             return False
 
 
-def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
+def _create_isolated_env_venv(path: str) -> tuple[str, str]:
     """
     On Python 3 we use the venv package from the standard library.
 
@@ -293,7 +296,7 @@ def _create_isolated_env_venv(path: str) -> Tuple[str, str]:
     return executable, script_dir
 
 
-def _find_executable_and_scripts(path: str) -> Tuple[str, str, str]:
+def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
     """
     Detect the Python executable and script folder of a virtual environment.
 
