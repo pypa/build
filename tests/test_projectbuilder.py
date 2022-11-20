@@ -221,6 +221,13 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
         build.ProjectBuilder(package_test_bad_syntax)
 
 
+def test_init_makes_srcdir_absolute(package_test_flit):
+    rel_dir = os.path.relpath(package_test_flit, os.getcwd())
+    assert not os.path.isabs(rel_dir)
+    builder = build.ProjectBuilder(rel_dir)
+    assert os.path.isabs(builder.srcdir)
+
+
 @pytest.mark.parametrize('value', [b'something', 'something_else'])
 def test_python_executable(package_test_flit, value):
     builder = build.ProjectBuilder(package_test_flit)
