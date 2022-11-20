@@ -126,18 +126,6 @@ class TypoWarning(Warning):
     """
 
 
-@contextlib.contextmanager
-def _working_directory(path: str) -> Iterator[None]:
-    current = os.getcwd()
-
-    os.chdir(path)
-
-    try:
-        yield
-    finally:
-        os.chdir(current)
-
-
 def _validate_source_directory(srcdir: PathType) -> None:
     if not os.path.isdir(srcdir):
         raise BuildException(f'Source {srcdir} is not a directory')
@@ -474,21 +462,20 @@ class ProjectBuilder:
 
     @contextlib.contextmanager
     def _handle_backend(self, hook: str) -> Iterator[None]:
-        with _working_directory(self.srcdir):
-            try:
-                yield
-            except pep517.wrappers.BackendUnavailable as exception:
-                raise BuildBackendException(  # noqa: B904 # use raise from
-                    exception,
-                    f"Backend '{self._backend}' is not available.",
-                    sys.exc_info(),
-                )
-            except subprocess.CalledProcessError as exception:
-                raise BuildBackendException(  # noqa: B904 # use raise from
-                    exception, f'Backend subprocess exited when trying to invoke {hook}'
-                )
-            except Exception as exception:
-                raise BuildBackendException(exception, exc_info=sys.exc_info())  # noqa: B904 # use raise from
+        try:
+            yield
+        except pep517.wrappers.BackendUnavailable as exception:
+            raise BuildBackendException(  # noqa: B904 # use raise from
+                exception,
+                f"Backend '{self._backend}' is not available.",
+                sys.exc_info(),
+            )
+        except subprocess.CalledProcessError as exception:
+            raise BuildBackendException(  # noqa: B904 # use raise from
+                exception, f'Backend subprocess exited when trying to invoke {hook}'
+            )
+        except Exception as exception:
+            raise BuildBackendException(exception, exc_info=sys.exc_info())  # noqa: B904 # use raise from
 
     @staticmethod
     def log(message: str) -> None:
