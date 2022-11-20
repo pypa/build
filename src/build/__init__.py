@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import textwrap
+import threading
 import types
 import warnings
 import zipfile
@@ -71,6 +72,9 @@ _DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
     'requires': ['setuptools >= 40.8.0', 'wheel'],
 }
+
+
+LOCK = threading.Lock()
 
 
 _logger = logging.getLogger(__name__)
@@ -139,14 +143,15 @@ class TypoWarning(Warning):
 
 @contextlib.contextmanager
 def _working_directory(path: str) -> Iterator[None]:
-    current = os.getcwd()
+    with LOCK:
+        current = os.getcwd()
 
-    os.chdir(path)
+        os.chdir(path)
 
-    try:
-        yield
-    finally:
-        os.chdir(current)
+        try:
+            yield
+        finally:
+            os.chdir(current)
 
 
 def _validate_source_directory(srcdir: PathType) -> None:
