@@ -285,23 +285,8 @@ def test_check_dependencies(mocker, package_test_flit):
         not builder.check_dependencies('wheel')
 
 
-def test_working_directory(tmp_dir):
-    assert os.path.realpath(os.curdir) != os.path.realpath(tmp_dir)
-    with build._working_directory(tmp_dir):
-        assert os.path.realpath(os.curdir) == os.path.realpath(tmp_dir)
-
-
-def test_working_directory_exc_is_not_transformed(mocker, package_test_flit, tmp_dir):
-    mocker.patch('build._working_directory', side_effect=OSError)
-
-    builder = build.ProjectBuilder(package_test_flit)
-    with pytest.raises(OSError):
-        builder._call_backend('build_sdist', tmp_dir)
-
-
 def test_build(mocker, package_test_flit, tmp_dir):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
-    mocker.patch('build._working_directory', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
 
@@ -310,18 +295,14 @@ def test_build(mocker, package_test_flit, tmp_dir):
 
     assert builder.build('sdist', tmp_dir) == os.path.join(tmp_dir, 'dist.tar.gz')
     builder._hook.build_sdist.assert_called_with(tmp_dir, None)
-    build._working_directory.assert_called_with(package_test_flit)
 
     assert builder.build('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist.whl')
     builder._hook.build_wheel.assert_called_with(tmp_dir, None)
-    build._working_directory.assert_called_with(package_test_flit)
 
     with pytest.raises(build.BuildBackendException):
-        build._working_directory.assert_called_with(package_test_flit)
         builder.build('sdist', tmp_dir)
 
     with pytest.raises(build.BuildBackendException):
-        build._working_directory.assert_called_with(package_test_flit)
         builder.build('wheel', tmp_dir)
 
 
@@ -450,14 +431,12 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
 
 def test_prepare(mocker, tmp_dir, package_test_flit):
     mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
-    mocker.patch('build._working_directory', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'
 
     assert builder.prepare('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist-1.0.dist-info')
     builder._hook.prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)
-    build._working_directory.assert_called_with(package_test_flit)
 
 
 def test_prepare_no_hook(mocker, tmp_dir, package_test_flit):
