@@ -18,12 +18,12 @@ import sys
 import warnings
 import zipfile
 
-from collections import OrderedDict
 from collections.abc import Iterator
-from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, TypeVar, Union
 
 import pyproject_hooks
 
+from . import env
 from ._exceptions import (
     BuildBackendException,
     BuildException,
@@ -35,7 +35,7 @@ from ._util import check_dependency, parse_wheel_filename
 
 
 TOMLDecodeError: type[Exception]
-toml_loads: Callable[[str], MutableMapping[str, Any]]
+toml_loads: Callable[[str], Mapping[str, Any]]
 
 if sys.version_info >= (3, 11):
     from tomllib import TOMLDecodeError
@@ -53,6 +53,8 @@ RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
 
+_TProjectBuilder = TypeVar('_TProjectBuilder', bound='ProjectBuilder')
+
 
 _DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
@@ -61,15 +63,6 @@ _DEFAULT_BACKEND = {
 
 
 _logger = logging.getLogger(__name__)
-
-
-def _validate_source_directory(srcdir: PathType) -> None:
-    if not os.path.isdir(srcdir):
-        raise BuildException(f'Source {srcdir} is not a directory')
-    pyproject_toml = os.path.join(srcdir, 'pyproject.toml')
-    setup_py = os.path.join(srcdir, 'setup.py')
-    if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
-        raise BuildException(f'Source {srcdir} does not appear to be a Python project: no pyproject.toml or setup.py')
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
@@ -81,7 +74,28 @@ def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
             )
 
 
-def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> dict[str, Any]:
+def _validate_source_directory(source_dir: PathType) -> None:
+    if not os.path.isdir(source_dir):
+        raise BuildException(f'Source {source_dir} is not a directory')
+    pyproject_toml = os.path.join(source_dir, 'pyproject.toml')
+    setup_py = os.path.join(source_dir, 'setup.py')
+    if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
+        raise BuildException(f'Source {source_dir} does not appear to be a Python project: no pyproject.toml or setup.py')
+
+
+def _read_pyproject_toml(path: PathType) -> Mapping[str, Any]:
+    try:
+        with open(path, 'rb') as f:
+            return toml_loads(f.read().decode())
+    except FileNotFoundError:
+        return {}
+    except PermissionError as e:
+        raise BuildException(f"{e.strerror}: '{e.filename}' ")  # noqa: B904 # use raise from
+    except TOMLDecodeError as e:
+        raise BuildException(f'Failed to parse {path}: {e} ')  # noqa: B904 # use raise from
+
+
+def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str, Any]:
     # If pyproject.toml is missing (per PEP 517) or [build-system] is missing
     # (per PEP 518), use default values
     if 'build-system' not in pyproject_toml:
@@ -120,6 +134,13 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> dict[str, An
     return build_system_table
 
 
+def _wrap_subprocess_runner(runner: RunnerType, env: env.IsolatedEnv) -> RunnerType:
+    def _invoke_wrapped_runner(cmd: Sequence[str], cwd: str | None, extra_environ: Mapping[str, str] | None) -> None:
+        runner(cmd, cwd, {**(env.make_extra_environ() or {}), **(extra_environ or {})})
+
+    return _invoke_wrapped_runner
+
+
 class ProjectBuilder:
     """
     The PEP 517 consumer API.
@@ -127,95 +148,70 @@ class ProjectBuilder:
 
     def __init__(
         self,
-        srcdir: PathType,
+        source_dir: PathType,
         python_executable: str = sys.executable,
-        scripts_dir: str | None = None,
         runner: RunnerType = pyproject_hooks.default_subprocess_runner,
     ) -> None:
         """
-        :param srcdir: The source directory
-        :param scripts_dir: The location of the scripts dir (defaults to the folder where the python executable lives)
+        :param source_dir: The source directory
         :param python_executable: The python executable where the backend lives
-        :param runner: An alternative runner for backend subprocesses
+        :param runner: Runner for backend subprocesses
 
-        The 'runner', if provided, must accept the following arguments:
+        The ``runner``, if provided, must accept the following arguments:
 
-        - cmd: a list of strings representing the command and arguments to
+        - ``cmd``: a list of strings representing the command and arguments to
           execute, as would be passed to e.g. 'subprocess.check_call'.
-        - cwd: a string representing the working directory that must be
-          used for the subprocess. Corresponds to the provided srcdir.
-        - extra_environ: a dict mapping environment variable names to values
+        - ``cwd``: a string representing the working directory that must be
+          used for the subprocess. Corresponds to the provided source_dir.
+        - ``extra_environ``: a dict mapping environment variable names to values
           which must be set for the subprocess execution.
 
         The default runner simply calls the backend hooks in a subprocess, writing backend output
         to stdout/stderr.
         """
-        self._srcdir: str = os.path.abspath(srcdir)
-        _validate_source_directory(srcdir)
+        self._source_dir: str = os.path.abspath(source_dir)
+        _validate_source_directory(source_dir)
 
-        spec_file = os.path.join(srcdir, 'pyproject.toml')
+        self._python_executable = python_executable
+        self._runner = runner
 
-        try:
-            with open(spec_file, 'rb') as f:
-                spec = toml_loads(f.read().decode())
-        except FileNotFoundError:
-            spec = {}
-        except PermissionError as e:
-            raise BuildException(f"{e.strerror}: '{e.filename}' ")  # noqa: B904 # use raise from
-        except TOMLDecodeError as e:
-            raise BuildException(f'Failed to parse {spec_file}: {e} ')  # noqa: B904 # use raise from
+        pyproject_toml_path = os.path.join(source_dir, 'pyproject.toml')
+        self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
 
-        self._build_system = _parse_build_system_table(spec)
         self._backend = self._build_system['build-backend']
-        self._scripts_dir = scripts_dir
-        self._hook_runner = runner
+
         self._hook = pyproject_hooks.BuildBackendHookCaller(
-            self.srcdir,
+            self._source_dir,
             self._backend,
             backend_path=self._build_system.get('backend-path'),
-            python_executable=python_executable,
+            python_executable=self._python_executable,
             runner=self._runner,
         )
 
-    def _runner(self, cmd: Sequence[str], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None) -> None:
-        # if script dir is specified must be inserted at the start of PATH (avoid duplicate path while doing so)
-        if self.scripts_dir is not None:
-            paths: dict[str, None] = OrderedDict()
-            paths[str(self.scripts_dir)] = None
-            if 'PATH' in os.environ:
-                paths.update((i, None) for i in os.environ['PATH'].split(os.pathsep))
-            extra_environ = {} if extra_environ is None else dict(extra_environ)
-            extra_environ['PATH'] = os.pathsep.join(paths)
-        self._hook_runner(cmd, cwd, extra_environ)
+    @classmethod
+    def from_isolated_env(
+        cls: type[_TProjectBuilder],
+        env: env.IsolatedEnv,
+        source_dir: PathType,
+        runner: RunnerType = pyproject_hooks.default_subprocess_runner,
+    ) -> _TProjectBuilder:
+        return cls(
+            source_dir=source_dir,
+            python_executable=env.python_executable,
+            runner=_wrap_subprocess_runner(runner, env),
+        )
 
     @property
-    def srcdir(self) -> str:
+    def source_dir(self) -> str:
         """Project source directory."""
-        return self._srcdir
+        return self._source_dir
 
     @property
     def python_executable(self) -> str:
         """
         The Python executable used to invoke the backend.
         """
-        # make mypy happy
-        exe: str = self._hook.python_executable
-        return exe
-
-    @python_executable.setter
-    def python_executable(self, value: str) -> None:
-        self._hook.python_executable = value
-
-    @property
-    def scripts_dir(self) -> str | None:
-        """
-        The folder where the scripts are stored for the python executable.
-        """
-        return self._scripts_dir
-
-    @scripts_dir.setter
-    def scripts_dir(self, value: str | None) -> None:
-        self._scripts_dir = value
+        return self._python_executable
 
     @property
     def build_system_requires(self) -> set[str]:

@@ -221,20 +221,11 @@ def test_init(mocker, package_test_flit, package_legacy, test_no_permission, pac
         build.ProjectBuilder(package_test_bad_syntax)
 
 
-def test_init_makes_srcdir_absolute(package_test_flit):
+def test_init_makes_source_dir_absolute(package_test_flit):
     rel_dir = os.path.relpath(package_test_flit, os.getcwd())
     assert not os.path.isabs(rel_dir)
     builder = build.ProjectBuilder(rel_dir)
-    assert os.path.isabs(builder.srcdir)
-
-
-@pytest.mark.parametrize('value', [b'something', 'something_else'])
-def test_python_executable(package_test_flit, value):
-    builder = build.ProjectBuilder(package_test_flit)
-
-    builder.python_executable = value
-    assert builder.python_executable == value
-    assert builder._hook.python_executable == value
+    assert os.path.isabs(builder.source_dir)
 
 
 @pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
@@ -383,7 +374,7 @@ def test_build_not_dir_outdir(mocker, tmp_dir, package_test_flit):
 def demo_pkg_inline(tmp_path_factory):
     # builds a wheel without any dependencies and with a console script demo-pkg-inline
     tmp_path = tmp_path_factory.mktemp('demo-pkg-inline')
-    builder = build.ProjectBuilder(srcdir=os.path.join(os.path.dirname(__file__), 'packages', 'inline'))
+    builder = build.ProjectBuilder(source_dir=os.path.join(os.path.dirname(__file__), 'packages', 'inline'))
     out = tmp_path / 'dist'
     builder.build('wheel', str(out))
     return next(out.iterdir())
@@ -501,7 +492,7 @@ def test_no_outdir_multiple(mocker, tmp_dir, package_test_flit):
 
 
 def test_runner_user_specified(tmp_dir, package_test_flit):
-    def dummy_runner(cmd, cwd=None, env=None):
+    def dummy_runner(cmd, cwd=None, extra_environ=None):
         raise RuntimeError('Runner was called')
 
     builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)
