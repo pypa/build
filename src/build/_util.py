@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import re
 import sys
 
 from collections.abc import Iterator, Set
+
+
+_WHEEL_FILENAME_REGEX = re.compile(
+    r'(?P<distribution>.+)-(?P<version>.+)'
+    r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
+    r'-(?P<abi_tag>.+)-(?P<platform_tag>.+)\.whl'
+)
 
 
 def check_dependency(
@@ -53,3 +61,7 @@ def check_dependency(
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
                 yield from check_dependency(other_req_string, ancestral_req_strings + (normalised_req_string,), req.extras)
+
+
+def parse_wheel_filename(filename: str) -> re.Match[str] | None:
+    return _WHEEL_FILENAME_REGEX.match(filename)
