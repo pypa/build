@@ -39,11 +39,6 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.1.0
-    hooks:
-      - id: setup-cfg-fmt
-        args: [--include-version-classifiers, --max-py-version=3.11]
   - repo: https://github.com/PyCQA/flake8
     rev: "5.0.4"
     hooks:
