@@ -20,6 +20,8 @@ sdist_files = {
     'pyproject.toml',
     'src/build/__init__.py',
     'src/build/__main__.py',
+    'src/build/_exceptions.py',
+    'src/build/_util.py',
     'src/build/env.py',
     'src/build/py.typed',
     'src/build/util.py',
@@ -28,6 +30,8 @@ sdist_files = {
 wheel_files = {
     'build/__init__.py',
     'build/__main__.py',
+    'build/_exceptions.py',
+    'build/_util.py',
     'build/env.py',
     'build/py.typed',
     'build/util.py',
