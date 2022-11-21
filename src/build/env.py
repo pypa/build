@@ -16,7 +16,7 @@ import sysconfig
 import tempfile
 import warnings
 
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Mapping
 from types import TracebackType
 
 from ._exceptions import FailedProcessError
@@ -33,28 +33,16 @@ _logger = logging.getLogger(__name__)
 
 
 class IsolatedEnv(metaclass=abc.ABCMeta):
-    """Abstract base of isolated build environments, as required by the build project."""
+    """Isolated build environment ABC."""
 
     @property
     @abc.abstractmethod
-    def executable(self) -> str:
-        """The executable of the isolated build environment."""
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def scripts_dir(self) -> str:
-        """The scripts directory of the isolated build environment."""
-        raise NotImplementedError
+    def python_executable(self) -> str:
+        """The Python executable of the isolated environment."""
 
     @abc.abstractmethod
-    def install(self, requirements: Collection[str]) -> None:
-        """
-        Install packages from PEP 508 requirements in the isolated build environment.
-
-        :param requirements: PEP 508 requirements
-        """
-        raise NotImplementedError
+    def make_extra_environ(self) -> Mapping[str, str] | None:
+        """Generate additional env vars specific to the isolated environment."""
 
 
 @functools.lru_cache(maxsize=None)
