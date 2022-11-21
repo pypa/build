@@ -16,16 +16,23 @@ import os
 import re
 import subprocess
 import sys
-import textwrap
-import types
 import warnings
 import zipfile
 
 from collections import OrderedDict
-from collections.abc import Iterator, Set
-from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence, Tuple, Type, Union
+from collections.abc import Iterator
+from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence, Union
 
 import pyproject_hooks
+
+from ._exceptions import (
+    BuildBackendException,
+    BuildException,
+    BuildSystemTableValidationError,
+    FailedProcessError,
+    TypoWarning,
+)
+from ._util import check_dependency
 
 
 TOMLDecodeError: type[Exception]
@@ -46,7 +53,6 @@ else:
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
-_ExcInfoType = Union[Tuple[Type[BaseException], BaseException, types.TracebackType], Tuple[None, None, None]]
 
 
 _WHEEL_NAME_REGEX = re.compile(
@@ -65,67 +71,6 @@ _DEFAULT_BACKEND = {
 _logger = logging.getLogger(__name__)
 
 
-class BuildException(Exception):
-    """
-    Exception raised by :class:`ProjectBuilder`
-    """
-
-
-class BuildBackendException(Exception):
-    """
-    Exception raised when a backend operation fails
-    """
-
-    def __init__(
-        self, exception: Exception, description: str | None = None, exc_info: _ExcInfoType = (None, None, None)
-    ) -> None:
-        super().__init__()
-        self.exception = exception
-        self.exc_info = exc_info
-        self._description = description
-
-    def __str__(self) -> str:
-        if self._description:
-            return self._description
-        return f'Backend operation failed: {self.exception!r}'
-
-
-class BuildSystemTableValidationError(BuildException):
-    """
-    Exception raised when the ``[build-system]`` table in pyproject.toml is invalid.
-    """
-
-    def __str__(self) -> str:
-        return f'Failed to validate `build-system` in pyproject.toml: {self.args[0]}'
-
-
-class FailedProcessError(Exception):
-    """
-    Exception raised when an setup or prepration operation fails.
-    """
-
-    def __init__(self, exception: subprocess.CalledProcessError, description: str) -> None:
-        super().__init__()
-        self.exception = exception
-        self._description = description
-
-    def __str__(self) -> str:
-        cmd = ' '.join(self.exception.cmd)
-        description = f"{self._description}\n  Command '{cmd}' failed with return code {self.exception.returncode}"
-        for stream_name in ('stdout', 'stderr'):
-            stream = getattr(self.exception, stream_name)
-            if stream:
-                description += f'\n  {stream_name}:\n'
-                description += textwrap.indent(stream.decode(), '    ')
-        return description
-
-
-class TypoWarning(Warning):
-    """
-    Warning raised when a possible typo is found
-    """
-
-
 def _validate_source_directory(srcdir: PathType) -> None:
     if not os.path.isdir(srcdir):
         raise BuildException(f'Source {srcdir} is not a directory')
@@ -133,56 +78,6 @@ def _validate_source_directory(srcdir: PathType) -> None:
     setup_py = os.path.join(srcdir, 'setup.py')
     if not os.path.exists(pyproject_toml) and not os.path.exists(setup_py):
         raise BuildException(f'Source {srcdir} does not appear to be a Python project: no pyproject.toml or setup.py')
-
-
-def check_dependency(
-    req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: Set[str] = frozenset()
-) -> Iterator[tuple[str, ...]]:
-    """
-    Verify that a dependency and all of its dependencies are met.
-
-    :param req_string: Requirement string
-    :param parent_extras: Extras (eg. "test" in myproject[test])
-    :yields: Unmet dependencies
-    """
-    import packaging.requirements
-
-    if sys.version_info >= (3, 8):
-        import importlib.metadata as importlib_metadata
-    else:
-        import importlib_metadata
-
-    req = packaging.requirements.Requirement(req_string)
-    normalised_req_string = str(req)
-
-    # ``Requirement`` doesn't implement ``__eq__`` so we cannot compare reqs for
-    # equality directly but the string representation is stable.
-    if normalised_req_string in ancestral_req_strings:
-        # cyclical dependency, already checked.
-        return
-
-    if req.marker:
-        extras = frozenset(('',)).union(parent_extras)
-        # a requirement can have multiple extras but ``evaluate`` can
-        # only check one at a time.
-        if all(not req.marker.evaluate(environment={'extra': e}) for e in extras):
-            # if the marker conditions are not met, we pretend that the
-            # dependency is satisfied.
-            return
-
-    try:
-        dist = importlib_metadata.distribution(req.name)  # type: ignore[no-untyped-call]
-    except importlib_metadata.PackageNotFoundError:
-        # dependency is not installed in the environment.
-        yield ancestral_req_strings + (normalised_req_string,)
-    else:
-        if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
-            # the installed version is incompatible.
-            yield ancestral_req_strings + (normalised_req_string,)
-        elif dist.requires:
-            for other_req_string in dist.requires:
-                # yields transitive dependencies that are not satisfied.
-                yield from check_dependency(other_req_string, ancestral_req_strings + (normalised_req_string,), req.extras)
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:

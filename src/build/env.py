@@ -19,7 +19,8 @@ import warnings
 from collections.abc import Callable, Collection
 from types import TracebackType
 
-import build
+from ._exceptions import FailedProcessError
+from ._util import check_dependency
 
 
 try:
@@ -65,7 +66,7 @@ def _should_use_virtualenv() -> bool:
     # dependencies are installed as specified by build.
     return virtualenv is not None and not any(
         packaging.requirements.Requirement(d[1]).name == 'virtualenv'
-        for d in build.check_dependency('build[virtualenv]')
+        for d in check_dependency('build[virtualenv]')
         if len(d) > 1
     )
 
@@ -271,7 +272,7 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
                 warnings.filterwarnings('ignore', 'check_home argument is deprecated and ignored.', DeprecationWarning)
             venv.EnvBuilder(with_pip=True, symlinks=symlinks).create(path)
     except subprocess.CalledProcessError as exc:
-        raise build.FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
+        raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
