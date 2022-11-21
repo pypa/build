@@ -13,7 +13,6 @@ import contextlib
 import difflib
 import logging
 import os
-import re
 import subprocess
 import sys
 import warnings
@@ -32,7 +31,7 @@ from ._exceptions import (
     FailedProcessError,
     TypoWarning,
 )
-from ._util import check_dependency
+from ._util import check_dependency, parse_wheel_filename
 
 
 TOMLDecodeError: type[Exception]
@@ -53,13 +52,6 @@ else:
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
-
-
-_WHEEL_NAME_REGEX = re.compile(
-    r'(?P<distribution>.+)-(?P<version>.+)'
-    r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
-    r'-(?P<abi_tag>.+)-(?P<platform_tag>.+)\.whl'
-)
 
 
 _DEFAULT_BACKEND = {
@@ -325,7 +317,7 @@ class ProjectBuilder:
 
         # fallback to build_wheel hook
         wheel = self.build('wheel', output_directory)
-        match = _WHEEL_NAME_REGEX.match(os.path.basename(wheel))
+        match = parse_wheel_filename(os.path.basename(wheel))
         if not match:
             raise ValueError('Invalid wheel')
         distinfo = f"{match['distribution']}-{match['version']}.dist-info"
