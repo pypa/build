@@ -9,7 +9,7 @@
 [![PyPI version](https://badge.fury.io/py/build.svg)](https://pypi.org/project/build/)
 [![Discord](https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23build&style=flat-square)](https://discord.gg/pypa)
 
-A simple, correct PEP 517 build frontend.
+A simple, correct Python build frontend.
 
 See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for more information.
 

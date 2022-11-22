@@ -6,6 +6,9 @@ Changelog
 Unreleased
 ==========
 
+- Replace ``pep517`` dependency with ``pyproject_hooks``,
+  into which ``pep517`` has been renamed
+  (`PR #539`_, Fixes `#529`_)
 - Change build backend from ``setuptools`` to ``flit``
   (`PR #470`_, Fixes `#394`_)
 - Dropped support for Python 3.6 (`PR #532`_)
@@ -13,7 +16,8 @@ Unreleased
 .. _PR #470: https://github.com/pypa/build/pull/470
 .. _PR #532: https://github.com/pypa/build/pull/532
 .. _#394: https://github.com/pypa/build/issues/394
-
+.. _PR #539: https://github.com/pypa/build/pull/539
+.. _#529: https://github.com/pypa/build/issues/529
 
 0.9.0 (2022-10-27)
 ==================

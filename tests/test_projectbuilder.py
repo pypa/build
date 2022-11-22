@@ -8,7 +8,7 @@ import os
 import sys
 import textwrap
 
-import pep517.wrappers
+import pyproject_hooks
 import pytest
 
 import build
@@ -185,25 +185,25 @@ def test_bad_project(package_test_no_project):
 
 
 def test_init(mocker, package_test_flit, package_legacy, test_no_permission, package_test_bad_syntax):
-    mocker.patch('pep517.wrappers.Pep517HookCaller')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller')
 
     # correct flit pyproject.toml
     builder = build.ProjectBuilder(package_test_flit)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(
+    pyproject_hooks.BuildBackendHookCaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable, runner=builder._runner
     )
-    pep517.wrappers.Pep517HookCaller.reset_mock()
+    pyproject_hooks.BuildBackendHookCaller.reset_mock()
 
     # custom python
     builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
-    pep517.wrappers.Pep517HookCaller.assert_called_with(
+    pyproject_hooks.BuildBackendHookCaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
     )
-    pep517.wrappers.Pep517HookCaller.reset_mock()
+    pyproject_hooks.BuildBackendHookCaller.reset_mock()
 
     # FileNotFoundError
     builder = build.ProjectBuilder(package_legacy)
-    pep517.wrappers.Pep517HookCaller.assert_called_with(
+    pyproject_hooks.BuildBackendHookCaller.assert_called_with(
         package_legacy,
         'setuptools.build_meta:__legacy__',
         backend_path=None,
@@ -263,15 +263,15 @@ def test_build_missing_backend(packages_path, distribution, tmpdir):
 
 
 def test_check_dependencies(mocker, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_sdist')
-    mocker.patch('pep517.wrappers.Pep517HookCaller.get_requires_for_build_wheel')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_sdist')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_wheel')
 
     builder = build.ProjectBuilder(package_test_flit)
 
     side_effects = [
         [],
         ['something'],
-        pep517.wrappers.BackendUnavailable,
+        pyproject_hooks.BackendUnavailable,
     ]
 
     builder._hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
@@ -293,7 +293,7 @@ def test_check_dependencies(mocker, package_test_flit):
 
 
 def test_build(mocker, package_test_flit, tmp_dir):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
 
@@ -314,7 +314,7 @@ def test_build(mocker, package_test_flit, tmp_dir):
 
 
 def test_default_backend(mocker, package_legacy):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_legacy)
 
@@ -322,7 +322,7 @@ def test_default_backend(mocker, package_legacy):
 
 
 def test_missing_backend(mocker, package_test_no_backend):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_no_backend)
 
@@ -330,21 +330,21 @@ def test_missing_backend(mocker, package_test_no_backend):
 
 
 def test_missing_requires(mocker, package_test_no_requires):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(package_test_no_requires)
 
 
 def test_build_system_typo(mocker, package_test_typo):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     with pytest.warns(build.TypoWarning):
         build.ProjectBuilder(package_test_typo)
 
 
 def test_missing_outdir(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.build_sdist.return_value = 'dist.tar.gz'
@@ -356,7 +356,7 @@ def test_missing_outdir(mocker, tmp_dir, package_test_flit):
 
 
 def test_relative_outdir(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.build_sdist.return_value = 'dist.tar.gz'
@@ -367,7 +367,7 @@ def test_relative_outdir(mocker, tmp_dir, package_test_flit):
 
 
 def test_build_not_dir_outdir(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.build_sdist.return_value = 'dist.tar.gz'
@@ -437,7 +437,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
 
 
 def test_prepare(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'
@@ -447,17 +447,17 @@ def test_prepare(mocker, tmp_dir, package_test_flit):
 
 
 def test_prepare_no_hook(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
-    failure = pep517.wrappers.HookMissing('prepare_metadata_for_build_wheel')
+    failure = pyproject_hooks.HookMissing('prepare_metadata_for_build_wheel')
     builder._hook.prepare_metadata_for_build_wheel.side_effect = failure
 
     assert builder.prepare('wheel', tmp_dir) is None
 
 
 def test_prepare_error(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.prepare_metadata_for_build_wheel.side_effect = Exception
@@ -467,7 +467,7 @@ def test_prepare_error(mocker, tmp_dir, package_test_flit):
 
 
 def test_prepare_not_dir_outdir(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
 
@@ -479,7 +479,7 @@ def test_prepare_not_dir_outdir(mocker, tmp_dir, package_test_flit):
 
 
 def test_no_outdir_single(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller.prepare_metadata_for_build_wheel', return_value='')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
 
     builder = build.ProjectBuilder(package_test_flit)
 
@@ -490,7 +490,7 @@ def test_no_outdir_single(mocker, tmp_dir, package_test_flit):
 
 
 def test_no_outdir_multiple(mocker, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller.prepare_metadata_for_build_wheel', return_value='')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
 
     builder = build.ProjectBuilder(package_test_flit)
 
@@ -564,7 +564,7 @@ def mock_tomli_not_available(mocker):
 
 @pytest.mark.skipif(sys.version_info >= (3, 11), reason='No need to test old toml support on 3.11+')
 def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
     builder._hook.build_sdist.return_value = 'dist.tar.gz'
@@ -575,7 +575,7 @@ def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, packag
 
 
 def test_log(mocker, caplog, package_test_flit):
-    mocker.patch('pep517.wrappers.Pep517HookCaller', autospec=True)
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
     mocker.patch('build.ProjectBuilder._call_backend', return_value='some_path')
     caplog.set_level(logging.DEBUG)
 
