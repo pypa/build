@@ -60,13 +60,13 @@ class ExtraMockDistribution(MockDistribution):
                 Metadata-Version: 2.2
                 Name: extras_dep
                 Version: 1.0.0
-                Provides-Extra: extra_without_associated_deps
-                Provides-Extra: extra_with_unmet_deps
-                Requires-Dist: unmet_dep; extra == 'extra_with_unmet_deps'
-                Provides-Extra: extra_with_met_deps
-                Requires-Dist: extras_dep; extra == 'extra_with_met_deps'
-                Provides-Extra: recursive_extra_with_unmet_deps
-                Requires-Dist: recursive_dep; extra == 'recursive_extra_with_unmet_deps'
+                Provides-Extra: extra-without-associated-deps
+                Provides-Extra: extra-with_unmet-deps
+                Requires-Dist: unmet_dep; extra == 'extra-with-unmet-deps'
+                Provides-Extra: extra-with-met-deps
+                Requires-Dist: extras_dep; extra == 'extra-with-met-deps'
+                Provides-Extra: recursive-extra-with-unmet-deps
+                Requires-Dist: recursive_dep; extra == 'recursive-extra-with-unmet-deps'
                 """
             ).strip()
 
@@ -142,27 +142,27 @@ class NestedCircularMockDistribution(MockDistribution):
         ('requireless_dep', None),
         ('extras_dep[undefined_extra]', None),
         # would the wheel builder filter this out?
-        ('extras_dep[extra_without_associated_deps]', None),
+        ('extras_dep[extra-without-associated-deps]', None),
         (
-            'extras_dep[extra_with_unmet_deps]',
-            ('extras_dep[extra_with_unmet_deps]', 'unmet_dep; extra == "extra_with_unmet_deps"'),
+            'extras_dep[extra-with-unmet-deps]',
+            ('extras_dep[extra-with-unmet-deps]', 'unmet_dep; extra == "extra-with-unmet-deps"'),
         ),
         (
-            'extras_dep[recursive_extra_with_unmet_deps]',
+            'extras_dep[recursive-extra-with-unmet-deps]',
             (
-                'extras_dep[recursive_extra_with_unmet_deps]',
-                'recursive_dep; extra == "recursive_extra_with_unmet_deps"',
+                'extras_dep[recursive-extra-with-unmet-deps]',
+                'recursive_dep; extra == "recursive-extra-with-unmet-deps"',
                 'recursive_unmet_dep',
             ),
         ),
-        ('extras_dep[extra_with_met_deps]', None),
+        ('extras_dep[extra-with-met-deps]', None),
         ('missing_dep; python_version>"10"', None),
         ('missing_dep; python_version<="1"', None),
         ('missing_dep; python_version>="1"', ('missing_dep; python_version >= "1"',)),
         ('extras_dep == 1.0.0', None),
         ('extras_dep == 2.0.0', ('extras_dep==2.0.0',)),
-        ('extras_dep[extra_without_associated_deps] == 1.0.0', None),
-        ('extras_dep[extra_without_associated_deps] == 2.0.0', ('extras_dep[extra_without_associated_deps]==2.0.0',)),
+        ('extras_dep[extra-without-associated-deps] == 1.0.0', None),
+        ('extras_dep[extra-without-associated-deps] == 2.0.0', ('extras_dep[extra-without-associated-deps]==2.0.0',)),
         ('prerelease_dep >= 1.0.0', None),
         ('circular_dep', None),
     ],
