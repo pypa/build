@@ -25,7 +25,7 @@ from collections import OrderedDict
 from collections.abc import Iterator, Set
 from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence, Tuple, Type, Union
 
-import pep517.wrappers
+import pyproject_hooks
 
 
 TOMLDecodeError: type[Exception]
@@ -243,7 +243,7 @@ class ProjectBuilder:
         srcdir: PathType,
         python_executable: str = sys.executable,
         scripts_dir: str | None = None,
-        runner: RunnerType = pep517.wrappers.default_subprocess_runner,
+        runner: RunnerType = pyproject_hooks.default_subprocess_runner,
     ) -> None:
         """
         :param srcdir: The source directory
@@ -282,7 +282,7 @@ class ProjectBuilder:
         self._backend = self._build_system['build-backend']
         self._scripts_dir = scripts_dir
         self._hook_runner = runner
-        self._hook = pep517.wrappers.Pep517HookCaller(
+        self._hook = pyproject_hooks.BuildBackendHookCaller(
             self.srcdir,
             self._backend,
             backend_path=self._build_system.get('backend-path'),
@@ -388,7 +388,7 @@ class ProjectBuilder:
                 _allow_fallback=False,
             )
         except BuildBackendException as exception:
-            if isinstance(exception.exception, pep517.wrappers.HookMissing):
+            if isinstance(exception.exception, pyproject_hooks.HookMissing):
                 return None
             raise
 
@@ -464,7 +464,7 @@ class ProjectBuilder:
     def _handle_backend(self, hook: str) -> Iterator[None]:
         try:
             yield
-        except pep517.wrappers.BackendUnavailable as exception:
+        except pyproject_hooks.BackendUnavailable as exception:
             raise BuildBackendException(  # noqa: B904 # use raise from
                 exception,
                 f"Backend '{self._backend}' is not available.",

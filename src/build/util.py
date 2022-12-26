@@ -7,7 +7,7 @@ import pathlib
 import sys
 import tempfile
 
-import pep517
+import pyproject_hooks
 
 import build
 import build.env
@@ -42,7 +42,7 @@ def project_wheel_metadata(
     """
     builder = build.ProjectBuilder(
         os.fspath(srcdir),
-        runner=pep517.quiet_subprocess_runner,
+        runner=pyproject_hooks.quiet_subprocess_runner,
     )
 
     if not isolated:
