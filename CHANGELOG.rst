@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+0.10.0 (2023-01-11)
+===================
 
 - Replace ``pep517`` dependency with ``pyproject_hooks``,
   into which ``pep517`` has been renamed
@@ -18,6 +18,7 @@ Unreleased
 .. _#394: https://github.com/pypa/build/issues/394
 .. _PR #539: https://github.com/pypa/build/pull/539
 .. _#529: https://github.com/pypa/build/issues/529
+
 
 0.9.0 (2022-10-27)
 ==================
