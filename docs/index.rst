@@ -4,9 +4,10 @@
 build
 *****
 
-A simple, correct :pep:`517` build frontend.
+A simple, correct Python build frontend.
 
-build will invoke the :pep:`517` hooks to build a distribution package.
+build implements handling for pyproject.toml-based builds, invoking
+build-backend hooks as appropriate to build a distribution package.
 It is a simple build tool and does not perform any dependency management.
 
 .. sphinx_argparse_cli::
