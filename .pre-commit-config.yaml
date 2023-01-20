@@ -47,7 +47,7 @@ repos:
     rev: v0.0.226
     hooks:
       - id: ruff
-        args: [--force-exclude, --format, grouped, --show-source]
+        args: [--force-exclude, --format, grouped]
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.2.2"
     hooks:
