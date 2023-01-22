@@ -17,7 +17,7 @@ def test_wheel_metadata(package_test_setuptools, isolated):
 @pytest.mark.pypy3323bug
 def test_wheel_metadata_isolation(package_test_flit):
     try:
-        import flit_core  # noqa: F401
+        import flit_core  # noqa: F401  # imported but unused
     except ModuleNotFoundError:
         pass
     else:
