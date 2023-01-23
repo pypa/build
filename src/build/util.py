@@ -28,6 +28,7 @@ def _project_wheel_metadata(builder: build.ProjectBuilder) -> importlib_metadata
 def project_wheel_metadata(
     srcdir: build.PathType,
     isolated: bool = True,
+    *,
     runner: build.RunnerType = pyproject_hooks.quiet_subprocess_runner,
 ) -> importlib_metadata.PackageMetadata:
     """
