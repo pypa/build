@@ -8,7 +8,7 @@ import tempfile
 
 import pyproject_hooks
 
-from . import PathType, ProjectBuilder
+from . import PathType, ProjectBuilder, RunnerType
 from .env import DefaultIsolatedEnv
 
 
