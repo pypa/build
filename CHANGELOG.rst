@@ -6,6 +6,8 @@ Changelog
 Unreleased
 ==========
 
+- Added ``runner`` parameter to ``util.project_wheel_metadata``
+  (`PR #566`_, Fixes `#553`_)
 - Modified ``ProjectBuilder`` constructor signature,
   added alternative ``ProjectBuilder.from_env`` constructor,
   redefined ``env.IsolatedEnv`` interface, and exposed ``env.DefaultIsolatedEnv``,
@@ -15,7 +17,9 @@ Unreleased
   from an ``IsolatedEnv`` in a consistent manner.  Mutating the project builder is no longer supported.
   (`PR #537`_)
 
+.. _#553: https://github.com/pypa/build/issues/553
 .. _PR #537: https://github.com/pypa/build/pull/537
+.. _PR #566: https://github.com/pypa/build/pull/566
 
 
 0.10.0 (2023-01-11)
