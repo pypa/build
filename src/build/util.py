@@ -8,7 +8,7 @@ import tempfile
 
 import pyproject_hooks
 
-from . import PathType, ProjectBuilder
+from . import PathType, ProjectBuilder, RunnerType
 from .env import DefaultIsolatedEnv
 
 
@@ -27,6 +27,8 @@ def _project_wheel_metadata(builder: ProjectBuilder) -> importlib_metadata.Packa
 def project_wheel_metadata(
     source_dir: PathType,
     isolated: bool = True,
+    *,
+    runner: RunnerType = pyproject_hooks.quiet_subprocess_runner,
 ) -> importlib_metadata.PackageMetadata:
     """
     Return the wheel metadata for a project.
@@ -38,6 +40,7 @@ def project_wheel_metadata(
     :param isolated: Whether or not to run invoke the backend in the current
                      environment or to create an isolated one and invoke it
                      there.
+    :param runner: An alternative runner for backend subprocesses
     """
 
     if isolated:
@@ -45,7 +48,7 @@ def project_wheel_metadata(
             builder = ProjectBuilder.from_isolated_env(
                 env,
                 source_dir,
-                runner=pyproject_hooks.quiet_subprocess_runner,
+                runner=runner,
             )
             env.install(builder.build_system_requires)
             env.install(builder.get_requires_for_build('wheel'))
@@ -53,7 +56,7 @@ def project_wheel_metadata(
     else:
         builder = ProjectBuilder(
             source_dir,
-            runner=pyproject_hooks.quiet_subprocess_runner,
+            runner=runner,
         )
         return _project_wheel_metadata(builder)
 
