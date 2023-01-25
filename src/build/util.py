@@ -28,7 +28,7 @@ def project_wheel_metadata(
     source_dir: PathType,
     isolated: bool = True,
     *,
-    runner: build.RunnerType = pyproject_hooks.quiet_subprocess_runner,
+    runner: RunnerType = pyproject_hooks.quiet_subprocess_runner,
 ) -> importlib_metadata.PackageMetadata:
     """
     Return the wheel metadata for a project.
