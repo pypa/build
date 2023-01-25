@@ -19,15 +19,15 @@ IS_PYPY3 = platform.python_implementation() == 'PyPy'
 @pytest.mark.isolated
 def test_isolation():
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
-    with build.env.IsolatedEnvBuilder() as env:
+    with build.env.DefaultIsolatedEnv() as env:
         with pytest.raises(subprocess.CalledProcessError):
             debug = 'import sys; import os; print(os.linesep.join(sys.path));'
-            subprocess.check_call([env.executable, '-c', f'{debug} import build.env'])
+            subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
 
 
 @pytest.mark.isolated
 def test_isolated_environment_install(mocker):
-    with build.env.IsolatedEnvBuilder() as env:
+    with build.env.DefaultIsolatedEnv() as env:
         mocker.patch('build.env._subprocess')
 
         env.install([])
@@ -37,7 +37,7 @@ def test_isolated_environment_install(mocker):
         build.env._subprocess.assert_called()
         args = build.env._subprocess.call_args[0][0][:-1]
         assert args == [
-            env.executable,
+            env.python_executable,
             '-Im',
             'pip',
             'install',
@@ -51,7 +51,7 @@ def test_isolated_environment_install(mocker):
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
     get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
-    with build.env.IsolatedEnvBuilder():
+    with build.env.DefaultIsolatedEnv():
         pass
     assert get_scheme_names.call_count == 1
 
@@ -61,7 +61,7 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(mocker):
     get_paths = mocker.spy(sysconfig, 'get_paths')
     # We should never call this, but we patch it to ensure failure if we do
     get_default_scheme = mocker.patch('sysconfig.get_default_scheme', return_value='posix_local')
-    with build.env.IsolatedEnvBuilder():
+    with build.env.DefaultIsolatedEnv():
         pass
     get_paths.assert_called_once_with(scheme='posix_prefix', vars=mocker.ANY)
     assert get_default_scheme.call_count == 0
@@ -70,7 +70,7 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(mocker):
 def test_executable_missing_post_creation(mocker):
     venv_create = mocker.patch('venv.EnvBuilder.create')
     with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
-        with build.env.IsolatedEnvBuilder():
+        with build.env.DefaultIsolatedEnv():
             pass
     assert venv_create.call_count == 1
 
@@ -104,7 +104,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
     mocker.patch('build.env._subprocess')
     caplog.set_level(logging.DEBUG)
 
-    builder = build.env.IsolatedEnvBuilder()
+    builder = build.env.DefaultIsolatedEnv()
     builder.log('something')  # line number 106
     with builder as env:
         env.install(['something'])
@@ -118,8 +118,10 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
 
 @pytest.mark.isolated
 def test_default_pip_is_never_too_old():
-    with build.env.IsolatedEnvBuilder() as env:
-        version = subprocess.check_output([env.executable, '-c', 'import pip; print(pip.__version__)'], text=True).strip()
+    with build.env.DefaultIsolatedEnv() as env:
+        version = subprocess.check_output(
+            [env.python_executable, '-c', 'import pip; print(pip.__version__)'], text=True
+        ).strip()
         assert Version(version) >= Version('19.1')
 
 
@@ -137,7 +139,7 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     mocker.patch(metadata_name + '.distributions', return_value=(SimpleNamespace(version=pip_version),))
 
     min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
-    with build.env.IsolatedEnvBuilder():
+    with build.env.DefaultIsolatedEnv():
         if Version(pip_version) < min_version:
             print(_subprocess.call_args_list)
             upgrade_call, uninstall_call = _subprocess.call_args_list

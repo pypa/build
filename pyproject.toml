@@ -142,3 +142,19 @@ lines_after_imports = 2
 line_length = 127
 known_first_party = "build"
 skip = []  # "build" is included in the default skip list
+
+[tool.ruff]
+line-length = 127
+target-version = "py37"
+select = [
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "C9",   # mccabe
+  "E",    # pycodestyle
+  "F",    # pyflakes
+  "W",    # pycodestyle
+  "RUF100",  # ruff
+]
+
+[tool.ruff.mccabe]
+max-complexity = 10

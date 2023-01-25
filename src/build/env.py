@@ -1,7 +1,3 @@
-"""
-Creates and manages isolated build environments.
-"""
-
 from __future__ import annotations
 
 import abc
@@ -14,12 +10,13 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
+import typing
 import warnings
 
-from collections.abc import Callable, Collection
-from types import TracebackType
+from collections.abc import Collection, Mapping
 
-import build
+from ._exceptions import FailedProcessError
+from ._util import check_dependency
 
 
 try:
@@ -27,33 +24,28 @@ try:
 except ModuleNotFoundError:
     virtualenv = None
 
+if sys.version_info >= (3, 8):
+    from typing import Protocol
+elif typing.TYPE_CHECKING:
+    from typing_extensions import Protocol
+else:
+    Protocol = abc.ABC
+
 
 _logger = logging.getLogger(__name__)
 
 
-class IsolatedEnv(metaclass=abc.ABCMeta):
-    """Abstract base of isolated build environments, as required by the build project."""
+class IsolatedEnv(Protocol):
+    """Isolated build environment ABC."""
 
     @property
     @abc.abstractmethod
-    def executable(self) -> str:
-        """The executable of the isolated build environment."""
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def scripts_dir(self) -> str:
-        """The scripts directory of the isolated build environment."""
-        raise NotImplementedError
+    def python_executable(self) -> str:
+        """The Python executable of the isolated environment."""
 
     @abc.abstractmethod
-    def install(self, requirements: Collection[str]) -> None:
-        """
-        Install packages from PEP 508 requirements in the isolated build environment.
-
-        :param requirements: PEP 508 requirements
-        """
-        raise NotImplementedError
+    def make_extra_environ(self) -> Mapping[str, str] | None:
+        """Generate additional env vars specific to the isolated environment."""
 
 
 @functools.lru_cache(maxsize=None)
@@ -65,7 +57,7 @@ def _should_use_virtualenv() -> bool:
     # dependencies are installed as specified by build.
     return virtualenv is not None and not any(
         packaging.requirements.Requirement(d[1]).name == 'virtualenv'
-        for d in build.check_dependency('build[virtualenv]')
+        for d in check_dependency('build[virtualenv]')
         if len(d) > 1
     )
 
@@ -79,54 +71,81 @@ def _subprocess(cmd: list[str]) -> None:
         raise e
 
 
-class IsolatedEnvBuilder:
-    """Builder object for isolated environments."""
+class DefaultIsolatedEnv(IsolatedEnv):
+    """An isolated environment which combines venv and virtualenv with pip."""
 
-    def __init__(self) -> None:
-        self._path: str | None = None
-
-    def __enter__(self) -> IsolatedEnv:
-        """
-        Create an isolated build environment.
-
-        :return: The isolated build environment
-        """
-        # Call ``realpath`` to prevent spurious warning from being emitted
-        # that the venv location has changed on Windows. The username is
-        # DOS-encoded in the output of tempfile - the location is the same
-        # but the representation of it is different, which confuses venv.
-        # Ref: https://bugs.python.org/issue46171
-        self._path = os.path.realpath(tempfile.mkdtemp(prefix='build-env-'))
+    def __enter__(self) -> DefaultIsolatedEnv:
         try:
+            self._path = tempfile.mkdtemp(prefix='build-env-')
             # use virtualenv when available (as it's faster than venv)
             if _should_use_virtualenv():
                 self.log('Creating virtualenv isolated environment...')
-                executable, scripts_dir = _create_isolated_env_virtualenv(self._path)
+                self._python_executable, self._scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
                 self.log('Creating venv isolated environment...')
-                executable, scripts_dir = _create_isolated_env_venv(self._path)
-            return _IsolatedEnvVenvPip(
-                path=self._path,
-                python_executable=executable,
-                scripts_dir=scripts_dir,
-                log=self.log,
-            )
+
+                # Call ``realpath`` to prevent spurious warning from being emitted
+                # that the venv location has changed on Windows. The username is
+                # DOS-encoded in the output of tempfile - the location is the same
+                # but the representation of it is different, which confuses venv.
+                # Ref: https://bugs.python.org/issue46171
+                self._path = os.path.realpath(tempfile.mkdtemp(prefix='build-env-'))
+                self._python_executable, self._scripts_dir = _create_isolated_env_venv(self._path)
+            return self
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None:
-        """
-        Delete the created isolated build environment.
-
-        :param exc_type: The type of exception raised (if any)
-        :param exc_val: The value of exception raised (if any)
-        :param exc_tb: The traceback of exception raised (if any)
-        """
-        if self._path is not None and os.path.exists(self._path):  # in case the user already deleted skip remove
+    def __exit__(self, *args: object) -> None:
+        if os.path.exists(self._path):  # in case the user already deleted skip remove
             shutil.rmtree(self._path)
+
+    @property
+    def path(self) -> str:
+        """The location of the isolated build environment."""
+        return self._path
+
+    @property
+    def python_executable(self) -> str:
+        """The python executable of the isolated build environment."""
+        return self._python_executable
+
+    def make_extra_environ(self) -> dict[str, str]:
+        path = os.environ.get('PATH')
+        return {'PATH': os.pathsep.join([self._scripts_dir, path]) if path is not None else self._scripts_dir}
+
+    def install(self, requirements: Collection[str]) -> None:
+        """
+        Install packages from PEP 508 requirements in the isolated build environment.
+
+        :param requirements: PEP 508 requirement specification to install
+
+        :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
+               merely an implementation detail, it may change any time without warning.
+        """
+        if not requirements:
+            return
+
+        self.log(f'Installing packages in isolated environment... ({", ".join(sorted(requirements))})')
+
+        # pip does not honour environment markers in command line arguments
+        # but it does for requirements from a file
+        with tempfile.NamedTemporaryFile('w', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
+            req_file.write(os.linesep.join(requirements))
+        try:
+            cmd = [
+                self.python_executable,
+                '-Im',
+                'pip',
+                'install',
+                '--use-pep517',
+                '--no-warn-script-location',
+                '-r',
+                os.path.abspath(req_file.name),
+            ]
+            _subprocess(cmd)
+        finally:
+            os.unlink(req_file.name)
 
     @staticmethod
     def log(message: str) -> None:
@@ -142,78 +161,6 @@ class IsolatedEnvBuilder:
             _logger.log(logging.INFO, message, stacklevel=2)
         else:
             _logger.log(logging.INFO, message)
-
-
-class _IsolatedEnvVenvPip(IsolatedEnv):
-    """
-    Isolated build environment context manager
-
-    Non-standard paths injected directly to sys.path will still be passed to the environment.
-    """
-
-    def __init__(
-        self,
-        path: str,
-        python_executable: str,
-        scripts_dir: str,
-        log: Callable[[str], None],
-    ) -> None:
-        """
-        :param path: The path where the environment exists
-        :param python_executable: The python executable within the environment
-        :param log: Log function
-        """
-        self._path = path
-        self._python_executable = python_executable
-        self._scripts_dir = scripts_dir
-        self._log = log
-
-    @property
-    def path(self) -> str:
-        """The location of the isolated build environment."""
-        return self._path
-
-    @property
-    def executable(self) -> str:
-        """The python executable of the isolated build environment."""
-        return self._python_executable
-
-    @property
-    def scripts_dir(self) -> str:
-        return self._scripts_dir
-
-    def install(self, requirements: Collection[str]) -> None:
-        """
-        Install packages from PEP 508 requirements in the isolated build environment.
-
-        :param requirements: PEP 508 requirement specification to install
-
-        :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
-               merely an implementation detail, it may change any time without warning.
-        """
-        if not requirements:
-            return
-
-        self._log('Installing packages in isolated environment... ({})'.format(', '.join(sorted(requirements))))
-
-        # pip does not honour environment markers in command line arguments
-        # but it does for requirements from a file
-        with tempfile.NamedTemporaryFile('w+', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
-            req_file.write(os.linesep.join(requirements))
-        try:
-            cmd = [
-                self.executable,
-                '-Im',
-                'pip',
-                'install',
-                '--use-pep517',
-                '--no-warn-script-location',
-                '-r',
-                os.path.abspath(req_file.name),
-            ]
-            _subprocess(cmd)
-        finally:
-            os.unlink(req_file.name)
 
 
 def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
@@ -271,7 +218,7 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
                 warnings.filterwarnings('ignore', 'check_home argument is deprecated and ignored.', DeprecationWarning)
             venv.EnvBuilder(with_pip=True, symlinks=symlinks).create(path)
     except subprocess.CalledProcessError as exc:
-        raise build.FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
+        raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
@@ -338,6 +285,6 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
 
 
 __all__ = [
-    'IsolatedEnvBuilder',
     'IsolatedEnv',
+    'DefaultIsolatedEnv',
 ]

@@ -3,6 +3,21 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Modified ``ProjectBuilder`` constructor signature,
+  added alternative ``ProjectBuilder.from_env`` constructor,
+  redefined ``env.IsolatedEnv`` interface, and exposed ``env.DefaultIsolatedEnv``,
+  replacing ``env.IsolatedEnvBuilder``.  The aim has been to shift
+  responsibility for modifying the environment from the project builder
+  to the ``IsolatedEnv`` entirely and to ensure that the builder will be initialised
+  from an ``IsolatedEnv`` in a consistent manner.  Mutating the project builder is no longer supported.
+  (`PR #537`_)
+
+.. _PR #537: https://github.com/pypa/build/pull/537
+
+
 0.10.0 (2023-01-11)
 ===================
 

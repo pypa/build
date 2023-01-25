@@ -20,8 +20,9 @@ from typing import NoReturn, TextIO
 
 import build
 
-from build import BuildBackendException, BuildException, ConfigSettingsType, FailedProcessError, PathType, ProjectBuilder
-from build.env import IsolatedEnvBuilder
+from . import ConfigSettingsType, PathType, ProjectBuilder
+from ._exceptions import BuildBackendException, BuildException, FailedProcessError
+from .env import DefaultIsolatedEnv
 
 
 _COLORS = {
@@ -93,7 +94,7 @@ class _ProjectBuilder(ProjectBuilder):
         _cprint('{bold}* {}{reset}', message)
 
 
-class _IsolatedEnvBuilder(IsolatedEnvBuilder):
+class _DefaultIsolatedEnv(DefaultIsolatedEnv):
     @staticmethod
     def log(message: str) -> None:
         _cprint('{bold}* {}{reset}', message)
@@ -104,11 +105,10 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    builder: ProjectBuilder, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
+    srcdir: PathType, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
 ) -> str:
-    with _IsolatedEnvBuilder() as env:
-        builder.python_executable = env.executable
-        builder.scripts_dir = env.scripts_dir
+    with _DefaultIsolatedEnv() as env:
+        builder = _ProjectBuilder.from_isolated_env(env, srcdir)
         # first install the build dependencies
         env.install(builder.build_system_requires)
         # then get the extra required dependencies from the backend (which was installed in the call above :P)
@@ -117,12 +117,14 @@ def _build_in_isolated_env(
 
 
 def _build_in_current_env(
-    builder: ProjectBuilder,
+    srcdir: PathType,
     outdir: PathType,
     distribution: str,
     config_settings: ConfigSettingsType | None,
     skip_dependency_check: bool = False,
 ) -> str:
+    builder = _ProjectBuilder(srcdir)
+
     if not skip_dependency_check:
         missing = builder.check_dependencies(distribution)
         if missing:
@@ -135,16 +137,16 @@ def _build_in_current_env(
 
 def _build(
     isolation: bool,
-    builder: ProjectBuilder,
+    srcdir: PathType,
     outdir: PathType,
     distribution: str,
     config_settings: ConfigSettingsType | None,
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
-        return _build_in_isolated_env(builder, outdir, distribution, config_settings)
+        return _build_in_isolated_env(srcdir, outdir, distribution, config_settings)
     else:
-        return _build_in_current_env(builder, outdir, distribution, config_settings, skip_dependency_check)
+        return _build_in_current_env(srcdir, outdir, distribution, config_settings, skip_dependency_check)
 
 
 @contextlib.contextmanager
@@ -203,9 +205,8 @@ def build_package(
     :param skip_dependency_check: Do not perform the dependency check
     """
     built: list[str] = []
-    builder = _ProjectBuilder(srcdir)
     for distribution in distributions:
-        out = _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
+        out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
         built.append(os.path.basename(out))
     return built
 
@@ -231,24 +232,23 @@ def build_package_via_sdist(
     if 'sdist' in distributions:
         raise ValueError('Only binary distributions are allowed but sdist was specified')
 
-    builder = _ProjectBuilder(srcdir)
-    sdist = _build(isolation, builder, outdir, 'sdist', config_settings, skip_dependency_check)
+    sdist = _build(isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check)
 
     sdist_name = os.path.basename(sdist)
     sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
     built: list[str] = []
-    # extract sdist
-    with tarfile.open(sdist) as t:
-        t.extractall(sdist_out)
-        try:
-            builder = _ProjectBuilder(os.path.join(sdist_out, sdist_name[: -len('.tar.gz')]))
-            if distributions:
-                builder.log(f'Building {_natural_language_list(distributions)} from sdist')
-            for distribution in distributions:
-                out = _build(isolation, builder, outdir, distribution, config_settings, skip_dependency_check)
-                built.append(os.path.basename(out))
-        finally:
-            shutil.rmtree(sdist_out, ignore_errors=True)
+    if distributions:
+        # extract sdist
+        with tarfile.open(sdist) as t:
+            t.extractall(sdist_out)
+            try:
+                _ProjectBuilder.log(f'Building {_natural_language_list(distributions)} from sdist')
+                srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
+                for distribution in distributions:
+                    out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
+                    built.append(os.path.basename(out))
+            finally:
+                shutil.rmtree(sdist_out, ignore_errors=True)
     return [sdist_name] + built
 
 
