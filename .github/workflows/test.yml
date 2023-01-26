@@ -6,12 +6,14 @@ on:
     paths-ignore:
       - "docs/**"
       - "*.md"
+      - "*.rst"
   pull_request:
     branches:
       - main
     paths-ignore:
       - "docs/**"
       - "*.md"
+      - "*.rst"
   schedule:
     - cron: "0 8 * * *"
   workflow_dispatch:
