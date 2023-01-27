@@ -34,19 +34,10 @@ from ._exceptions import (
 from ._util import check_dependency, parse_wheel_filename
 
 
-TOMLDecodeError: type[Exception]
-toml_loads: Callable[[str], Mapping[str, Any]]
-
 if sys.version_info >= (3, 11):
-    from tomllib import TOMLDecodeError
-    from tomllib import loads as toml_loads
+    import tomllib
 else:
-    try:
-        from tomli import TOMLDecodeError
-        from tomli import loads as toml_loads
-    except ModuleNotFoundError:  # pragma: no cover
-        from toml import TomlDecodeError as TOMLDecodeError  # type: ignore[import,no-redef]
-        from toml import loads as toml_loads  # type: ignore[no-redef]
+    import tomli as tomllib
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
@@ -86,12 +77,12 @@ def _validate_source_directory(source_dir: PathType) -> None:
 def _read_pyproject_toml(path: PathType) -> Mapping[str, Any]:
     try:
         with open(path, 'rb') as f:
-            return toml_loads(f.read().decode())
+            return tomllib.loads(f.read().decode())
     except FileNotFoundError:
         return {}
     except PermissionError as e:
         raise BuildException(f"{e.strerror}: '{e.filename}' ")  # noqa: B904 # use raise from
-    except TOMLDecodeError as e:
+    except tomllib.TOMLDecodeError as e:
         raise BuildException(f'Failed to parse {path}: {e} ')  # noqa: B904 # use raise from
 
 

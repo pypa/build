@@ -6,6 +6,9 @@ Changelog
 Unreleased
 ==========
 
+- Removed the ``toml`` library fallback; ``toml`` can no longer be used
+  as a substitute for ``tomli``.
+  (`PR #567`_)
 - Added ``runner`` parameter to ``util.project_wheel_metadata``
   (`PR #566`_, Fixes `#553`_)
 - Modified ``ProjectBuilder`` constructor signature,
@@ -20,6 +23,7 @@ Unreleased
 .. _#553: https://github.com/pypa/build/issues/553
 .. _PR #537: https://github.com/pypa/build/pull/537
 .. _PR #566: https://github.com/pypa/build/pull/566
+.. _PR #567: https://github.com/pypa/build/pull/567
 
 
 0.10.0 (2023-01-11)

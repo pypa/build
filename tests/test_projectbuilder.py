@@ -2,7 +2,6 @@
 
 
 import copy
-import importlib
 import logging
 import os
 import sys
@@ -538,31 +537,6 @@ def test_metadata_invalid_wheel(tmp_dir, package_test_bad_wheel):
 
     with pytest.raises(ValueError, match='Invalid wheel'):
         builder.metadata_path(tmp_dir)
-
-
-@pytest.fixture
-def mock_tomli_not_available(mocker):
-    loads = mocker.patch('tomli.loads')
-    mocker.patch.dict(sys.modules, {'tomli': None})
-    importlib.reload(build)
-    try:
-        yield
-    finally:
-        loads.assert_not_called()
-        mocker.stopall()
-        importlib.reload(build)
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason='No need to test old toml support on 3.11+')
-def test_toml_instead_of_tomli(mocker, mock_tomli_not_available, tmp_dir, package_test_flit):
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
-
-    builder = build.ProjectBuilder(package_test_flit)
-    builder._hook.build_sdist.return_value = 'dist.tar.gz'
-
-    builder.build('sdist', '.')
-
-    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)
 
 
 def test_log(mocker, caplog, package_test_flit):
