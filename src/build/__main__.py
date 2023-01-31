@@ -249,7 +249,7 @@ def build_package_via_sdist(
                     built.append(os.path.basename(out))
             finally:
                 shutil.rmtree(sdist_out, ignore_errors=True)
-    return [sdist_name] + built
+    return [sdist_name, *built]
 
 
 def main_parser() -> argparse.ArgumentParser:

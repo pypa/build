@@ -52,15 +52,15 @@ def check_dependency(
         dist = importlib_metadata.distribution(req.name)  # type: ignore[no-untyped-call]
     except importlib_metadata.PackageNotFoundError:
         # dependency is not installed in the environment.
-        yield ancestral_req_strings + (normalised_req_string,)
+        yield (*ancestral_req_strings, normalised_req_string)
     else:
         if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
             # the installed version is incompatible.
-            yield ancestral_req_strings + (normalised_req_string,)
+            yield (*ancestral_req_strings, normalised_req_string)
         elif dist.requires:
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
-                yield from check_dependency(other_req_string, ancestral_req_strings + (normalised_req_string,), req.extras)
+                yield from check_dependency(other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras)
 
 
 def parse_wheel_filename(filename: str) -> re.Match[str] | None:

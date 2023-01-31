@@ -110,7 +110,7 @@ def test_build(monkeypatch, project, args, call, tmp_path):
             pytest.skip('Running via PYTHONPATH, so the pyproject-build entrypoint is not available')
     path = get_project(project, tmp_path)
     pkgs = tmp_path / 'pkgs'
-    args = [str(path), '-o', str(pkgs)] + args
+    args = [str(path), '-o', str(pkgs), *args]
 
     if call is None:
         build.__main__.main(args)
