@@ -21,11 +21,6 @@ repos:
     rev: v0.12.1
     hooks:
       - id: validate-pyproject
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-      - id: pyupgrade
-        args: ["--py37-plus"]
   - repo: https://github.com/psf/black
     rev: 22.12.0
     hooks:
@@ -34,7 +29,7 @@ repos:
     rev: 1.13.0
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==22.6]
+        additional_dependencies: [black==22.12]
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v3.0.0-alpha.4"
     hooks:
@@ -44,7 +39,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.237
+    rev: v0.0.238
     hooks:
       - id: ruff
         args: [--fix, --format, grouped]
@@ -56,11 +51,6 @@ repos:
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: "v1.10.0"
     hooks:
-      - id: python-check-blanket-noqa
-      - id: python-check-blanket-type-ignore
-      - id: python-no-log-warn
-      - id: python-no-eval
-      - id: python-use-type-annotations
       - id: rst-backticks
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
