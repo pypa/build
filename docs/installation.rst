@@ -33,13 +33,9 @@ of the following keys:
 Bootstrapping
 =============
 
-This package can build itself with only the ``toml`` and ``pep517``
-dependencies. The ``--skip-dependency-check`` flag should be used in this
-case.
-
-On Python 3.10 and older, we have a dependency on tomli_, but toml_ can be
-used instead, which may make bootstrapping easier.
-
+This package can build itself only with the ``tomli`` (can be omitted in Python 3.11+)
+and ``pyproject-hooks`` dependencies.
+The ``--skip-dependency-check`` flag should be used in this case.
 
 Compatibility
 =============
