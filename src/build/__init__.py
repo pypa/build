@@ -42,9 +42,9 @@ else:
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
-PathType = Union[str, 'os.PathLike[str]']
+PathType = Union[str, os.PathLike[str]]
 
-_TProjectBuilder = TypeVar('_TProjectBuilder', bound='ProjectBuilder')
+_TProjectBuilder = TypeVar('_TProjectBuilder', bound=ProjectBuilder)
 
 
 _DEFAULT_BACKEND = {
