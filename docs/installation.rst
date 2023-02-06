@@ -2,19 +2,17 @@
 Installation
 ============
 
-You can download a tarball_ from Github, checkout the latest `git tag`_ or fetch
-the artifacts from `project page`_ on PyPI.
-
-The recommended way is to checkout the git tags, as they are PGP signed with one
-of the following keys:
-
-- |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2|_ *(Filipe Laíns)*
-
-``build`` may also be installed via `pip`_ or an equivalent:
+``build`` can be installed via `pip`_ or an equivalent:
 
 .. code-block:: sh
 
    $ pip install build
+
+You can also checkout the latest `git tag`_, download a tarball_ from Github, or
+manually fetch the artifacts from `project page`_ on PyPI. The git tags are
+PGP signed with one of the following keys:
+
+- |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2|_ *(Filipe Laíns)*
 
 .. tip::
    If you prefer, or are already using virtualenv_ in your workflow, you can
