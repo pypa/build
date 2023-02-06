@@ -8,9 +8,9 @@ Installation
 
    $ pip install build
 
-You can also checkout the latest `git tag`_, download a tarball_ from Github, or
-manually fetch the artifacts from `project page`_ on PyPI. The git tags are
-PGP signed with one of the following keys:
+You can also check out the latest `git tag`_, download a tarball_ from GitHub, or
+manually fetch the artifacts from the `project page`_ on PyPI. The git tags are
+recommended for redistribution and are PGP-signed with one of the following keys:
 
 - |3DCE51D60930EBA47858BA4146F633CBB0EB4BF2|_ *(Filipe Laíns)*
 
