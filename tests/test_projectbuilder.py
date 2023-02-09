@@ -363,7 +363,7 @@ def test_build_not_dir_outdir(mocker, tmp_dir, package_test_flit):
     builder._hook.build_sdist.return_value = 'dist.tar.gz'
     out = os.path.join(tmp_dir, 'out')
 
-    open(out, 'a').close()  # create empty file
+    open(out, 'a', encoding='utf-8').close()  # create empty file
 
     with pytest.raises(build.BuildException):
         builder.build('sdist', out)
@@ -410,7 +410,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
         '''
     )
     (tmp_path / 'pyproject.toml').write_text(toml, encoding='UTF-8')
-    (tmp_path / 'build.py').write_text(code)
+    (tmp_path / 'build.py').write_text(code, encoding='utf-8')
 
     deps = {str(demo_pkg_inline)}  # we patch the requires demo_pkg_inline to refer to the wheel -> we don't need index
     mocker.patch('build.ProjectBuilder.build_system_requires', new_callable=mocker.PropertyMock, return_value=deps)
@@ -462,7 +462,7 @@ def test_prepare_not_dir_outdir(mocker, tmp_dir, package_test_flit):
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'out')
-    with open(out, 'w') as f:
+    with open(out, 'w', encoding='utf-8') as f:
         f.write('Not a directory')
     with pytest.raises(build.BuildException, match='Build path .* exists and is not a directory'):
         builder.prepare('wheel', out)

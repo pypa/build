@@ -130,7 +130,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
-        with tempfile.NamedTemporaryFile('w', prefix='build-reqs-', suffix='.txt', delete=False) as req_file:
+        with tempfile.NamedTemporaryFile('w', prefix='build-reqs-', suffix='.txt', delete=False, encoding='utf-8') as req_file:
             req_file.write(os.linesep.join(requirements))
         try:
             cmd = [
