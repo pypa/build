@@ -133,14 +133,6 @@ line-length = 127
 skip-string-normalization = true
 target-version = ["py311", "py310", "py39", "py38", "py37"]
 
-[tool.isort]
-profile = "black"
-lines_between_types = 1
-lines_after_imports = 2
-line_length = 127
-known_first_party = "build"
-skip = []  # "build" is included in the default skip list
-
 [tool.ruff]
 line-length = 127
 exclude = []
@@ -162,3 +154,8 @@ target-version = "py37"
 
 [tool.ruff.mccabe]
 max-complexity = 10
+
+[tool.ruff.isort]
+lines-between-types = 1
+lines-after-imports = 2
+known-first-party = ["build"]
