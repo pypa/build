@@ -124,7 +124,7 @@ def test_build(monkeypatch, project, args, call, tmp_path):
 
 def test_isolation(tmp_dir, package_test_flit, mocker):
     try:
-        import flit_core  # noqa: F401  # imported but unused
+        import flit_core
     except ModuleNotFoundError:
         pass
     else:
