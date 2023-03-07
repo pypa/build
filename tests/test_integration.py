@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 
+import importlib.util
 import os
 import os.path
 import platform
@@ -123,11 +124,7 @@ def test_build(monkeypatch, project, args, call, tmp_path):
 
 
 def test_isolation(tmp_dir, package_test_flit, mocker):
-    try:
-        import flit_core
-    except ModuleNotFoundError:
-        pass
-    else:
+    if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
     mocker.patch('build.__main__._error')
