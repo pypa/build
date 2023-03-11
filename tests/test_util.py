@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+import importlib.util
+
 import pytest
 
 import build.util
@@ -16,11 +18,7 @@ def test_wheel_metadata(package_test_setuptools, isolated):
 
 @pytest.mark.pypy3323bug
 def test_wheel_metadata_isolation(package_test_flit):
-    try:
-        import flit_core  # noqa: F401  # imported but unused
-    except ModuleNotFoundError:
-        pass
-    else:
+    if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
     metadata = build.util.project_wheel_metadata(package_test_flit)
