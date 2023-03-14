@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 
+import contextlib
 import os
 import os.path
 import shutil
@@ -11,6 +12,11 @@ import tempfile
 import pytest
 
 import build.env
+
+if sys.version_info < (3, 8):
+    import importlib_metadata as metadata
+else:
+    from importlib import metadata
 
 
 def pytest_addoption(parser):
@@ -109,3 +115,26 @@ def tmp_dir():
 @pytest.fixture(autouse=True)
 def force_venv(mocker):
     mocker.patch.object(build.env, '_should_use_virtualenv', lambda: False)
+
+
+def pytest_report_header() -> str:
+    interesting_packages = [
+        'build',
+        'colorama',
+        'filelock',
+        'packaging',
+        'pip',
+        'pyproject_hooks',
+        'setuptools',
+        'tomli',
+        'virtualenv',
+        'wheel',
+    ]
+    valid = []
+    for package in interesting_packages:
+        with contextlib.suppress(ModuleNotFoundError):
+            valid.append(f'{package}=={metadata.version(package)}')
+    reqs = ' '.join(valid)
+    pkg_line = f'installed packages of interest: {reqs}'
+
+    return '\n'.join([pkg_line])

@@ -48,6 +48,7 @@ docs = [
 ]
 test = [
   "filelock >= 3",
+  'importlib-metadata; python_version<"3.8"',
   "pytest >= 6.2.4",
   "pytest-cov >= 2.12",
   "pytest-mock >= 2",
