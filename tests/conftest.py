@@ -132,9 +132,9 @@ def pytest_report_header() -> str:
     ]
     valid = []
     for package in interesting_packages:
-        with contextlib.suppress(ModuleNotFoundError):
+        with contextlib.suppress(ImportError):
             valid.append(f'{package}=={metadata.version(package)}')
     reqs = ' '.join(valid)
     pkg_line = f'installed packages of interest: {reqs}'
 
-    return '\n'.join([pkg_line])
+    return pkg_line
