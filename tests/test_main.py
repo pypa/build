@@ -20,6 +20,8 @@ build_open_owner = 'builtins'
 cwd = os.getcwd()
 out = os.path.join(cwd, 'dist')
 
+ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
 
 @pytest.mark.parametrize(
     ('cli_args', 'build_args', 'hook'),
@@ -368,8 +370,10 @@ def test_output_env_subprocess_error(
     assert stdout[:4] == stdout_body
     assert stdout[-1].startswith(stdout_error)
 
-    assert len(stderr) == 1
-    assert stderr[0].startswith('ERROR: Invalid requirement: ')
+    # Newer versions of pip also color stderr - strip them if present
+    cleaned_stderr = ANSI_STRIP.sub('', '\n'.join(stderr)).strip()
+    assert len(cleaned_stderr.splitlines()) == 1
+    assert cleaned_stderr.startswith('ERROR: Invalid requirement: ')
 
 
 @pytest.mark.parametrize(
