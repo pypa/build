@@ -45,6 +45,7 @@ docs = [
   "sphinx ~= 6.0",
   "sphinx-argparse-cli >= 1.5",
   "sphinx-autodoc-typehints >= 1.10",
+  "sphinx-issues >= 3.0.0",
 ]
 test = [
   "filelock >= 3",
