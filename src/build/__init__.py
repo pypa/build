@@ -62,6 +62,7 @@ def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
             warnings.warn(
                 f"Found '{obj}' in pyproject.toml, did you mean '{expected}'?",
                 TypoWarning,
+                stacklevel=2,
             )
 
 

@@ -40,7 +40,7 @@ _NO_COLORS = {color: '' for color in _COLORS}
 def _init_colors() -> dict[str, str]:
     if 'NO_COLOR' in os.environ:
         if 'FORCE_COLOR' in os.environ:
-            warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color')
+            warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
         return _NO_COLORS
     elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
         return _COLORS
@@ -330,7 +330,7 @@ def main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(cli_args: Sequence[str], prog: str | None = None) -> None:  # noqa: C901
+def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     """
     Parse the CLI arguments and invoke the build process.
 
