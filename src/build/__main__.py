@@ -330,7 +330,7 @@ def main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(cli_args: Sequence[str], prog: str | None = None) -> None:  # noqa: C901
+def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     """
     Parse the CLI arguments and invoke the build process.
 
