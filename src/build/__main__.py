@@ -40,7 +40,7 @@ _NO_COLORS = {color: '' for color in _COLORS}
 def _init_colors() -> dict[str, str]:
     if 'NO_COLOR' in os.environ:
         if 'FORCE_COLOR' in os.environ:
-            warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color')
+            warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
         return _NO_COLORS
     elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
         return _COLORS
