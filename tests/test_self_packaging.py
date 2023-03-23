@@ -56,7 +56,7 @@ def test_build_sdist(monkeypatch, tmpdir):
             str(tmpdir),
         ],
         check=True,
-    ).stdout
+    )
 
     (sdist,) = tmpdir.visit('*.tar.gz')
 
