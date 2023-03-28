@@ -3,11 +3,11 @@ Release Process
 ***************
 
 As this project is critical to the Python ecosystem's supply chain security, all
-releases are PGP signed with one of the keys listed in the `installation page`_.
+releases are PGP signed with one of the keys listed in the :doc:`installation page <installation>`.
 Before releasing please make sure your PGP key is listed there, and preferably
 signed by one of the other key holders. If your key is not signed by one of the
 other key holders, please make sure the PR that added your key to the
-`installation page`_ was approved by at least one other maintainer.
+:doc:`installation page <installation>` was approved by at least one other maintainer.
 
 After that is done, you may release the project by following these steps:
 
@@ -25,6 +25,3 @@ After that is done, you may release the project by following these steps:
 
 If you have any questions, please look at previous releases and/or ping the
 other maintainers.
-
-
-.. _installation page: installation
