@@ -19,7 +19,7 @@ import warnings
 import zipfile
 
 from collections.abc import Iterator
-from typing import Any, Callable, Mapping, Optional, Sequence, TypeVar, Union
+from typing import Any, Mapping, Sequence, TypeVar, Union
 
 import pyproject_hooks
 
@@ -31,7 +31,7 @@ from ._exceptions import (
     FailedProcessError,
     TypoWarning,
 )
-from ._util import check_dependency, parse_wheel_filename
+from ._util import Protocol, check_dependency, parse_wheel_filename
 
 
 if sys.version_info >= (3, 11):
@@ -40,7 +40,18 @@ else:
     import tomli as tomllib
 
 
-RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
+class RunnerType(Protocol):
+    """A protocol for the subprocess runner."""
+
+    def __call__(
+        self,
+        cmd: Sequence[str],
+        cwd: str | None = None,
+        extra_environ: Mapping[str, str] | None = None,
+    ) -> None:
+        ...
+
+
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
 PathType = Union[str, 'os.PathLike[str]']
 
@@ -136,7 +147,9 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
 
 
 def _wrap_subprocess_runner(runner: RunnerType, env: env.IsolatedEnv) -> RunnerType:
-    def _invoke_wrapped_runner(cmd: Sequence[str], cwd: str | None, extra_environ: Mapping[str, str] | None) -> None:
+    def _invoke_wrapped_runner(
+        cmd: Sequence[str], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None
+    ) -> None:
         runner(cmd, cwd, {**(env.make_extra_environ() or {}), **(extra_environ or {})})
 
     return _invoke_wrapped_runner

@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import abc
 import re
 import sys
 import tarfile
 import typing
 
 from collections.abc import Iterator, Set
+
+
+if sys.version_info >= (3, 8):
+    from typing import Protocol as Protocol
+elif typing.TYPE_CHECKING:
+    from typing_extensions import Protocol as Protocol
+else:
+    Protocol = abc.ABC
 
 
 _WHEEL_FILENAME_REGEX = re.compile(

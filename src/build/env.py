@@ -11,21 +11,12 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
-import typing
 import warnings
 
 from collections.abc import Collection, Mapping
 
 from ._exceptions import FailedProcessError
-from ._util import check_dependency
-
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-elif typing.TYPE_CHECKING:
-    from typing_extensions import Protocol
-else:
-    Protocol = abc.ABC
+from ._util import Protocol, check_dependency
 
 
 _logger = logging.getLogger(__name__)
