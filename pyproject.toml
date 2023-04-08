@@ -150,7 +150,7 @@ quote-style = "single"
 extend-select = [
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
-  "C9",   # mccabe
+  "C90",  # mccabe
   "I",    # isort
   "PGH",  # pygrep-hooks
   "RUF",  # ruff
