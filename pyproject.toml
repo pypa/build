@@ -58,12 +58,6 @@ test = [
   'setuptools >= 42.0.0; python_version < "3.10"',
   'setuptools >= 56.0.0; python_version >= "3.10"',
 ]
-typing = [
-  "importlib-metadata >= 5.1",
-  "mypy == 0.991",
-  "tomli",
-  "typing-extensions >= 3.7.4.3",
-]
 virtualenv = [
   "virtualenv >= 20.0.35",
 ]
