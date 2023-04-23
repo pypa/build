@@ -147,7 +147,6 @@ select = [
   "RUF",  # ruff
   "UP",   # pyupgrade
   "W",    # pycodestyle
-  "W",    # pycodestyle
   "YTT",  # flake8-2020
 ]
 src = ["src"]
