@@ -49,7 +49,7 @@ def check_dependency(
             return
 
     try:
-        dist = importlib_metadata.distribution(req.name)  # type: ignore[no-untyped-call]
+        dist = importlib_metadata.distribution(req.name)
     except importlib_metadata.PackageNotFoundError:
         # dependency is not installed in the environment.
         yield (*ancestral_req_strings, normalised_req_string)
