@@ -13,6 +13,7 @@ import pytest
 
 import build.env
 
+
 if sys.version_info < (3, 8):
     import importlib_metadata as metadata
 else:

@@ -143,6 +143,7 @@ select = [
   "C9",   # mccabe
   "E",    # pycodestyle
   "F",    # pyflakes
+  "I",    # isort
   "PGH",  # pygrep-hooks
   "RUF",  # ruff
   "UP",   # pyupgrade
