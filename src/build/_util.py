@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 import sys
+import tarfile
+import typing
 
 from collections.abc import Iterator, Set
 
@@ -65,3 +67,18 @@ def check_dependency(
 
 def parse_wheel_filename(filename: str) -> re.Match[str] | None:
     return _WHEEL_FILENAME_REGEX.match(filename)
+
+
+if typing.TYPE_CHECKING:
+    TarFile = tarfile.TarFile
+
+else:
+    # Per https://peps.python.org/pep-0706/, the "data" filter will become
+    # the default in Python 3.14.
+    if sys.version_info < (3, 14) and hasattr(tarfile, 'data_filter'):
+
+        class TarFile(tarfile.TarFile):
+            extraction_filter = staticmethod(tarfile.data_filter)
+
+    else:
+        TarFile = tarfile.TarFile

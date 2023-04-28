@@ -9,7 +9,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
 import textwrap
 import traceback
@@ -230,6 +229,8 @@ def build_package_via_sdist(
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
     """
+    from ._util import TarFile
+
     if 'sdist' in distributions:
         raise ValueError('Only binary distributions are allowed but sdist was specified')
 
@@ -240,7 +241,7 @@ def build_package_via_sdist(
     built: list[str] = []
     if distributions:
         # extract sdist
-        with tarfile.open(sdist) as t:
+        with TarFile.open(sdist) as t:
             t.extractall(sdist_out)
             try:
                 _ProjectBuilder.log(f'Building {_natural_language_list(distributions)} from sdist')
