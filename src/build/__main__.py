@@ -313,6 +313,7 @@ def main_parser() -> argparse.ArgumentParser:
         '-o',
         type=str,
         help=f'output directory (defaults to {{srcdir}}{os.sep}dist)',
+        metavar='PATH',
     )
     parser.add_argument(
         '--skip-dependency-check',
@@ -324,14 +325,17 @@ def main_parser() -> argparse.ArgumentParser:
         '--no-isolation',
         '-n',
         action='store_true',
-        help='do not isolate the build in a virtual environment',
+        help='disable building the project in an isolated virtual environment. '
+        'Build dependencies must be installed separately when this option is used',
     )
     parser.add_argument(
         '--config-setting',
         '-C',
         action='append',
-        help='pass options to the backend.  options which begin with a hyphen must be in the form of '
-        '"--config-setting=--opt(=value)" or "-C--opt(=value)"',
+        help='settings to pass to the backend.  Multiple settings can be provided. '
+        'Settings beginning with a hyphen will erroneously be interpreted as options to build if separated '
+        'by a space character; use ``--config-setting=--my-setting -C--my-other-setting``',
+        metavar='KEY[=VALUE]',
     )
     return parser
 
