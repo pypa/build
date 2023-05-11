@@ -16,6 +16,7 @@ import traceback
 import warnings
 
 from collections.abc import Iterator, Sequence
+from functools import partial
 from typing import NoReturn, TextIO
 
 import build
@@ -275,7 +276,12 @@ def main_parser() -> argparse.ArgumentParser:
             ).strip(),
             '    ',
         ),
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=partial(
+            argparse.RawDescriptionHelpFormatter,
+            # Prevent argparse from taking up the entire width of the terminal window
+            # which impedes readability.
+            width=min(shutil.get_terminal_size().columns - 2, 127),
+        ),
     )
     parser.add_argument(
         'srcdir',
