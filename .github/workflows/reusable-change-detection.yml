@@ -1,0 +1,58 @@
+name: change detection
+on:
+  workflow_call:
+    outputs:
+      run-docs:
+        description: Whether or not build the docs
+        value: ${{ jobs.change-detection.outputs.run-docs || false }}
+      run-tests:
+        description: Whether or not run the tests
+        value: ${{ jobs.change-detection.outputs.run-tests || false }}
+
+jobs:
+  change-detection:
+    name: Identify source changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      run-docs: ${{ steps.docs-changes.outputs.run-docs || false }}
+      run-tests: ${{ steps.tests-changes.outputs.run-tests || false }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get a list of the changed runtime-related files
+        if: github.event_name == 'pull_request'
+        id: changed-testable-files
+        uses: Ana06/get-changed-files@v2.2.0
+        with:
+          filter: |
+            src/**
+            tests/**
+            tox.ini
+            .github/workflows/test.yml
+            .github/workflows/reusable-type.yml
+            .github/workflows/reusable-pytest.yml
+      - name: Set a flag for running the tests
+        if: >-
+          github.event_name != 'pull_request'
+          || steps.changed-testable-files.outputs.added_modified_renamed != ''
+        id: tests-changes
+        run: >-
+          echo "run-tests=true" >> "${GITHUB_OUTPUT}"
+      - name: Get a list of the changed documentation-related files
+        if: github.event_name == 'pull_request'
+        id: changed-docs-files
+        uses: Ana06/get-changed-files@v2.2.0
+        with:
+          filter: |
+            docs/**
+            CHANGELOG.rst
+            README.md
+            .github/workflows/test.yml
+            .github/workflows/reusable-check.yml
+      - name: Set a flag for building the docs
+        if: >-
+          github.event_name != 'pull_request'
+          || steps.changed-docs-files.outputs.added_modified_renamed != ''
+        id: docs-changes
+        run: >-
+          echo "run-docs=true" >> "${GITHUB_OUTPUT}"

@@ -1,0 +1,26 @@
+name: type
+on:
+  workflow_call:
+
+jobs:
+  type:
+    runs-on: ubuntu-latest
+    env:
+      PY_COLORS: 1
+      TOX_PARALLEL_NO_SPINNER: 1
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install tox
+        run: python -m pip install tox
+
+      - name: Setup run environment
+        run: tox -vv --notest -e type
+
+      - name: Run check for type
+        run: tox -e type --skip-pkg-install

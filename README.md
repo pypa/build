@@ -1,7 +1,6 @@
 # build
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pypa/build/main.svg)](https://results.pre-commit.ci/latest/github/pypa/build/main)
-[![CI check](https://github.com/pypa/build/workflows/check/badge.svg)](https://github.com/pypa/build/actions)
 [![CI test](https://github.com/pypa/build/actions/workflows/test.yml/badge.svg)](https://github.com/pypa/build/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/pypa/build/branch/main/graph/badge.svg)](https://codecov.io/gh/pypa/build)
 
