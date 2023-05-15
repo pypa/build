@@ -1,0 +1,100 @@
+name: pytest
+on:
+  workflow_call:
+
+jobs:
+  pytest:
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10 --reruns 5 --only-rerun subprocess.CalledProcessError"
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu
+          - macos
+          - windows
+        py:
+          - "pypy-3.7"
+          - "pypy-3.8"
+          - "pypy-3.9"
+          - "3.11"
+          - "3.10"
+          - "3.9"
+          - "3.8"
+          - "3.7"
+        tox-target:
+          - "tox"
+          - "min"
+
+    continue-on-error: >- # jobs not required in branch protection
+      ${{
+        (
+          startsWith(matrix.py, 'pypy-')
+          && (!endsWith(matrix.py, '-3.7') || matrix.os == 'windows')
+        )
+        && true
+        || false
+      }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup python for test ${{ matrix.py }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.py }}
+
+      - name: Pick environment to run
+        run: |
+          import platform
+          import os
+          import sys
+
+          if platform.python_implementation() == "PyPy":
+              base = f"pypy{sys.version_info.major}{sys.version_info.minor}"
+          else:
+              base = f"py{sys.version_info.major}{sys.version_info.minor}"
+          env = f"BASE={base}\n"
+          print(f"Picked:\n{env}for {sys.version}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as file:
+              file.write(env)
+        shell: python
+
+      - name: Setup python for tox
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install tox
+        run: python -m pip install tox
+
+      - name: Run test suite via tox
+        if: matrix.tox-target == 'tox'
+        run: |
+          tox -vv --notest -e ${{env.BASE}}
+          tox -e ${{env.BASE}} --skip-pkg-install
+
+      - name: Run minimum version test
+        if: matrix.tox-target == 'min'
+        run: tox -e ${{env.BASE}}-${{ matrix.tox-target }}
+
+      - name: Run path test
+        if: matrix.tox-target == 'tox' && matrix.py == '3.10'
+        run: tox -e path
+
+      - name: Combine coverage files
+        if: always()
+        run: tox -e coverage
+
+      - uses: codecov/codecov-action@v3
+        if: always()
+        env:
+          PYTHON: ${{ matrix.python }}
+        with:
+          file: ./.tox/coverage.xml
+          flags: tests
+          env_vars: PYTHON
+          name: ${{ matrix.py }} - ${{ matrix.os }}
