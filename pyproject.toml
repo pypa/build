@@ -24,6 +24,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -56,7 +57,9 @@ test = [
   "pytest-xdist >= 1.34",
   "wheel >= 0.36.0",
   'setuptools >= 42.0.0; python_version < "3.10"',
-  'setuptools >= 56.0.0; python_version >= "3.10"',
+  'setuptools >= 56.0.0; python_version == "3.10"',
+  'setuptools >= 56.0.0; python_version == "3.11"',
+  'setuptools >= 67.8.0; python_version >= "3.12"',
 ]
 typing = [
   "importlib-metadata >= 5.1",
@@ -112,6 +115,7 @@ filterwarnings = [
   "error",
   "ignore:path is deprecated.:DeprecationWarning",
   "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
+  "ignore:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
 ]
 
 [tool.mypy]

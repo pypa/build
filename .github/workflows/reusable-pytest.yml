@@ -18,6 +18,7 @@ jobs:
           - "pypy-3.7"
           - "pypy-3.8"
           - "pypy-3.9"
+          - "3.12"
           - "3.11"
           - "3.10"
           - "3.9"
@@ -46,6 +47,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
+          allow-prereleases: true
 
       - name: Pick environment to run
         run: |
