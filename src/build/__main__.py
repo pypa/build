@@ -112,7 +112,7 @@ def _build_in_isolated_env(
         # first install the build dependencies
         env.install(builder.build_system_requires)
         # then get the extra required dependencies from the backend (which was installed in the call above :P)
-        env.install(builder.get_requires_for_build(distribution))
+        env.install(builder.get_requires_for_build(distribution, config_settings or {}))
         return builder.build(distribution, outdir, config_settings or {})
 
 
@@ -126,7 +126,7 @@ def _build_in_current_env(
     builder = _ProjectBuilder(srcdir)
 
     if not skip_dependency_check:
-        missing = builder.check_dependencies(distribution)
+        missing = builder.check_dependencies(distribution, config_settings or {})
         if missing:
             dependencies = ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
             _cprint()
