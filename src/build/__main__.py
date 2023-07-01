@@ -17,13 +17,23 @@ import warnings
 
 from collections.abc import Iterator, Sequence
 from functools import partial
-from typing import NoReturn, TextIO
+from typing import TYPE_CHECKING, List, NoReturn, TextIO, Tuple
 
 import build
 
 from . import ConfigSettingsType, PathType, ProjectBuilder
 from ._exceptions import BuildBackendException, BuildException, FailedProcessError
 from .env import DefaultIsolatedEnv
+
+
+if TYPE_CHECKING:  # pragma: no cover
+    from typing_extensions import Literal
+
+    DistributionType = Literal['sdist', 'wheel']
+else:
+    DistributionType = str
+
+_ExpandedConfigSettingsType = List[Tuple[str, str, str]]
 
 
 _COLORS = {
@@ -105,43 +115,106 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
 
+_HOOK_SEP = ':'
+_SETTING_SEP = '='
+_EMPTY_HOOK = ''
+
+_VALID_HOOK_PREFIXES = [
+    'build_sdist',
+    'build_wheel',
+    'get_requires_for_build_sdist',
+    'get_requires_for_build_wheel',
+]
+
+
+def _parse_config_settings(raw_config_settings: list[str]) -> _ExpandedConfigSettingsType:
+    settings: _ExpandedConfigSettingsType = []
+
+    for arg in raw_config_settings:
+        hook, hook_sep, setting = arg.partition(_HOOK_SEP)
+        if not hook_sep:
+            setting = hook
+            hook = _EMPTY_HOOK
+        elif hook not in _VALID_HOOK_PREFIXES:
+            msg = f"You cannot pass config settings to '{hook}'; hook must be one of: {', '.join(_VALID_HOOK_PREFIXES)}"
+            warnings.warn(msg, stacklevel=2)
+            continue
+
+        key, _, value = setting.partition(_SETTING_SEP)
+        settings.append((hook, key, value))
+
+    return settings
+
+
+def _get_config_settings_for_hook(
+    config_settings_by_hook: _ExpandedConfigSettingsType | None, hook: str
+) -> ConfigSettingsType:
+    if config_settings_by_hook is None:
+        return {}
+
+    merged_settings: dict[str, list[str]] = {}
+    for key, expanded_value in ((k, v) for h, k, v in config_settings_by_hook if h in {_EMPTY_HOOK, hook}):
+        merged_settings.setdefault(key, []).append(expanded_value)
+
+    collapsed_settings = {k: [h, *r] if r else h for k, [h, *r] in merged_settings.items()}
+    return collapsed_settings
+
+
 def _build_in_isolated_env(
-    srcdir: PathType, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
+    srcdir: PathType,
+    outdir: PathType,
+    distribution: DistributionType,
+    config_settings: _ExpandedConfigSettingsType | None,
 ) -> str:
     with _DefaultIsolatedEnv() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
         # first install the build dependencies
         env.install(builder.build_system_requires)
         # then get the extra required dependencies from the backend (which was installed in the call above :P)
-        env.install(builder.get_requires_for_build(distribution))
-        return builder.build(distribution, outdir, config_settings or {})
+        env.install(
+            builder.get_requires_for_build(
+                distribution, _get_config_settings_for_hook(config_settings, f'get_requires_for_build_{distribution}')
+            ),
+        )
+        return builder.build(
+            distribution,
+            outdir,
+            _get_config_settings_for_hook(config_settings, f'build_{distribution}'),
+        )
 
 
 def _build_in_current_env(
     srcdir: PathType,
     outdir: PathType,
-    distribution: str,
-    config_settings: ConfigSettingsType | None,
+    distribution: DistributionType,
+    config_settings: _ExpandedConfigSettingsType | None,
     skip_dependency_check: bool = False,
 ) -> str:
     builder = _ProjectBuilder(srcdir)
 
     if not skip_dependency_check:
-        missing = builder.check_dependencies(distribution)
+        missing = builder.check_dependencies(
+            distribution,
+            _get_config_settings_for_hook(config_settings, f'get_requires_for_build_{distribution}'),
+        )
         if missing:
             dependencies = ''.join('\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep)
             _cprint()
             _error(f'Missing dependencies:{dependencies}')
 
-    return builder.build(distribution, outdir, config_settings or {})
+    return builder.build(
+        distribution,
+        outdir,
+        _get_config_settings_for_hook(config_settings, f'build_{distribution}'),
+    )
 
 
 def _build(
     isolation: bool,
     srcdir: PathType,
     outdir: PathType,
-    distribution: str,
-    config_settings: ConfigSettingsType | None,
+    distribution: DistributionType,
+    config_settings: _ExpandedConfigSettingsType | None,
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
@@ -190,8 +263,8 @@ def _natural_language_list(elements: Sequence[str]) -> str:
 def build_package(
     srcdir: PathType,
     outdir: PathType,
-    distributions: Sequence[str],
-    config_settings: ConfigSettingsType | None = None,
+    distributions: Sequence[DistributionType],
+    config_settings: _ExpandedConfigSettingsType | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -215,8 +288,8 @@ def build_package(
 def build_package_via_sdist(
     srcdir: PathType,
     outdir: PathType,
-    distributions: Sequence[str],
-    config_settings: ConfigSettingsType | None = None,
+    distributions: Sequence[DistributionType],
+    config_settings: _ExpandedConfigSettingsType | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -331,11 +404,14 @@ def main_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--config-setting',
         '-C',
+        dest='config_settings',
         action='append',
         help='settings to pass to the backend.  Multiple settings can be provided. '
         'Settings beginning with a hyphen will erroneously be interpreted as options to build if separated '
-        'by a space character; use ``--config-setting=--my-setting -C--my-other-setting``',
-        metavar='KEY[=VALUE]',
+        'by a space character; use ``--config-setting=--my-setting -C--my-other-setting``. '
+        'Prefix the hook name to pass settings to specific hooks, '
+        'e.g. ``-C build_wheel:--my-hook-specific-setting``',
+        metavar='[HOOK:]KEY[=VALUE]',
     )
     return parser
 
@@ -353,19 +429,9 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         parser.prog = prog
     args = parser.parse_args(cli_args)
 
-    distributions = []
-    config_settings = {}
+    distributions: list[DistributionType] = []
 
-    if args.config_setting:
-        for arg in args.config_setting:
-            setting, _, value = arg.partition('=')
-            if setting not in config_settings:
-                config_settings[setting] = value
-            else:
-                if not isinstance(config_settings[setting], list):
-                    config_settings[setting] = [config_settings[setting]]
-
-                config_settings[setting].append(value)
+    config_settings = _parse_config_settings(args.config_settings or [])
 
     if args.sdist:
         distributions.append('sdist')

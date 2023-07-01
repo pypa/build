@@ -28,62 +28,81 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     [
         (
             [],
-            [cwd, out, ['wheel'], {}, True, False],
+            [cwd, out, ['wheel'], [], True, False],
             'build_package_via_sdist',
         ),
         (
             ['-n'],
-            [cwd, out, ['wheel'], {}, False, False],
+            [cwd, out, ['wheel'], [], False, False],
             'build_package_via_sdist',
         ),
         (
             ['-s'],
-            [cwd, out, ['sdist'], {}, True, False],
+            [cwd, out, ['sdist'], [], True, False],
             'build_package',
         ),
         (
             ['-w'],
-            [cwd, out, ['wheel'], {}, True, False],
+            [cwd, out, ['wheel'], [], True, False],
             'build_package',
         ),
         (
             ['-s', '-w'],
-            [cwd, out, ['sdist', 'wheel'], {}, True, False],
+            [cwd, out, ['sdist', 'wheel'], [], True, False],
             'build_package',
         ),
         (
             ['source'],
-            ['source', os.path.join('source', 'dist'), ['wheel'], {}, True, False],
+            ['source', os.path.join('source', 'dist'), ['wheel'], [], True, False],
             'build_package_via_sdist',
         ),
         (
             ['-o', 'out'],
-            [cwd, 'out', ['wheel'], {}, True, False],
+            [cwd, 'out', ['wheel'], [], True, False],
             'build_package_via_sdist',
         ),
         (
             ['source', '-o', 'out'],
-            ['source', 'out', ['wheel'], {}, True, False],
+            ['source', 'out', ['wheel'], [], True, False],
             'build_package_via_sdist',
         ),
         (
             ['-x'],
-            [cwd, out, ['wheel'], {}, True, True],
+            [cwd, out, ['wheel'], [], True, True],
             'build_package_via_sdist',
         ),
         (
             ['-C--flag1', '-C--flag2'],
-            [cwd, out, ['wheel'], {'--flag1': '', '--flag2': ''}, True, False],
+            [cwd, out, ['wheel'], [('', '--flag1', ''), ('', '--flag2', '')], True, False],
             'build_package_via_sdist',
         ),
         (
             ['-C--flag=value'],
-            [cwd, out, ['wheel'], {'--flag': 'value'}, True, False],
+            [cwd, out, ['wheel'], [('', '--flag', 'value')], True, False],
             'build_package_via_sdist',
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
-            [cwd, out, ['wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
+            [
+                cwd,
+                out,
+                ['wheel'],
+                [('', '--flag1', 'value'), ('', '--flag2', 'other_value'), ('', '--flag2', 'extra_value')],
+                True,
+                False,
+            ],
+            'build_package_via_sdist',
+        ),
+        (
+            ['-C--flag1=value', '-Cbuild_wheel:--flag2=other_value'],
+            [
+                cwd,
+                out,
+                ['wheel'],
+                [('', '--flag1', 'value'), ('build_wheel', '--flag2', 'other_value')],
+                True,
+                False,
+            ],
             'build_package_via_sdist',
         ),
     ],
@@ -135,7 +154,7 @@ def test_build_isolated(mocker, package_test_flit):
 
     install.assert_any_call({'flit_core >=2,<3'})
 
-    required_cmd.assert_called_with('sdist')
+    required_cmd.assert_called_with('sdist', {})
     install.assert_any_call(['dep1', 'dep2'])
 
     build_cmd.assert_called_with('sdist', '.', {})
@@ -439,3 +458,67 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
 '''
     )
     assert stderr == ''
+
+
+@pytest.mark.parametrize(
+    ('raw_config_settings', 'config_settings_per_hook'),
+    [
+        (
+            ['foo', 'bar'],
+            ({'foo': '', 'bar': ''},) * 4,
+        ),
+        (
+            ['foo=bar'],
+            ({'foo': 'bar'},) * 4,
+        ),
+        (
+            ['foo=bar', 'foo=baz'],
+            ({'foo': ['bar', 'baz']},) * 4,
+        ),
+        (
+            ['build_sdist:foo'],
+            ({'foo': ''}, {}, {}, {}),
+        ),
+        (
+            ['build_wheel:foo=bar'],
+            ({}, {'foo': 'bar'}, {}, {}),
+        ),
+        (
+            ['foo=bar', 'build_wheel:foo=baz'],
+            ({'foo': 'bar'}, {'foo': ['bar', 'baz']}, {'foo': 'bar'}, {'foo': 'bar'}),
+        ),
+        (
+            ['build_foo:foo'],
+            ({},) * 4,
+        ),
+        (
+            ['build_foo:foo=bar', 'build_wheel:foo=baz'],
+            ({}, {'foo': 'baz'}, {}, {}),
+        ),
+        (
+            ['foo=foo', 'get_requires_for_build_wheel:foo=bar', 'build_wheel:foo=baz'],
+            ({'foo': 'foo'}, {'foo': ['foo', 'baz']}, {'foo': 'foo'}, {'foo': ['foo', 'bar']}),
+        ),
+    ],
+)
+@pytest.mark.filterwarnings('ignore:You cannot pass config settings')
+def test_config_settings_transform(
+    mocker,
+    tmp_dir,
+    package_test_setuptools,
+    raw_config_settings,
+    config_settings_per_hook,
+):
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    builder_get_requires_for_build = mocker.patch('build.ProjectBuilder.get_requires_for_build', return_value=set())
+    builder_build = mocker.patch('build.ProjectBuilder.build', return_value='something')
+
+    (build_sdist, build_wheel, get_requires_for_build_sdist, get_requires_for_build_wheel) = config_settings_per_hook
+
+    build.__main__.main(
+        ['--no-isolation', '-sw', *(f'-C{s}' for s in raw_config_settings), '-o', tmp_dir, package_test_setuptools]
+    )
+    builder_get_requires_for_build.assert_any_call('sdist', get_requires_for_build_sdist)
+    builder_get_requires_for_build.assert_any_call('wheel', get_requires_for_build_wheel)
+    builder_build.assert_any_call('sdist', tmp_dir, build_sdist)
+    builder_build.assert_any_call('wheel', tmp_dir, build_wheel)
