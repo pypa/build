@@ -136,7 +136,6 @@ ignore_missing_imports = true
 [tool.black]
 line-length = 127
 skip-string-normalization = true
-target-version = ["py311", "py310", "py39", "py38", "py37"]
 
 [tool.ruff]
 line-length = 127
@@ -155,7 +154,6 @@ select = [
   "YTT",  # flake8-2020
 ]
 src = ["src"]
-target-version = "py37"
 
 [tool.ruff.mccabe]
 max-complexity = 10
