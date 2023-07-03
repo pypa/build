@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import functools
+import importlib.util
 import logging
 import os
 import platform
@@ -18,11 +19,6 @@ from collections.abc import Collection, Mapping
 from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
-
-try:
-    import virtualenv
-except ModuleNotFoundError:
-    virtualenv = None
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -55,7 +51,7 @@ def _should_use_virtualenv() -> bool:
     # virtualenv might be incompatible if it was installed separately
     # from build. This verifies that virtualenv and all of its
     # dependencies are installed as specified by build.
-    return virtualenv is not None and not any(
+    return importlib.util.find_spec('virtualenv') is not None and not any(
         packaging.requirements.Requirement(d[1]).name == 'virtualenv'
         for d in check_dependency('build[virtualenv]')
         if len(d) > 1
@@ -170,6 +166,8 @@ def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     :param path: The path where to create the isolated build environment
     :return: The Python executable and script folder
     """
+    import virtualenv
+
     cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
     result = virtualenv.cli_run(cmd, setup_logging=False)
     executable = str(result.creator.exe)
