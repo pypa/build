@@ -27,10 +27,7 @@ def check_dependency(
     """
     import packaging.requirements
 
-    if sys.version_info >= (3, 8):
-        import importlib.metadata as importlib_metadata
-    else:
-        import importlib_metadata
+    from ._importlib import metadata
 
     req = packaging.requirements.Requirement(req_string)
     normalised_req_string = str(req)
@@ -51,8 +48,8 @@ def check_dependency(
             return
 
     try:
-        dist = importlib_metadata.distribution(req.name)
-    except importlib_metadata.PackageNotFoundError:
+        dist = metadata.distribution(req.name)
+    except metadata.PackageNotFoundError:
         # dependency is not installed in the environment.
         yield (*ancestral_req_strings, normalised_req_string)
     else:

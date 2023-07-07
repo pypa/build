@@ -3,25 +3,19 @@
 from __future__ import annotations
 
 import pathlib
-import sys
 import tempfile
 
 import pyproject_hooks
 
 from . import PathType, ProjectBuilder, RunnerType
+from ._importlib import metadata
 from .env import DefaultIsolatedEnv
 
 
-if sys.version_info >= (3, 8):
-    import importlib.metadata as importlib_metadata
-else:
-    import importlib_metadata
-
-
-def _project_wheel_metadata(builder: ProjectBuilder) -> importlib_metadata.PackageMetadata:
+def _project_wheel_metadata(builder: ProjectBuilder) -> metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        return importlib_metadata.PathDistribution(path).metadata
+        return metadata.PathDistribution(path).metadata
 
 
 def project_wheel_metadata(
@@ -29,7 +23,7 @@ def project_wheel_metadata(
     isolated: bool = True,
     *,
     runner: RunnerType = pyproject_hooks.quiet_subprocess_runner,
-) -> importlib_metadata.PackageMetadata:
+) -> metadata.PackageMetadata:
     """
     Return the wheel metadata for a project.
 

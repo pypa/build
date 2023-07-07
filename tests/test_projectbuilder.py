@@ -4,6 +4,7 @@
 import copy
 import logging
 import os
+import pathlib
 import sys
 import textwrap
 
@@ -12,13 +13,7 @@ import pytest
 
 import build
 
-
-if sys.version_info >= (3, 8):  # pragma: no cover
-    from importlib import metadata as importlib_metadata
-else:  # pragma: no cover
-    import importlib_metadata
-
-import pathlib
+from build import _importlib
 
 
 build_open_owner = 'builtins'
@@ -30,7 +25,7 @@ DEFAULT_BACKEND = {
 }
 
 
-class MockDistribution(importlib_metadata.Distribution):
+class MockDistribution(_importlib.metadata.Distribution):
     def locate_file(self, path):  # pragma: no cover
         return ''
 
@@ -48,7 +43,7 @@ class MockDistribution(importlib_metadata.Distribution):
             return CircularMockDistribution()
         elif name == 'nested_circular_dep':
             return NestedCircularMockDistribution()
-        raise importlib_metadata.PackageNotFoundError
+        raise _importlib.metadata.PackageNotFoundError
 
 
 class ExtraMockDistribution(MockDistribution):
@@ -167,7 +162,7 @@ class NestedCircularMockDistribution(MockDistribution):
     ],
 )
 def test_check_dependency(monkeypatch, requirement_string, expected):
-    monkeypatch.setattr(importlib_metadata, 'Distribution', MockDistribution)
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
 
 
@@ -502,7 +497,7 @@ def test_runner_user_specified(tmp_dir, package_test_flit):
 def test_metadata_path_no_prepare(tmp_dir, package_test_no_prepare):
     builder = build.ProjectBuilder(package_test_no_prepare)
 
-    metadata = importlib_metadata.PathDistribution(
+    metadata = _importlib.metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
 
@@ -513,7 +508,7 @@ def test_metadata_path_no_prepare(tmp_dir, package_test_no_prepare):
 def test_metadata_path_with_prepare(tmp_dir, package_test_setuptools):
     builder = build.ProjectBuilder(package_test_setuptools)
 
-    metadata = importlib_metadata.PathDistribution(
+    metadata = _importlib.metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
 
@@ -524,7 +519,7 @@ def test_metadata_path_with_prepare(tmp_dir, package_test_setuptools):
 def test_metadata_path_legacy(tmp_dir, package_legacy):
     builder = build.ProjectBuilder(package_legacy)
 
-    metadata = importlib_metadata.PathDistribution(
+    metadata = _importlib.metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
 
