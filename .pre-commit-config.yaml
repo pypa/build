@@ -26,16 +26,16 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.14.0
+    rev: 1.15.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==23.3.0]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0-alpha.9-for-vscode"
+    rev: "v3.0.0"
     hooks:
       - id: prettier
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.276
+    rev: v0.0.277
     hooks:
       - id: ruff
         args: [--fix, --format, grouped, --show-fixes]
