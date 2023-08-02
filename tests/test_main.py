@@ -188,6 +188,7 @@ def test_build_raises_build_backend_exception(mocker, package_test_flit):
         build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
 
+@pytest.mark.network
 @pytest.mark.pypy3323bug
 def test_build_package(tmp_dir, package_test_setuptools):
     build.__main__.build_package(package_test_setuptools, tmp_dir, ['sdist', 'wheel'])
@@ -198,6 +199,7 @@ def test_build_package(tmp_dir, package_test_setuptools):
     ]
 
 
+@pytest.mark.network
 @pytest.mark.pypy3323bug
 def test_build_package_via_sdist(tmp_dir, package_test_setuptools):
     build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['wheel'])
@@ -223,7 +225,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
 @pytest.mark.parametrize(
     ('args', 'output'),
     [
-        (
+        pytest.param(
             [],
             [
                 '* Creating venv isolated environment...',
@@ -238,8 +240,10 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
+            id='via-sdist-isolation',
+            marks=[pytest.mark.network, pytest.mark.isolated],
         ),
-        (
+        pytest.param(
             ['--no-isolation'],
             [
                 '* Getting build dependencies for sdist...',
@@ -249,8 +253,9 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
+            id='via-sdist-no-isolation',
         ),
-        (
+        pytest.param(
             ['--wheel'],
             [
                 '* Creating venv isolated environment...',
@@ -260,24 +265,28 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
+            id='wheel-direct-isolation',
+            marks=[pytest.mark.network, pytest.mark.isolated],
         ),
-        (
+        pytest.param(
             ['--wheel', '--no-isolation'],
             [
                 '* Getting build dependencies for wheel...',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
+            id='wheel-direct-no-isolation',
         ),
-        (
+        pytest.param(
             ['--sdist', '--no-isolation'],
             [
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 'Successfully built test_setuptools-1.0.0.tar.gz',
             ],
+            id='sdist-direct-no-isolation',
         ),
-        (
+        pytest.param(
             ['--sdist', '--wheel', '--no-isolation'],
             [
                 '* Getting build dependencies for sdist...',
@@ -286,15 +295,8 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
+            id='sdist-and-wheel-direct-no-isolation',
         ),
-    ],
-    ids=[
-        'via-sdist-isolation',
-        'via-sdist-no-isolation',
-        'wheel-direct-isolation',
-        'wheel-direct-no-isolation',
-        'sdist-direct-no-isolation',
-        'sdist-and-wheel-direct-no-isolation',
     ],
 )
 @pytest.mark.flaky(reruns=5)
