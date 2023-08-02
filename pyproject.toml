@@ -111,6 +111,7 @@ norecursedirs = "tests/integration/*"
 markers = [
   "isolated",
   "pypy3323bug",
+  "network",
 ]
 filterwarnings = [
   "error",

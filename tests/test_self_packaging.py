@@ -43,6 +43,7 @@ wheel_files = {
 }
 
 
+@pytest.mark.network
 def test_build_sdist(monkeypatch, tmpdir):
     monkeypatch.chdir(MAIN_DIR)
 
@@ -66,6 +67,7 @@ def test_build_sdist(monkeypatch, tmpdir):
     assert simpler == sdist_files
 
 
+@pytest.mark.network
 @pytest.mark.parametrize('args', ((), ('--wheel',)), ids=('from_sdist', 'direct'))
 def test_build_wheel(monkeypatch, tmpdir, args):
     monkeypatch.chdir(MAIN_DIR)
