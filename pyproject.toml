@@ -77,6 +77,11 @@ pyproject-build = "build.__main__:entrypoint"
 [project.entry-points."pipx.run"]
 build = "build.__main__:entrypoint"
 
+[tool.flit.sdist]
+include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.ini"]
+exclude = ["tests/__pycache__", "docs/_build"]
+
+
 [tool.coverage.run]
 source = [
   "build",
