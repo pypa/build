@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit-core >= 3.4"]
+requires = ["flit-core >= 3.8"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -79,7 +79,7 @@ build = "build.__main__:entrypoint"
 
 [tool.flit.sdist]
 include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.ini"]
-exclude = ["tests/__pycache__", "docs/_build"]
+exclude = ["**/__pycache__", "docs/_build"]
 
 
 [tool.coverage.run]
