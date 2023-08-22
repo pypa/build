@@ -5,7 +5,7 @@ import sys
 import tarfile
 import zipfile
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 
@@ -13,20 +13,34 @@ import pytest
 DIR = Path(__file__).parent.resolve()
 MAIN_DIR = DIR.parent
 
+
 sdist_files = {
+    '.dockerignore',
+    '.gitignore',
+    'CHANGELOG.rst',
     'LICENSE',
     'PKG-INFO',
     'README.md',
+    'docs/conf.py',
     'pyproject.toml',
-    'src/build/__init__.py',
-    'src/build/__main__.py',
-    'src/build/_exceptions.py',
-    'src/build/_importlib.py',
-    'src/build/_util.py',
-    'src/build/env.py',
     'src/build/py.typed',
-    'src/build/util.py',
+    'tests/constraints.txt',
+    'tests/packages/test-cant-build-via-sdist/some-file-that-is-needed-for-build.txt',
+    'tests/packages/test-no-project/empty.txt',
+    'tox.ini',
 }
+
+sdist_patterns = {
+    'docs/*.rst',
+    'src/build/*.py',
+    'tests/*.py',
+    'tests/packages/*/*.py',
+    'tests/packages/*/*/*.py',
+    'tests/packages/*/pyproject.toml',
+    'tests/packages/*/setup.*',
+}
+
+sdist_files |= {str(PurePosixPath(p.relative_to(MAIN_DIR))) for path in sdist_patterns for p in MAIN_DIR.glob(path)}
 
 wheel_files = {
     'build/__init__.py',
