@@ -28,6 +28,7 @@ jobs:
             src/**
             tests/**
             tox.ini
+            pyproject.toml
             .github/workflows/test.yml
             .github/workflows/reusable-type.yml
             .github/workflows/reusable-pytest.yml
