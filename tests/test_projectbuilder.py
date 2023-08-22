@@ -487,7 +487,8 @@ def test_no_outdir_multiple(mocker, tmp_dir, package_test_flit):
 
 def test_runner_user_specified(tmp_dir, package_test_flit):
     def dummy_runner(cmd, cwd=None, extra_environ=None):
-        raise RuntimeError('Runner was called')
+        msg = 'Runner was called'
+        raise RuntimeError(msg)
 
     builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)
     with pytest.raises(build.BuildBackendException, match='Runner was called'):

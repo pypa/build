@@ -176,7 +176,8 @@ def _handle_build_error() -> Iterator[None]:
 
 def _natural_language_list(elements: Sequence[str]) -> str:
     if len(elements) == 0:
-        raise IndexError('no elements')
+        msg = 'no elements'
+        raise IndexError(msg)
     elif len(elements) == 1:
         return elements[0]
     else:
@@ -232,7 +233,8 @@ def build_package_via_sdist(
     from ._util import TarFile
 
     if 'sdist' in distributions:
-        raise ValueError('Only binary distributions are allowed but sdist was specified')
+        msg = 'Only binary distributions are allowed but sdist was specified'
+        raise ValueError(msg)
 
     sdist = _build(isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check)
 

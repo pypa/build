@@ -159,6 +159,8 @@ select = [
   "UP",   # pyupgrade
   "W",    # pycodestyle
   "YTT",  # flake8-2020
+  "TRY",  # tryceratops
+  "EM",   # flake8-errmsg
 ]
 src = ["src"]
 
