@@ -11,15 +11,42 @@ Unreleased
   (PR :pr:`567`)
 - Added ``runner`` parameter to ``util.project_wheel_metadata``
   (PR :pr:`566`, Fixes :issue:`553`)
-- Modified ``ProjectBuilder`` constructor signature,
-  added alternative ``ProjectBuilder.from_env`` constructor,
-  redefined ``env.IsolatedEnv`` interface, and exposed ``env.DefaultIsolatedEnv``,
-  replacing ``env.IsolatedEnvBuilder``.  The aim has been to shift
-  responsibility for modifying the environment from the project builder
-  to the ``IsolatedEnv`` entirely and to ensure that the builder will be initialised
-  from an ``IsolatedEnv`` in a consistent manner.  Mutating the project builder is no longer supported.
+- Modified ``ProjectBuilder`` constructor signature, added alternative
+  ``ProjectBuilder.from_env`` constructor, redefined ``env.IsolatedEnv``
+  interface, and exposed ``env.DefaultIsolatedEnv``, replacing
+  ``env.IsolatedEnvBuilder``.  The aim has been to shift responsibility for
+  modifying the environment from the project builder to the ``IsolatedEnv``
+  entirely and to ensure that the builder will be initialised from an
+  ``IsolatedEnv`` in a consistent manner.  Mutating the project builder is no
+  longer supported.
   (PR :pr:`537`)
-
+- ``virtualenv`` is no longer imported when using ``-n``, for faster builds
+  (PR :pr:`636`, fixes issue :issue:`510`)
+- The SDist now contains the repository contents, including tests. Flit-core
+  3.8+ required.
+  (PR :pr:`657`, :pr:`661`, fixes issue :issue:`656`)
+- The minimum version of ``importlib-metadata`` has been increased to 4.6 and
+  Python 3.10 due to a bug in the standard library version with URL
+  requirements in extras. This is still not required for 3.8 when bootstrapping
+  (as long as you don't have URL requirements in extras).
+  (PR :pr:`631`, fixes issue :issue:`631`)
+- Docs now built with Sphinx 7
+  (PR :pr:`660`)
+- Tests now contain a ``network`` marker
+  (PR :pr:`649`, fixes issue :issue:`648`)
+- Config-settings are now passed to ``get_requires*`` hooks, fixing a long
+  standing bug. If this affects your setuptools build, you can use
+  ``-C--build-option=<cmd> -C--build-option=<option>`` to workaround an issue
+  with Setuptools not allowing unrecognised build options when running this
+  hook.
+  (PR :pr:`627`, fixes issue :issue:`#264`)
+- Test on Python 3.12 betas/RCs
+  (PR :pr:`624`)
+- Filter out malicious files when extracting tar archives when Python supports it
+  (PR :pr:`609`)
+- Specify encoding, fixing issues when ``PYTHONWARNDEFAULTENCODING`` is set.
+  (PR :pr:`587`, fixes issue :issue:`577`)
+- Ruff is now used for linting.
 
 
 0.10.0 (2023-01-11)

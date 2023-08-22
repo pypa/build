@@ -63,7 +63,7 @@ test = [
 ]
 typing = [
   "importlib-metadata >= 5.1",
-  "mypy == 1.2.0",
+  "mypy ~= 1.5.0",
   "tomli",
   "typing-extensions >= 3.7.4.3",
 ]
@@ -122,7 +122,6 @@ filterwarnings = [
   "error",
   "ignore:path is deprecated.:DeprecationWarning",
   "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
-  "ignore:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
 ]
 
 [tool.mypy]
