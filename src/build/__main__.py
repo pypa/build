@@ -42,7 +42,7 @@ def _init_colors() -> dict[str, str]:
         if 'FORCE_COLOR' in os.environ:
             warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
         return _NO_COLORS
-    elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
+    if 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
         return _COLORS
     return _NO_COLORS
 
@@ -145,8 +145,7 @@ def _build(
 ) -> str:
     if isolation:
         return _build_in_isolated_env(srcdir, outdir, distribution, config_settings)
-    else:
-        return _build_in_current_env(srcdir, outdir, distribution, config_settings, skip_dependency_check)
+    return _build_in_current_env(srcdir, outdir, distribution, config_settings, skip_dependency_check)
 
 
 @contextlib.contextmanager
@@ -177,13 +176,12 @@ def _handle_build_error() -> Iterator[None]:
 def _natural_language_list(elements: Sequence[str]) -> str:
     if len(elements) == 0:
         raise IndexError('no elements')
-    elif len(elements) == 1:
+    if len(elements) == 1:
         return elements[0]
-    else:
-        return '{} and {}'.format(
-            ', '.join(elements[:-1]),
-            elements[-1],
-        )
+    return '{} and {}'.format(
+        ', '.join(elements[:-1]),
+        elements[-1],
+    )
 
 
 def build_package(

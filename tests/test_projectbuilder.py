@@ -33,15 +33,15 @@ class MockDistribution(_importlib.metadata.Distribution):
     def from_name(cls, name):
         if name == 'extras_dep':
             return ExtraMockDistribution()
-        elif name == 'requireless_dep':
+        if name == 'requireless_dep':
             return RequirelessMockDistribution()
-        elif name == 'recursive_dep':
+        if name == 'recursive_dep':
             return RecursiveMockDistribution()
-        elif name == 'prerelease_dep':
+        if name == 'prerelease_dep':
             return PrereleaseMockDistribution()
-        elif name == 'circular_dep':
+        if name == 'circular_dep':
             return CircularMockDistribution()
-        elif name == 'nested_circular_dep':
+        if name == 'nested_circular_dep':
             return NestedCircularMockDistribution()
         raise _importlib.metadata.PackageNotFoundError
 
@@ -63,6 +63,7 @@ class ExtraMockDistribution(MockDistribution):
                 Requires-Dist: recursive_dep; extra == 'recursive-extra-with-unmet-deps'
                 """
             ).strip()
+        return None
 
 
 class RequirelessMockDistribution(MockDistribution):
@@ -75,6 +76,7 @@ class RequirelessMockDistribution(MockDistribution):
                 Version: 1.0.0
                 """
             ).strip()
+        return None
 
 
 class RecursiveMockDistribution(MockDistribution):
@@ -88,6 +90,7 @@ class RecursiveMockDistribution(MockDistribution):
                 Requires-Dist: recursive_unmet_dep
                 """
             ).strip()
+        return None
 
 
 class PrereleaseMockDistribution(MockDistribution):
@@ -100,6 +103,7 @@ class PrereleaseMockDistribution(MockDistribution):
                 Version: 1.0.1a0
                 """
             ).strip()
+        return None
 
 
 class CircularMockDistribution(MockDistribution):
@@ -113,6 +117,7 @@ class CircularMockDistribution(MockDistribution):
                 Requires-Dist: nested_circular_dep
                 """
             ).strip()
+        return None
 
 
 class NestedCircularMockDistribution(MockDistribution):
@@ -126,6 +131,7 @@ class NestedCircularMockDistribution(MockDistribution):
                 Requires-Dist: circular_dep
                 """
             ).strip()
+        return None
 
 
 @pytest.mark.parametrize(

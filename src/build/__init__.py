@@ -100,7 +100,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
     if 'requires' not in build_system_table:
         _find_typo(build_system_table, 'requires')
         raise BuildSystemTableValidationError('`requires` is a required property')
-    elif not isinstance(build_system_table['requires'], list) or not all(
+    if not isinstance(build_system_table['requires'], list) or not all(
         isinstance(i, str) for i in build_system_table['requires']
     ):
         raise BuildSystemTableValidationError('`requires` must be an array of strings')
