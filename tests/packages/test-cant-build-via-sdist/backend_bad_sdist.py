@@ -16,7 +16,8 @@ def build_sdist(sdist_directory, config_settings=None):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     if not os.path.isfile('some-file-that-is-needed-for-build.txt'):
-        raise FileNotFoundError('some-file-that-is-needed-for-build.txt is missing!')
+        msg = 'some-file-that-is-needed-for-build.txt is missing!'
+        raise FileNotFoundError(msg)
     # pragma: no cover
     file = 'test_cant_build_via_sdist-1.0.0-py2.py3-none-any.whl'
     zipfile.ZipFile(os.path.join(wheel_directory, file), 'w').close()

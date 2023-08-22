@@ -38,7 +38,8 @@ def pytest_collection_modifyitems(config, items):
     skip_other = pytest.mark.skip(reason='only integration tests are run (got --only-integration flag)')
 
     if config.getoption('--run-integration') and config.getoption('--only-integration'):  # pragma: no cover
-        raise pytest.UsageError("--run-integration and --only-integration can't be used together, choose one")
+        msg = "--run-integration and --only-integration can't be used together, choose one"
+        raise pytest.UsageError(msg)
 
     if len(items) == 1:  # do not require flags if called directly
         return

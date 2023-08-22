@@ -98,8 +98,9 @@ def test_parse_args(mocker, cli_args, build_args, hook):
         build.__main__.build_package.assert_called_with(*build_args)
     elif hook == 'build_package_via_sdist':
         build.__main__.build_package_via_sdist.assert_called_with(*build_args)
-    else:
-        raise ValueError(f'Unknown hook {hook}')  # pragma: no cover
+    else:  # pragma: no cover
+        msg = f'Unknown hook {hook}'
+        raise ValueError(msg)
 
 
 def test_prog():

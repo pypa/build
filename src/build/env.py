@@ -64,7 +64,7 @@ def _subprocess(cmd: list[str]) -> None:
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         print(e.output.decode(), end='', file=sys.stderr)
-        raise e
+        raise
 
 
 class DefaultIsolatedEnv(IsolatedEnv):
@@ -87,10 +87,11 @@ class DefaultIsolatedEnv(IsolatedEnv):
                 # Ref: https://bugs.python.org/issue46171
                 self._path = os.path.realpath(tempfile.mkdtemp(prefix='build-env-'))
                 self._python_executable, self._scripts_dir = _create_isolated_env_venv(self._path)
-            return self
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
             raise
+
+        return self
 
     def __exit__(self, *args: object) -> None:
         if os.path.exists(self._path):  # in case the user already deleted skip remove
@@ -188,9 +189,9 @@ def _fs_supports_symlink() -> bool:
         try:
             os.symlink(tmp_file.name, dest)
             os.unlink(dest)
-            return True
         except (OSError, NotImplementedError, AttributeError):
             return False
+        return True
 
 
 def _create_isolated_env_venv(path: str) -> tuple[str, str]:
@@ -277,7 +278,8 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
         paths = sysconfig.get_paths(vars=config_vars)
     executable = os.path.join(paths['scripts'], 'python.exe' if sys.platform.startswith('win') else 'python')
     if not os.path.exists(executable):
-        raise RuntimeError(f'Virtual environment creation failed, executable {executable} missing')
+        msg = f'Virtual environment creation failed, executable {executable} missing'
+        raise RuntimeError(msg)
 
     return executable, paths['scripts'], paths['purelib']
 
