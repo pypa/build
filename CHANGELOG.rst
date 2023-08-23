@@ -10,7 +10,7 @@ Unreleased
   as a substitute for ``tomli``
   (PR :pr:`567`)
 - Added ``runner`` parameter to ``util.project_wheel_metadata``
-  (PR :pr:`566`, Fixes :issue:`553`)
+  (PR :pr:`566`, fixes issue :issue:`553`)
 - Modified ``ProjectBuilder`` constructor signature, added alternative
   ``ProjectBuilder.from_env`` constructor, redefined ``env.IsolatedEnv``
   interface, and exposed ``env.DefaultIsolatedEnv``, replacing
