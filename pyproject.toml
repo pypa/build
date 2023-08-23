@@ -122,6 +122,7 @@ filterwarnings = [
   "error",
   "ignore:path is deprecated.:DeprecationWarning",
   "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
+  "ignore:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning:flit",
 ]
 
 [tool.mypy]
