@@ -115,12 +115,15 @@ class DefaultIsolatedEnv(IsolatedEnv):
         Install packages from PEP 508 requirements in the isolated build environment.
 
         :param requirements: PEP 508 requirement specification to install
-
-        :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
-               merely an implementation detail, it may change any time without warning.
         """
         if not requirements:
             return
+
+        import packaging.requirements
+
+        for r in requirements:
+            # raise exception for invalid requirements
+            packaging.requirements.Requirement(r)
 
         self.log(f'Installing packages in isolated environment... ({", ".join(sorted(requirements))})')
 
