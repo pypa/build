@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "build"
-version = "0.10.0"
+version = "1.0.0"
 description = "A simple, correct Python build frontend"
 readme = "README.md"
 requires-python = ">= 3.7"
