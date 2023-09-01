@@ -3,8 +3,8 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+1.0.0 (2023-09-01)
+==================
 
 - Removed the ``toml`` library fallback; ``toml`` can no longer be used
   as a substitute for ``tomli``
