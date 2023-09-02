@@ -319,6 +319,11 @@ def main_parser() -> argparse.ArgumentParser:
         metavar='PATH',
     )
     parser.add_argument(
+        '--overwrite',
+        '-ow',
+        help=f'clear the dir'
+    )
+    parser.add_argument(
         '--skip-dependency-check',
         '-x',
         action='store_true',
@@ -377,6 +382,14 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     # outdir is relative to srcdir only if omitted.
     outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
+
+    if args.overwrite:
+        directory_path = "dist"
+        for filename in os.listdir(directory_path):
+            file_path = os.path.join(directory_path, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
 
     if distributions:
         build_call = build_package
