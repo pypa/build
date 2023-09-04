@@ -29,7 +29,7 @@ Changelog
   Python 3.10 due to a bug in the standard library version with URL
   requirements in extras. This is still not required for 3.8 when bootstrapping
   (as long as you don't have URL requirements in extras).
-  (PR :pr:`631`, fixes issue :issue:`631`)
+  (PR :pr:`631`, fixes issue :issue:`630`)
 - Docs now built with Sphinx 7
   (PR :pr:`660`)
 - Tests now contain a ``network`` marker
