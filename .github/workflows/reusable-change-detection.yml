@@ -18,7 +18,7 @@ jobs:
       run-docs: ${{ steps.docs-changes.outputs.run-docs || false }}
       run-tests: ${{ steps.tests-changes.outputs.run-tests || false }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Get a list of the changed runtime-related files
         if: github.event_name == 'pull_request'
         id: changed-testable-files
