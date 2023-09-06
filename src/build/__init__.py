@@ -7,7 +7,7 @@ build - A simple, correct PEP 517 build frontend
 from __future__ import annotations
 
 
-__version__ = '1.0.1'
+__version__ = '1.0.1.post1'
 
 import contextlib
 import difflib
