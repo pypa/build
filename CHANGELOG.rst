@@ -2,6 +2,13 @@
 Changelog
 +++++++++
 
+1.0.1 (2023-09-06)
+==================
+
+- Avoid CPython 3.8.17, 3.9.17, 3.10.12, and 3.11.4 tarfile symlink bug
+  triggered by adding ``data_filter`` in 1.0.0.
+  (PR :pr:`675`, fixes issue :issue:`674`)
+
 
 1.0.0 (2023-09-01)
 ==================
