@@ -175,3 +175,14 @@ lines-after-imports = 2
 ignore = [
   "W005",  # We _are_ build
 ]
+
+[tool.bumpversion]
+current_version = "1.0.0"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+
+[[tool.bumpversion.files]]
+filename = "src/build/__init__.py"
+search = "__version__ = '{current_version}'"
