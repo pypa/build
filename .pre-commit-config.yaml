@@ -31,11 +31,11 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==23.7.0]
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.2"
+    rev: "v3.0.3"
     hooks:
       - id: prettier
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.286
+    rev: v0.0.287
     hooks:
       - id: ruff
         args: [--fix, --format, grouped, --show-fixes]
