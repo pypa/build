@@ -34,6 +34,7 @@ urls.changelog = "https://pypa-build.readthedocs.io/en/stable/changelog.html"
 dependencies = [
   "packaging >= 19.0",
   "pyproject_hooks",
+  "pip>=22.3",
   # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
   'colorama; os_name == "nt"',
   'importlib-metadata >= 4.6; python_version < "3.10"',  # Not required for 3.8+, but fixes a stdlib bug

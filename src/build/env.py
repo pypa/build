@@ -5,7 +5,6 @@ import functools
 import importlib.util
 import logging
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -131,9 +130,11 @@ class DefaultIsolatedEnv(IsolatedEnv):
             req_file.write(os.linesep.join(requirements))
         try:
             cmd = [
-                self.python_executable,
+                sys.executable,
                 '-Im',
                 'pip',
+                '--python',
+                self.python_executable,
                 'install',
                 '--use-pep517',
                 '--no-warn-script-location',
@@ -169,7 +170,7 @@ def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     """
     import virtualenv
 
-    cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
+    cmd = [str(path), '--no-setuptools', '--no-wheel', '--no-pip', '--activators', '']
     result = virtualenv.cli_run(cmd, setup_logging=False)
     executable = str(result.creator.exe)
     script_dir = str(result.creator.script_dir)
@@ -203,51 +204,24 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
     """
     import venv
 
-    import packaging.version
-
-    if sys.version_info < (3, 8):
-        import importlib_metadata as metadata
-    else:
-        from importlib import metadata
-
     symlinks = _fs_supports_symlink()
     try:
         with warnings.catch_warnings():
             if sys.version_info[:3] == (3, 11, 0):
                 warnings.filterwarnings('ignore', 'check_home argument is deprecated and ignored.', DeprecationWarning)
-            venv.EnvBuilder(with_pip=True, symlinks=symlinks).create(path)
+            venv.EnvBuilder(with_pip=False, symlinks=symlinks).create(path)
     except subprocess.CalledProcessError as exc:
         raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
-    executable, script_dir, purelib = _find_executable_and_scripts(path)
-
-    # Get the version of pip in the environment
-    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
-    current_pip_version = packaging.version.Version(pip_distribution.version)
-
-    if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
-        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
-        # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
-        is_apple_silicon_python = platform.machine() != 'x86_64'
-        minimum_pip_version = '21.0.1' if is_apple_silicon_python else '20.3.0'
-    else:
-        # PEP-517 and manylinux1 was first implemented in 19.1
-        minimum_pip_version = '19.1.0'
-
-    if current_pip_version < packaging.version.Version(minimum_pip_version):
-        _subprocess([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
-
-    # Avoid the setuptools from ensurepip to break the isolation
-    _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
-    return executable, script_dir
+    return _find_executable_and_scripts(path)
 
 
-def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
+def _find_executable_and_scripts(path: str) -> tuple[str, str]:
     """
     Detect the Python executable and script folder of a virtual environment.
 
     :param path: The location of the virtual environment
-    :return: The Python executable, script folder, and purelib folder
+    :return: The Python executable and script folder
     """
     config_vars = sysconfig.get_config_vars().copy()  # globally cached, copy before altering it
     config_vars['base'] = path
@@ -281,7 +255,7 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
         msg = f'Virtual environment creation failed, executable {executable} missing'
         raise RuntimeError(msg)
 
-    return executable, paths['scripts'], paths['purelib']
+    return executable, paths['scripts']
 
 
 __all__ = [

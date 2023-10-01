@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: MIT
-import collections
 import logging
 import platform
 import subprocess
@@ -7,8 +6,6 @@ import sys
 import sysconfig
 
 import pytest
-
-from packaging.version import Version
 
 import build.env
 
@@ -37,9 +34,11 @@ def test_isolated_environment_install(mocker):
         build.env._subprocess.assert_called()
         args = build.env._subprocess.call_args[0][0][:-1]
         assert args == [
-            env.python_executable,
+            sys.executable,
             '-Im',
             'pip',
+            '--python',
+            env.python_executable,
             'install',
             '--use-pep517',
             '--no-warn-script-location',
@@ -114,43 +113,6 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
         ('INFO', 'Creating venv isolated environment...'),
         ('INFO', 'Installing packages in isolated environment... (something)'),
     ]
-
-
-@pytest.mark.isolated
-def test_default_pip_is_never_too_old():
-    with build.env.DefaultIsolatedEnv() as env:
-        version = subprocess.check_output(
-            [env.python_executable, '-c', 'import pip; print(pip.__version__)'],
-            text=True,
-            encoding='utf-8',
-        ).strip()
-        assert Version(version) >= Version('19.1')
-
-
-@pytest.mark.isolated
-@pytest.mark.parametrize('pip_version', ['20.2.0', '20.3.0', '21.0.0', '21.0.1'])
-@pytest.mark.parametrize('arch', ['x86_64', 'arm64'])
-def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
-    SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
-
-    _subprocess = mocker.patch('build.env._subprocess')
-    mocker.patch('platform.system', return_value='Darwin')
-    mocker.patch('platform.machine', return_value=arch)
-    mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
-    metadata_name = 'importlib_metadata' if sys.version_info < (3, 8) else 'importlib.metadata'
-    mocker.patch(metadata_name + '.distributions', return_value=(SimpleNamespace(version=pip_version),))
-
-    min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
-    with build.env.DefaultIsolatedEnv():
-        if Version(pip_version) < min_version:
-            print(_subprocess.call_args_list)
-            upgrade_call, uninstall_call = _subprocess.call_args_list
-            answer = 'pip>=20.3.0' if arch == 'x86_64' else 'pip>=21.0.1'
-            assert upgrade_call[0][0][1:] == ['-m', 'pip', 'install', answer]
-            assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
-        else:
-            (uninstall_call,) = _subprocess.call_args_list
-            assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
 
 
 @pytest.mark.isolated
