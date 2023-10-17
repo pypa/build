@@ -14,6 +14,7 @@ def test_wheel_metadata(package_test_setuptools, isolated):
 
     assert metadata['name'] == 'test-setuptools'
     assert metadata['version'] == '1.0.0'
+    assert isinstance(metadata.json, dict)
 
 
 @pytest.mark.network
@@ -26,6 +27,7 @@ def test_wheel_metadata_isolation(package_test_flit):
 
     assert metadata['name'] == 'test_flit'
     assert metadata['version'] == '1.0.0'
+    assert isinstance(metadata.json, dict)
 
     with pytest.raises(
         build.BuildBackendException,
@@ -42,3 +44,4 @@ def test_with_get_requires(package_test_metadata):
     assert metadata['name'] == 'test-metadata'
     assert str(metadata['version']) == '1.0.0'
     assert metadata['summary'] == 'hello!'
+    assert isinstance(metadata.json, dict)
