@@ -53,6 +53,12 @@ def check_dependency(
         # dependency is not installed in the environment.
         yield (*ancestral_req_strings, normalised_req_string)
     else:
+        if dist.version is None:
+            # Malformed dist-info or some other form of metadata corruption
+            # req.specifier.contains will raise TypeError, so let's do the same
+            # with a more helpful error message
+            msg = f'Package {req.name} has malformed metadata and no version information could be found'
+            raise TypeError(msg)
         if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
             # the installed version is incompatible.
             yield (*ancestral_req_strings, normalised_req_string)
