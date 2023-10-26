@@ -383,7 +383,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
     # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
     toml = textwrap.dedent(
-        '''
+        """
         [build-system]
         requires = ["demo_pkg_inline"]
         build-backend = "build"
@@ -392,17 +392,17 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
         [project]
         description = "Factory ⸻ A code generator 🏭"
         authors = [{name = "Łukasz Langa"}]
-        '''
+        """
     )
     code = textwrap.dedent(
-        '''
+        """
         import os
         import shutil
         import sys
         print("BB " + os.environ["PATH"])
         exe_at = shutil.which("demo-pkg-inline")
         print("BB " + exe_at)
-        '''
+        """
     )
     (tmp_path / 'pyproject.toml').write_text(toml, encoding='UTF-8')
     (tmp_path / 'build.py').write_text(code, encoding='utf-8')

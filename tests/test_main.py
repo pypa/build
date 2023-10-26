@@ -431,7 +431,7 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
 
     assert (
         stdout
-        == '''\
+        == """\
 * Creating venv isolated environment...
 ERROR Failed to create venv. Maybe try installing virtualenv.
   Command 'test args' failed with return code 1
@@ -439,6 +439,6 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
     stdoutput
   stderr:
     stderror
-'''
+"""
     )
     assert stderr == ''
