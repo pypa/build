@@ -145,14 +145,15 @@ line-length = 127
 skip-string-normalization = true
 
 [tool.ruff]
+src = ["src"]
 line-length = 127
+
+[tool.ruff.lint]
 exclude = ["tests/packages/test-bad-syntax"]
-select = [
+extend-select = [
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
   "C9",   # mccabe
-  "E",    # pycodestyle
-  "F",    # pyflakes
   "I",    # isort
   "PGH",  # pygrep-hooks
   "RUF",  # ruff
@@ -162,15 +163,13 @@ select = [
   "TRY",  # tryceratops
   "EM",   # flake8-errmsg
 ]
-src = ["src"]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 10
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-between-types = 1
 lines-after-imports = 2
-known-first-party = ["build"]
 
 [tool.check-wheel-contents]
 ignore = [
