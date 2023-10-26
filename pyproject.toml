@@ -146,10 +146,10 @@ skip-string-normalization = true
 
 [tool.ruff]
 src = ["src"]
+exclude = ["tests/packages/test-bad-syntax"]
 line-length = 127
 
 [tool.ruff.lint]
-exclude = ["tests/packages/test-bad-syntax"]
 extend-select = [
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
