@@ -148,6 +148,9 @@ skip-string-normalization = true
 src = ["src"]
 line-length = 127
 
+[tool.ruff.format]
+quote-style = "single"
+
 [tool.ruff.lint]
 exclude = ["tests/packages/test-bad-syntax"]
 extend-select = [
