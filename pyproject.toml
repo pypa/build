@@ -149,6 +149,9 @@ src = ["src"]
 exclude = ["tests/packages/test-bad-syntax"]
 line-length = 127
 
+[tool.ruff.format]
+quote-style = "single"
+
 [tool.ruff.lint]
 extend-select = [
   "B",    # flake8-bugbear
