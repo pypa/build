@@ -140,10 +140,6 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.black]
-line-length = 127
-skip-string-normalization = true
-
 [tool.ruff]
 src = ["src"]
 exclude = ["tests/packages/test-bad-syntax"]
