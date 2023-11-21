@@ -89,8 +89,7 @@ source = [
 ]
 
 [tool.coverage.report]
-exclude_lines = [
-  '\#\s*pragma: no cover',
+exclude_also = [
   '^\s*raise NotImplementedError\b',
   "if typing.TYPE_CHECKING:",
 ]
