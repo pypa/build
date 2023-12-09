@@ -31,25 +31,13 @@ from ._exceptions import (
     FailedProcessError,
     TypoWarning,
 )
-from ._util import Protocol, check_dependency, parse_wheel_filename
+from ._util import check_dependency, parse_wheel_filename
 
 
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
-
-
-class RunnerType(Protocol):
-    """A protocol for the subprocess runner."""
-
-    def __call__(
-        self,
-        cmd: Sequence[str],
-        cwd: str | None = None,
-        extra_environ: Mapping[str, str] | None = None,
-    ) -> None:
-        ...
 
 
 ConfigSettingsType = Mapping[str, Union[str, Sequence[str]]]
@@ -146,7 +134,9 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
     return build_system_table
 
 
-def _wrap_subprocess_runner(runner: RunnerType, env: env.IsolatedEnv) -> RunnerType:
+def _wrap_subprocess_runner(
+    runner: pyproject_hooks.SubprocessRunner, env: env.IsolatedEnv
+) -> pyproject_hooks.SubprocessRunner:
     def _invoke_wrapped_runner(
         cmd: Sequence[str], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None
     ) -> None:
@@ -164,7 +154,7 @@ class ProjectBuilder:
         self,
         source_dir: PathType,
         python_executable: str = sys.executable,
-        runner: RunnerType = pyproject_hooks.default_subprocess_runner,
+        runner: pyproject_hooks.SubprocessRunner = pyproject_hooks.default_subprocess_runner,
     ) -> None:
         """
         :param source_dir: The source directory
@@ -207,7 +197,7 @@ class ProjectBuilder:
         cls: type[_TProjectBuilder],
         env: env.IsolatedEnv,
         source_dir: PathType,
-        runner: RunnerType = pyproject_hooks.default_subprocess_runner,
+        runner: pyproject_hooks.SubprocessRunner = pyproject_hooks.default_subprocess_runner,
     ) -> _TProjectBuilder:
         return cls(
             source_dir=source_dir,
@@ -398,7 +388,6 @@ __all__ = [
     'ConfigSettingsType',
     'FailedProcessError',
     'ProjectBuilder',
-    'RunnerType',
     'TypoWarning',
     'check_dependency',
 ]
