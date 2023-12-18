@@ -14,7 +14,6 @@ import pytest
 import build
 import build.__main__
 
-
 build_open_owner = 'builtins'
 
 cwd = os.getcwd()
@@ -230,14 +229,14 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             [],
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... ("setuptools >= 42.0.0", "wheel >= 0.36.0")',
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... ("setuptools >= 42.0.0", "wheel >= 0.36.0")',
                 '* Getting build dependencies for wheel...',
-                '* Installing packages in isolated environment... (wheel)',
+                '* Installing packages in isolated environment... ("wheel")',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -260,9 +259,9 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             ['--wheel'],
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... ("setuptools >= 42.0.0", "wheel >= 0.36.0")',
                 '* Getting build dependencies for wheel...',
-                '* Installing packages in isolated environment... (wheel)',
+                '* Installing packages in isolated environment... ("wheel")',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -324,7 +323,7 @@ def main_reload_styles():
             'ERROR ',
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... ("setuptools >= 42.0.0", "this is invalid", "wheel >= 0.36.0")',
                 '',
                 'Traceback (most recent call last):',
             ],
@@ -335,7 +334,7 @@ def main_reload_styles():
             [
                 '\33[1m* Creating venv isolated environment...\33[0m',
                 '\33[1m* Installing packages in isolated environment... '
-                '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
+                '("setuptools >= 42.0.0", "this is invalid", "wheel >= 0.36.0")\33[0m',
                 '',
                 '\33[2mTraceback (most recent call last):',
             ],

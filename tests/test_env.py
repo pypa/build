@@ -112,7 +112,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
     assert [(record.levelname, record.message) for record in caplog.records] == [
         ('INFO', 'something'),
         ('INFO', 'Creating venv isolated environment...'),
-        ('INFO', 'Installing packages in isolated environment... (something)'),
+        ('INFO', 'Installing packages in isolated environment... ("something")'),
     ]
 
 

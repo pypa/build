@@ -123,7 +123,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
-        self.log(f'Installing packages in isolated environment... ({", ".join(sorted(requirements))})')
+        self.log(f'Installing packages in isolated environment... ({", ".join(_quote_text(req) for req in sorted(requirements))})')
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
@@ -159,6 +159,15 @@ class DefaultIsolatedEnv(IsolatedEnv):
         else:
             _logger.log(logging.INFO, message)
 
+
+def _quote_text(text: str) -> str:
+    """Quote text for log message
+    
+    This method is a workaround for getting quotes in the nested f-string prior to Python 3.12
+    
+    :param text: Text to quote
+    """
+    return f'"{text}"' 
 
 def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     """
