@@ -123,7 +123,9 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
-        self.log(f'Installing packages in isolated environment... ({", ".join(_quote_text(req) for req in sorted(requirements))})')
+        self.log(
+            f'Installing packages in isolated environment... ({", ".join(_quote_text(req) for req in sorted(requirements))})'
+        )
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
@@ -168,6 +170,7 @@ def _quote_text(text: str) -> str:
     :param text: Text to quote
     """
     return f'"{text}"'
+
 
 def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     """
