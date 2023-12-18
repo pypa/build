@@ -162,12 +162,12 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
 def _quote_text(text: str) -> str:
     """Quote text for log message
-    
+
     This method is a workaround for getting quotes in the nested f-string prior to Python 3.12
-    
+
     :param text: Text to quote
     """
-    return f'"{text}"' 
+    return f'"{text}"'
 
 def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     """
