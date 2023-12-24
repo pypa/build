@@ -4,13 +4,13 @@
 [![CI test](https://github.com/pypa/build/actions/workflows/test.yml/badge.svg)](https://github.com/pypa/build/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/pypa/build/branch/main/graph/badge.svg)](https://codecov.io/gh/pypa/build)
 
-[![Documentation Status](https://readthedocs.org/projects/pypa-build/badge/?version=latest)](https://pypa-build.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/pypa-build/badge/?version=latest)](https://build.pypa.io/en/lateast/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/build.svg)](https://pypi.org/project/build/)
 [![Discord](https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23build)](https://discord.gg/pypa)
 
 A simple, correct Python build frontend.
 
-See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for more information.
+See the [documentation](https://build.pypa.io) for more information.
 
 ### Installation
 
@@ -28,7 +28,7 @@ $ python -m build
 
 This will build the package in an isolated environment, generating a
 source-distribution and wheel in the directory `dist/`.
-See the [documentation](https://pypa-build.readthedocs.io/en/latest/) for full information.
+See the [documentation](https://build.pypa.io) for full information.
 
 ### Code of Conduct
 

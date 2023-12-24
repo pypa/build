@@ -28,8 +28,10 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-urls.homepage = "https://github.com/pypa/build"
-urls.changelog = "https://pypa-build.readthedocs.io/en/stable/changelog.html"
+urls.changelog = "https://build.pypa.io/en/stable/changelog.html"
+urls.homepage = "https://build.pypa.io"
+urls.issues = "https://github.com/pypa/build/issues"
+urls.source = "https://github.com/pypa/build"
 
 dependencies = [
   "packaging >= 19.0",
