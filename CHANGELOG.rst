@@ -2,6 +2,15 @@
 Changelog
 +++++++++
 
+
+next release
+============
+
+- Stopped injecting ``wheel`` as a build dependency automatically, in the
+  case of missing ``pyproject.toml`` -- by :user:`webknjaz`.
+  (:pr:`716`)
+
+
 1.0.3 (2023-09-06)
 ==================
 

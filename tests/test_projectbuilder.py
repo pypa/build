@@ -21,7 +21,7 @@ build_open_owner = 'builtins'
 
 DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
-    'requires': ['setuptools >= 40.8.0', 'wheel'],
+    'requires': ['setuptools >= 40.8.0'],
 }
 
 
