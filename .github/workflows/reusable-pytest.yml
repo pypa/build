@@ -91,7 +91,7 @@ jobs:
         if: always()
         run: tox -e coverage
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: always()
         env:
           PYTHON: ${{ matrix.python }}
