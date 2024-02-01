@@ -263,7 +263,7 @@ def main_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=textwrap.indent(
             textwrap.dedent(
-                '''
+                """
                 A simple, correct Python build frontend.
 
                 By default, a source distribution (sdist) is built from {srcdir}
@@ -275,7 +275,7 @@ def main_parser() -> argparse.ArgumentParser:
                 If you do this, the default behavior will be disabled, and all
                 artifacts will be built from {srcdir} (even if you combine
                 -w/--wheel with -s/--sdist, the wheel will be built from {srcdir}).
-                '''
+                """
             ).strip(),
             '    ',
         ),

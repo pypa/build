@@ -3,6 +3,22 @@ Changelog
 +++++++++
 
 
+next release
+============
+
+- Stopped injecting ``wheel`` as a build dependency automatically, in the
+  case of missing ``pyproject.toml`` -- by :user:`webknjaz`.
+  (:pr:`716`)
+
+
+1.0.3 (2023-09-06)
+==================
+
+- Avoid CPython 3.8.17, 3.9.17, 3.10.12, and 3.11.4 tarfile symlink bug
+  triggered by adding ``data_filter`` in 1.0.0.
+  (PR :pr:`675`, fixes issue :issue:`674`)
+
+
 1.0.0 (2023-09-01)
 ==================
 
@@ -29,7 +45,7 @@ Changelog
   Python 3.10 due to a bug in the standard library version with URL
   requirements in extras. This is still not required for 3.8 when bootstrapping
   (as long as you don't have URL requirements in extras).
-  (PR :pr:`631`, fixes issue :issue:`631`)
+  (PR :pr:`631`, fixes issue :issue:`630`)
 - Docs now built with Sphinx 7
   (PR :pr:`660`)
 - Tests now contain a ``network`` marker

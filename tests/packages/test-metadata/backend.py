@@ -24,12 +24,12 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
     distinfo.mkdir(parents=True, exist_ok=True)
     distinfo.joinpath('METADATA').write_text(
         textwrap.dedent(
-            f'''
+            f"""
             Metadata-Version: 2.2
             Name: {metadata['project']['name']}
             Version: {metadata['project']['version']}
             Summary: {metadata['project']['description']}
-            '''
+            """
         ).strip()
     )
     return distinfo.name

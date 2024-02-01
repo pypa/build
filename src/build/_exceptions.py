@@ -20,8 +20,11 @@ class BuildBackendException(Exception):
         self,
         exception: Exception,
         description: str | None = None,
-        exc_info: tuple[type[BaseException], BaseException, types.TracebackType]
-        | tuple[None, None, None] = (None, None, None),
+        exc_info: tuple[type[BaseException], BaseException, types.TracebackType] | tuple[None, None, None] = (
+            None,
+            None,
+            None,
+        ),
     ) -> None:
         super().__init__()
         self.exception = exception

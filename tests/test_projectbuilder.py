@@ -21,7 +21,7 @@ build_open_owner = 'builtins'
 
 DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
-    'requires': ['setuptools >= 40.8.0', 'wheel'],
+    'requires': ['setuptools >= 40.8.0'],
 }
 
 
@@ -383,7 +383,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     # to validate backend invocations contain the correct path we use an inline backend that will fail, but first
     # provides the PATH information (and validates shutil.which is able to discover the executable - as PEP states)
     toml = textwrap.dedent(
-        '''
+        """
         [build-system]
         requires = ["demo_pkg_inline"]
         build-backend = "build"
@@ -392,17 +392,17 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
         [project]
         description = "Factory ⸻ A code generator 🏭"
         authors = [{name = "Łukasz Langa"}]
-        '''
+        """
     )
     code = textwrap.dedent(
-        '''
+        """
         import os
         import shutil
         import sys
         print("BB " + os.environ["PATH"])
         exe_at = shutil.which("demo-pkg-inline")
         print("BB " + exe_at)
-        '''
+        """
     )
     (tmp_path / 'pyproject.toml').write_text(toml, encoding='UTF-8')
     (tmp_path / 'build.py').write_text(code, encoding='utf-8')
@@ -502,7 +502,8 @@ def test_metadata_path_no_prepare(tmp_dir, package_test_no_prepare):
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
 
-    assert metadata['name'] == 'test-no-prepare'
+    # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
+    assert metadata['name'].replace('-', '_') == 'test_no_prepare'
     assert metadata['Version'] == '1.0.0'
 
 
@@ -513,7 +514,8 @@ def test_metadata_path_with_prepare(tmp_dir, package_test_setuptools):
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
 
-    assert metadata['name'] == 'test-setuptools'
+    # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
+    assert metadata['name'].replace('-', '_') == 'test_setuptools'
     assert metadata['Version'] == '1.0.0'
 
 

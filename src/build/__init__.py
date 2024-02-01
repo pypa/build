@@ -7,7 +7,7 @@ build - A simple, correct PEP 517 build frontend
 from __future__ import annotations
 
 
-__version__ = '1.0.0'
+__version__ = '1.0.3'
 
 import contextlib
 import difflib
@@ -49,7 +49,7 @@ _TProjectBuilder = TypeVar('_TProjectBuilder', bound='ProjectBuilder')
 
 _DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
-    'requires': ['setuptools >= 40.8.0', 'wheel'],
+    'requires': ['setuptools >= 40.8.0'],
 }
 
 

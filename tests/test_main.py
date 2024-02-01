@@ -230,12 +230,12 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             [],
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0)',
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0)',
                 '* Getting build dependencies for wheel...',
                 '* Installing packages in isolated environment... (wheel)',
                 '* Building wheel...',
@@ -260,7 +260,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             ['--wheel'],
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0)',
                 '* Getting build dependencies for wheel...',
                 '* Installing packages in isolated environment... (wheel)',
                 '* Building wheel...',
@@ -324,7 +324,7 @@ def main_reload_styles():
             'ERROR ',
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)',
+                '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid)',
                 '',
                 'Traceback (most recent call last):',
             ],
@@ -334,8 +334,7 @@ def main_reload_styles():
             '\33[91mERROR\33[0m ',
             [
                 '\33[1m* Creating venv isolated environment...\33[0m',
-                '\33[1m* Installing packages in isolated environment... '
-                '(setuptools >= 42.0.0, this is invalid, wheel >= 0.36.0)\33[0m',
+                '\33[1m* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid)\33[0m',
                 '',
                 '\33[2mTraceback (most recent call last):',
             ],
@@ -431,7 +430,7 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
 
     assert (
         stdout
-        == '''\
+        == """\
 * Creating venv isolated environment...
 ERROR Failed to create venv. Maybe try installing virtualenv.
   Command 'test args' failed with return code 1
@@ -439,6 +438,6 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
     stdoutput
   stderr:
     stderror
-'''
+"""
     )
     assert stderr == ''
