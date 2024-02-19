@@ -70,7 +70,7 @@ def _minimum_pip_version() -> str:
     return '19.1.0'
 
 
-def _has_valid_pip(purelib: str) -> bool:
+def _has_valid_pip(**distargs: str) -> bool:
     """
     Given a path, see if Pip is present and return True if the version is
     sufficient for build, False if it is not.
@@ -83,11 +83,27 @@ def _has_valid_pip(purelib: str) -> bool:
     else:
         from importlib import metadata
 
-    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
+    pip_distribution = next(iter(metadata.distributions(name='pip', **distargs)))
 
     current_pip_version = packaging.version.Version(pip_distribution.version)
 
     return current_pip_version >= packaging.version.Version(_minimum_pip_version())
+
+
+@functools.lru_cache(maxsize=None)
+def _valid_global_pip() -> bool | None:
+    """
+    This checks for a valid global pip. Returns None if the prerequisites are
+    not available (Python 3.7 only) or pip is missing, False if Pip is too old,
+    and True if it can be used.
+    """
+
+    try:
+        return _has_valid_pip()
+    except ModuleNotFoundError:  # Python 3.7 only
+        return None
+    except StopIteration:
+        return None
 
 
 def _subprocess(cmd: list[str]) -> None:
@@ -139,6 +155,12 @@ class DefaultIsolatedEnv(IsolatedEnv):
         """The python executable of the isolated build environment."""
         return self._python_executable
 
+    def _pip_args(self, *, isolate: bool = False) -> list[str]:
+        if _valid_global_pip():
+            return [sys.executable, '-Im' if isolate else '-m', 'pip', '--python', self.python_executable]
+        else:
+            return [self.python_executable, '-Im' if isolate else '-m', 'pip']
+
     def make_extra_environ(self) -> dict[str, str]:
         path = os.environ.get('PATH')
         return {'PATH': os.pathsep.join([self._scripts_dir, path]) if path is not None else self._scripts_dir}
@@ -163,9 +185,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             req_file.write(os.linesep.join(requirements))
         try:
             cmd = [
-                self.python_executable,
-                '-Im',
-                'pip',
+                *self._pip_args(isolate=True),
                 'install',
                 '--use-pep517',
                 '--no-warn-script-location',
@@ -201,7 +221,11 @@ def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     """
     import virtualenv
 
-    cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
+    if _valid_global_pip():
+        cmd = [str(path), '--no-seed', '--activators', '']
+    else:
+        cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
+
     result = virtualenv.cli_run(cmd, setup_logging=False)
     executable = str(result.creator.exe)
     script_dir = str(result.creator.script_dir)
@@ -240,18 +264,22 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
         with warnings.catch_warnings():
             if sys.version_info[:3] == (3, 11, 0):
                 warnings.filterwarnings('ignore', 'check_home argument is deprecated and ignored.', DeprecationWarning)
-            venv.EnvBuilder(with_pip=True, symlinks=symlinks).create(path)
+            venv.EnvBuilder(with_pip=not _valid_global_pip(), symlinks=symlinks).create(path)
     except subprocess.CalledProcessError as exc:
         raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
     # Get the version of pip in the environment
-    if not _has_valid_pip(purelib):
+    if not _valid_global_pip() and not _has_valid_pip(path=[purelib]):
         _subprocess([executable, '-m', 'pip', 'install', f'pip>={_minimum_pip_version()}'])
 
     # Avoid the setuptools from ensurepip to break the isolation
-    _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+    if _valid_global_pip():
+        _subprocess([sys.executable, '-m', 'pip', '--python', executable, 'uninstall', 'setuptools', '-y'])
+    else:
+        _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+
     return executable, script_dir
 
 
