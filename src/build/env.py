@@ -58,6 +58,38 @@ def _should_use_virtualenv() -> bool:
     )
 
 
+def _minimum_pip_version() -> str:
+    if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
+        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be
+        # told to report 10.16 for backwards compatibility; but that also fixes
+        # earlier versions of pip so this is only needed for 11+.
+        is_apple_silicon_python = platform.machine() != 'x86_64'
+        return '21.0.1' if is_apple_silicon_python else '20.3.0'
+
+    # PEP-517 and manylinux1 was first implemented in 19.1
+    return '19.1.0'
+
+
+def _has_valid_pip(purelib: str) -> bool:
+    """
+    Given a path, see if Pip is present and return True if the version is
+    sufficient for build, False if it is not.
+    """
+
+    import packaging.version
+
+    if sys.version_info < (3, 8):
+        import importlib_metadata as metadata
+    else:
+        from importlib import metadata
+
+    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
+
+    current_pip_version = packaging.version.Version(pip_distribution.version)
+
+    return current_pip_version >= packaging.version.Version(_minimum_pip_version())
+
+
 def _subprocess(cmd: list[str]) -> None:
     """Invoke subprocess and output stdout and stderr if it fails."""
     try:
@@ -203,13 +235,6 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
     """
     import venv
 
-    import packaging.version
-
-    if sys.version_info < (3, 8):
-        import importlib_metadata as metadata
-    else:
-        from importlib import metadata
-
     symlinks = _fs_supports_symlink()
     try:
         with warnings.catch_warnings():
@@ -222,20 +247,8 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
     # Get the version of pip in the environment
-    pip_distribution = next(iter(metadata.distributions(name='pip', path=[purelib])))
-    current_pip_version = packaging.version.Version(pip_distribution.version)
-
-    if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split('.')[0]) >= 11:
-        # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be told to report 10.16 for backwards
-        # compatibility; but that also fixes earlier versions of pip so this is only needed for 11+.
-        is_apple_silicon_python = platform.machine() != 'x86_64'
-        minimum_pip_version = '21.0.1' if is_apple_silicon_python else '20.3.0'
-    else:
-        # PEP-517 and manylinux1 was first implemented in 19.1
-        minimum_pip_version = '19.1.0'
-
-    if current_pip_version < packaging.version.Version(minimum_pip_version):
-        _subprocess([executable, '-m', 'pip', 'install', f'pip>={minimum_pip_version}'])
+    if not _has_valid_pip(purelib):
+        _subprocess([executable, '-m', 'pip', 'install', f'pip>={_minimum_pip_version()}'])
 
     # Avoid the setuptools from ensurepip to break the isolation
     _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
