@@ -40,7 +40,10 @@ _NO_COLORS = {color: '' for color in _COLORS}
 def _init_colors() -> dict[str, str]:
     if 'NO_COLOR' in os.environ:
         if 'FORCE_COLOR' in os.environ:
-            warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
+            warnings.warn(
+                'Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color',
+                stacklevel=2,
+            )
         return _NO_COLORS
     elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
         return _COLORS
@@ -105,7 +108,10 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    srcdir: PathType, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
+    srcdir: PathType,
+    outdir: PathType,
+    distribution: str,
+    config_settings: ConfigSettingsType | None,
 ) -> str:
     with _DefaultIsolatedEnv() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
@@ -207,7 +213,14 @@ def build_package(
     """
     built: list[str] = []
     for distribution in distributions:
-        out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
+        out = _build(
+            isolation,
+            srcdir,
+            outdir,
+            distribution,
+            config_settings,
+            skip_dependency_check,
+        )
         built.append(os.path.basename(out))
     return built
 
@@ -249,7 +262,14 @@ def build_package_via_sdist(
                 _ProjectBuilder.log(f'Building {_natural_language_list(distributions)} from sdist')
                 srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
                 for distribution in distributions:
-                    out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
+                    out = _build(
+                        isolation,
+                        srcdir,
+                        outdir,
+                        distribution,
+                        config_settings,
+                        skip_dependency_check,
+                    )
                     built.append(os.path.basename(out))
             finally:
                 shutil.rmtree(sdist_out, ignore_errors=True)
@@ -319,9 +339,9 @@ def main_parser() -> argparse.ArgumentParser:
         metavar='PATH',
     )
     parser.add_argument(
-        '--overwrite',
-        '-ow',
-        help=f'clear the dir'
+        '--delete-outdir-before-build',
+        action='store_true',
+        help='delete the existing outdir before build',
     )
     parser.add_argument(
         '--skip-dependency-check',
@@ -382,15 +402,11 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     # outdir is relative to srcdir only if omitted.
     outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
-
-    if args.overwrite:
-        directory_path = "dist"
-        for filename in os.listdir(directory_path):
-            file_path = os.path.join(directory_path, filename)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-
-
+    if args.delete_outdir_before_build:
+        directory_path = outdir
+        if os.path.exists(directory_path):
+            shutil.rmtree(outdir)
+            _cprint('{yellow}INFO{reset} Deleted existing output directory: {}', outdir)
     if distributions:
         build_call = build_package
     else:
@@ -399,7 +415,12 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     try:
         with _handle_build_error():
             built = build_call(
-                args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
+                args.srcdir,
+                outdir,
+                distributions,
+                config_settings,
+                not args.no_isolation,
+                args.skip_dependency_check,
             )
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
