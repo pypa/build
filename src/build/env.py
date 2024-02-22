@@ -70,7 +70,7 @@ def _minimum_pip_version() -> str:
     return '19.1.0'
 
 
-def _has_valid_pip(**distargs: str) -> bool:
+def _has_valid_pip(**distargs: object) -> bool:
     """
     Given a path, see if Pip is present and return True if the version is
     sufficient for build, False if it is not.
