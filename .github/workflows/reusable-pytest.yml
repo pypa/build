@@ -71,7 +71,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install tox
-        run: python -m pip install tox
+        run: python -m pip install tox tox-uv uv
 
       - name: Run test suite via tox
         if: matrix.tox-target == 'tox'
