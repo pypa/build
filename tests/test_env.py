@@ -26,6 +26,7 @@ def test_isolation():
 
 
 @pytest.mark.isolated
+@pytest.mark.usefixtures('local_pip')
 def test_isolated_environment_install(mocker):
     with build.env.DefaultIsolatedEnv() as env:
         mocker.patch('build.env._subprocess')
@@ -117,6 +118,7 @@ def test_isolated_env_log(mocker, caplog, package_test_flit):
 
 
 @pytest.mark.isolated
+@pytest.mark.usefixtures('local_pip')
 def test_default_pip_is_never_too_old():
     with build.env.DefaultIsolatedEnv() as env:
         version = subprocess.check_output(
@@ -130,6 +132,7 @@ def test_default_pip_is_never_too_old():
 @pytest.mark.isolated
 @pytest.mark.parametrize('pip_version', ['20.2.0', '20.3.0', '21.0.0', '21.0.1'])
 @pytest.mark.parametrize('arch', ['x86_64', 'arm64'])
+@pytest.mark.usefixtures('local_pip')
 def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
 

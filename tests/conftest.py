@@ -65,6 +65,11 @@ def is_integration(item):
     return os.path.basename(item.location[0]) == 'test_integration.py'
 
 
+@pytest.fixture()
+def local_pip(monkeypatch):
+    monkeypatch.setattr(build.env, '_valid_global_pip', lambda: None)
+
+
 @pytest.fixture(scope='session', autouse=True)
 def ensure_syconfig_vars_created():
     # the config vars are globally cached and may use get_path, make sure they are created

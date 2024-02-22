@@ -342,6 +342,7 @@ def main_reload_styles():
     ],
     ids=['no-color', 'color'],
 )
+@pytest.mark.usefixtures('local_pip')
 def test_output_env_subprocess_error(
     mocker,
     monkeypatch,
