@@ -22,7 +22,7 @@ jobs:
       - name: Get a list of the changed runtime-related files
         if: github.event_name == 'pull_request'
         id: changed-testable-files
-        uses: Ana06/get-changed-files@v2.2.0
+        uses: Ana06/get-changed-files@v2.3.0
         with:
           filter: |
             src/**
@@ -42,7 +42,7 @@ jobs:
       - name: Get a list of the changed documentation-related files
         if: github.event_name == 'pull_request'
         id: changed-docs-files
-        uses: Ana06/get-changed-files@v2.2.0
+        uses: Ana06/get-changed-files@v2.3.0
         with:
           filter: |
             docs/**
