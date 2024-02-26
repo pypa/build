@@ -73,17 +73,20 @@ def _minimum_pip_version() -> str:
 def _has_valid_pip(**distargs: object) -> bool:
     """
     Given a path, see if Pip is present and return True if the version is
-    sufficient for build, False if it is not.
+    sufficient for build, False if it is not. ModuleNotFoundError is thrown if
+    pip is not present.
     """
 
     import packaging.version
 
-    if sys.version_info < (3, 8):
-        import importlib_metadata as metadata
-    else:
-        from importlib import metadata
+    from ._importlib import metadata
 
-    pip_distribution = next(iter(metadata.distributions(name='pip', **distargs)))
+    name = 'pip'
+
+    try:
+        pip_distribution = next(iter(metadata.distributions(name=name, **distargs)))
+    except StopIteration:
+        raise ModuleNotFoundError(name) from None
 
     current_pip_version = packaging.version.Version(pip_distribution.version)
 
@@ -93,16 +96,13 @@ def _has_valid_pip(**distargs: object) -> bool:
 @functools.lru_cache(maxsize=None)
 def _valid_global_pip() -> bool | None:
     """
-    This checks for a valid global pip. Returns None if the prerequisites are
-    not available (Python 3.7 only) or pip is missing, False if Pip is too old,
-    and True if it can be used.
+    This checks for a valid global pip. Returns None if pip is missing, False
+    if Pip is too old, and True if it can be used.
     """
 
     try:
         return _has_valid_pip()
-    except ModuleNotFoundError:  # Python 3.7 only
-        return None
-    except StopIteration:
+    except ModuleNotFoundError:
         return None
 
 
@@ -155,11 +155,11 @@ class DefaultIsolatedEnv(IsolatedEnv):
         """The python executable of the isolated build environment."""
         return self._python_executable
 
-    def _pip_args(self, *, isolate: bool = False) -> list[str]:
+    def _pip_args(self) -> list[str]:
         if _valid_global_pip():
-            return [sys.executable, '-Im' if isolate else '-m', 'pip', '--python', self.python_executable]
+            return [sys.executable, '-Im', 'pip', '--python', self.python_executable]
         else:
-            return [self.python_executable, '-Im' if isolate else '-m', 'pip']
+            return [self.python_executable, '-Im', 'pip']
 
     def make_extra_environ(self) -> dict[str, str]:
         path = os.environ.get('PATH')
@@ -185,7 +185,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             req_file.write(os.linesep.join(requirements))
         try:
             cmd = [
-                *self._pip_args(isolate=True),
+                *self._pip_args(),
                 'install',
                 '--use-pep517',
                 '--no-warn-script-location',
@@ -222,9 +222,9 @@ def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:
     import virtualenv
 
     if _valid_global_pip():
-        cmd = [str(path), '--no-seed', '--activators', '']
+        cmd = [path, '--no-seed', '--activators', '']
     else:
-        cmd = [str(path), '--no-setuptools', '--no-wheel', '--activators', '']
+        cmd = [path, '--no-setuptools', '--no-wheel', '--activators', '']
 
     result = virtualenv.cli_run(cmd, setup_logging=False)
     executable = str(result.creator.exe)
@@ -275,9 +275,7 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
         _subprocess([executable, '-m', 'pip', 'install', f'pip>={_minimum_pip_version()}'])
 
     # Avoid the setuptools from ensurepip to break the isolation
-    if _valid_global_pip():
-        _subprocess([sys.executable, '-m', 'pip', '--python', executable, 'uninstall', 'setuptools', '-y'])
-    else:
+    if not _valid_global_pip():
         _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
 
     return executable, script_dir
