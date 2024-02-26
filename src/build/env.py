@@ -79,12 +79,12 @@ def _has_valid_pip(**distargs: object) -> bool:
 
     import packaging.version
 
-    from ._importlib import metadata
+    from ._compat import importlib
 
     name = 'pip'
 
     try:
-        pip_distribution = next(iter(metadata.distributions(name=name, **distargs)))
+        pip_distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
     except StopIteration:
         raise ModuleNotFoundError(name) from None
 

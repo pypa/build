@@ -140,7 +140,7 @@ def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.machine', return_value=arch)
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
-    mocker.patch('build._importlib.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
+    mocker.patch('build._compat.importlib.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
 
     min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
     with build.env.DefaultIsolatedEnv():

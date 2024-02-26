@@ -13,7 +13,7 @@ import pytest
 
 import build
 
-from build import _importlib
+from build._compat import importlib as _importlib
 
 
 build_open_owner = 'builtins'

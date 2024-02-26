@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import re
-import sys
-import tarfile
-import typing
 
 from collections.abc import Iterator, Set
 
@@ -27,7 +24,7 @@ def check_dependency(
     """
     import packaging.requirements
 
-    from ._importlib import metadata
+    from ._compat import importlib
 
     req = packaging.requirements.Requirement(req_string)
     normalised_req_string = str(req)
@@ -48,8 +45,8 @@ def check_dependency(
             return
 
     try:
-        dist = metadata.distribution(req.name)
-    except metadata.PackageNotFoundError:
+        dist = importlib.metadata.distribution(req.name)
+    except importlib.metadata.PackageNotFoundError:
         # dependency is not installed in the environment.
         yield (*ancestral_req_strings, normalised_req_string)
     else:
@@ -64,25 +61,3 @@ def check_dependency(
 
 def parse_wheel_filename(filename: str) -> re.Match[str] | None:
     return _WHEEL_FILENAME_REGEX.match(filename)
-
-
-if typing.TYPE_CHECKING:
-    TarFile = tarfile.TarFile
-
-else:
-    # Per https://peps.python.org/pep-0706/, the "data" filter will become
-    # the default in Python 3.14. The first series of releases with the filter
-    # had a broken filter that could not process symlinks correctly.
-    if (
-        (3, 8, 18) <= sys.version_info < (3, 9)
-        or (3, 9, 18) <= sys.version_info < (3, 10)
-        or (3, 10, 13) <= sys.version_info < (3, 11)
-        or (3, 11, 5) <= sys.version_info < (3, 12)
-        or (3, 12) <= sys.version_info < (3, 14)
-    ):
-
-        class TarFile(tarfile.TarFile):
-            extraction_filter = staticmethod(tarfile.data_filter)
-
-    else:
-        TarFile = tarfile.TarFile

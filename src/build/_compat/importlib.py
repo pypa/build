@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 
@@ -12,4 +14,7 @@ else:
         # helps bootstrapping when dependencies aren't installed
         from importlib import metadata
 
-__all__ = ['metadata']
+
+__all__ = [
+    'metadata',
+]
