@@ -20,18 +20,10 @@ from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-elif typing.TYPE_CHECKING:
-    from typing_extensions import Protocol
-else:
-    Protocol = abc.ABC
-
-
 _logger = logging.getLogger(__name__)
 
 
-class IsolatedEnv(Protocol):
+class IsolatedEnv(typing.Protocol):
     """Isolated build environment ABC."""
 
     @property
@@ -207,10 +199,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
         :param msg: Message to output
         """
-        if sys.version_info >= (3, 8):
-            _logger.log(logging.INFO, message, stacklevel=2)
-        else:
-            _logger.log(logging.INFO, message)
+        _logger.log(logging.INFO, message, stacklevel=2)
 
 
 def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:

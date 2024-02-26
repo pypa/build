@@ -366,10 +366,7 @@ class ProjectBuilder:
 
         :param message: Message to output
         """
-        if sys.version_info >= (3, 8):
-            _logger.log(logging.INFO, message, stacklevel=2)
-        else:
-            _logger.log(logging.INFO, message)
+        _logger.log(logging.INFO, message, stacklevel=2)
 
 
 __all__ = [

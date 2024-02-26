@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
+import importlib.metadata
 import os
 import os.path
 import shutil
@@ -12,12 +13,6 @@ import tempfile
 import pytest
 
 import build.env
-
-
-if sys.version_info < (3, 8):
-    import importlib_metadata as metadata
-else:
-    from importlib import metadata
 
 
 def pytest_addoption(parser):
@@ -141,6 +136,6 @@ def pytest_report_header() -> str:
     for package in interesting_packages:
         # Old versions of importlib_metadata made this FileNotFoundError
         with contextlib.suppress(ModuleNotFoundError, FileNotFoundError):
-            valid.append(f'{package}=={metadata.version(package)}')
+            valid.append(f'{package}=={importlib.metadata.version(package)}')
     reqs = ' '.join(valid)
     return f'installed packages of interest: {reqs}'
