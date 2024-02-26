@@ -6,15 +6,20 @@ build - A simple, correct PEP 517 build frontend
 
 from __future__ import annotations
 
+import os
+import sys
 
-__version__ = '1.0.3'
+
+# Remove '' and current working directory from the first entry
+# of sys.path, if present to avoid using current directory
+if sys.path[0] in ('', os.getcwd()):
+    sys.path.pop(0)
+
 
 import contextlib
 import difflib
 import logging
-import os
 import subprocess
-import sys
 import warnings
 import zipfile
 
@@ -33,6 +38,9 @@ from ._exceptions import (
     TypoWarning,
 )
 from ._util import check_dependency, parse_wheel_filename
+
+
+__version__ = '1.0.3'
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
