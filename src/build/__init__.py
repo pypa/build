@@ -24,6 +24,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence, TypeVar, Union
 import pyproject_hooks
 
 from . import env
+from ._compat import tomllib
 from ._exceptions import (
     BuildBackendException,
     BuildException,
@@ -32,12 +33,6 @@ from ._exceptions import (
     TypoWarning,
 )
 from ._util import check_dependency, parse_wheel_filename
-
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 
 RunnerType = Callable[[Sequence[str], Optional[str], Optional[Mapping[str, str]]], None]
