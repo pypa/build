@@ -70,7 +70,7 @@ def _minimum_pip_version() -> str:
     return '19.1.0'
 
 
-def _has_valid_pip(**distargs: object) -> bool:
+def _has_valid_pip(__version: str | None = None, **distargs: object) -> bool:
     """
     Given a path, see if Pip is present and return True if the version is
     sufficient for build, False if it is not. ModuleNotFoundError is thrown if
@@ -90,7 +90,7 @@ def _has_valid_pip(**distargs: object) -> bool:
 
     current_pip_version = packaging.version.Version(pip_distribution.version)
 
-    return current_pip_version >= packaging.version.Version(_minimum_pip_version())
+    return current_pip_version >= packaging.version.Version(__version or _minimum_pip_version())
 
 
 @functools.lru_cache(maxsize=None)
@@ -101,7 +101,8 @@ def _valid_global_pip() -> bool | None:
     """
 
     try:
-        return _has_valid_pip()
+        # Version to have added the `--python` option.
+        return _has_valid_pip('22.3')
     except ModuleNotFoundError:
         return None
 
