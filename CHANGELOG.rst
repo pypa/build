@@ -3,6 +3,12 @@ Changelog
 +++++++++
 
 
+Unreleased
+==========
+
+- Dropped support for Python 3.7 (PR :pr:`743`)
+
+
 1.1.1 (2024-02-29)
 ==================
 
