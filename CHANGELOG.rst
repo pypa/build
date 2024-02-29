@@ -3,10 +3,14 @@ Changelog
 +++++++++
 
 
-next release
-============
+1.1.1 (2024-02-29)
+==================
 
-Python 3.7 (past EoL) support will be removed.
+- Fixed invoking outer pip from user site packages
+  (PR :pr:`746`, fixes issue :issue:`745`)
+- Corrected the minimum pip version required to use an outer pip
+  (PR :pr:`746`, fixes issue :issue:`745`)
+
 
 1.1.0 (2024-02-29)
 ==================
