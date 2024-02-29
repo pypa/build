@@ -157,7 +157,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
     def _pip_args(self) -> list[str]:
         if _valid_global_pip():
-            return [sys.executable, '-Im', 'pip', '--python', self.python_executable]
+            return [sys.executable, '-m', 'pip', '--python', self.python_executable]
         else:
             return [self.python_executable, '-Im', 'pip']
 
