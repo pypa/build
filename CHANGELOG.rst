@@ -6,9 +6,21 @@ Changelog
 next release
 ============
 
+Python 3.7 (past EoL) support will be removed.
+
+1.1.0 (2024-02-29)
+==================
+
+- Use external pip if available instead of installing, speeds up environment
+  setup with virtualenv slightly and venv significantly.
+  (PR :pr:`736`)
 - Stopped injecting ``wheel`` as a build dependency automatically, in the
   case of missing ``pyproject.toml`` -- by :user:`webknjaz`.
-  (:pr:`716`)
+  (PR :pr:`716`)
+- Use ``importlib_metadata`` on Python <3.10.2 for bugfixes not present in
+  those CPython standard libraries (not required when bootstrapping) -- by
+  :user:`GianlucaFicarelli`.
+  (PR :pr:`693`, fixes issue :issue:`692`)
 
 
 1.0.3 (2023-09-06)
