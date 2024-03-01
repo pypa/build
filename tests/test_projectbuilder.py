@@ -12,6 +12,7 @@ import pyproject_hooks
 import pytest
 
 import build
+import build._builder
 
 from build._compat import importlib as _importlib
 
@@ -578,7 +579,7 @@ def test_log(mocker, caplog, package_test_flit):
     ],
 )
 def test_parse_valid_build_system_table_type(pyproject_toml, parse_output):
-    assert build._parse_build_system_table(pyproject_toml) == parse_output
+    assert build._builder._parse_build_system_table(pyproject_toml) == parse_output
 
 
 @pytest.mark.parametrize(
@@ -616,4 +617,4 @@ def test_parse_valid_build_system_table_type(pyproject_toml, parse_output):
 )
 def test_parse_invalid_build_system_table_type(pyproject_toml, error_message):
     with pytest.raises(build.BuildSystemTableValidationError, match=error_message):
-        build._parse_build_system_table(pyproject_toml)
+        build._builder._parse_build_system_table(pyproject_toml)
