@@ -51,8 +51,8 @@ def _init_colors() -> dict[str, str]:
 _STYLES = _init_colors()
 
 
-def _cprint(fmt: str = '', msg: str = '') -> None:
-    print(fmt.format(msg, **_STYLES), flush=True)
+def _cprint(fmt: str = '', msg: str = '', file: TextIO | None = None) -> None:
+    print(fmt.format(msg, **_STYLES), file=file, flush=True)
 
 
 def _showwarning(
@@ -66,7 +66,28 @@ def _showwarning(
     _cprint('{yellow}WARNING{reset} {}', str(message))
 
 
-def _setup_cli() -> None:
+_max_terminal_width = shutil.get_terminal_size().columns - 2
+
+
+_fill = partial(textwrap.fill, subsequent_indent='  ', width=_max_terminal_width)
+
+
+def _log(message: str, *, origin: tuple[str, ...] | None = None) -> None:
+    if origin is None:
+        (first, *rest) = message.splitlines()
+        _cprint('{bold}{}{reset}', _fill(first, initial_indent='* '))
+        for line in rest:
+            print(_fill(line, initial_indent='  '))
+
+    elif origin[0] == 'subprocess':
+        initial_indent = '> ' if origin[1] == 'cmd' else '< '
+        color = '{red}' if origin[1] == 'stderr' else '{dim}'
+        file = sys.stderr if origin[1] == 'stderr' else None
+        for line in message.splitlines():
+            _cprint(color + '{}{reset}', _fill(line, initial_indent=initial_indent), file=file)
+
+
+def _setup_cli(*, verbosity: int) -> None:
     warnings.showwarning = _showwarning
 
     if platform.system() == 'Windows':
@@ -76,6 +97,9 @@ def _setup_cli() -> None:
             colorama.init()
         except ModuleNotFoundError:
             pass
+
+    _ctx.LOGGER.set(_log)
+    _ctx.VERBOSITY.set(verbosity)
 
 
 def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
@@ -275,12 +299,9 @@ def main_parser() -> argparse.ArgumentParser:
             ).strip(),
             '    ',
         ),
-        formatter_class=partial(
-            argparse.RawDescriptionHelpFormatter,
-            # Prevent argparse from taking up the entire width of the terminal window
-            # which impedes readability.
-            width=min(shutil.get_terminal_size().columns - 2, 127),
-        ),
+        # Prevent argparse from taking up the entire width of the terminal window
+        # which impedes readability.
+        formatter_class=partial(argparse.RawDescriptionHelpFormatter, width=min(_max_terminal_width, 127)),
     )
     parser.add_argument(
         'srcdir',
@@ -354,11 +375,12 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     :param cli_args: CLI arguments
     :param prog: Program name to show in help text
     """
-    _setup_cli()
     parser = main_parser()
     if prog:
         parser.prog = prog
     args = parser.parse_args(cli_args)
+
+    _setup_cli(verbosity=args.verbosity)
 
     distributions: list[Distribution] = []
     config_settings = {}
