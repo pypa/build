@@ -33,3 +33,7 @@ __all__ = [
     'RunnerType',
     'TypoWarning',
 ]
+
+
+def __dir__() -> list[str]:
+    return __all__
