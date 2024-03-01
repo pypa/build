@@ -16,7 +16,7 @@ from typing import Any, Mapping, Sequence, TypeVar
 
 import pyproject_hooks
 
-from . import _types, env
+from . import env
 from ._compat import tomllib
 from ._exceptions import (
     BuildBackendException,
@@ -24,6 +24,7 @@ from ._exceptions import (
     BuildSystemTableValidationError,
     TypoWarning,
 )
+from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 from ._util import check_dependency, parse_wheel_filename
 
 
@@ -49,7 +50,7 @@ def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
             )
 
 
-def _validate_source_directory(source_dir: _types.StrPath) -> None:
+def _validate_source_directory(source_dir: StrPath) -> None:
     if not os.path.isdir(source_dir):
         msg = f'Source {source_dir} is not a directory'
         raise BuildException(msg)
@@ -60,7 +61,7 @@ def _validate_source_directory(source_dir: _types.StrPath) -> None:
         raise BuildException(msg)
 
 
-def _read_pyproject_toml(path: _types.StrPath) -> Mapping[str, Any]:
+def _read_pyproject_toml(path: StrPath) -> Mapping[str, Any]:
     try:
         with open(path, 'rb') as f:
             return tomllib.loads(f.read().decode())
@@ -118,7 +119,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
     return build_system_table
 
 
-def _wrap_subprocess_runner(runner: _types.SubprocessRunner, env: env.IsolatedEnv) -> _types.SubprocessRunner:
+def _wrap_subprocess_runner(runner: SubprocessRunner, env: env.IsolatedEnv) -> SubprocessRunner:
     def _invoke_wrapped_runner(cmd: Sequence[str], cwd: str | None, extra_environ: Mapping[str, str] | None) -> None:
         runner(cmd, cwd, {**(env.make_extra_environ() or {}), **(extra_environ or {})})
 
@@ -132,9 +133,9 @@ class ProjectBuilder:
 
     def __init__(
         self,
-        source_dir: _types.StrPath,
+        source_dir: StrPath,
         python_executable: str = sys.executable,
-        runner: _types.SubprocessRunner = pyproject_hooks.default_subprocess_runner,
+        runner: SubprocessRunner = pyproject_hooks.default_subprocess_runner,
     ) -> None:
         """
         :param source_dir: The source directory
@@ -176,8 +177,8 @@ class ProjectBuilder:
     def from_isolated_env(
         cls: type[_TProjectBuilder],
         env: env.IsolatedEnv,
-        source_dir: _types.StrPath,
-        runner: _types.SubprocessRunner = pyproject_hooks.default_subprocess_runner,
+        source_dir: StrPath,
+        runner: SubprocessRunner = pyproject_hooks.default_subprocess_runner,
     ) -> _TProjectBuilder:
         return cls(
             source_dir=source_dir,
@@ -206,9 +207,7 @@ class ProjectBuilder:
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(
-        self, distribution: _types.Distribution, config_settings: _types.ConfigSettings | None = None
-    ) -> set[str]:
+    def get_requires_for_build(self, distribution: Distribution, config_settings: ConfigSettings | None = None) -> set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -225,7 +224,7 @@ class ProjectBuilder:
             return set(get_requires(config_settings))
 
     def check_dependencies(
-        self, distribution: _types.Distribution, config_settings: _types.ConfigSettings | None = None
+        self, distribution: Distribution, config_settings: ConfigSettings | None = None
     ) -> set[tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
@@ -241,9 +240,9 @@ class ProjectBuilder:
 
     def prepare(
         self,
-        distribution: _types.Distribution,
-        output_directory: _types.StrPath,
-        config_settings: _types.ConfigSettings | None = None,
+        distribution: Distribution,
+        output_directory: StrPath,
+        config_settings: ConfigSettings | None = None,
     ) -> str | None:
         """
         Prepare metadata for a distribution.
@@ -268,9 +267,9 @@ class ProjectBuilder:
 
     def build(
         self,
-        distribution: _types.Distribution,
-        output_directory: _types.StrPath,
-        config_settings: _types.ConfigSettings | None = None,
+        distribution: Distribution,
+        output_directory: StrPath,
+        config_settings: ConfigSettings | None = None,
         metadata_directory: str | None = None,
     ) -> str:
         """
@@ -287,7 +286,7 @@ class ProjectBuilder:
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
-    def metadata_path(self, output_directory: _types.StrPath) -> str:
+    def metadata_path(self, output_directory: StrPath) -> str:
         """
         Generate the metadata directory of a distribution and return its path.
 
@@ -318,7 +317,7 @@ class ProjectBuilder:
         return os.path.join(output_directory, distinfo)
 
     def _call_backend(
-        self, hook_name: str, outdir: _types.StrPath, config_settings: _types.ConfigSettings | None = None, **kwargs: Any
+        self, hook_name: str, outdir: StrPath, config_settings: ConfigSettings | None = None, **kwargs: Any
     ) -> str:
         outdir = os.path.abspath(outdir)
 
