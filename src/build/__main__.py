@@ -296,6 +296,14 @@ def main_parser() -> argparse.ArgumentParser:
         version=f"build {build.__version__} ({','.join(build.__path__)})",
     )
     parser.add_argument(
+        '--verbose',
+        '-v',
+        dest='verbosity',
+        action='count',
+        default=0,
+        help='increase verbosity',
+    )
+    parser.add_argument(
         '--sdist',
         '-s',
         action='store_true',
