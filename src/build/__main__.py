@@ -20,8 +20,9 @@ from typing import NoReturn, TextIO
 
 import build
 
-from . import ConfigSettingsType, PathType, ProjectBuilder
+from . import ProjectBuilder
 from ._exceptions import BuildBackendException, BuildException, FailedProcessError
+from ._types import ConfigSettings, Distribution, StrPath
 from .env import DefaultIsolatedEnv
 
 
@@ -105,7 +106,10 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    srcdir: PathType, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
+    srcdir: StrPath,
+    outdir: StrPath,
+    distribution: Distribution,
+    config_settings: ConfigSettings | None,
 ) -> str:
     with _DefaultIsolatedEnv() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
@@ -117,10 +121,10 @@ def _build_in_isolated_env(
 
 
 def _build_in_current_env(
-    srcdir: PathType,
-    outdir: PathType,
-    distribution: str,
-    config_settings: ConfigSettingsType | None,
+    srcdir: StrPath,
+    outdir: StrPath,
+    distribution: Distribution,
+    config_settings: ConfigSettings | None,
     skip_dependency_check: bool = False,
 ) -> str:
     builder = _ProjectBuilder(srcdir)
@@ -137,10 +141,10 @@ def _build_in_current_env(
 
 def _build(
     isolation: bool,
-    srcdir: PathType,
-    outdir: PathType,
-    distribution: str,
-    config_settings: ConfigSettingsType | None,
+    srcdir: StrPath,
+    outdir: StrPath,
+    distribution: Distribution,
+    config_settings: ConfigSettings | None,
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
@@ -188,10 +192,10 @@ def _natural_language_list(elements: Sequence[str]) -> str:
 
 
 def build_package(
-    srcdir: PathType,
-    outdir: PathType,
-    distributions: Sequence[str],
-    config_settings: ConfigSettingsType | None = None,
+    srcdir: StrPath,
+    outdir: StrPath,
+    distributions: Sequence[Distribution],
+    config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -213,10 +217,10 @@ def build_package(
 
 
 def build_package_via_sdist(
-    srcdir: PathType,
-    outdir: PathType,
-    distributions: Sequence[str],
-    config_settings: ConfigSettingsType | None = None,
+    srcdir: StrPath,
+    outdir: StrPath,
+    distributions: Sequence[Distribution],
+    config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -356,7 +360,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         parser.prog = prog
     args = parser.parse_args(cli_args)
 
-    distributions = []
+    distributions: list[Distribution] = []
     config_settings = {}
 
     if args.config_setting:

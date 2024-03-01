@@ -7,8 +7,9 @@ import tempfile
 
 import pyproject_hooks
 
-from . import PathType, ProjectBuilder, RunnerType
+from . import ProjectBuilder
 from ._compat import importlib
+from ._types import StrPath, SubprocessRunner
 from .env import DefaultIsolatedEnv
 
 
@@ -19,10 +20,10 @@ def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.Packa
 
 
 def project_wheel_metadata(
-    source_dir: PathType,
+    source_dir: StrPath,
     isolated: bool = True,
     *,
-    runner: RunnerType = pyproject_hooks.quiet_subprocess_runner,
+    runner: SubprocessRunner = pyproject_hooks.quiet_subprocess_runner,
 ) -> importlib.metadata.PackageMetadata:
     """
     Return the wheel metadata for a project.
