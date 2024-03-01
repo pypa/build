@@ -176,6 +176,10 @@ def _handle_build_error() -> Iterator[None]:
             tb = traceback.format_exc(-1)
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _error(str(e))
+    except Exception as e:  # pragma: no cover
+        tb = traceback.format_exc().strip('\n')
+        _cprint('\n{dim}{}{reset}\n', tb)
+        _error(str(e))
 
 
 def _natural_language_list(elements: Sequence[str]) -> str:
@@ -387,19 +391,15 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     else:
         build_call = build_package_via_sdist
         distributions = ['wheel']
-    try:
-        with _handle_build_error():
-            built = build_call(
-                args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
-            )
-            artifact_list = _natural_language_list(
-                ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
-            )
-            _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
-    except Exception as e:  # pragma: no cover
-        tb = traceback.format_exc().strip('\n')
-        _cprint('\n{dim}{}{reset}\n', tb)
-        _error(str(e))
+
+    with _handle_build_error():
+        built = build_call(
+            args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
+        )
+        artifact_list = _natural_language_list(
+            ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
+        )
+        _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
 
 
 def entrypoint() -> None:
