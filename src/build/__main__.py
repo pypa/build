@@ -20,7 +20,7 @@ from typing import NoReturn, TextIO
 
 import build
 
-from . import ProjectBuilder
+from . import ProjectBuilder, _ctx
 from ._exceptions import BuildBackendException, BuildException, FailedProcessError
 from ._types import ConfigSettings, Distribution, StrPath
 from .env import DefaultIsolatedEnv
@@ -89,18 +89,6 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     raise SystemExit(code)
 
 
-class _ProjectBuilder(ProjectBuilder):
-    @staticmethod
-    def log(message: str) -> None:
-        _cprint('{bold}* {}{reset}', message)
-
-
-class _DefaultIsolatedEnv(DefaultIsolatedEnv):
-    @staticmethod
-    def log(message: str) -> None:
-        _cprint('{bold}* {}{reset}', message)
-
-
 def _format_dep_chain(dep_chain: Sequence[str]) -> str:
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
@@ -111,8 +99,8 @@ def _build_in_isolated_env(
     distribution: Distribution,
     config_settings: ConfigSettings | None,
 ) -> str:
-    with _DefaultIsolatedEnv() as env:
-        builder = _ProjectBuilder.from_isolated_env(env, srcdir)
+    with DefaultIsolatedEnv() as env:
+        builder = ProjectBuilder.from_isolated_env(env, srcdir)
         # first install the build dependencies
         env.install(builder.build_system_requires)
         # then get the extra required dependencies from the backend (which was installed in the call above :P)
@@ -127,7 +115,7 @@ def _build_in_current_env(
     config_settings: ConfigSettings | None,
     skip_dependency_check: bool = False,
 ) -> str:
-    builder = _ProjectBuilder(srcdir)
+    builder = ProjectBuilder(srcdir)
 
     if not skip_dependency_check:
         missing = builder.check_dependencies(distribution, config_settings or {})
@@ -254,7 +242,7 @@ def build_package_via_sdist(
         with tarfile.TarFile.open(sdist) as t:
             t.extractall(sdist_out)
             try:
-                _ProjectBuilder.log(f'Building {_natural_language_list(distributions)} from sdist')
+                _ctx.log(f'Building {_natural_language_list(distributions)} from sdist')
                 srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
                 for distribution in distributions:
                     out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
