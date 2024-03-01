@@ -230,14 +230,17 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             [],
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0)',
+                '* Installing packages in isolated environment:',
+                '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0)',
+                '* Installing packages in isolated environment:',
+                '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
-                '* Installing packages in isolated environment... (wheel)',
+                '* Installing packages in isolated environment:',
+                '  - wheel',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -260,9 +263,11 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             ['--wheel'],
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0)',
+                '* Installing packages in isolated environment:',
+                '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
-                '* Installing packages in isolated environment... (wheel)',
+                '* Installing packages in isolated environment:',
+                '  - wheel',
                 '* Building wheel...',
                 'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
             ],
@@ -324,9 +329,9 @@ def main_reload_styles():
             'ERROR ',
             [
                 '* Creating venv isolated environment...',
-                '* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid)',
-                '',
-                'Traceback (most recent call last):',
+                '* Installing packages in isolated environment:',
+                '  - setuptools >= 42.0.0',
+                '  - this is invalid',
             ],
         ),
         (
@@ -334,9 +339,9 @@ def main_reload_styles():
             '\33[91mERROR\33[0m ',
             [
                 '\33[1m* Creating venv isolated environment...\33[0m',
-                '\33[1m* Installing packages in isolated environment... (setuptools >= 42.0.0, this is invalid)\33[0m',
-                '',
-                '\33[2mTraceback (most recent call last):',
+                '\33[1m* Installing packages in isolated environment:\33[0m',
+                '  - setuptools >= 42.0.0',
+                '  - this is invalid',
             ],
         ),
     ],
@@ -375,8 +380,7 @@ def test_output_env_subprocess_error(
 
     # Newer versions of pip also color stderr - strip them if present
     cleaned_stderr = ANSI_STRIP.sub('', '\n'.join(stderr)).strip()
-    assert len(cleaned_stderr.splitlines()) == 1
-    assert cleaned_stderr.startswith('ERROR: Invalid requirement: ')
+    assert cleaned_stderr.startswith('< ERROR: Invalid requirement: ')
 
 
 @pytest.mark.parametrize(
@@ -414,11 +418,10 @@ def test_colors_conflict(monkeypatch, main_reload_styles):
         assert build.__main__._STYLES == build.__main__._NO_COLORS
 
 
-def raise_called_process_err(*args, **kwargs):
-    raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
-
-
 def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
+    def raise_called_process_err(*args, **kwargs):
+        raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
+
     monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)
     monkeypatch.setenv('NO_COLOR', '')
 
@@ -433,12 +436,14 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
         stdout
         == """\
 * Creating venv isolated environment...
+> test args
+< stdoutput
 ERROR Failed to create venv. Maybe try installing virtualenv.
-  Command 'test args' failed with return code 1
-  stdout:
-    stdoutput
-  stderr:
-    stderror
 """
     )
-    assert stderr == ''
+    assert (
+        stderr
+        == """\
+< stderror
+"""
+    )

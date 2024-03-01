@@ -29,14 +29,14 @@ def test_isolation():
 @pytest.mark.usefixtures('local_pip')
 def test_isolated_environment_install(mocker):
     with build.env.DefaultIsolatedEnv() as env:
-        mocker.patch('build.env._subprocess')
+        mocker.patch('build.env.run_subprocess')
 
         env.install([])
-        build.env._subprocess.assert_not_called()
+        build.env.run_subprocess.assert_not_called()
 
         env.install(['some', 'requirements'])
-        build.env._subprocess.assert_called()
-        args = build.env._subprocess.call_args[0][0][:-1]
+        build.env.run_subprocess.assert_called()
+        args = build.env.run_subprocess.call_args[0][0][:-1]
         assert args == [
             env.python_executable,
             '-Im',
@@ -102,18 +102,15 @@ def test_isolated_env_has_install_still_abstract():
 
 @pytest.mark.pypy3323bug
 def test_isolated_env_log(mocker, caplog, package_test_flit):
-    mocker.patch('build.env._subprocess')
+    mocker.patch('build.env.run_subprocess')
     caplog.set_level(logging.DEBUG)
 
-    builder = build.env.DefaultIsolatedEnv()
-    builder.log('something')  # line number 106
-    with builder as env:
+    with build.env.DefaultIsolatedEnv() as env:
         env.install(['something'])
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
-        ('INFO', 'something'),
         ('INFO', 'Creating venv isolated environment...'),
-        ('INFO', 'Installing packages in isolated environment... (something)'),
+        ('INFO', 'Installing packages in isolated environment:\n- something'),
     ]
 
 
@@ -136,7 +133,7 @@ def test_default_pip_is_never_too_old():
 def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
     SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
 
-    _subprocess = mocker.patch('build.env._subprocess')
+    _subprocess = mocker.patch('build.env.run_subprocess')
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.machine', return_value=arch)
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))

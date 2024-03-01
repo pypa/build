@@ -549,7 +549,6 @@ def test_log(mocker, caplog, package_test_flit):
     builder.prepare('wheel', '.')
     builder.build('sdist', '.')
     builder.build('wheel', '.')
-    builder.log('something')
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
         ('INFO', 'Getting build dependencies for sdist...'),
@@ -557,7 +556,6 @@ def test_log(mocker, caplog, package_test_flit):
         ('INFO', 'Getting metadata for wheel...'),
         ('INFO', 'Building sdist...'),
         ('INFO', 'Building wheel...'),
-        ('INFO', 'something'),
     ]
 
 
