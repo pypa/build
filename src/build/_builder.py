@@ -206,7 +206,9 @@ class ProjectBuilder:
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(self, distribution: str, config_settings: _types.ConfigSettings | None = None) -> set[str]:
+    def get_requires_for_build(
+        self, distribution: _types.Distribution, config_settings: _types.ConfigSettings | None = None
+    ) -> set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -223,7 +225,7 @@ class ProjectBuilder:
             return set(get_requires(config_settings))
 
     def check_dependencies(
-        self, distribution: str, config_settings: _types.ConfigSettings | None = None
+        self, distribution: _types.Distribution, config_settings: _types.ConfigSettings | None = None
     ) -> set[tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
@@ -238,7 +240,10 @@ class ProjectBuilder:
         return {u for d in dependencies for u in check_dependency(d)}
 
     def prepare(
-        self, distribution: str, output_directory: _types.StrPath, config_settings: _types.ConfigSettings | None = None
+        self,
+        distribution: _types.Distribution,
+        output_directory: _types.StrPath,
+        config_settings: _types.ConfigSettings | None = None,
     ) -> str | None:
         """
         Prepare metadata for a distribution.
@@ -263,7 +268,7 @@ class ProjectBuilder:
 
     def build(
         self,
-        distribution: str,
+        distribution: _types.Distribution,
         output_directory: _types.StrPath,
         config_settings: _types.ConfigSettings | None = None,
         metadata_directory: str | None = None,

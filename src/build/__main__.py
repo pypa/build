@@ -105,7 +105,10 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    srcdir: _types.StrPath, outdir: _types.StrPath, distribution: str, config_settings: _types.ConfigSettings | None
+    srcdir: _types.StrPath,
+    outdir: _types.StrPath,
+    distribution: _types.Distribution,
+    config_settings: _types.ConfigSettings | None,
 ) -> str:
     with _DefaultIsolatedEnv() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
@@ -119,7 +122,7 @@ def _build_in_isolated_env(
 def _build_in_current_env(
     srcdir: _types.StrPath,
     outdir: _types.StrPath,
-    distribution: str,
+    distribution: _types.Distribution,
     config_settings: _types.ConfigSettings | None,
     skip_dependency_check: bool = False,
 ) -> str:
@@ -139,7 +142,7 @@ def _build(
     isolation: bool,
     srcdir: _types.StrPath,
     outdir: _types.StrPath,
-    distribution: str,
+    distribution: _types.Distribution,
     config_settings: _types.ConfigSettings | None,
     skip_dependency_check: bool,
 ) -> str:
@@ -190,7 +193,7 @@ def _natural_language_list(elements: Sequence[str]) -> str:
 def build_package(
     srcdir: _types.StrPath,
     outdir: _types.StrPath,
-    distributions: Sequence[str],
+    distributions: Sequence[_types.Distribution],
     config_settings: _types.ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
@@ -215,7 +218,7 @@ def build_package(
 def build_package_via_sdist(
     srcdir: _types.StrPath,
     outdir: _types.StrPath,
-    distributions: Sequence[str],
+    distributions: Sequence[_types.Distribution],
     config_settings: _types.ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
@@ -356,7 +359,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         parser.prog = prog
     args = parser.parse_args(cli_args)
 
-    distributions = []
+    distributions: list[_types.Distribution] = []
     config_settings = {}
 
     if args.config_setting:

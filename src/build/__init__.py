@@ -9,6 +9,7 @@ from ._exceptions import (
     TypoWarning,
 )
 from ._types import ConfigSettings as ConfigSettingsType
+from ._types import Distribution as DistributionType
 from ._types import SubprocessRunner as RunnerType
 from ._util import check_dependency
 
@@ -22,6 +23,7 @@ __all__ = [
     'BuildSystemTableValidationError',
     'check_dependency',
     'ConfigSettingsType',
+    'DistributionType',
     'FailedProcessError',
     'ProjectBuilder',
     'RunnerType',
