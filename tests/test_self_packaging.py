@@ -47,11 +47,13 @@ sdist_files |= {str(PurePosixPath(p.relative_to(MAIN_DIR))) for path in sdist_pa
 wheel_files = {
     'build/__init__.py',
     'build/__main__.py',
+    'build/_builder.py',
     'build/_compat/__init__.py',
     'build/_compat/importlib.py',
     'build/_compat/tarfile.py',
     'build/_compat/tomllib.py',
     'build/_exceptions.py',
+    'build/_types.py',
     'build/_util.py',
     'build/env.py',
     'build/py.typed',
