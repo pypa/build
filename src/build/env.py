@@ -137,12 +137,6 @@ class DefaultIsolatedEnv(IsolatedEnv):
         """The python executable of the isolated build environment."""
         return self._python_executable
 
-    def _pip_args(self) -> list[str]:
-        if _valid_global_pip():
-            return [sys.executable, '-m', 'pip', '--python', self.python_executable]
-        else:
-            return [self.python_executable, '-Im', 'pip']
-
     def make_extra_environ(self) -> dict[str, str]:
         path = os.environ.get('PATH')
         return {'PATH': os.pathsep.join([self._scripts_dir, path]) if path is not None else self._scripts_dir}
@@ -165,9 +159,17 @@ class DefaultIsolatedEnv(IsolatedEnv):
         # but it does for requirements from a file
         with tempfile.NamedTemporaryFile('w', prefix='build-reqs-', suffix='.txt', delete=False, encoding='utf-8') as req_file:
             req_file.write(os.linesep.join(requirements))
+
         try:
-            cmd = [
-                *self._pip_args(),
+            if _valid_global_pip():
+                cmd = [sys.executable, '-m', 'pip', '--python', self.python_executable]
+            else:
+                cmd = [self.python_executable, '-Im', 'pip']
+
+            if _ctx.verbosity > 1:
+                cmd += [f'-{"v" * (_ctx.verbosity - 1)}']
+
+            cmd += [
                 'install',
                 '--use-pep517',
                 '--no-warn-script-location',
