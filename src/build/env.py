@@ -153,7 +153,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
-        _ctx.log(f'Installing packages in isolated environment... ({", ".join(sorted(requirements))})')
+        _ctx.log('Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)))
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
