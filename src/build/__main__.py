@@ -20,7 +20,7 @@ from typing import NoReturn, TextIO
 
 import build
 
-from . import ConfigSettingsType, PathType, ProjectBuilder
+from . import ProjectBuilder, _types
 from ._exceptions import BuildBackendException, BuildException, FailedProcessError
 from .env import DefaultIsolatedEnv
 
@@ -105,7 +105,7 @@ def _format_dep_chain(dep_chain: Sequence[str]) -> str:
 
 
 def _build_in_isolated_env(
-    srcdir: PathType, outdir: PathType, distribution: str, config_settings: ConfigSettingsType | None
+    srcdir: _types.StrPath, outdir: _types.StrPath, distribution: str, config_settings: _types.ConfigSettings | None
 ) -> str:
     with _DefaultIsolatedEnv() as env:
         builder = _ProjectBuilder.from_isolated_env(env, srcdir)
@@ -117,10 +117,10 @@ def _build_in_isolated_env(
 
 
 def _build_in_current_env(
-    srcdir: PathType,
-    outdir: PathType,
+    srcdir: _types.StrPath,
+    outdir: _types.StrPath,
     distribution: str,
-    config_settings: ConfigSettingsType | None,
+    config_settings: _types.ConfigSettings | None,
     skip_dependency_check: bool = False,
 ) -> str:
     builder = _ProjectBuilder(srcdir)
@@ -137,10 +137,10 @@ def _build_in_current_env(
 
 def _build(
     isolation: bool,
-    srcdir: PathType,
-    outdir: PathType,
+    srcdir: _types.StrPath,
+    outdir: _types.StrPath,
     distribution: str,
-    config_settings: ConfigSettingsType | None,
+    config_settings: _types.ConfigSettings | None,
     skip_dependency_check: bool,
 ) -> str:
     if isolation:
@@ -188,10 +188,10 @@ def _natural_language_list(elements: Sequence[str]) -> str:
 
 
 def build_package(
-    srcdir: PathType,
-    outdir: PathType,
+    srcdir: _types.StrPath,
+    outdir: _types.StrPath,
     distributions: Sequence[str],
-    config_settings: ConfigSettingsType | None = None,
+    config_settings: _types.ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
@@ -213,10 +213,10 @@ def build_package(
 
 
 def build_package_via_sdist(
-    srcdir: PathType,
-    outdir: PathType,
+    srcdir: _types.StrPath,
+    outdir: _types.StrPath,
     distributions: Sequence[str],
-    config_settings: ConfigSettingsType | None = None,
+    config_settings: _types.ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
 ) -> Sequence[str]:
