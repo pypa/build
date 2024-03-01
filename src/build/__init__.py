@@ -1,3 +1,7 @@
+"""
+build - A simple, correct Python build frontend
+"""
+
 from __future__ import annotations
 
 from ._builder import ProjectBuilder
