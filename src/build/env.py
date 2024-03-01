@@ -3,7 +3,6 @@ from __future__ import annotations
 import abc
 import functools
 import importlib.util
-import logging
 import os
 import platform
 import shutil
@@ -16,11 +15,9 @@ import warnings
 
 from collections.abc import Collection, Mapping
 
+from . import _ctx
 from ._exceptions import FailedProcessError
 from ._util import check_dependency
-
-
-_logger = logging.getLogger(__name__)
 
 
 class IsolatedEnv(typing.Protocol):
@@ -116,10 +113,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
             self._path = tempfile.mkdtemp(prefix='build-env-')
             # use virtualenv when available (as it's faster than venv)
             if _should_use_virtualenv():
-                self.log('Creating virtualenv isolated environment...')
+                _ctx.log('Creating virtualenv isolated environment...')
                 self._python_executable, self._scripts_dir = _create_isolated_env_virtualenv(self._path)
             else:
-                self.log('Creating venv isolated environment...')
+                _ctx.log('Creating venv isolated environment...')
 
                 # Call ``realpath`` to prevent spurious warning from being emitted
                 # that the venv location has changed on Windows. The username is
@@ -170,7 +167,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
-        self.log(f'Installing packages in isolated environment... ({", ".join(sorted(requirements))})')
+        _ctx.log(f'Installing packages in isolated environment... ({", ".join(sorted(requirements))})')
 
         # pip does not honour environment markers in command line arguments
         # but it does for requirements from a file
@@ -188,18 +185,6 @@ class DefaultIsolatedEnv(IsolatedEnv):
             _subprocess(cmd)
         finally:
             os.unlink(req_file.name)
-
-    @staticmethod
-    def log(message: str) -> None:
-        """
-        Prints message
-
-        The default implementation uses the logging module but this function can be
-        overwritten by users to have a different implementation.
-
-        :param msg: Message to output
-        """
-        _logger.log(logging.INFO, message, stacklevel=2)
 
 
 def _create_isolated_env_virtualenv(path: str) -> tuple[str, str]:

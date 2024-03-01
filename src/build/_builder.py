@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 import difflib
-import logging
 import os
 import subprocess
 import sys
@@ -16,7 +15,7 @@ from typing import Any, Mapping, Sequence, TypeVar
 
 import pyproject_hooks
 
-from . import env
+from . import _ctx, env
 from ._compat import tomllib
 from ._exceptions import (
     BuildBackendException,
@@ -35,9 +34,6 @@ _DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
     'requires': ['setuptools >= 40.8.0'],
 }
-
-
-_logger = logging.getLogger(__name__)
 
 
 def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
@@ -216,7 +212,7 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        self.log(f'Getting build dependencies for {distribution}...')
+        _ctx.log(f'Getting build dependencies for {distribution}...')
         hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
@@ -252,7 +248,7 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
-        self.log(f'Getting metadata for {distribution}...')
+        _ctx.log(f'Getting metadata for {distribution}...')
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
@@ -282,7 +278,7 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        self.log(f'Building {distribution}...')
+        _ctx.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
@@ -349,15 +345,3 @@ class ProjectBuilder:
             raise BuildBackendException(exception, f'Backend subprocess exited when trying to invoke {hook}') from None
         except Exception as exception:
             raise BuildBackendException(exception, exc_info=sys.exc_info()) from None
-
-    @staticmethod
-    def log(message: str) -> None:
-        """
-        Log a message.
-
-        The default implementation uses the logging module but this function can be
-        overridden by users to have a different implementation.
-
-        :param message: Message to output
-        """
-        _logger.log(logging.INFO, message, stacklevel=2)
