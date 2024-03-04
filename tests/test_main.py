@@ -14,6 +14,9 @@ import build
 import build.__main__
 
 
+pytestmark = pytest.mark.contextvars
+
+
 build_open_owner = 'builtins'
 
 cwd = os.getcwd()

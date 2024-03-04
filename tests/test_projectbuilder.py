@@ -375,6 +375,7 @@ def demo_pkg_inline(tmp_path_factory):
     return next(out.iterdir())
 
 
+@pytest.mark.contextvars
 @pytest.mark.isolated
 def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mocker):
     """

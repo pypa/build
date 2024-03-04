@@ -9,6 +9,9 @@ import pytest_mock
 import build._ctx
 
 
+pytestmark = pytest.mark.contextvars
+
+
 def test_default_ctx_logger(caplog: pytest.LogCaptureFixture):
     build._ctx.log('foo')
 

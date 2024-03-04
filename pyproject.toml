@@ -114,6 +114,7 @@ xfail_strict = true
 junit_family = "xunit2"
 norecursedirs = "tests/integration/*"
 markers = [
+  "contextvars",
   "isolated",
   "pypy3323bug",
   "network",
