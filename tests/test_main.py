@@ -447,3 +447,23 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
 < stderror
 """
     )
+
+
+@pytest.mark.parametrize('verbosity', [0, 1])
+def test_verbose_output(
+    capsys: pytest.CaptureFixture,
+    monkeypatch,
+    tmp_dir,
+    package_test_flit,
+    verbosity: int,
+):
+    monkeypatch.setenv('NO_COLOR', '')
+
+    cmd = [package_test_flit, '-w', '-o', tmp_dir]
+    if verbosity:
+        cmd.insert(0, f'-{"v" * verbosity}')
+
+    build.__main__.main(cmd)
+
+    stdout = capsys.readouterr().out.splitlines()
+    assert sum(1 for o in stdout if o.startswith('> ')) == verbosity
