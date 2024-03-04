@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
+import contextvars
 import importlib.metadata
 import os
 import os.path
@@ -9,6 +10,8 @@ import stat
 import sys
 import sysconfig
 import tempfile
+
+from functools import partial, update_wrapper
 
 import pytest
 
@@ -58,6 +61,16 @@ def pytest_collection_modifyitems(config, items):
 
 def is_integration(item):
     return os.path.basename(item.location[0]) == 'test_integration.py'
+
+
+def pytest_runtest_call(item: pytest.Item):
+    if item.get_closest_marker('contextvars'):
+        if isinstance(item, pytest.Function):
+            wrapped_function = partial(contextvars.copy_context().run, item.obj)
+            item.obj = update_wrapper(wrapped_function, item.obj)
+        else:
+            msg = 'cannot rewrap non-function item'
+            raise RuntimeError(msg)
 
 
 @pytest.fixture()
