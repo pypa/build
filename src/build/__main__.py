@@ -365,6 +365,7 @@ def main_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--config-setting',
         '-C',
+        dest='config_settings',
         action='append',
         help='settings to pass to the backend.  Multiple settings can be provided. '
         'Settings beginning with a hyphen will erroneously be interpreted as options to build if separated '
@@ -390,8 +391,8 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     config_settings = {}
 
-    if args.config_setting:
-        for arg in args.config_setting:
+    if args.config_settings:
+        for arg in args.config_settings:
             setting, _, value = arg.partition('=')
             if setting not in config_settings:
                 config_settings[setting] = value
