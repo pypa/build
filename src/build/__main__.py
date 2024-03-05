@@ -82,10 +82,9 @@ def _log(message: str, *, origin: tuple[str, ...] | None = None) -> None:
 
     elif origin[0] == 'subprocess':
         initial_indent = '> ' if origin[1] == 'cmd' else '< '
-        color = '{red}' if origin[1] == 'stderr' else '{dim}'
         file = sys.stderr if origin[1] == 'stderr' else None
         for line in message.splitlines():
-            _cprint(color + '{}{reset}', _fill(line, initial_indent=initial_indent), file=file)
+            _cprint('{dim}{}{reset}', _fill(line, initial_indent=initial_indent), file=file)
 
 
 def _setup_cli(*, verbosity: int) -> None:
