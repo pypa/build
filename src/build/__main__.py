@@ -329,13 +329,17 @@ def main_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--sdist',
         '-s',
-        action='store_true',
+        dest='distributions',
+        action='append_const',
+        const='sdist',
         help='build a source distribution (disables the default behavior)',
     )
     parser.add_argument(
         '--wheel',
         '-w',
-        action='store_true',
+        dest='distributions',
+        action='append_const',
+        const='wheel',
         help='build a wheel (disables the default behavior)',
     )
     parser.add_argument(
@@ -384,7 +388,6 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     _setup_cli(verbosity=args.verbosity)
 
-    distributions: list[Distribution] = []
     config_settings = {}
 
     if args.config_setting:
@@ -398,14 +401,10 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
                 config_settings[setting].append(value)
 
-    if args.sdist:
-        distributions.append('sdist')
-    if args.wheel:
-        distributions.append('wheel')
-
     # outdir is relative to srcdir only if omitted.
     outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
 
+    distributions: list[Distribution] = args.distributions
     if distributions:
         build_call = build_package
     else:
