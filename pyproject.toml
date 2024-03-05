@@ -63,10 +63,14 @@ test = [
   'setuptools >= 67.8.0; python_version >= "3.12"',
 ]
 typing = [
+  "build[uv]",
   "importlib-metadata >= 5.1",
   "mypy ~= 1.5.0",
   "tomli",
   "typing-extensions >= 3.7.4.3",
+]
+uv = [
+  "uv >= 0.1.15",
 ]
 virtualenv = [
   "virtualenv >= 20.0.35",
