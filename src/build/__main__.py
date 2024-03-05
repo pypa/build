@@ -22,6 +22,7 @@ from typing import NoReturn, TextIO
 import build
 
 from . import ProjectBuilder, _ctx
+from . import env as _env
 from ._exceptions import BuildBackendException, BuildException, FailedProcessError
 from ._types import ConfigSettings, Distribution, StrPath
 from .env import DefaultIsolatedEnv
@@ -124,8 +125,9 @@ def _build_in_isolated_env(
     outdir: StrPath,
     distribution: Distribution,
     config_settings: ConfigSettings | None,
+    env_impl: _env.EnvImpl | None,
 ) -> str:
-    with DefaultIsolatedEnv() as env:
+    with DefaultIsolatedEnv(env_impl) as env:
         builder = ProjectBuilder.from_isolated_env(env, srcdir)
         # first install the build dependencies
         env.install(builder.build_system_requires)
@@ -160,9 +162,10 @@ def _build(
     distribution: Distribution,
     config_settings: ConfigSettings | None,
     skip_dependency_check: bool,
+    env_impl: _env.EnvImpl | None,
 ) -> str:
     if isolation:
-        return _build_in_isolated_env(srcdir, outdir, distribution, config_settings)
+        return _build_in_isolated_env(srcdir, outdir, distribution, config_settings, env_impl)
     else:
         return _build_in_current_env(srcdir, outdir, distribution, config_settings, skip_dependency_check)
 
@@ -216,6 +219,7 @@ def build_package(
     config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
+    env_impl: _env.EnvImpl | None = None,
 ) -> Sequence[str]:
     """
     Run the build process.
@@ -229,7 +233,7 @@ def build_package(
     """
     built: list[str] = []
     for distribution in distributions:
-        out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
+        out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check, env_impl)
         built.append(os.path.basename(out))
     return built
 
@@ -241,6 +245,7 @@ def build_package_via_sdist(
     config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
+    env_impl: _env.EnvImpl | None = None,
 ) -> Sequence[str]:
     """
     Build a sdist and then the specified distributions from it.
@@ -258,7 +263,7 @@ def build_package_via_sdist(
         msg = 'Only binary distributions are allowed but sdist was specified'
         raise ValueError(msg)
 
-    sdist = _build(isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check)
+    sdist = _build(isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check, env_impl)
 
     sdist_name = os.path.basename(sdist)
     sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
@@ -271,7 +276,7 @@ def build_package_via_sdist(
                 _ctx.log(f'Building {_natural_language_list(distributions)} from sdist')
                 srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
                 for distribution in distributions:
-                    out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check)
+                    out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check, env_impl)
                     built.append(os.path.basename(out))
             finally:
                 shutil.rmtree(sdist_out, ignore_errors=True)
@@ -355,12 +360,19 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='do not check that build dependencies are installed',
     )
-    parser.add_argument(
+    env_group = parser.add_mutually_exclusive_group()
+    env_group.add_argument(
         '--no-isolation',
         '-n',
         action='store_true',
         help='disable building the project in an isolated virtual environment. '
         'Build dependencies must be installed separately when this option is used',
+    )
+    env_group.add_argument(
+        '--env-impl',
+        choices=_env.ENV_IMPLS,
+        help='isolated environment implementation to use.  Defaults to virtualenv if installed, '
+        ' otherwise venv.  uv support is experimental.',
     )
     parser.add_argument(
         '--config-setting',
@@ -414,7 +426,13 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     with _handle_build_error():
         built = build_call(
-            args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
+            args.srcdir,
+            outdir,
+            distributions,
+            config_settings,
+            not args.no_isolation,
+            args.skip_dependency_check,
+            args.env_impl,
         )
         artifact_list = _natural_language_list(
             ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
