@@ -5,7 +5,7 @@ import logging
 import subprocess
 import typing
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import partial
 
 from ._types import StrPath
@@ -40,7 +40,7 @@ def log_subprocess_error(error: subprocess.CalledProcessError) -> None:
             log(stream.decode() if isinstance(stream, bytes) else stream, origin=('subprocess', stream_name))
 
 
-def run_subprocess(cmd: Sequence[StrPath]) -> None:
+def run_subprocess(cmd: Sequence[StrPath], env: Mapping[str, str] | None = None) -> None:
     verbosity = VERBOSITY.get()
 
     if verbosity:
@@ -53,7 +53,7 @@ def run_subprocess(cmd: Sequence[StrPath]) -> None:
                 log(line, origin=('subprocess', stream_name))
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor, subprocess.Popen(
-            cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            cmd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         ) as process:
             log(subprocess.list2cmdline(cmd), origin=('subprocess', 'cmd'))
 
@@ -69,7 +69,7 @@ def run_subprocess(cmd: Sequence[StrPath]) -> None:
 
     else:
         try:
-            subprocess.run(cmd, capture_output=True, check=True)
+            subprocess.run(cmd, capture_output=True, check=True, env=env)
         except subprocess.CalledProcessError as error:
             log_subprocess_error(error)
             raise
