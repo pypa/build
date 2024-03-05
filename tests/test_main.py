@@ -30,76 +30,81 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     [
         (
             [],
-            [cwd, out, ['wheel'], {}, True, False],
+            [cwd, out, ['wheel'], {}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['-n'],
-            [cwd, out, ['wheel'], {}, False, False],
+            [cwd, out, ['wheel'], {}, False, False, None],
             'build_package_via_sdist',
         ),
         (
             ['-s'],
-            [cwd, out, ['sdist'], {}, True, False],
+            [cwd, out, ['sdist'], {}, True, False, None],
             'build_package',
         ),
         (
             ['-w'],
-            [cwd, out, ['wheel'], {}, True, False],
+            [cwd, out, ['wheel'], {}, True, False, None],
             'build_package',
         ),
         (
             ['-s', '-w'],
-            [cwd, out, ['sdist', 'wheel'], {}, True, False],
+            [cwd, out, ['sdist', 'wheel'], {}, True, False, None],
             'build_package',
         ),
         (
             ['source'],
-            ['source', os.path.join('source', 'dist'), ['wheel'], {}, True, False],
+            ['source', os.path.join('source', 'dist'), ['wheel'], {}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['-o', 'out'],
-            [cwd, 'out', ['wheel'], {}, True, False],
+            [cwd, 'out', ['wheel'], {}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['source', '-o', 'out'],
-            ['source', 'out', ['wheel'], {}, True, False],
+            ['source', 'out', ['wheel'], {}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['-x'],
-            [cwd, out, ['wheel'], {}, True, True],
+            [cwd, out, ['wheel'], {}, True, True, None],
+            'build_package_via_sdist',
+        ),
+        (
+            ['--env-impl', 'venv'],
+            [cwd, out, ['wheel'], {}, True, False, 'venv'],
             'build_package_via_sdist',
         ),
         (
             ['-C--flag1', '-C--flag2'],
-            [cwd, out, ['wheel'], {'--flag1': '', '--flag2': ''}, True, False],
+            [cwd, out, ['wheel'], {'--flag1': '', '--flag2': ''}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['-C--flag=value'],
-            [cwd, out, ['wheel'], {'--flag': 'value'}, True, False],
+            [cwd, out, ['wheel'], {'--flag': 'value'}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
-            [cwd, out, ['wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False],
+            [cwd, out, ['wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False, None],
             'build_package_via_sdist',
         ),
     ],
 )
 def test_parse_args(mocker, cli_args, build_args, hook):
-    mocker.patch('build.__main__.build_package', return_value=['something'])
-    mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
+    build_package = mocker.patch('build.__main__.build_package', return_value=['something'])
+    build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
 
     build.__main__.main(cli_args)
 
     if hook == 'build_package':
-        build.__main__.build_package.assert_called_with(*build_args)
+        build_package.assert_called_with(*build_args)
     elif hook == 'build_package_via_sdist':
-        build.__main__.build_package_via_sdist.assert_called_with(*build_args)
+        build_package_via_sdist.assert_called_with(*build_args)
     else:  # pragma: no cover
         msg = f'Unknown hook {hook}'
         raise ValueError(msg)
@@ -231,13 +236,13 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         pytest.param(
             [],
             [
-                '* Creating venv isolated environment...',
+                '* Creating isolated environment: venv...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
-                '* Creating venv isolated environment...',
+                '* Creating isolated environment: venv...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
@@ -264,7 +269,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         pytest.param(
             ['--wheel'],
             [
-                '* Creating venv isolated environment...',
+                '* Creating isolated environment: venv...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
@@ -322,7 +327,7 @@ def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
             False,
             'ERROR ',
             [
-                '* Creating venv isolated environment...',
+                '* Creating isolated environment: venv...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '  - this is invalid',
@@ -332,7 +337,7 @@ def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
             True,
             '\33[91mERROR\33[0m ',
             [
-                '\33[1m* Creating venv isolated environment...\33[0m',
+                '\33[1m* Creating isolated environment: venv...\33[0m',
                 '\33[1m* Installing packages in isolated environment:\33[0m',
                 '  - setuptools >= 42.0.0',
                 '  - this is invalid',
@@ -424,7 +429,7 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
     assert (
         stdout
         == """\
-* Creating venv isolated environment...
+* Creating isolated environment: venv...
 > test args
 < stdoutput
 ERROR Failed to create venv. Maybe try installing virtualenv.
