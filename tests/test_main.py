@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 
 import contextlib
-import importlib
 import io
 import os
 import re
@@ -312,14 +311,6 @@ def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
     assert stdout.splitlines() == output
 
 
-@pytest.fixture()
-def main_reload_styles():
-    try:
-        yield
-    finally:
-        importlib.reload(build.__main__)
-
-
 @pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
     ('color', 'stdout_error', 'stdout_body'),
@@ -351,7 +342,6 @@ def main_reload_styles():
 def test_output_env_subprocess_error(
     mocker,
     monkeypatch,
-    main_reload_styles,
     package_test_invalid_requirements,
     tmp_dir,
     capsys,
@@ -367,8 +357,6 @@ def test_output_env_subprocess_error(
 
     monkeypatch.delenv('NO_COLOR', raising=False)
     monkeypatch.setenv('FORCE_COLOR' if color else 'NO_COLOR', '')
-
-    importlib.reload(build.__main__)  # reload module to set _STYLES
 
     with pytest.raises(SystemExit):
         build.__main__.main([package_test_invalid_requirements, '-o', tmp_dir])
@@ -394,17 +382,17 @@ def test_output_env_subprocess_error(
         (True, {'FORCE_COLOR': ''}, build.__main__._COLORS),
     ],
 )
-def test_colors(mocker, monkeypatch, main_reload_styles, tty, env, colors):
+def test_colors(mocker, monkeypatch, tty, env, colors):
     mocker.patch('sys.stdout.isatty', return_value=tty)
     for key, value in env.items():
         monkeypatch.setenv(key, value)
 
-    importlib.reload(build.__main__)  # reload module to set _STYLES
+    build.__main__._init_colors()
 
-    assert build.__main__._STYLES == colors
+    assert build.__main__._styles.get() == colors
 
 
-def test_colors_conflict(monkeypatch, main_reload_styles):
+def test_colors_conflict(monkeypatch):
     with monkeypatch.context() as m:
         m.setenv('NO_COLOR', '')
         m.setenv('FORCE_COLOR', '')
@@ -413,9 +401,9 @@ def test_colors_conflict(monkeypatch, main_reload_styles):
             UserWarning,
             match='Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color',
         ):
-            importlib.reload(build.__main__)
+            build.__main__._init_colors()
 
-        assert build.__main__._STYLES == build.__main__._NO_COLORS
+        assert build.__main__._styles.get() == build.__main__._NO_COLORS
 
 
 def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
@@ -424,8 +412,6 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
 
     monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)
     monkeypatch.setenv('NO_COLOR', '')
-
-    importlib.reload(build.__main__)  # reload module to set _STYLES
 
     with pytest.raises(SystemExit):
         build.__main__.main([package_test_flit, '-o', tmp_dir])

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import contextvars
 import os
 import platform
 import shutil
@@ -38,21 +39,21 @@ _COLORS = {
 _NO_COLORS = {color: '' for color in _COLORS}
 
 
-def _init_colors() -> dict[str, str]:
+_styles = contextvars.ContextVar('_styles', default=_COLORS)
+
+
+def _init_colors() -> None:
     if 'NO_COLOR' in os.environ:
         if 'FORCE_COLOR' in os.environ:
             warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
-        return _NO_COLORS
+        _styles.set(_NO_COLORS)
     elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
-        return _COLORS
-    return _NO_COLORS
-
-
-_STYLES = _init_colors()
+        return
+    _styles.set(_NO_COLORS)
 
 
 def _cprint(fmt: str = '', msg: str = '', file: TextIO | None = None) -> None:
-    print(fmt.format(msg, **_STYLES), file=file, flush=True)
+    print(fmt.format(msg, **_styles.get()), file=file, flush=True)
 
 
 def _showwarning(
@@ -97,6 +98,8 @@ def _setup_cli(*, verbosity: int) -> None:
             colorama.init()
         except ModuleNotFoundError:
             pass
+
+    _init_colors()
 
     _ctx.LOGGER.set(_log)
     _ctx.VERBOSITY.set(verbosity)
@@ -415,7 +418,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             args.srcdir, outdir, distributions, config_settings, not args.no_isolation, args.skip_dependency_check
         )
         artifact_list = _natural_language_list(
-            ['{underline}{}{reset}{bold}{green}'.format(artifact, **_STYLES) for artifact in built]
+            ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
         )
         _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
 
