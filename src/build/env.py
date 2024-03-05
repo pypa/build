@@ -16,6 +16,7 @@ import warnings
 from collections.abc import Collection, Mapping
 
 from . import _ctx
+from ._ctx import run_subprocess
 from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
@@ -96,15 +97,6 @@ def _valid_global_pip() -> bool | None:
         return None
 
 
-def _subprocess(cmd: list[str]) -> None:
-    """Invoke subprocess and output stdout and stderr if it fails."""
-    try:
-        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        print(e.output.decode(), end='', file=sys.stderr)
-        raise
-
-
 class DefaultIsolatedEnv(IsolatedEnv):
     """An isolated environment which combines venv and virtualenv with pip."""
 
@@ -182,7 +174,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
                 '-r',
                 os.path.abspath(req_file.name),
             ]
-            _subprocess(cmd)
+            run_subprocess(cmd)
         finally:
             os.unlink(req_file.name)
 
@@ -241,17 +233,18 @@ def _create_isolated_env_venv(path: str) -> tuple[str, str]:
                 warnings.filterwarnings('ignore', 'check_home argument is deprecated and ignored.', DeprecationWarning)
             venv.EnvBuilder(with_pip=not _valid_global_pip(), symlinks=symlinks).create(path)
     except subprocess.CalledProcessError as exc:
+        _ctx.log_subprocess_error(exc)
         raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
     executable, script_dir, purelib = _find_executable_and_scripts(path)
 
     # Get the version of pip in the environment
     if not _valid_global_pip() and not _has_valid_pip(path=[purelib]):
-        _subprocess([executable, '-m', 'pip', 'install', f'pip>={_minimum_pip_version()}'])
+        run_subprocess([executable, '-m', 'pip', 'install', f'pip>={_minimum_pip_version()}'])
 
     # Avoid the setuptools from ensurepip to break the isolation
     if not _valid_global_pip():
-        _subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
+        run_subprocess([executable, '-m', 'pip', 'uninstall', 'setuptools', '-y'])
 
     return executable, script_dir
 

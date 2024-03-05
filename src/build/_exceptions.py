@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import subprocess
-import textwrap
 import types
 
 
@@ -57,14 +56,7 @@ class FailedProcessError(Exception):
         self._description = description
 
     def __str__(self) -> str:
-        cmd = ' '.join(self.exception.cmd)
-        description = f"{self._description}\n  Command '{cmd}' failed with return code {self.exception.returncode}"
-        for stream_name in ('stdout', 'stderr'):
-            stream = getattr(self.exception, stream_name)
-            if stream:
-                description += f'\n  {stream_name}:\n'
-                description += textwrap.indent(stream.decode(), '    ')
-        return description
+        return self._description
 
 
 class TypoWarning(Warning):
