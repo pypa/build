@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MIT
-import collections
 import logging
 import platform
 import subprocess
 import sys
 import sysconfig
 
+from types import SimpleNamespace
+
 import pytest
+import pytest_mock
 
 from packaging.version import Version
 
@@ -27,16 +29,16 @@ def test_isolation():
 
 @pytest.mark.isolated
 @pytest.mark.usefixtures('local_pip')
-def test_isolated_environment_install(mocker):
+def test_isolated_environment_install(mocker: pytest_mock.MockerFixture):
     with build.env.DefaultIsolatedEnv() as env:
-        mocker.patch('build.env.run_subprocess')
+        run_subprocess = mocker.patch('build.env.run_subprocess')
 
         env.install([])
-        build.env.run_subprocess.assert_not_called()
+        run_subprocess.assert_not_called()
 
         env.install(['some', 'requirements'])
-        build.env.run_subprocess.assert_called()
-        args = build.env.run_subprocess.call_args[0][0][:-1]
+        run_subprocess.assert_called()
+        args = run_subprocess.call_args[0][0][:-1]
         assert args == [
             env.python_executable,
             '-Im',
@@ -50,7 +52,9 @@ def test_isolated_environment_install(mocker):
 
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
-def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
+def test_can_get_venv_paths_with_conflicting_default_scheme(
+    mocker: pytest_mock.MockerFixture,
+):
     get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
     with build.env.DefaultIsolatedEnv():
         pass
@@ -58,7 +62,9 @@ def test_can_get_venv_paths_with_conflicting_default_scheme(mocker):
 
 
 @pytest.mark.skipif('posix_local' not in sysconfig.get_scheme_names(), reason='workaround for Debian/Ubuntu Python')
-def test_can_get_venv_paths_with_posix_local_default_scheme(mocker):
+def test_can_get_venv_paths_with_posix_local_default_scheme(
+    mocker: pytest_mock.MockerFixture,
+):
     get_paths = mocker.spy(sysconfig, 'get_paths')
     # We should never call this, but we patch it to ensure failure if we do
     get_default_scheme = mocker.patch('sysconfig.get_default_scheme', return_value='posix_local')
@@ -68,7 +74,9 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(mocker):
     assert get_default_scheme.call_count == 0
 
 
-def test_executable_missing_post_creation(mocker):
+def test_executable_missing_post_creation(
+    mocker: pytest_mock.MockerFixture,
+):
     venv_create = mocker.patch('venv.EnvBuilder.create')
     with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
         with build.env.DefaultIsolatedEnv():
@@ -80,36 +88,36 @@ def test_isolated_env_abstract():
     with pytest.raises(TypeError):
         build.env.IsolatedEnv()
 
-
-def test_isolated_env_has_executable_still_abstract():
-    class Env(build.env.IsolatedEnv):
+    class PartialEnv(build.env.IsolatedEnv):
         @property
         def executable(self):
             raise NotImplementedError
 
     with pytest.raises(TypeError):
-        Env()
+        PartialEnv()
 
-
-def test_isolated_env_has_install_still_abstract():
-    class Env(build.env.IsolatedEnv):
-        def install(self, requirements):
-            raise NotImplementedError
+    class PartialEnv(build.env.IsolatedEnv):
+        def make_extra_environ(self):
+            return super().make_extra_environ()
 
     with pytest.raises(TypeError):
-        Env()
+        PartialEnv()
 
 
 @pytest.mark.pypy3323bug
-def test_isolated_env_log(mocker, caplog, package_test_flit):
-    mocker.patch('build.env.run_subprocess')
+@pytest.mark.usefixtures('package_test_flit')
+def test_isolated_env_log(
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
     caplog.set_level(logging.DEBUG)
+    mocker.patch('build.env.run_subprocess')
 
     with build.env.DefaultIsolatedEnv() as env:
         env.install(['something'])
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
-        ('INFO', 'Creating venv isolated environment...'),
+        ('INFO', 'Creating isolated environment: venv...'),
         ('INFO', 'Installing packages in isolated environment:\n- something'),
     ]
 
@@ -130,32 +138,33 @@ def test_default_pip_is_never_too_old():
 @pytest.mark.parametrize('pip_version', ['20.2.0', '20.3.0', '21.0.0', '21.0.1'])
 @pytest.mark.parametrize('arch', ['x86_64', 'arm64'])
 @pytest.mark.usefixtures('local_pip')
-def test_pip_needs_upgrade_mac_os_11(mocker, pip_version, arch):
-    SimpleNamespace = collections.namedtuple('SimpleNamespace', 'version')
-
-    _subprocess = mocker.patch('build.env.run_subprocess')
+def test_pip_needs_upgrade_mac_os_11(
+    mocker: pytest_mock.MockerFixture,
+    pip_version: str,
+    arch: str,
+):
+    run_subprocess = mocker.patch('build.env.run_subprocess')
     mocker.patch('platform.system', return_value='Darwin')
-    mocker.patch('platform.machine', return_value=arch)
-    mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), ''))
+    mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), arch))
     mocker.patch('build._compat.importlib.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
 
     min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
     with build.env.DefaultIsolatedEnv():
         if Version(pip_version) < min_version:
-            print(_subprocess.call_args_list)
-            upgrade_call, uninstall_call = _subprocess.call_args_list
+            upgrade_call, uninstall_call = run_subprocess.call_args_list
             answer = 'pip>=20.3.0' if arch == 'x86_64' else 'pip>=21.0.1'
-            assert upgrade_call[0][0][1:] == ['-m', 'pip', 'install', answer]
-            assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
+            assert upgrade_call[0][0][1:] == ['-Im', 'pip', 'install', answer]
+            assert uninstall_call[0][0][1:] == ['-Im', 'pip', 'uninstall', '-y', 'setuptools']
         else:
-            (uninstall_call,) = _subprocess.call_args_list
-            assert uninstall_call[0][0][1:] == ['-m', 'pip', 'uninstall', 'setuptools', '-y']
+            (uninstall_call,) = run_subprocess.call_args_list
+            assert uninstall_call[0][0][1:] == ['-Im', 'pip', 'uninstall', '-y', 'setuptools']
 
 
-@pytest.mark.isolated
-@pytest.mark.skipif(IS_PYPY3 and sys.platform.startswith('win'), reason='Isolated tests not supported on PyPy3 + Windows')
 @pytest.mark.parametrize('has_symlink', [True, False] if sys.platform.startswith('win') else [True])
-def test_venv_symlink(mocker, has_symlink):
+def test_venv_symlink(
+    mocker: pytest_mock.MockerFixture,
+    has_symlink: bool,
+):
     if has_symlink:
         mocker.patch('os.symlink')
         mocker.patch('os.unlink')
