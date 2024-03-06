@@ -253,20 +253,17 @@ class _VirtualenvImplBackend(_PipInstallBackendStub):
 
 class _UvImplBackend(_EnvImplBackend):
     def create(self, path: str) -> None:
-        import uv
+        import venv
 
-        self._env_path = path
-        self._uv_bin_path = uv.find_uv_bin()
-
-        cmd = [self._uv_bin_path, 'venv', self._env_path]
-        if _ctx.verbosity > 1:
-            cmd += ['-v']
-        run_subprocess(cmd)
+        venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(path)
 
         self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(path)
+        self._env_path = path
 
     def install_requirements(self, requirements: Collection[str]) -> None:
-        cmd = [self._uv_bin_path, 'pip']
+        import uv
+
+        cmd = [uv.find_uv_bin(), 'pip']
         if _ctx.verbosity > 1:
             # uv doesn't support doubling up -v unlike pip.
             cmd += ['-v']
