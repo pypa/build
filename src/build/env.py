@@ -20,7 +20,7 @@ from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
 
-EnvImpl = typing.Literal['venv', 'virtualenv', 'uv']
+EnvImpl = typing.Literal['venv+uv']
 
 ENV_IMPLS = typing.get_args(EnvImpl)
 
@@ -112,18 +112,17 @@ class DefaultIsolatedEnv(IsolatedEnv):
             self._env_impl_backend: _EnvImplBackend
 
             # uv is opt-in only.
-            if self.env_impl == 'uv':
-                _ctx.log(msg_tpl.format('uv'))
+            if self.env_impl == 'venv+uv':
+                _ctx.log(msg_tpl.format(self.env_impl))
                 self._env_impl_backend = _UvImplBackend()
 
-            # Use virtualenv when available and the user hasn't explicitly opted into
-            # venv (as seeding pip is faster than with venv).
-            elif self.env_impl == 'virtualenv' or (self.env_impl is None and _has_virtualenv()):
-                _ctx.log(msg_tpl.format('virtualenv'))
+            # Use virtualenv when available (as seeding pip is faster than with venv).
+            elif _has_virtualenv():
+                _ctx.log(msg_tpl.format('virtualenv+pip'))
                 self._env_impl_backend = _VirtualenvImplBackend()
 
             else:
-                _ctx.log(msg_tpl.format('venv'))
+                _ctx.log(msg_tpl.format('venv+pip'))
                 self._env_impl_backend = _VenvImplBackend()
 
             self._env_impl_backend.create(self._path)
