@@ -74,8 +74,8 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             'build_package_via_sdist',
         ),
         (
-            ['--env-impl', 'venv'],
-            [cwd, out, ['wheel'], {}, True, False, 'venv'],
+            ['--env-impl', 'venv+uv'],
+            [cwd, out, ['wheel'], {}, True, False, 'venv+uv'],
             'build_package_via_sdist',
         ),
         (
@@ -236,13 +236,13 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         pytest.param(
             [],
             [
-                '* Creating isolated environment: venv...',
+                '* Creating isolated environment: venv+pip...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for sdist...',
                 '* Building sdist...',
                 '* Building wheel from sdist',
-                '* Creating isolated environment: venv...',
+                '* Creating isolated environment: venv+pip...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
@@ -269,7 +269,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
         pytest.param(
             ['--wheel'],
             [
-                '* Creating isolated environment: venv...',
+                '* Creating isolated environment: venv+pip...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
@@ -327,7 +327,7 @@ def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
             False,
             'ERROR ',
             [
-                '* Creating isolated environment: venv...',
+                '* Creating isolated environment: venv+pip...',
                 '* Installing packages in isolated environment:',
                 '  - setuptools >= 42.0.0',
                 '  - this is invalid',
@@ -337,7 +337,7 @@ def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
             True,
             '\33[91mERROR\33[0m ',
             [
-                '\33[1m* Creating isolated environment: venv...\33[0m',
+                '\33[1m* Creating isolated environment: venv+pip...\33[0m',
                 '\33[1m* Installing packages in isolated environment:\33[0m',
                 '  - setuptools >= 42.0.0',
                 '  - this is invalid',
@@ -429,7 +429,7 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
     assert (
         stdout
         == """\
-* Creating isolated environment: venv...
+* Creating isolated environment: venv+pip...
 > test args
 < stdoutput
 ERROR Failed to create venv. Maybe try installing virtualenv.

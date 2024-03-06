@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: MIT
+from __future__ import annotations
+
 import logging
 import platform
 import subprocess
@@ -97,7 +99,7 @@ def test_isolated_env_log(
         env.install(['something'])
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
-        ('INFO', 'Creating isolated environment: venv...'),
+        ('INFO', 'Creating isolated environment: venv+pip...'),
         ('INFO', 'Installing packages in isolated environment:\n- something'),
     ]
 
@@ -197,27 +199,10 @@ def test_venv_or_virtualenv_impl_install_cmd_well_formed(
         ]
 
 
-@pytest.mark.parametrize('verbosity', [0, 1, 9000])
-def test_uv_impl_create_cmd_well_formed(
-    mocker: pytest_mock.MockerFixture,
-    verbosity: int,
-):
-    run_subprocess = mocker.patch('build.env.run_subprocess')
-
-    with pytest.raises(RuntimeError, match='Virtual environment creation failed'), \
-            build.env.DefaultIsolatedEnv('uv') as env:  # fmt: skip
-        (create_call,) = run_subprocess.call_args_list
-        cmd_tail = ['venv', env.path]
-        if verbosity:
-            cmd_tail += ['-v']
-        assert create_call.args[0][1:] == cmd_tail
-        assert not create_call.kwargs
-
-
 def test_uv_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
 ):
-    with build.env.DefaultIsolatedEnv('uv') as env:
+    with build.env.DefaultIsolatedEnv('venv+uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
         env.install(['foo'])
@@ -230,15 +215,16 @@ def test_uv_impl_install_cmd_well_formed(
 
 
 @pytest.mark.parametrize(
-    ('env_impl', 'backend_cls'),
+    ('env_impl', 'backend_cls', 'has_virtualenv'),
     [
-        ('venv', build.env._VenvImplBackend),
-        ('virtualenv', build.env._VirtualenvImplBackend),
-        ('uv', build.env._UvImplBackend),
+        (None, build.env._VenvImplBackend, False),
+        (None, build.env._VirtualenvImplBackend, True),
+        ('venv+uv', build.env._UvImplBackend, None),
     ],
+    indirect=('has_virtualenv',),
 )
-def test_venv_creation(
-    env_impl: build.env.EnvImpl,
+def test_uv_venv_creation(
+    env_impl: build.env.EnvImpl | None,
     backend_cls: build.env._EnvImplBackend,
 ):
     with build.env.DefaultIsolatedEnv(env_impl) as env:
