@@ -261,6 +261,7 @@ class _PipBackend(_EnvBackend):
                 'install',
                 '--use-pep517',
                 '--no-warn-script-location',
+                '--no-compile',
                 '-r',
                 os.path.abspath(req_file.name),
             ]
