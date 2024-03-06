@@ -50,6 +50,7 @@ docs = [
   "sphinx-issues >= 3.0.0",
 ]
 test = [
+  "build[uv, virtualenv]",
   "filelock >= 3",
   "pytest >= 6.2.4",
   "pytest-cov >= 2.12",
