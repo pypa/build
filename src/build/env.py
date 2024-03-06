@@ -277,7 +277,7 @@ class _UvImplBackend(_EnvImplBackend):
 def _fs_supports_symlink() -> bool:
     """Return True if symlinks are supported"""
     # Using definition used by venv.main()
-    if not sys.platform.startswith('win'):
+    if os.name != 'nt':
         return True
 
     # Windows may support symlinks (setting in Windows 10)
@@ -326,7 +326,7 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
     else:
         paths = sysconfig.get_paths(vars=config_vars)
 
-    executable = os.path.join(paths['scripts'], 'python.exe' if sys.platform.startswith('win') else 'python')
+    executable = os.path.join(paths['scripts'], 'python.exe' if os.name == 'nt' else 'python')
     if not os.path.exists(executable):
         msg = f'Virtual environment creation failed, executable {executable} missing'
         raise RuntimeError(msg)
