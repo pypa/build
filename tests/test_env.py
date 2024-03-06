@@ -5,6 +5,7 @@ import subprocess
 import sys
 import sysconfig
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -19,35 +20,15 @@ IS_PYPY3 = platform.python_implementation() == 'PyPy'
 
 
 @pytest.mark.isolated
-def test_isolation():
+@pytest.mark.parametrize('env_impl', build.env.ENV_IMPLS)
+def test_isolation(
+    env_impl: build.env.EnvImpl,
+):
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
-    with build.env.DefaultIsolatedEnv() as env:
+    with build.env.DefaultIsolatedEnv(env_impl) as env:
         with pytest.raises(subprocess.CalledProcessError):
             debug = 'import sys; import os; print(os.linesep.join(sys.path));'
             subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
-
-
-@pytest.mark.isolated
-@pytest.mark.usefixtures('local_pip')
-def test_isolated_environment_install(mocker: pytest_mock.MockerFixture):
-    with build.env.DefaultIsolatedEnv() as env:
-        run_subprocess = mocker.patch('build.env.run_subprocess')
-
-        env.install([])
-        run_subprocess.assert_not_called()
-
-        env.install(['some', 'requirements'])
-        run_subprocess.assert_called()
-        args = run_subprocess.call_args[0][0][:-1]
-        assert args == [
-            env.python_executable,
-            '-Im',
-            'pip',
-            'install',
-            '--use-pep517',
-            '--no-warn-script-location',
-            '-r',
-        ]
 
 
 @pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
@@ -74,7 +55,7 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(
     assert get_default_scheme.call_count == 0
 
 
-def test_executable_missing_post_creation(
+def test_venv_impl_executable_missing_post_creation(
     mocker: pytest_mock.MockerFixture,
 ):
     venv_create = mocker.patch('venv.EnvBuilder.create')
@@ -105,7 +86,6 @@ def test_isolated_env_abstract():
 
 
 @pytest.mark.pypy3323bug
-@pytest.mark.usefixtures('package_test_flit')
 def test_isolated_env_log(
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,
@@ -127,10 +107,9 @@ def test_isolated_env_log(
 def test_default_pip_is_never_too_old():
     with build.env.DefaultIsolatedEnv() as env:
         version = subprocess.check_output(
-            [env.python_executable, '-c', 'import pip; print(pip.__version__)'],
-            text=True,
+            [env.python_executable, '-c', 'import pip; print(pip.__version__, end="")'],
             encoding='utf-8',
-        ).strip()
+        )
         assert Version(version) >= Version('19.1')
 
 
@@ -177,3 +156,101 @@ def test_venv_symlink(
     build.env._fs_supports_symlink.cache_clear()
 
     assert supports_symlink is has_symlink
+
+
+@pytest.mark.parametrize('env_impl', build.env.ENV_IMPLS)
+def test_install_short_circuits(
+    mocker: pytest_mock.MockerFixture,
+    env_impl: build.env.EnvImpl,
+):
+    with build.env.DefaultIsolatedEnv(env_impl) as env:
+        install_requirements = mocker.patch.object(env._env_impl_backend, 'install_requirements')
+
+        env.install([])
+        install_requirements.assert_not_called()
+
+        env.install(['foo'])
+        install_requirements.assert_called_once()
+
+
+@pytest.mark.usefixtures('local_pip')
+@pytest.mark.parametrize('env_impl', ['virtualenv', 'venv'])
+def test_venv_or_virtualenv_impl_install_cmd_well_formed(
+    mocker: pytest_mock.MockerFixture,
+    env_impl: build.env.EnvImpl,
+):
+    with build.env.DefaultIsolatedEnv(env_impl) as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+
+        env.install(['some', 'requirements'])
+
+        run_subprocess.assert_called_once()
+        call_args = run_subprocess.call_args[0][0][:-1]
+        assert call_args == [
+            env.python_executable,
+            '-Im',
+            'pip',
+            'install',
+            '--use-pep517',
+            '--no-warn-script-location',
+            '-r',
+        ]
+
+
+@pytest.mark.parametrize('verbosity', [0, 1, 9000])
+def test_uv_impl_create_cmd_well_formed(
+    mocker: pytest_mock.MockerFixture,
+    verbosity: int,
+):
+    run_subprocess = mocker.patch('build.env.run_subprocess')
+
+    with pytest.raises(RuntimeError, match='Virtual environment creation failed'), \
+            build.env.DefaultIsolatedEnv('uv') as env:  # fmt: skip
+        (create_call,) = run_subprocess.call_args_list
+        cmd_tail = ['venv', env.path]
+        if verbosity:
+            cmd_tail += ['-v']
+        assert create_call.args[0][1:] == cmd_tail
+        assert not create_call.kwargs
+
+
+def test_uv_impl_install_cmd_well_formed(
+    mocker: pytest_mock.MockerFixture,
+):
+    with build.env.DefaultIsolatedEnv('uv') as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+
+        env.install(['foo'])
+
+        (install_call,) = run_subprocess.call_args_list
+        assert len(install_call.args) == 1
+        assert install_call.args[0][1:] == ['pip', 'install', 'foo']
+        assert len(install_call.kwargs) == 1
+        assert install_call.kwargs['env']['VIRTUAL_ENV'] == env.path
+
+
+@pytest.mark.parametrize(
+    ('env_impl', 'pyvenv_key'),
+    [
+        ('virtualenv', 'virtualenv'),
+        ('uv', 'uv'),
+    ],
+)
+def test_venv_creation(
+    env_impl: build.env.EnvImpl,
+    pyvenv_key: str,
+):
+    with build.env.DefaultIsolatedEnv(env_impl) as env:
+        with Path(env.path, 'pyvenv.cfg').open(encoding='utf-8') as pyvenv_cfg:
+            next(h.rstrip() == pyvenv_key for i in pyvenv_cfg for (h, *_) in (i.partition('='),))
+
+
+@pytest.mark.network
+@pytest.mark.usefixtures('local_pip')
+@pytest.mark.parametrize('env_impl', build.env.ENV_IMPLS)
+def test_requirement_installation(
+    package_test_flit: str,
+    env_impl: build.env.EnvImpl,
+):
+    with build.env.DefaultIsolatedEnv(env_impl) as env:
+        env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
