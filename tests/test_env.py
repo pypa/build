@@ -230,19 +230,19 @@ def test_uv_impl_install_cmd_well_formed(
 
 
 @pytest.mark.parametrize(
-    ('env_impl', 'pyvenv_key'),
+    ('env_impl', 'backend_cls'),
     [
-        ('virtualenv', 'virtualenv'),
-        ('uv', 'uv'),
+        ('venv', build.env._VenvImplBackend),
+        ('virtualenv', build.env._VirtualenvImplBackend),
+        ('uv', build.env._UvImplBackend),
     ],
 )
 def test_venv_creation(
     env_impl: build.env.EnvImpl,
-    pyvenv_key: str,
+    backend_cls: build.env._EnvImplBackend,
 ):
     with build.env.DefaultIsolatedEnv(env_impl) as env:
-        with Path(env.path, 'pyvenv.cfg').open(encoding='utf-8') as pyvenv_cfg:
-            next(h.rstrip() == pyvenv_key for i in pyvenv_cfg for (h, *_) in (i.partition('='),))
+        assert type(env._env_impl_backend) is backend_cls
 
 
 @pytest.mark.network
