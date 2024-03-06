@@ -127,9 +127,9 @@ def tmp_dir():
     shutil.rmtree(path)
 
 
-@pytest.fixture(autouse=True)
-def force_venv(mocker):
-    mocker.patch.object(build.env, '_has_virtualenv', lambda: False)
+@pytest.fixture(autouse=True, params=[False])
+def has_virtualenv(request, mocker):
+    mocker.patch.object(build.env, '_has_virtualenv', lambda: request.param)
 
 
 def pytest_report_header() -> str:
