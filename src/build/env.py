@@ -24,6 +24,8 @@ EnvImpl = typing.Literal['venv+uv']
 
 ENV_IMPLS = typing.get_args(EnvImpl)
 
+_EnvImplInclDefault = typing.Literal['venv+pip', 'virtualenv+pip', EnvImpl]
+
 
 class IsolatedEnv(typing.Protocol):
     """Isolated build environment ABC."""
@@ -38,51 +40,24 @@ class IsolatedEnv(typing.Protocol):
         """Generate additional env vars specific to the isolated environment."""
 
 
-@functools.lru_cache(maxsize=None)
-def _has_virtualenv() -> bool:
-    from packaging.requirements import Requirement
-
-    # virtualenv might be incompatible if it was installed separately
-    # from build. This verifies that virtualenv and all of its
-    # dependencies are installed as specified by build.
-    return importlib.util.find_spec('virtualenv') is not None and not any(
-        Requirement(d[1]).name == 'virtualenv' for d in check_dependency('build[virtualenv]') if len(d) > 1
-    )
-
-
-def _minimum_pip_version_str() -> str:
-    if platform.system() == 'Darwin':
-        release, _, machine = platform.mac_ver()
-        if int(release[: release.find('.')]) >= 11:
-            # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be
-            # told to report 10.16 for backwards compatibility; but that also fixes
-            # earlier versions of pip so this is only needed for 11+.
-            is_apple_silicon_python = machine != 'x86_64'
-            return '21.0.1' if is_apple_silicon_python else '20.3.0'
-
-    # PEP-517 and manylinux1 was first implemented in 19.1
-    return '19.1.0'
-
-
-def _has_valid_pip(version_str: str | None = None, /, **distargs: object) -> bool:
+def _has_dependency(name: str, minimum_version_str: str | None = None, /, **distargs: object) -> bool | None:
     """
-    Given a path, see if Pip is present and return True if the version is
-    sufficient for build, False if it is not. ModuleNotFoundError is thrown if
-    pip is not present.
+    Given a path, see if a package is present and return True if the version is
+    sufficient for build, False if it is not, None if the package is missing.
     """
-
     from packaging.version import Version
 
     from ._compat import importlib
 
-    name = 'pip'
-
     try:
-        pip_distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
+        distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
     except StopIteration:
-        raise ModuleNotFoundError(name) from None
+        return None
 
-    return Version(pip_distribution.version) >= Version(version_str or _minimum_pip_version_str())
+    if minimum_version_str is None:
+        return True
+
+    return Version(distribution.version) >= Version(minimum_version_str)
 
 
 class DefaultIsolatedEnv(IsolatedEnv):
@@ -107,24 +82,15 @@ class DefaultIsolatedEnv(IsolatedEnv):
             path = os.path.realpath(path)
             self._path = path
 
-            msg_tpl = 'Creating isolated environment: {}...'
-
             self._env_impl_backend: _EnvImplBackend
 
             # uv is opt-in only.
             if self.env_impl == 'venv+uv':
-                _ctx.log(msg_tpl.format(self.env_impl))
                 self._env_impl_backend = _UvImplBackend()
-
-            # Use virtualenv when available (as seeding pip is faster than with venv).
-            elif _has_virtualenv():
-                _ctx.log(msg_tpl.format('virtualenv+pip'))
-                self._env_impl_backend = _VirtualenvImplBackend()
-
             else:
-                _ctx.log(msg_tpl.format('venv+pip'))
-                self._env_impl_backend = _VenvImplBackend()
+                self._env_impl_backend = _DefaultImplBackend()
 
+            _ctx.log(f'Creating isolated environment: {self._env_impl_backend.name}...')
             self._env_impl_backend.create(self._path)
 
         except Exception:  # cleanup folder if creation fails
@@ -181,19 +147,101 @@ class _EnvImplBackend(typing.Protocol):  # pragma: no cover
     def install_requirements(self, requirements: Collection[str]) -> None:
         ...
 
+    @property
+    def name(self) -> _EnvImplInclDefault:
+        ...
 
-class _PipInstallBackendStub(_EnvImplBackend, typing.Protocol):
+
+class _DefaultImplBackend(_EnvImplBackend):
+    def __init__(self) -> None:
+        self._create_with_virtualenv = not self._has_valid_outer_pip and self._has_virtualenv
+
     @functools.cached_property
     def _has_valid_outer_pip(self) -> bool | None:
         """
         This checks for a valid global pip. Returns None if pip is missing, False
         if pip is too old, and True if it can be used.
         """
-        try:
-            # Version to have added the `--python` option.
-            return _has_valid_pip('22.3')
-        except ModuleNotFoundError:
-            return None
+        # Version to have added the `--python` option.
+        return _has_dependency('pip', '22.3')
+
+    @functools.cached_property
+    def _has_virtualenv(self) -> bool:
+        """
+        virtualenv might be incompatible if it was installed separately
+        from build. This verifies that virtualenv and all of its
+        dependencies are installed as required by build.
+        """
+        from packaging.requirements import Requirement
+
+        name = 'virtualenv'
+
+        return importlib.util.find_spec(name) is not None and not any(
+            Requirement(d[1]).name == name for d in check_dependency(f'build[{name}]') if len(d) > 1
+        )
+
+    @staticmethod
+    def _get_minimum_pip_version_str() -> str:
+        if platform.system() == 'Darwin':
+            release, _, machine = platform.mac_ver()
+            if int(release[: release.find('.')]) >= 11:
+                # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be
+                # told to report 10.16 for backwards compatibility; but that also fixes
+                # earlier versions of pip so this is only needed for 11+.
+                is_apple_silicon_python = machine != 'x86_64'
+                return '21.0.1' if is_apple_silicon_python else '20.3.0'
+
+        # PEP-517 and manylinux1 was first implemented in 19.1
+        return '19.1.0'
+
+    def create(self, path: str) -> None:
+        if self._create_with_virtualenv:
+            import virtualenv
+
+            result = virtualenv.cli_run(
+                [
+                    path,
+                    '--activators',
+                    '',
+                    '--no-setuptools',
+                    '--no-wheel',
+                ],
+                setup_logging=False,
+            )
+
+            # The creator attributes are `pathlib.Path`s.
+            self.python_executable = str(result.creator.exe)
+            self.scripts_dir = str(result.creator.script_dir)
+
+        else:
+            import venv
+
+            with_pip = not self._has_valid_outer_pip
+
+            try:
+                venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=with_pip).create(path)
+            except subprocess.CalledProcessError as exc:
+                _ctx.log_subprocess_error(exc)
+                raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
+
+            self.python_executable, self.scripts_dir, purelib = _find_executable_and_scripts(path)
+
+            if with_pip:
+                minimum_pip_version_str = self._get_minimum_pip_version_str()
+                if not _has_dependency(
+                    'pip',
+                    minimum_pip_version_str,
+                    path=[purelib],
+                ):
+                    run_subprocess([self.python_executable, '-Im', 'pip', 'install', f'pip>={minimum_pip_version_str}'])
+
+                # Uninstall setuptools from the build env to prevent depending on it implicitly.
+                # Pythons 3.12 and up do not install setuptools, check if it exists first.
+                if _has_dependency(
+                    'setuptools',
+                    path=[purelib],
+                ):
+                    run_subprocess([self.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools'])
 
     def install_requirements(self, requirements: Collection[str]) -> None:
         # pip does not honour environment markers in command line arguments
@@ -210,44 +258,21 @@ class _PipInstallBackendStub(_EnvImplBackend, typing.Protocol):
             if _ctx.verbosity > 1:
                 cmd += [f'-{"v" * (_ctx.verbosity - 1)}']
 
-            cmd += ['install', '--use-pep517', '--no-warn-script-location', '-r', os.path.abspath(req_file.name)]
+            cmd += [
+                'install',
+                '--use-pep517',
+                '--no-warn-script-location',
+                '-r',
+                os.path.abspath(req_file.name),
+            ]
             run_subprocess(cmd)
 
         finally:
             os.unlink(req_file.name)
 
-
-class _VenvImplBackend(_PipInstallBackendStub):
-    def create(self, path: str) -> None:
-        import venv
-
-        try:
-            venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=not self._has_valid_outer_pip).create(path)
-        except subprocess.CalledProcessError as exc:
-            _ctx.log_subprocess_error(exc)
-            raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
-
-        self.python_executable, self.scripts_dir, purelib = _find_executable_and_scripts(path)
-
-        if not self._has_valid_outer_pip:
-            # Get the version of pip in the environment
-            if not _has_valid_pip(path=[purelib]):
-                run_subprocess([self.python_executable, '-Im', 'pip', 'install', f'pip>={_minimum_pip_version_str()}'])
-            run_subprocess([self.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools'])
-
-
-class _VirtualenvImplBackend(_PipInstallBackendStub):
-    def create(self, path: str) -> None:
-        import virtualenv
-
-        cmd = [path, '--activators', '']
-        cmd += ['--no-seed'] if self._has_valid_outer_pip else ['--no-setuptools', '--no-wheel']
-
-        result = virtualenv.cli_run(cmd, setup_logging=False)
-
-        # The creator attributes are `pathlib.Path`s.
-        self.python_executable = str(result.creator.exe)
-        self.scripts_dir = str(result.creator.script_dir)
+    @property
+    def name(self) -> _EnvImplInclDefault:
+        return 'virtualenv+pip' if self._create_with_virtualenv else 'venv+pip'
 
 
 class _UvImplBackend(_EnvImplBackend):
@@ -267,6 +292,10 @@ class _UvImplBackend(_EnvImplBackend):
             # uv doesn't support doubling up -v unlike pip.
             cmd += ['-v']
         run_subprocess([*cmd, 'install', *requirements], env={**os.environ, 'VIRTUAL_ENV': self._env_path})
+
+    @property
+    def name(self) -> EnvImpl:
+        return 'venv+uv'
 
 
 @functools.lru_cache(maxsize=None)

@@ -73,9 +73,15 @@ def pytest_runtest_call(item: pytest.Item):
             raise RuntimeError(msg)
 
 
-@pytest.fixture()
+@pytest.fixture
 def local_pip(monkeypatch):
-    monkeypatch.setattr(build.env._PipInstallBackendStub, '_has_valid_outer_pip', None)
+    monkeypatch.setattr(build.env._DefaultImplBackend, '_has_valid_outer_pip', None)
+
+
+@pytest.fixture(autouse=True, params=[False])
+def has_virtualenv(request, monkeypatch):
+    if request.param is not None:
+        monkeypatch.setattr(build.env._DefaultImplBackend, '_has_virtualenv', request.param)
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -125,11 +131,6 @@ def tmp_dir():
     yield path
 
     shutil.rmtree(path)
-
-
-@pytest.fixture(autouse=True, params=[False])
-def has_virtualenv(request, mocker):
-    mocker.patch.object(build.env, '_has_virtualenv', lambda: request.param)
 
 
 def pytest_report_header() -> str:
