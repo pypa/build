@@ -22,12 +22,9 @@ IS_PYPY3 = platform.python_implementation() == 'PyPy'
 
 
 @pytest.mark.isolated
-@pytest.mark.parametrize('env_impl', build.env.ENV_IMPLS)
-def test_isolation(
-    env_impl: build.env.EnvImpl,
-):
+def test_isolation():
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
-    with build.env.DefaultIsolatedEnv(env_impl) as env:
+    with build.env.DefaultIsolatedEnv() as env:
         with pytest.raises(subprocess.CalledProcessError):
             debug = 'import sys; import os; print(os.linesep.join(sys.path));'
             subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
@@ -57,7 +54,7 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(
     assert get_default_scheme.call_count == 0
 
 
-def test_venv_impl_executable_missing_post_creation(
+def test_venv_executable_missing_post_creation(
     mocker: pytest_mock.MockerFixture,
 ):
     venv_create = mocker.patch('venv.EnvBuilder.create')
@@ -160,12 +157,10 @@ def test_venv_symlink(
     assert supports_symlink is has_symlink
 
 
-@pytest.mark.parametrize('env_impl', build.env.ENV_IMPLS)
 def test_install_short_circuits(
     mocker: pytest_mock.MockerFixture,
-    env_impl: build.env.EnvImpl,
 ):
-    with build.env.DefaultIsolatedEnv(env_impl) as env:
+    with build.env.DefaultIsolatedEnv() as env:
         install_requirements = mocker.patch.object(env._env_impl_backend, 'install_requirements')
 
         env.install([])
@@ -176,12 +171,10 @@ def test_install_short_circuits(
 
 
 @pytest.mark.usefixtures('local_pip')
-@pytest.mark.parametrize('env_impl', ['virtualenv', 'venv'])
-def test_venv_or_virtualenv_impl_install_cmd_well_formed(
+def test_default_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
-    env_impl: build.env.EnvImpl,
 ):
-    with build.env.DefaultIsolatedEnv(env_impl) as env:
+    with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
         env.install(['some', 'requirements'])
@@ -214,29 +207,30 @@ def test_uv_impl_install_cmd_well_formed(
         assert install_call.kwargs['env']['VIRTUAL_ENV'] == env.path
 
 
+@pytest.mark.usefixtures('local_pip')
 @pytest.mark.parametrize(
-    ('env_impl', 'backend_cls', 'has_virtualenv'),
+    ('env_impl', 'resultant_impl_name', 'has_virtualenv'),
     [
-        (None, build.env._VenvImplBackend, False),
-        (None, build.env._VirtualenvImplBackend, True),
-        ('venv+uv', build.env._UvImplBackend, None),
+        (None, 'venv+pip', False),
+        (None, 'virtualenv+pip', True),
+        ('venv+uv', 'venv+uv', None),
     ],
     indirect=('has_virtualenv',),
 )
-def test_uv_venv_creation(
+def test_env_creation(
     env_impl: build.env.EnvImpl | None,
-    backend_cls: build.env._EnvImplBackend,
+    resultant_impl_name: build.env._EnvImplBackend,
 ):
     with build.env.DefaultIsolatedEnv(env_impl) as env:
-        assert type(env._env_impl_backend) is backend_cls
+        assert env._env_impl_backend.name == resultant_impl_name
 
 
 @pytest.mark.network
 @pytest.mark.usefixtures('local_pip')
-@pytest.mark.parametrize('env_impl', build.env.ENV_IMPLS)
+@pytest.mark.parametrize('env_impl', [None, *build.env.ENV_IMPLS])
 def test_requirement_installation(
     package_test_flit: str,
-    env_impl: build.env.EnvImpl,
+    env_impl: build.env.EnvImpl | None,
 ):
     with build.env.DefaultIsolatedEnv(env_impl) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
