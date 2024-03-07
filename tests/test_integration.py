@@ -79,8 +79,8 @@ def get_project(name, tmp_path):
 )
 @pytest.mark.parametrize(
     'args',
-    [[], ['-x', '--no-isolation']],
-    ids=['isolated', 'no_isolation'],
+    [[], ['--env-impl', 'venv+uv'], ['-x', '--no-isolation']],
+    ids=['isolated', 'isolated_venv+uv', 'no_isolation'],
 )
 @pytest.mark.parametrize(
     'project',
