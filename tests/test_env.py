@@ -126,16 +126,18 @@ def test_pip_needs_upgrade_mac_os_11(
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), arch))
     mocker.patch('build._compat.importlib.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
 
-    min_version = Version('20.3' if arch == 'x86_64' else '21.0.1')
-    with build.env.DefaultIsolatedEnv():
-        if Version(pip_version) < min_version:
-            upgrade_call, uninstall_call = run_subprocess.call_args_list
-            answer = 'pip>=20.3.0' if arch == 'x86_64' else 'pip>=21.0.1'
-            assert upgrade_call[0][0][1:] == ['-Im', 'pip', 'install', answer]
-            assert uninstall_call[0][0][1:] == ['-Im', 'pip', 'uninstall', '-y', 'setuptools']
+    min_pip_version = '20.3.0' if arch == 'x86_64' else '21.0.1'
+
+    with build.env.DefaultIsolatedEnv() as env:
+        if Version(pip_version) < Version(min_pip_version):
+            assert run_subprocess.call_args_list == [
+                mocker.call([env.python_executable, '-Im', 'pip', 'install', f'pip>={min_pip_version}']),
+                mocker.call([env.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools']),
+            ]
         else:
-            (uninstall_call,) = run_subprocess.call_args_list
-            assert uninstall_call[0][0][1:] == ['-Im', 'pip', 'uninstall', '-y', 'setuptools']
+            run_subprocess.assert_called_once_with(
+                [env.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools'],
+            )
 
 
 @pytest.mark.parametrize('has_symlink', [True, False] if sys.platform.startswith('win') else [True])
