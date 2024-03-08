@@ -282,10 +282,19 @@ class _UvImplBackend(_EnvImplBackend):
 
         self._env_path = path
 
-        uv_bin = shutil.which('uv')
+        # ``uv.find_uv_bin`` will look for uv in the user prefix if it can't
+        # find it under ``sys.prefix``, essentially potentially rearranging
+        # the user's $PATH.  We'll only look for uv under the prefix of
+        # the running interpreter for unactivated venvs then defer to $PATH.
+        uv_bin = shutil.which('uv', path=sysconfig.get_path('scripts'))
+
+        if not uv_bin:
+            uv_bin = shutil.which('uv')
+
         if not uv_bin:
             msg = 'uv executable missing'
             raise RuntimeError(msg)
+
         self._uv_bin = uv_bin
 
         if sys.implementation.name == 'pypy':

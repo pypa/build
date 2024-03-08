@@ -6,6 +6,7 @@ import logging
 import subprocess
 import sys
 import sysconfig
+import typing
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -64,6 +65,7 @@ def test_venv_executable_missing_post_creation(
     assert venv_create.call_count == 1
 
 
+@typing.no_type_check
 def test_isolated_env_abstract():
     with pytest.raises(TypeError):
         build.env.IsolatedEnv()
