@@ -11,6 +11,7 @@ import sys
 import sysconfig
 import tempfile
 import typing
+import warnings
 
 from collections.abc import Collection, Mapping
 
@@ -287,6 +288,9 @@ class _UvImplBackend(_EnvImplBackend):
             raise RuntimeError(msg)
         self._uv_bin = uv_bin
 
+        if sys.implementation.name == 'pypy':
+            msg = 'uv does not officially support PyPY; things might break'
+            warnings.warn(msg, stacklevel=2)
 
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(path)
         self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(path)
