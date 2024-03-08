@@ -214,6 +214,7 @@ def test_uv_impl_install_cmd_well_formed(
     [
         (None, 'venv+pip', False),
         (None, 'virtualenv+pip', True),
+        (None, 'virtualenv+pip', None),  # Fall-through
         ('venv+uv', 'venv+uv', None),
     ],
     indirect=('has_virtualenv',),
