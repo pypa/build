@@ -192,7 +192,7 @@ def test_default_impl_install_cmd_well_formed(
         ]
 
 
-@pytest.mark.skipif(IS_PYPY, reason='uv does not declare support for PyPy')
+@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 def test_uv_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
 ):
@@ -238,11 +238,13 @@ def test_requirement_installation(
     package_test_flit: str,
     env_impl: build.env.EnvImpl | None,
 ):
+    if IS_PYPY and env_impl == 'venv+uv':
+        pytest.xfail('uv cannot find PyPy executable')
+
     with build.env.DefaultIsolatedEnv(env_impl) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
 
 
-@pytest.mark.skipif(IS_PYPY, reason='uv does not declare support for PyPy')
 def test_uv_missing(
     mocker: pytest_mock.MockerFixture,
 ):

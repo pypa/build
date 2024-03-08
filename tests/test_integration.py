@@ -3,7 +3,6 @@
 import importlib.util
 import os
 import os.path
-import platform
 import re
 import shutil
 import subprocess
@@ -18,7 +17,7 @@ import build.__main__
 
 
 IS_WINDOWS = sys.platform.startswith('win')
-IS_PYPY3 = platform.python_implementation() == 'PyPy'
+IS_PYPY = sys.implementation.name == 'pypy'
 
 
 INTEGRATION_SOURCES = {
@@ -93,10 +92,12 @@ def get_project(name, tmp_path):
     ],
 )
 @pytest.mark.isolated
-def test_build(monkeypatch, project, args, call, tmp_path):
+def test_build(request, monkeypatch, project, args, call, tmp_path):
+    if args == ['--env-impl', 'venv+uv'] and IS_PYPY:
+        pytest.xfail('uv cannot find PyPy executable')
     if project in {'build', 'flit'} and '--no-isolation' in args:
         pytest.xfail(f"can't build {project} without isolation due to missing dependencies")
-    if project == 'Solaar' and IS_WINDOWS and IS_PYPY3:
+    if project == 'Solaar' and IS_WINDOWS and IS_PYPY:
         pytest.xfail('Solaar fails building wheels via sdists on Windows on PyPy 3')
 
     monkeypatch.chdir(tmp_path)
