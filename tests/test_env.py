@@ -170,40 +170,56 @@ def test_install_short_circuits(
         install_requirements.assert_called_once()
 
 
+@pytest.mark.parametrize('verbosity', range(4))
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
+    verbosity: int,
 ):
+    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
+
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
         env.install(['some', 'requirements'])
 
-        run_subprocess.assert_called_once()
-        call_args = run_subprocess.call_args[0][0][:-1]
-        assert call_args == [
-            env.python_executable,
-            '-Im',
-            'pip',
-            'install',
-            '--use-pep517',
-            '--no-warn-script-location',
-            '-r',
-        ]
+        run_subprocess.assert_called_once_with(
+            [
+                env.python_executable,
+                '-Im',
+                'pip',
+                *([f'-{"v" * (verbosity - 1)}'] if verbosity > 1 else []),
+                'install',
+                '--use-pep517',
+                '--no-warn-script-location',
+                '-r',
+                mocker.ANY,
+            ]
+        )
 
 
+@pytest.mark.parametrize('verbosity', range(4))
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 def test_uv_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
+    verbosity: int,
 ):
+    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
+
     with build.env.DefaultIsolatedEnv('venv+uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['foo'])
+        env.install(['some', 'requirements'])
 
         (install_call,) = run_subprocess.call_args_list
         assert len(install_call.args) == 1
-        assert install_call.args[0][1:] == ['pip', 'install', 'foo']
+        assert install_call.args[0][1:] == [
+            'pip',
+            *(['-v'] if verbosity > 1 else []),
+            'install',
+            'some',
+            'requirements',
+        ]
         assert len(install_call.kwargs) == 1
         assert install_call.kwargs['env']['VIRTUAL_ENV'] == env.path
 
