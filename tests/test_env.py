@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import contextlib
 import logging
-import platform
 import subprocess
 import sys
 import sysconfig
@@ -18,7 +18,7 @@ from packaging.version import Version
 import build.env
 
 
-IS_PYPY3 = platform.python_implementation() == 'PyPy'
+IS_PYPY = sys.implementation.name == 'pypy'
 
 
 @pytest.mark.isolated
@@ -30,7 +30,7 @@ def test_isolation():
             subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
 
 
-@pytest.mark.skipif(IS_PYPY3, reason='PyPy3 uses get path to create and provision venv')
+@pytest.mark.skipif(IS_PYPY, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(
     mocker: pytest_mock.MockerFixture,
@@ -192,6 +192,7 @@ def test_default_impl_install_cmd_well_formed(
         ]
 
 
+@pytest.mark.skipif(IS_PYPY, reason='uv does not declare support for PyPy')
 def test_uv_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
 ):
@@ -209,7 +210,7 @@ def test_uv_impl_install_cmd_well_formed(
 
 @pytest.mark.usefixtures('local_pip')
 @pytest.mark.parametrize(
-    ('env_impl', 'resultant_impl_name', 'has_virtualenv'),
+    ('env_impl', 'env_impl_display_name', 'has_virtualenv'),
     [
         (None, 'venv+pip', False),
         (None, 'virtualenv+pip', True),
@@ -219,10 +220,15 @@ def test_uv_impl_install_cmd_well_formed(
 )
 def test_env_creation(
     env_impl: build.env.EnvImpl | None,
-    resultant_impl_name: build.env._EnvImplBackend,
+    env_impl_display_name: str,
 ):
-    with build.env.DefaultIsolatedEnv(env_impl) as env:
-        assert env._env_impl_backend.name == resultant_impl_name
+    with (
+        pytest.warns(match='uv does not officially support PyPY; things might break')
+        if IS_PYPY and env_impl == 'venv+uv'
+        else contextlib.nullcontext()
+    ):
+        with build.env.DefaultIsolatedEnv(env_impl) as env:
+            assert env._env_impl_backend.name == env_impl_display_name
 
 
 @pytest.mark.network
@@ -234,3 +240,14 @@ def test_requirement_installation(
 ):
     with build.env.DefaultIsolatedEnv(env_impl) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
+
+
+@pytest.mark.skipif(IS_PYPY, reason='uv does not declare support for PyPy')
+def test_uv_missing(
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch('shutil.which', return_value=None)
+
+    with pytest.raises(RuntimeError, match='uv executable missing'):
+        with build.env.DefaultIsolatedEnv('venv+uv'):
+            pass
