@@ -50,7 +50,7 @@ docs = [
   "sphinx-issues >= 3.0.0",
 ]
 test = [
-  "build[virtualenv]",
+  "build[uv, virtualenv]",
   "filelock >= 3",
   "pytest >= 6.2.4",
   "pytest-cov >= 2.12",
@@ -62,13 +62,15 @@ test = [
   'setuptools >= 56.0.0; python_version == "3.10"',
   'setuptools >= 56.0.0; python_version == "3.11"',
   'setuptools >= 67.8.0; python_version >= "3.12"',
-  "uv >= 0.1.15",
 ]
 typing = [
+  "build[uv]",
   "importlib-metadata >= 5.1",
   "mypy ~= 1.5.0",
   "tomli",
   "typing-extensions >= 3.7.4.3",
+]
+uv = [
   "uv >= 0.1.15",
 ]
 virtualenv = [
