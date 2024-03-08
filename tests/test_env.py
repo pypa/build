@@ -78,7 +78,7 @@ def test_isolated_env_abstract():
 
     class PartialEnv(build.env.IsolatedEnv):
         def make_extra_environ(self):
-            return super().make_extra_environ()
+            raise NotImplementedError
 
     with pytest.raises(TypeError):
         PartialEnv()
