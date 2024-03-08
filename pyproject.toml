@@ -33,7 +33,7 @@ urls.issues = "https://github.com/pypa/build/issues"
 urls.source = "https://github.com/pypa/build"
 
 dependencies = [
-  "packaging >= 19.0",
+  "packaging >= 19.1",
   "pyproject_hooks",
   # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
   'colorama; os_name == "nt"',
