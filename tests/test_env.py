@@ -19,6 +19,7 @@ import build.env
 
 
 IS_PYPY = sys.implementation.name == 'pypy'
+IS_WINDOWS = sys.platform.startswith('win')
 
 
 @pytest.mark.isolated
@@ -248,14 +249,17 @@ def test_env_creation(
 
 @pytest.mark.network
 @pytest.mark.usefixtures('local_pip')
-@pytest.mark.parametrize('env_impl', [None, *build.env.ENV_IMPLS])
+@pytest.mark.parametrize(
+    'env_impl',
+    [
+        None,
+        pytest.param('venv+uv', marks=pytest.mark.xfail(IS_PYPY and IS_WINDOWS, reason='uv cannot find PyPy executable')),
+    ],
+)
 def test_requirement_installation(
     package_test_flit: str,
     env_impl: build.env.EnvImpl | None,
 ):
-    if IS_PYPY and env_impl == 'venv+uv':
-        pytest.xfail('uv cannot find PyPy executable')
-
     with build.env.DefaultIsolatedEnv(env_impl) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
 
