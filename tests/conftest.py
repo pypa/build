@@ -75,13 +75,13 @@ def pytest_runtest_call(item: pytest.Item):
 
 @pytest.fixture
 def local_pip(monkeypatch):
-    monkeypatch.setattr(build.env._DefaultImplBackend, '_has_valid_outer_pip', None)
+    monkeypatch.setattr(build.env._PipBackend, '_has_valid_outer_pip', None)
 
 
 @pytest.fixture(autouse=True, params=[False])
 def has_virtualenv(request, monkeypatch):
     if request.param is not None:
-        monkeypatch.setattr(build.env._DefaultImplBackend, '_has_virtualenv', request.param)
+        monkeypatch.setattr(build.env._PipBackend, '_has_virtualenv', request.param)
 
 
 @pytest.fixture(scope='session', autouse=True)
