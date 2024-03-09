@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-import contextlib
 import logging
 import subprocess
 import sys
@@ -243,13 +242,8 @@ def test_env_creation(
     env_impl: build.env.EnvImpl | None,
     env_impl_display_name: str,
 ):
-    with (
-        pytest.warns(match='uv does not officially support PyPy; things might break')
-        if IS_PYPY and env_impl == 'venv+uv'
-        else contextlib.nullcontext()
-    ):
-        with build.env.DefaultIsolatedEnv(env_impl) as env:
-            assert env._env_impl_backend.name == env_impl_display_name
+    with build.env.DefaultIsolatedEnv(env_impl) as env:
+        assert env._env_impl_backend.name == env_impl_display_name
 
 
 @pytest.mark.network
