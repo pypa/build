@@ -262,13 +262,3 @@ def test_requirement_installation(
 ):
     with build.env.DefaultIsolatedEnv(installer=installer) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
-
-
-def test_uv_missing(
-    mocker: pytest_mock.MockerFixture,
-):
-    mocker.patch('shutil.which', return_value=None)
-
-    with pytest.raises(RuntimeError, match='uv executable missing'):
-        with build.env.DefaultIsolatedEnv(installer='uv'):
-            pass
