@@ -279,27 +279,13 @@ class _UvBackend(_EnvBackend):
         import venv
 
         self._env_path = path
-
-        # ``uv.find_uv_bin`` will look for uv in the user prefix if it can't
-        # find it under ``sys.prefix``, essentially potentially rearranging
-        # the user's $PATH.  We'll only look for uv under the prefix of
-        # the running interpreter for unactivated venvs then defer to $PATH.
-        uv_bin = shutil.which('uv', path=sysconfig.get_path('scripts'))
-
-        if not uv_bin:
-            uv_bin = shutil.which('uv')
-
-        if not uv_bin:
-            msg = 'uv executable missing'
-            raise RuntimeError(msg)
-
-        self._uv_bin = uv_bin
-
-        venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(path)
-        self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(path)
+        venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
+        self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
 
     def install_requirements(self, requirements: Collection[str]) -> None:
-        cmd = [self._uv_bin, 'pip']
+        import uv
+
+        cmd = [uv.find_uv_bin(), 'pip']
         if _ctx.verbosity > 1:
             # uv doesn't support doubling up -v unlike pip.
             cmd += ['-v']
