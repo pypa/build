@@ -165,7 +165,7 @@ def test_install_short_circuits(
     mocker: pytest_mock.MockerFixture,
 ):
     with build.env.DefaultIsolatedEnv() as env:
-        install_requirements = mocker.patch.object(env._env_impl_backend, 'install_requirements')
+        install_requirements = mocker.patch.object(env._env_backend, 'install_requirements')
 
         env.install([])
         install_requirements.assert_not_called()
@@ -210,7 +210,7 @@ def test_uv_impl_install_cmd_well_formed(
 ):
     mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
 
-    with build.env.DefaultIsolatedEnv('venv+uv') as env:
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
         env.install(['some', 'requirements'])
@@ -230,37 +230,37 @@ def test_uv_impl_install_cmd_well_formed(
 
 @pytest.mark.usefixtures('local_pip')
 @pytest.mark.parametrize(
-    ('env_impl', 'env_impl_display_name', 'has_virtualenv'),
+    ('installer', 'env_backend_display_name', 'has_virtualenv'),
     [
-        (None, 'venv+pip', False),
-        (None, 'virtualenv+pip', True),
-        (None, 'virtualenv+pip', None),  # Fall-through
-        ('venv+uv', 'venv+uv', None),
+        ('pip', 'venv+pip', False),
+        ('pip', 'virtualenv+pip', True),
+        ('pip', 'virtualenv+pip', None),  # Fall-through
+        ('uv', 'venv+uv', None),
     ],
     indirect=('has_virtualenv',),
 )
-def test_env_creation(
-    env_impl: build.env.EnvImpl | None,
-    env_impl_display_name: str,
+def test_venv_creation(
+    installer: build.env.Installer,
+    env_backend_display_name: str,
 ):
-    with build.env.DefaultIsolatedEnv(env_impl) as env:
-        assert env._env_impl_backend.name == env_impl_display_name
+    with build.env.DefaultIsolatedEnv(installer=installer) as env:
+        assert env._env_backend.display_name == env_backend_display_name
 
 
 @pytest.mark.network
 @pytest.mark.usefixtures('local_pip')
 @pytest.mark.parametrize(
-    'env_impl',
+    'installer',
     [
         None,
-        pytest.param('venv+uv', marks=pytest.mark.xfail(IS_PYPY and IS_WINDOWS, reason='uv cannot find PyPy executable')),
+        pytest.param('uv', marks=pytest.mark.xfail(IS_PYPY and IS_WINDOWS, reason='uv cannot find PyPy executable')),
     ],
 )
 def test_requirement_installation(
     package_test_flit: str,
-    env_impl: build.env.EnvImpl | None,
+    installer: build.env.Installer,
 ):
-    with build.env.DefaultIsolatedEnv(env_impl) as env:
+    with build.env.DefaultIsolatedEnv(installer=installer) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
 
 
@@ -270,5 +270,5 @@ def test_uv_missing(
     mocker.patch('shutil.which', return_value=None)
 
     with pytest.raises(RuntimeError, match='uv executable missing'):
-        with build.env.DefaultIsolatedEnv('venv+uv'):
+        with build.env.DefaultIsolatedEnv(installer='uv'):
             pass

@@ -74,8 +74,8 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             'build_package_via_sdist',
         ),
         (
-            ['--env-impl', 'venv+uv'],
-            [cwd, out, ['wheel'], {}, True, False, 'venv+uv'],
+            ['--installer', 'uv'],
+            [cwd, out, ['wheel'], {}, True, False, 'uv'],
             'build_package_via_sdist',
         ),
         (

@@ -78,8 +78,8 @@ def get_project(name, tmp_path):
 )
 @pytest.mark.parametrize(
     'args',
-    [[], ['--env-impl', 'venv+uv'], ['-x', '--no-isolation']],
-    ids=['isolated', 'isolated_venv+uv', 'no_isolation'],
+    [[], ['--installer', 'uv'], ['-x', '--no-isolation']],
+    ids=['isolated_pip', 'isolated_uv', 'no_isolation'],
 )
 @pytest.mark.parametrize(
     'project',
@@ -93,7 +93,7 @@ def get_project(name, tmp_path):
 )
 @pytest.mark.isolated
 def test_build(request, monkeypatch, project, args, call, tmp_path):
-    if args == ['--env-impl', 'venv+uv'] and IS_PYPY:
+    if args == ['--installer', 'uv'] and IS_WINDOWS and IS_PYPY:
         pytest.xfail('uv cannot find PyPy executable')
     if project in {'build', 'flit'} and '--no-isolation' in args:
         pytest.xfail(f"can't build {project} without isolation due to missing dependencies")

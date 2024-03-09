@@ -20,11 +20,9 @@ from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
 
-EnvImpl = typing.Literal['venv+uv']
+Installer = typing.Literal['pip', 'uv']
 
-ENV_IMPLS = typing.get_args(EnvImpl)
-
-_EnvImplInclDefault = typing.Literal['venv+pip', 'virtualenv+pip', EnvImpl]
+INSTALLERS = typing.get_args(Installer)
 
 
 class IsolatedEnv(typing.Protocol):
@@ -67,9 +65,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
     def __init__(
         self,
-        env_impl: EnvImpl | None = None,
+        *,
+        installer: Installer = 'pip',
     ) -> None:
-        self.env_impl = env_impl
+        self.installer: Installer = installer
 
     def __enter__(self) -> DefaultIsolatedEnv:
         try:
@@ -82,16 +81,16 @@ class DefaultIsolatedEnv(IsolatedEnv):
             path = os.path.realpath(path)
             self._path = path
 
-            self._env_impl_backend: _EnvImplBackend
+            self._env_backend: _EnvBackend
 
             # uv is opt-in only.
-            if self.env_impl == 'venv+uv':
-                self._env_impl_backend = _UvImplBackend()
+            if self.installer == 'uv':
+                self._env_backend = _UvBackend()
             else:
-                self._env_impl_backend = _DefaultImplBackend()
+                self._env_backend = _PipBackend()
 
-            _ctx.log(f'Creating isolated environment: {self._env_impl_backend.name}...')
-            self._env_impl_backend.create(self._path)
+            _ctx.log(f'Creating isolated environment: {self._env_backend.display_name}...')
+            self._env_backend.create(self._path)
 
         except Exception:  # cleanup folder if creation fails
             self.__exit__(*sys.exc_info())
@@ -111,14 +110,14 @@ class DefaultIsolatedEnv(IsolatedEnv):
     @property
     def python_executable(self) -> str:
         """The python executable of the isolated build environment."""
-        return self._env_impl_backend.python_executable
+        return self._env_backend.python_executable
 
     def make_extra_environ(self) -> dict[str, str]:
         path = os.environ.get('PATH')
         return {
-            'PATH': os.pathsep.join([self._env_impl_backend.scripts_dir, path])
+            'PATH': os.pathsep.join([self._env_backend.scripts_dir, path])
             if path is not None
-            else self._env_impl_backend.scripts_dir
+            else self._env_backend.scripts_dir
         }
 
     def install(self, requirements: Collection[str]) -> None:
@@ -134,10 +133,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
             return
 
         _ctx.log('Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)))
-        self._env_impl_backend.install_requirements(requirements)
+        self._env_backend.install_requirements(requirements)
 
 
-class _EnvImplBackend(typing.Protocol):  # pragma: no cover
+class _EnvBackend(typing.Protocol):  # pragma: no cover
     python_executable: str
     scripts_dir: str
 
@@ -148,11 +147,11 @@ class _EnvImplBackend(typing.Protocol):  # pragma: no cover
         ...
 
     @property
-    def name(self) -> _EnvImplInclDefault:
+    def display_name(self) -> str:
         ...
 
 
-class _DefaultImplBackend(_EnvImplBackend):
+class _PipBackend(_EnvBackend):
     def __init__(self) -> None:
         self._create_with_virtualenv = not self._has_valid_outer_pip and self._has_virtualenv
 
@@ -271,11 +270,11 @@ class _DefaultImplBackend(_EnvImplBackend):
             os.unlink(req_file.name)
 
     @property
-    def name(self) -> _EnvImplInclDefault:
+    def display_name(self) -> str:
         return 'virtualenv+pip' if self._create_with_virtualenv else 'venv+pip'
 
 
-class _UvImplBackend(_EnvImplBackend):
+class _UvBackend(_EnvBackend):
     def create(self, path: str) -> None:
         import venv
 
@@ -307,7 +306,7 @@ class _UvImplBackend(_EnvImplBackend):
         run_subprocess([*cmd, 'install', *requirements], env={**os.environ, 'VIRTUAL_ENV': self._env_path})
 
     @property
-    def name(self) -> EnvImpl:
+    def display_name(self) -> str:
         return 'venv+uv'
 
 
