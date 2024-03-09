@@ -252,7 +252,7 @@ def test_venv_creation(
 @pytest.mark.parametrize(
     'installer',
     [
-        None,
+        'pip',
         pytest.param('uv', marks=pytest.mark.xfail(IS_PYPY and IS_WINDOWS, reason='uv cannot find PyPy executable')),
     ],
 )
