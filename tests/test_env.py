@@ -244,7 +244,7 @@ def test_env_creation(
     env_impl_display_name: str,
 ):
     with (
-        pytest.warns(match='uv does not officially support PyPY; things might break')
+        pytest.warns(match='uv does not officially support PyPy; things might break')
         if IS_PYPY and env_impl == 'venv+uv'
         else contextlib.nullcontext()
     ):

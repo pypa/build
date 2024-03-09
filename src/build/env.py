@@ -298,7 +298,7 @@ class _UvImplBackend(_EnvImplBackend):
         self._uv_bin = uv_bin
 
         if sys.implementation.name == 'pypy':
-            msg = 'uv does not officially support PyPY; things might break'
+            msg = 'uv does not officially support PyPy; things might break'
             warnings.warn(msg, stacklevel=2)
 
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(path)
