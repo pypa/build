@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -262,3 +263,28 @@ def test_requirement_installation(
 ):
     with build.env.DefaultIsolatedEnv(installer=installer) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
+
+
+def test_external_uv_detection_success(
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch.dict(sys.modules, {'uv': None})
+
+    with build.env.DefaultIsolatedEnv(installer='uv'):
+        pass
+
+    assert any(
+        r.message == f'Using external uv from {shutil.which("uv", path=sysconfig.get_path("scripts"))}' for r in caplog.records
+    )
+
+
+def test_external_uv_detection_failure(
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch.dict(sys.modules, {'uv': None})
+    mocker.patch('shutil.which', return_value=None)
+
+    with pytest.raises(RuntimeError, match='uv executable not found'):
+        with build.env.DefaultIsolatedEnv(installer='uv'):
+            pass
