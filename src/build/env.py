@@ -279,13 +279,24 @@ class _UvBackend(_EnvBackend):
         import venv
 
         self._env_path = path
+
+        try:
+            import uv
+
+            self._uv_bin = uv.find_uv_bin()
+        except (ModuleNotFoundError, FileNotFoundError):
+            self._uv_bin = shutil.which('uv')
+            if self._uv_bin is None:
+                msg = 'uv executable not found'
+                raise RuntimeError(msg) from None
+
+            _ctx.log(f'Using external uv from {self._uv_bin}')
+
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
         self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
 
     def install_requirements(self, requirements: Collection[str]) -> None:
-        import uv
-
-        cmd = [uv.find_uv_bin(), 'pip']
+        cmd = [self._uv_bin, 'pip']
         if _ctx.verbosity > 1:
             # uv doesn't support doubling up -v unlike pip.
             cmd += ['-v']
