@@ -285,12 +285,13 @@ class _UvBackend(_EnvBackend):
 
             self._uv_bin = uv.find_uv_bin()
         except (ModuleNotFoundError, FileNotFoundError):
-            self._uv_bin = shutil.which('uv')
-            if self._uv_bin is None:
+            uv_bin = shutil.which('uv')
+            if uv_bin is None:
                 msg = 'uv executable not found'
                 raise RuntimeError(msg) from None
 
-            _ctx.log(f'Using external uv from {self._uv_bin}')
+            _ctx.log(f'Using external uv from {uv_bin}')
+            self._uv_bin = uv_bin
 
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
         self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
