@@ -148,7 +148,10 @@ ignore_missing_imports = true
 
 [tool.ruff]
 src = ["src"]
-exclude = ["tests/packages/test-bad-syntax"]
+exclude = [
+  "tests/packages/*/pyproject.toml",
+  "tests/packages/test-bad-syntax",
+]
 line-length = 127
 
 [tool.ruff.format]
