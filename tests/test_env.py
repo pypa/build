@@ -197,6 +197,7 @@ def test_default_impl_install_cmd_well_formed(
                 'install',
                 '--use-pep517',
                 '--no-warn-script-location',
+                '--no-compile',
                 '-r',
                 mocker.ANY,
             ]
