@@ -12,8 +12,7 @@ from ._types import StrPath
 
 
 class _Logger(typing.Protocol):  # pragma: no cover
-    def __call__(self, message: str, *, origin: tuple[str, ...] | None = None) -> None:
-        ...
+    def __call__(self, message: str, *, origin: tuple[str, ...] | None = None) -> None: ...
 
 
 _package_name = __spec__.parent  # type: ignore[name-defined]
