@@ -221,7 +221,7 @@ def test_uv_impl_install_cmd_well_formed(
         assert len(install_call.args) == 1
         assert install_call.args[0][1:] == [
             'pip',
-            *(['-v'] if verbosity > 1 else []),
+            *(['-vv' if verbosity > 2 else '-v'] if verbosity > 1 else []),
             'install',
             'some',
             'requirements',

@@ -297,8 +297,7 @@ class _UvBackend(_EnvBackend):
     def install_requirements(self, requirements: Collection[str]) -> None:
         cmd = [self._uv_bin, 'pip']
         if _ctx.verbosity > 1:
-            # uv doesn't support doubling up -v unlike pip.
-            cmd += ['-v']
+            cmd += [f'-{"v" * min(2, _ctx.verbosity - 1)}']
         run_subprocess([*cmd, 'install', *requirements], env={**os.environ, 'VIRTUAL_ENV': self._env_path})
 
     @property
