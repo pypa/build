@@ -3,10 +3,18 @@ Changelog
 +++++++++
 
 
-Unreleased
-==========
+1.2.0 (2024-03-27)
+==================
 
-- Dropped support for Python 3.7 (PR :pr:`743`)
+- Add ``--installer`` option, supporting ``pip`` and ``uv``. Added ``uv``
+  extra.
+  (PR :pr:`751`)
+- Improve console output and provide ``-v`` for dependency installation
+  (PR :pr:`749`)
+- Avoid compiling unused bytecode when using ``pip``
+  (PR :pr:`752`)
+- Dropped support for Python 3.7
+  (PR :pr:`743`)
 
 
 1.1.1 (2024-02-29)

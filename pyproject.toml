@@ -4,7 +4,6 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "build"
-version = "1.1.1"
 description = "A simple, correct Python build frontend"
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -31,7 +30,8 @@ urls.changelog = "https://build.pypa.io/en/stable/changelog.html"
 urls.homepage = "https://build.pypa.io"
 urls.issues = "https://github.com/pypa/build/issues"
 urls.source = "https://github.com/pypa/build"
-
+# Version read from __version__ field in __init__.py by Flit
+dynamic = ["version"]
 dependencies = [
   "packaging >= 19.1",
   "pyproject_hooks",
