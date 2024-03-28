@@ -2,6 +2,11 @@
 Changelog
 +++++++++
 
+1.2.1 (2024-03-28)
+==================
+
+- Avoid error when terminal width is undetectable on Python < 3.11
+  (PR :pr:`761`)
 
 1.2.0 (2024-03-27)
 ==================
