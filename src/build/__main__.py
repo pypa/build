@@ -69,6 +69,8 @@ def _showwarning(
 
 
 _max_terminal_width = shutil.get_terminal_size().columns - 2
+if _max_terminal_width <= 0:
+    _max_terminal_width = 78
 
 
 _fill = partial(textwrap.fill, subsequent_indent='  ', width=_max_terminal_width)
