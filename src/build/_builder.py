@@ -11,7 +11,7 @@ import warnings
 import zipfile
 
 from collections.abc import Iterator
-from typing import Any, Mapping, Sequence, TypeVar
+from typing import Any, Literal, Mapping, Sequence, TypeVar
 
 import pyproject_hooks
 
@@ -203,7 +203,11 @@ class ProjectBuilder:
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(self, distribution: Distribution, config_settings: ConfigSettings | None = None) -> set[str]:
+    def get_requires_for_build(
+        self,
+        distribution: Literal[Distribution, 'editable'],
+        config_settings: ConfigSettings | None = None,
+    ) -> set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -220,7 +224,9 @@ class ProjectBuilder:
             return set(get_requires(config_settings))
 
     def check_dependencies(
-        self, distribution: Distribution, config_settings: ConfigSettings | None = None
+        self,
+        distribution: Literal[Distribution, 'editable'],
+        config_settings: ConfigSettings | None = None,
     ) -> set[tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
@@ -236,7 +242,7 @@ class ProjectBuilder:
 
     def prepare(
         self,
-        distribution: Distribution,
+        distribution: Literal[Distribution, 'editable'],
         output_directory: StrPath,
         config_settings: ConfigSettings | None = None,
     ) -> str | None:
@@ -263,7 +269,7 @@ class ProjectBuilder:
 
     def build(
         self,
-        distribution: Distribution,
+        distribution: Literal[Distribution, 'editable'],
         output_directory: StrPath,
         config_settings: ConfigSettings | None = None,
         metadata_directory: str | None = None,
