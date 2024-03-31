@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import tempfile
 
@@ -21,7 +22,7 @@ def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.Packa
 
 def project_wheel_metadata(
     source_dir: StrPath,
-    isolated: bool = True,
+    isolated: bool = os.environ.get('BUILD_ENVIRONMENT', 'isolated') == 'isolated',
     *,
     runner: SubprocessRunner = pyproject_hooks.quiet_subprocess_runner,
 ) -> importlib.metadata.PackageMetadata:
@@ -34,7 +35,9 @@ def project_wheel_metadata(
     :param source_dir: Project source directory
     :param isolated: Whether or not to run invoke the backend in the current
                      environment or to create an isolated one and invoke it
-                     there.
+                     there. Defaults to True (isolated), but with
+                     ``BUILD_ENVIRONMENT=current`` set, the default
+                     is False.
     :param runner: An alternative runner for backend subprocesses
     """
 
