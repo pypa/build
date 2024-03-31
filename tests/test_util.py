@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 import importlib.util
+import sys
+import subprocess
 
 import pytest
 
@@ -47,3 +49,11 @@ def test_with_get_requires(package_test_metadata):
     assert str(metadata['version']) == '1.0.0'
     assert metadata['summary'] == 'hello!'
     assert isinstance(metadata.json, dict)
+
+
+def test_current_environment_default():
+    check_script = "import build.util, inspect; print(inspect.signature(build.util.project_wheel_metadata).parameters['isolated'].default)"
+    cmd = [sys.executable, '-c', check_script]
+    env = {'BUILD_ENVIRONMENT': 'current'}
+    res = subprocess.check_output(cmd, env=env, text=True, encoding='utf-8')
+    assert res.strip() == 'False'
