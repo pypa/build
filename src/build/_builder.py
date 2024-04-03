@@ -11,7 +11,7 @@ import warnings
 import zipfile
 
 from collections.abc import Iterator
-from typing import Any, Literal, Mapping, Sequence, TypeVar
+from typing import Any, Mapping, Sequence, TypeVar
 
 import pyproject_hooks
 
@@ -205,7 +205,7 @@ class ProjectBuilder:
 
     def get_requires_for_build(
         self,
-        distribution: Literal[Distribution, 'editable'],
+        distribution: Distribution,
         config_settings: ConfigSettings | None = None,
     ) -> set[str]:
         """
@@ -225,7 +225,7 @@ class ProjectBuilder:
 
     def check_dependencies(
         self,
-        distribution: Literal[Distribution, 'editable'],
+        distribution: Distribution,
         config_settings: ConfigSettings | None = None,
     ) -> set[tuple[str, ...]]:
         """
@@ -242,7 +242,7 @@ class ProjectBuilder:
 
     def prepare(
         self,
-        distribution: Literal[Distribution, 'editable'],
+        distribution: Distribution,
         output_directory: StrPath,
         config_settings: ConfigSettings | None = None,
     ) -> str | None:
@@ -269,7 +269,7 @@ class ProjectBuilder:
 
     def build(
         self,
-        distribution: Literal[Distribution, 'editable'],
+        distribution: Distribution,
         output_directory: StrPath,
         config_settings: ConfigSettings | None = None,
         metadata_directory: str | None = None,
