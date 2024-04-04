@@ -203,7 +203,11 @@ class ProjectBuilder:
         """
         return set(self._build_system['requires'])
 
-    def get_requires_for_build(self, distribution: Distribution, config_settings: ConfigSettings | None = None) -> set[str]:
+    def get_requires_for_build(
+        self,
+        distribution: Distribution,
+        config_settings: ConfigSettings | None = None,
+    ) -> set[str]:
         """
         Return the dependencies defined by the backend in addition to
         :attr:`build_system_requires` for a given distribution.
@@ -220,7 +224,9 @@ class ProjectBuilder:
             return set(get_requires(config_settings))
 
     def check_dependencies(
-        self, distribution: Distribution, config_settings: ConfigSettings | None = None
+        self,
+        distribution: Distribution,
+        config_settings: ConfigSettings | None = None,
     ) -> set[tuple[str, ...]]:
         """
         Return the dependencies which are not satisfied from the combined set of
