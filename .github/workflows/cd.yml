@@ -27,7 +27,6 @@ jobs:
     permissions:
       id-token: write
       attestations: write
-      contents: read
 
     steps:
       - uses: actions/download-artifact@v4
