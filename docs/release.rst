@@ -13,9 +13,8 @@ You may release the project by following these steps:
     - The tag body should be a plaintext version of the changelog for the current
       release
 #. Push the commit and tag to the repository (``git push`` and ``git push --tags``)
-#. Download the built release from GitHub Actions
-#. Generate a token for uploading to PyPI
-#. Push the artifacts to PyPI (``twine upload -s dist/*``)
+#. Make a release on GitHub or with the ``gh`` CLI tool. Copy the release notes
+   into the release.
 
 If you have any questions, please look at previous releases and/or ping the
 other maintainers.
