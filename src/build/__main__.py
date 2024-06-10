@@ -7,6 +7,7 @@ import contextlib
 import contextvars
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -214,6 +215,40 @@ def _natural_language_list(elements: Sequence[str]) -> str:
         )
 
 
+def build_metadata(
+    metadata: Sequence[str],
+    srcdir: StrPath,
+    outdir: StrPath,
+    distributions: Sequence[Distribution],
+    config_settings: ConfigSettings | None = None,
+    isolation: bool = True,
+    skip_dependency_check: bool = False,
+    installer: _env.Installer = 'pip',
+) -> Sequence[str]:
+    """
+    Get named metadata
+
+    :param metadata: Metadata items
+    :param srcdir: Source directory
+    :param outdir: Output directory
+    :param distribution: Distribution to build (sdist or wheel)
+    :param config_settings: Configuration settings to be passed to the backend
+    :param isolation: Isolate the build in a separate environment
+    :param skip_dependency_check: Do not perform the dependency check
+    """
+    out = _build(isolation, srcdir, outdir, 'metadata', config_settings, skip_dependency_check, installer)
+    metadata_re = tuple((metadata_item, re.compile(rf'{metadata_item}: (.*)')) for metadata_item in metadata)
+    built_metadata: dict[str, str] = {}
+    for metadata_line in out.splitlines():
+        for metadata_item, regex in metadata_re:
+            if re_match := regex.match(metadata_line):
+                built_metadata[metadata_item] = re_match.group(1)
+    built: list[str] = [built_metadata.get(metadata_item, '') for metadata_item in metadata]
+    for metadata_value in built:
+        print(metadata_value, file=sys.stderr)
+    return built
+
+
 def build_package(
     srcdir: StrPath,
     outdir: StrPath,
@@ -334,6 +369,13 @@ def main_parser() -> argparse.ArgumentParser:
         help='increase verbosity',
     )
     parser.add_argument(
+        '--metadata',
+        '-m',
+        nargs='+',
+        dest='metadata',
+        help='print named distribution metadata (disables the default behavior)',
+    )
+    parser.add_argument(
         '--sdist',
         '-s',
         dest='distributions',
@@ -418,8 +460,12 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     # outdir is relative to srcdir only if omitted.
     outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
 
+    metadata: list[str] = args.metadata
     distributions: list[Distribution] = args.distributions
-    if distributions:
+    if metadata:
+        build_call = partial(build_metadata, metadata)
+        distributions = ['wheel']
+    elif distributions:
         build_call = build_package
     else:
         build_call = build_package_via_sdist

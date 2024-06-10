@@ -5,7 +5,7 @@ import typing
 
 
 ConfigSettings = typing.Mapping[str, typing.Union[str, typing.Sequence[str]]]
-Distribution = typing.Literal['sdist', 'wheel', 'editable']
+Distribution = typing.Literal['sdist', 'wheel', 'editable', 'metadata']
 StrPath = typing.Union[str, 'os.PathLike[str]']
 SubprocessRunner = typing.Callable[
     [typing.Sequence[str], typing.Optional[str], typing.Optional[typing.Mapping[str, str]]], None

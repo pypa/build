@@ -217,7 +217,10 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         """
         _ctx.log(f'Getting build dependencies for {distribution}...')
-        hook_name = f'get_requires_for_build_{distribution}'
+        if distribution == 'metadata':
+            hook_name = 'get_requires_for_build_wheel'
+        else:
+            hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
         with self._handle_backend(hook_name):
@@ -286,6 +289,14 @@ class ProjectBuilder:
         """
         _ctx.log(f'Building {distribution}...')
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
+        if distribution == 'metadata':
+            dist_info = self._call_backend(
+                'prepare_metadata_for_build_wheel',
+                output_directory,
+                config_settings,
+            )
+            with open(os.path.join(dist_info, 'METADATA')) as metadata:
+                return metadata.read()
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
     def metadata_path(self, output_directory: StrPath) -> str:
