@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os  # noqa: F401
 import pathlib
 import tempfile
 
