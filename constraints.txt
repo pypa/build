@@ -1,1 +1,1 @@
-setuptools<74
+setuptools<73
