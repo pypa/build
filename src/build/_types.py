@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import typing
 
+
 __all__ = ['ConfigSettings', 'Distribution', 'StrPath', 'SubprocessRunner']
 
 ConfigSettings = typing.Mapping[str, typing.Union[str, typing.Sequence[str]]]
