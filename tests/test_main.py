@@ -439,6 +439,7 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
     )
 
 
+@pytest.mark.network
 @pytest.mark.parametrize('verbosity', [0, 1])
 def test_verbose_output(
     capsys: pytest.CaptureFixture,
