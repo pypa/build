@@ -21,6 +21,7 @@ import build.env
 
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_WINDOWS = sys.platform.startswith('win')
+MISSING_UV = not shutil.which('uv')
 
 
 @pytest.mark.isolated
@@ -206,6 +207,7 @@ def test_default_impl_install_cmd_well_formed(
 
 @pytest.mark.parametrize('verbosity', range(4))
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
@@ -237,7 +239,12 @@ def test_uv_impl_install_cmd_well_formed(
         ('pip', 'venv+pip', False),
         ('pip', 'virtualenv+pip', True),
         ('pip', 'virtualenv+pip', None),  # Fall-through
-        ('uv', 'venv+uv', None),
+        pytest.param(
+            'uv',
+            'venv+uv',
+            None,
+            marks=pytest.mark.skipif(MISSING_UV, reason='uv executable not found'),
+        ),
     ],
     indirect=('has_virtualenv',),
 )
@@ -257,9 +264,13 @@ def test_venv_creation(
         'pip',
         pytest.param(
             'uv',
-            marks=pytest.mark.xfail(
-                IS_PYPY and IS_WINDOWS and sys.version_info < (3, 9), reason='uv cannot find PyPy 3.8 executable on Windows'
-            ),
+            marks=[
+                pytest.mark.xfail(
+                    IS_PYPY and IS_WINDOWS and sys.version_info < (3, 9),
+                    reason='uv cannot find PyPy 3.8 executable on Windows',
+                ),
+                pytest.mark.skipif(MISSING_UV, reason='uv executable not found'),
+            ],
         ),
     ],
 )
@@ -271,6 +282,7 @@ def test_requirement_installation(
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
 
 
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_external_uv_detection_success(
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,
