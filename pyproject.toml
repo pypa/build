@@ -141,7 +141,6 @@ enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
 [[tool.mypy.overrides]]
 module = [
   "colorama",   # Optional dependency
-  "pyproject_hooks.*",   # Untyped
   "virtualenv", # Optional dependency
 ]
 ignore_missing_imports = true

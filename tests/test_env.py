@@ -255,7 +255,12 @@ def test_venv_creation(
     'installer',
     [
         'pip',
-        pytest.param('uv', marks=pytest.mark.xfail(IS_PYPY and IS_WINDOWS, reason='uv cannot find PyPy executable')),
+        pytest.param(
+            'uv',
+            marks=pytest.mark.xfail(
+                IS_PYPY and IS_WINDOWS and sys.version_info < (3, 9), reason='uv cannot find PyPy 3.8 executable on Windows'
+            ),
+        ),
     ],
 )
 def test_requirement_installation(

@@ -116,7 +116,9 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
 
 
 def _wrap_subprocess_runner(runner: SubprocessRunner, env: env.IsolatedEnv) -> SubprocessRunner:
-    def _invoke_wrapped_runner(cmd: Sequence[str], cwd: str | None, extra_environ: Mapping[str, str] | None) -> None:
+    def _invoke_wrapped_runner(
+        cmd: Sequence[str], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None
+    ) -> None:
         runner(cmd, cwd, {**(env.make_extra_environ() or {}), **(extra_environ or {})})
 
     return _invoke_wrapped_runner
