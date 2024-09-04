@@ -147,7 +147,6 @@ module = [
 ignore_missing_imports = true
 
 [tool.ruff]
-src = ["src"]
 exclude = [
   "tests/packages/*/pyproject.toml",
   "tests/packages/test-bad-syntax",
