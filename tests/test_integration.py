@@ -67,6 +67,7 @@ def get_project(name, tmp_path):
     return dest / f'{name}-{version}'
 
 
+@pytest.mark.network
 @pytest.mark.parametrize(
     'call',
     [
