@@ -30,9 +30,66 @@ This will build the package in an isolated environment, generating a
 source-distribution and wheel in the directory `dist/`.
 See the [documentation](https://build.pypa.io) for full information.
 
+### Common arguments
+
+- `--sdist` (`-s`): Produce just an SDist
+- `--wheel` (`-w`): Produce just a wheel
+- `-C<option>=<value>`: A Config-setting, the PEP 517 way of passing options to a backend. Can be passed multiple times. Matching options will make a list. Note that setuptools has very limited support.
+- `--installer`: Pick an installer for the isolated build (`pip` or `uv`).
+- `--no-isolation` (`-n`): Disable build isolation.
+- `--skip-dependency-check` (`-x`): Disable dependency checking when not isolated; this should be done if some requirements or version ranges are not required for non-isolated builds.
+- `--outdir (`-o`): The output directory (defaults to `dist`)
+
+Some common combinations of arguments:
+
+- `--sdist --wheel` (`-sw`): Produce and SDist and a wheel, both from the source distribution. The default (if no flag is passed) is to build an SDist and then build a wheel _from_ the SDist.
+- `-nx`: Disable build isolation and dependency checking. Identical to pip and uv's `--no-build-isolation` flag.
+
+### Integration with other tools
+
+#### pipx
+
+If you use [pipx][], such as in GitHub Actions, the following command will download
+and run build in one step:
+
+```console
+$ pipx run build
+```
+
+#### uv
+
+If you want to use [uv][] to speed up the virtual environment creation, you can use
+`--installer=uv`. You can get a Python wheel for `uv` with the `[uv]` extra.
+Combining both suggestions yields the following:
+
+```console
+$ pipx run build[uv] --installer=uv
+```
+
+#### cibuildwheel
+
+If you are using [cibuildwheel][], build is integrated and can be use with either (in your `pyproject.toml`):
+
+```toml
+[tool.cibuildwheel]
+build-frontend = "build"
+```
+
+or
+
+```toml
+[tool.cibuildwheel]
+build-frontend = "build[uv]"
+```
+
+(Be sure to pre-install uv before running cibuildwheel for this one!)
+
 ### Code of Conduct
 
 Everyone interacting in the build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
 the [PSF Code of Conduct].
 
 [psf code of conduct]: https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md
+[pipx]: https://pipx.pypa.io
+[uv]: https://docs.astral.sh/uv/
+[cibuildwheel]: https://cibuildwheel.pypa.io
