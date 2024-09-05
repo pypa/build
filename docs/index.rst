@@ -4,10 +4,11 @@
 build
 *****
 
-A simple, correct Python packaging build frontend.
+A simple, correct Python packaging :std:term:`build frontend <Build Frontend>`.
 
 build manages ``pyproject.toml``-based builds, invoking
-build-backend hooks as appropriate to build a distribution package.
+:std:term:`build-backend <Build Backend>` hooks as appropriate to build a
+:std:term:`distribution package <Distribution Package>`.
 It is a simple build tool and does not perform any dependency management.
 
 .. sphinx_argparse_cli::
