@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import importlib.util
 import logging
 import shutil
 import subprocess
@@ -21,7 +22,8 @@ import build.env
 
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_WINDOWS = sys.platform.startswith('win')
-MISSING_UV = not shutil.which('uv')
+
+MISSING_UV = importlib.util.find_spec('uv') is None and not shutil.which('uv')
 
 
 @pytest.mark.isolated
