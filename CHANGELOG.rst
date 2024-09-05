@@ -2,6 +2,22 @@
 Changelog
 +++++++++
 
+1.2.2 (2024-09-06)
+==================
+
+- Add editable to ``builder.get_requries_for_build``'s static types
+  (PR :pr:`764`, fixes issue :issue:`763`)
+- Include artifact attestations in our release
+  (PR :pr:`782`)
+- Fix typing compatibility with typed ``pyproject-hooks``
+  (PR :pr:`788`)
+- Mark more tests with ``network``
+  (PR :pr:`808`)
+- Add more intersphinx links to docs
+  (PR :pr:`804`)
+- Make ``uv`` optional for tests
+  (PR :pr:`807`)
+
 1.2.1 (2024-03-28)
 ==================
 
