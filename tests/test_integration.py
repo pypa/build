@@ -18,6 +18,7 @@ import build.__main__
 
 IS_WINDOWS = sys.platform.startswith('win')
 IS_PYPY = sys.implementation.name == 'pypy'
+MISSING_UV = not shutil.which('uv')
 
 
 INTEGRATION_SOURCES = {
@@ -79,7 +80,14 @@ def get_project(name, tmp_path):
 )
 @pytest.mark.parametrize(
     'args',
-    [[], ['--installer', 'uv'], ['-x', '--no-isolation']],
+    [
+        [],
+        pytest.param(
+            ['--installer', 'uv'],
+            marks=pytest.mark.skipif(MISSING_UV, reason='uv executable not found'),
+        ),
+        ['-x', '--no-isolation'],
+    ],
     ids=['isolated_pip', 'isolated_uv', 'no_isolation'],
 )
 @pytest.mark.parametrize(
