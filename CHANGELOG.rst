@@ -16,7 +16,7 @@ Changelog
 - Add more intersphinx links to docs
   (PR :pr:`804`)
 - Make ``uv`` optional for tests
-  (PR :pr:`807`)
+  (PR :pr:`807` and :pr:`813`)
 
 1.2.1 (2024-03-28)
 ==================
