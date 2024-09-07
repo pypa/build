@@ -84,6 +84,10 @@ build-frontend = "build[uv]"
 
 (Be sure to pre-install uv before running cibuildwheel for this one!)
 
+#### Conda-forge
+
+On conda-forge, this package is called [python-build][].
+
 ### Code of Conduct
 
 Everyone interacting in the build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
@@ -93,3 +97,4 @@ the [PSF Code of Conduct].
 [pipx]: https://pipx.pypa.io
 [uv]: https://docs.astral.sh/uv/
 [cibuildwheel]: https://cibuildwheel.pypa.io
+[python-build]: https://github.com/conda-forge/python-build-feedstock
