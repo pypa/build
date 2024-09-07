@@ -38,7 +38,7 @@ See the [documentation](https://build.pypa.io) for full information.
 - `--installer`: Pick an installer for the isolated build (`pip` or `uv`).
 - `--no-isolation` (`-n`): Disable build isolation.
 - `--skip-dependency-check` (`-x`): Disable dependency checking when not isolated; this should be done if some requirements or version ranges are not required for non-isolated builds.
-- `--outdir (`-o`): The output directory (defaults to `dist`)
+- `--outdir` (`-o`): The output directory (defaults to `dist`)
 
 Some common combinations of arguments:
 
