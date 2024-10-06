@@ -40,3 +40,5 @@ jobs:
           subject-path: "dist/build-*"
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true
