@@ -504,7 +504,8 @@ def test_metadata_path_no_prepare(tmp_dir, package_test_no_prepare):
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
 
-    assert metadata['name'] == 'test-no-prepare'
+    # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
+    assert metadata['name'].replace('-', '_') == 'test_no_prepare'
     assert metadata['Version'] == '1.0.0'
 
 
