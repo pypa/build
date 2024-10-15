@@ -20,8 +20,8 @@ repos:
     rev: v0.20.2
     hooks:
       - id: validate-pyproject
-  - repo: https://github.com/asottile/blacken-docs
-    rev: 1.18.0
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: 1.19.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==23.*]
