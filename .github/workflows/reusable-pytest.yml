@@ -96,7 +96,7 @@ jobs:
         env:
           PYTHON: ${{ matrix.python }}
         with:
-          file: ./.tox/coverage.xml
+          files: .tox/coverage.xml
           flags: tests
           env_vars: PYTHON
           name: ${{ matrix.py }} - ${{ matrix.os }}
