@@ -2,6 +2,9 @@
 Installation
 ============
 
+Installing via pip
+==================
+
 ``build`` can be installed via `pip`_ or an equivalent:
 
 .. code-block:: sh
@@ -38,6 +41,15 @@ accepted.
    There is also a ``uv`` extra, which can be used for ``--installer=uv`` if
    you don't have another install of ``uv`` available.
 
+Installing via conda
+====================
+
+On conda-forge, this package is called python-build_, therefore it can be installed via `conda`_ or an equivalent:
+
+.. code-block:: sh
+
+   $ conda install conda-forge::python-build
+
 Bootstrapping
 =============
 
@@ -66,6 +78,9 @@ versions:
 .. _tox: https://tox.readthedocs.org/
 .. _virtualenv: https://virtualenv.pypa.io
 .. _venv: https://docs.python.org/3/library/venv.html
+
+.. _python-build: https://github.com/conda-forge/python-build-feedstock
+.. _conda: https://github.com/conda/conda
 
 .. _tarball: https://github.com/pypa/build/releases
 .. _git tag: https://github.com/pypa/build/tags
