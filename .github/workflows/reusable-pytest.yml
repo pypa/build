@@ -91,12 +91,12 @@ jobs:
         if: always()
         run: tox -e coverage
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: always()
         env:
           PYTHON: ${{ matrix.python }}
         with:
-          file: ./.tox/coverage.xml
+          files: .tox/coverage.xml
           flags: tests
           env_vars: PYTHON
           name: ${{ matrix.py }} - ${{ matrix.os }}
