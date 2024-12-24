@@ -367,6 +367,6 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
 
 
 __all__ = [
-    'IsolatedEnv',
     'DefaultIsolatedEnv',
+    'IsolatedEnv',
 ]
