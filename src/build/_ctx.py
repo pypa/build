@@ -89,10 +89,10 @@ else:
 
 
 __all__ = [
-    'log_subprocess_error',
-    'log',
-    'run_subprocess',
     'LOGGER',
-    'verbosity',
     'VERBOSITY',
+    'log',
+    'log_subprocess_error',
+    'run_subprocess',
+    'verbosity',
 ]
