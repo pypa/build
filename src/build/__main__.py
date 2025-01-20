@@ -323,7 +323,7 @@ def main_parser() -> argparse.ArgumentParser:
         '--version',
         '-V',
         action='version',
-        version=f"build {build.__version__} ({','.join(build.__path__)})",
+        version=f'build {build.__version__} ({",".join(build.__path__)})',
     )
     parser.add_argument(
         '--verbose',

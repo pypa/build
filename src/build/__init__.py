@@ -21,17 +21,17 @@ from ._util import check_dependency
 __version__ = '1.2.2.post1'
 
 __all__ = [
-    '__version__',
     'BuildBackendException',
     'BuildException',
     'BuildSystemTableValidationError',
-    'check_dependency',
     'ConfigSettingsType',
     'DistributionType',
     'FailedProcessError',
     'ProjectBuilder',
     'RunnerType',
     'TypoWarning',
+    '__version__',
+    'check_dependency',
 ]
 
 

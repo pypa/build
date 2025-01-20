@@ -114,6 +114,6 @@ def test_build_wheel(monkeypatch, tmpdir, args):
         names = z.namelist()
 
     trimmed = {n for n in names if 'dist-info' not in n}
-    trimmed |= {f"dist-info/{n.split('/', 1)[-1]}" for n in names if 'dist-info' in n}
+    trimmed |= {f'dist-info/{n.split("/", 1)[-1]}' for n in names if 'dist-info' in n}
 
     assert trimmed == wheel_files
