@@ -113,7 +113,7 @@ def test_build(request, monkeypatch, project, args, call, tmp_path):
     monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', '0+dummy')  # for the projects that use setuptools_scm
 
     if call and call[0] == 'pyproject-build':
-        exe_name = f"pyproject-build{'.exe' if sys.platform.startswith('win') else ''}"
+        exe_name = f'pyproject-build{".exe" if sys.platform.startswith("win") else ""}'
         exe = os.path.join(os.path.dirname(sys.executable), exe_name)
         if os.path.exists(exe):
             call[0] = exe

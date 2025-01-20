@@ -311,7 +311,7 @@ class ProjectBuilder:
         if not match:
             msg = 'Invalid wheel'
             raise ValueError(msg)
-        distinfo = f"{match['distribution']}-{match['version']}.dist-info"
+        distinfo = f'{match["distribution"]}-{match["version"]}.dist-info'
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
             w.extractall(
