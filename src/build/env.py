@@ -158,6 +158,12 @@ class _PipBackend(_EnvBackend):
         This checks for a valid global pip. Returns None if pip is missing, False
         if pip is too old, and True if it can be used.
         """
+        # `pip install --python` is nonfunctional on Gentoo debundled pip
+        try:
+            import pip._vendor
+        except ImportError:
+            return False
+
         # Version to have added the `--python` option.
         return _has_dependency('pip', '22.3')
 
