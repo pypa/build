@@ -159,7 +159,7 @@ class _PipBackend(_EnvBackend):
         if pip is too old, and True if it can be used.
         """
         # `pip install --python` is nonfunctional on Gentoo debundled pip
-        if importlib.util.find_spec("pip._vendor") is None:
+        if importlib.util.find_spec('pip._vendor') is None:
             return False
 
         # Version to have added the `--python` option.
