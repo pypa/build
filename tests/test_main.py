@@ -202,7 +202,7 @@ def test_build_package(tmp_dir, package_test_setuptools):
     build.__main__.build_package(package_test_setuptools, tmp_dir, ['sdist', 'wheel'])
 
     assert sorted(os.listdir(tmp_dir)) == [
-        'test_setuptools-1.0.0-py2.py3-none-any.whl',
+        'test_setuptools-1.0.0-py3-none-any.whl',
         'test_setuptools-1.0.0.tar.gz',
     ]
 
@@ -213,7 +213,7 @@ def test_build_package_via_sdist(tmp_dir, package_test_setuptools):
     build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['wheel'])
 
     assert sorted(os.listdir(tmp_dir)) == [
-        'test_setuptools-1.0.0-py2.py3-none-any.whl',
+        'test_setuptools-1.0.0-py3-none-any.whl',
         'test_setuptools-1.0.0.tar.gz',
     ]
 
@@ -247,7 +247,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
                 '* Building wheel...',
-                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
+                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py3-none-any.whl',
             ],
             id='via-sdist-isolation',
             marks=[pytest.mark.network, pytest.mark.isolated],
@@ -260,7 +260,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Building wheel from sdist',
                 '* Getting build dependencies for wheel...',
                 '* Building wheel...',
-                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
+                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py3-none-any.whl',
             ],
             id='via-sdist-no-isolation',
         ),
@@ -272,7 +272,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '  - setuptools >= 42.0.0',
                 '* Getting build dependencies for wheel...',
                 '* Building wheel...',
-                'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
+                'Successfully built test_setuptools-1.0.0-py3-none-any.whl',
             ],
             id='wheel-direct-isolation',
             marks=[pytest.mark.network, pytest.mark.isolated],
@@ -282,7 +282,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             [
                 '* Getting build dependencies for wheel...',
                 '* Building wheel...',
-                'Successfully built test_setuptools-1.0.0-py2.py3-none-any.whl',
+                'Successfully built test_setuptools-1.0.0-py3-none-any.whl',
             ],
             id='wheel-direct-no-isolation',
         ),
@@ -302,7 +302,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
                 '* Building sdist...',
                 '* Getting build dependencies for wheel...',
                 '* Building wheel...',
-                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py2.py3-none-any.whl',
+                'Successfully built test_setuptools-1.0.0.tar.gz and test_setuptools-1.0.0-py3-none-any.whl',
             ],
             id='sdist-and-wheel-direct-no-isolation',
         ),
