@@ -166,7 +166,7 @@ class _PipBackend(_EnvBackend):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             if importlib.util.find_spec('pip._vendor') is None:
-                return False
+                return False  # pragma: no cover
 
         # Version to have added the `--python` option.
         return _has_dependency('pip', '22.3')
