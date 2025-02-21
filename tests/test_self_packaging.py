@@ -59,7 +59,7 @@ wheel_files = {
     'build/env.py',
     'build/py.typed',
     'build/util.py',
-    'dist-info/LICENSE',
+    'dist-info/licenses/LICENSE',
     'dist-info/METADATA',
     'dist-info/RECORD',
     'dist-info/WHEEL',
