@@ -11,6 +11,7 @@ import sys
 import sysconfig
 import tempfile
 import typing
+import warnings
 
 from collections.abc import Collection, Mapping
 
@@ -158,6 +159,15 @@ class _PipBackend(_EnvBackend):
         This checks for a valid global pip. Returns None if pip is missing, False
         if pip is too old, and True if it can be used.
         """
+        # `pip install --python` is nonfunctional on Gentoo debundled pip.
+        # Detect that by checking if pip._vendor` module exists.  However,
+        # searching for pip could yield warnings from _distutils_hack,
+        # so silence them.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            if importlib.util.find_spec('pip._vendor') is None:
+                return False  # pragma: no cover
+
         # Version to have added the `--python` option.
         return _has_dependency('pip', '22.3')
 
