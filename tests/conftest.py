@@ -78,6 +78,12 @@ def local_pip(monkeypatch):
     monkeypatch.setattr(build.env._PipBackend, '_has_valid_outer_pip', None)
 
 
+@pytest.fixture(autouse=True)
+def avoid_constraints(monkeypatch):
+    monkeypatch.delenv('PIP_CONSTRAINT', raising=False)
+    monkeypatch.delenv('UV_CONSTRAINT', raising=False)
+
+
 @pytest.fixture(autouse=True, params=[False])
 def has_virtualenv(request, monkeypatch):
     if request.param is not None:
