@@ -80,8 +80,8 @@ def local_pip(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def avoid_constraints(monkeypatch):
-    monkeypatch.delenv("PIP_CONSTRAINT", raising=False)
-    monkeypatch.delenv("UV_CONSTRAINT", raising=False)
+    monkeypatch.delenv('PIP_CONSTRAINT', raising=False)
+    monkeypatch.delenv('UV_CONSTRAINT', raising=False)
 
 
 @pytest.fixture(autouse=True, params=[False])
