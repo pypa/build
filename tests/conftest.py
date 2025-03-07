@@ -103,8 +103,14 @@ def packages_path():
 
 def generate_package_path_fixture(package_name):
     @pytest.fixture
-    def fixture(packages_path):
-        return os.path.join(packages_path, package_name)
+    def fixture(packages_path, tmp_path):
+        package_path = os.path.join(packages_path, package_name)
+        if 'flit' in package_name:
+            return package_path
+
+        new_path = tmp_path / package_name
+        shutil.copytree(package_path, new_path)
+        return str(new_path)
 
     return fixture
 
