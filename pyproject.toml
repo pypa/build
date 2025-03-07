@@ -54,7 +54,7 @@ test = [
   "build[uv, virtualenv]",
   "filelock >= 3",
   "pytest >= 6.2.4",
-  "coverage[toml]>=5.1",
+  "pytest-cov >= 2.12",
   "pytest-mock >= 2",
   "pytest-rerunfailures >= 9.1",
   "pytest-xdist >= 1.34",
@@ -100,7 +100,6 @@ exclude_also = [
   '^\s*raise NotImplementedError\b',
   "if typing.TYPE_CHECKING:",
 ]
-show_missing = true
 
 [tool.coverage.paths]
 build = [
