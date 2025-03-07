@@ -63,6 +63,7 @@ test = [
   'setuptools >= 56.0.0; python_version == "3.10"',
   'setuptools >= 56.0.0; python_version == "3.11"',
   'setuptools >= 67.8.0; python_version >= "3.12"',
+  "setuptools_scm >= 6",
 ]
 typing = [
   "build[uv]",
