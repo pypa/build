@@ -12,10 +12,16 @@ import sysconfig
 import tempfile
 
 from functools import partial, update_wrapper
+from pathlib import Path
 
 import pytest
 
 import build.env
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 
 def pytest_addoption(parser):
@@ -101,12 +107,25 @@ def packages_path():
     return os.path.realpath(os.path.join(__file__, '..', 'packages'))
 
 
+def is_setuptools(package_path):
+    if package_path.joinpath("setup.py").is_file():
+        return True
+    pyproject = package_path / "pyproject.toml"
+    try:
+        with pyproject.open("rb") as f:
+            pp = tomllib.load(f)
+    except (FileNotFoundError, ValueError):
+        return True
+    return "setuptools" in pp.get("build-system", {}).get("build-backend", "setuptools")
+
+
+
 def generate_package_path_fixture(package_name):
     @pytest.fixture
     def fixture(packages_path, tmp_path):
-        package_path = os.path.join(packages_path, package_name)
-        if 'flit' in package_name:
-            return package_path
+        package_path = Path(packages_path) / package_name
+        if not is_setuptools(package_path):
+            return str(package_path)
 
         new_path = tmp_path / package_name
         shutil.copytree(package_path, new_path)
