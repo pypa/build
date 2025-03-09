@@ -95,6 +95,10 @@ source = [
   "build",
   "tests",
 ]
+disable_warnings = [
+  "module-not-measured",  # Triggers in multithreaded context on build
+  "no-sysmon",
+]
 
 [tool.coverage.report]
 exclude_also = [
