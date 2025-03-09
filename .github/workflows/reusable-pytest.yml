@@ -49,6 +49,9 @@ jobs:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
       - name: Pick environment to run
         run: |
           import platform
@@ -70,8 +73,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install tox
-        run: python -m pip install tox tox-uv uv
+      - name: Install tox (uv)
+        if: matrix.py != 'pypy3.8'
+        run: uv tool install tox --with tox-uv
+
+      - name: Install tox (pypy 3.8)
+        if: matrix.py == 'pypy3.8'
+        run: uv tool install tox
 
       - name: Run test suite via tox
         if: matrix.tox-target == 'tox'
