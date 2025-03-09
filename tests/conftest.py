@@ -18,10 +18,7 @@ import pytest
 
 import build.env
 
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
+from build._compat import tomllib
 
 
 def pytest_addoption(parser):
