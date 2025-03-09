@@ -105,16 +105,15 @@ def packages_path():
 
 
 def is_setuptools(package_path):
-    if package_path.joinpath("setup.py").is_file():
+    if package_path.joinpath('setup.py').is_file():
         return True
-    pyproject = package_path / "pyproject.toml"
+    pyproject = package_path / 'pyproject.toml'
     try:
-        with pyproject.open("rb") as f:
+        with pyproject.open('rb') as f:
             pp = tomllib.load(f)
     except (FileNotFoundError, ValueError):
         return True
-    return "setuptools" in pp.get("build-system", {}).get("build-backend", "setuptools")
-
+    return 'setuptools' in pp.get('build-system', {}).get('build-backend', 'setuptools')
 
 
 def generate_package_path_fixture(package_name):
