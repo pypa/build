@@ -68,11 +68,6 @@ jobs:
               file.write(env)
         shell: python
 
-      - name: Setup python for tox
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install tox (uv)
         if: matrix.py != 'pypy3.8'
         run: uv tool install tox --with tox-uv
