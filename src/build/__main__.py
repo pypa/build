@@ -356,7 +356,7 @@ def main_parser() -> argparse.ArgumentParser:
         action='append_const',
         const='editable',
         help='build an editable wheel (disables the default behavior). '
-        'Can not be combined with other distribuion build types',
+        'Can not be combined with other distribution build types',
     )
     parser.add_argument(
         '--outdir',
