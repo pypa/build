@@ -37,7 +37,7 @@ _COLORS = {
     'underline': '\33[4m',
     'reset': '\33[0m',
 }
-_NO_COLORS = {color: '' for color in _COLORS}
+_NO_COLORS = dict.fromkeys(_COLORS, '')
 
 
 _styles = contextvars.ContextVar('_styles', default=_COLORS)
