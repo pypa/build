@@ -15,7 +15,7 @@ class _Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, origin: tuple[str, ...] | None = None) -> None: ...
 
 
-_package_name = __spec__.parent  # type: ignore[name-defined]
+_package_name = __spec__.parent
 _default_logger = logging.getLogger(_package_name)
 
 
