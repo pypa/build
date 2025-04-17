@@ -68,7 +68,7 @@ test = [
 typing = [
   "build[uv]",
   "importlib-metadata >= 5.1",
-  "mypy ~= 1.9.0",
+  "mypy ~= 1.15.0",
   "tomli",
   "typing-extensions >= 3.7.4.3",
 ]
