@@ -214,6 +214,7 @@ class _PipBackend(_EnvBackend):
                 '--activators',
                 '',
                 '--no-setuptools',
+                '--no-periodic-update',
             ]
 
             if virtualenv_ver < packaging.version.Version('20.31.0'):
