@@ -13,8 +13,7 @@ else:
     # the default in Python 3.14. The first series of releases with the filter
     # had a broken filter that could not process symlinks correctly.
     if (
-        (3, 8, 18) <= sys.version_info < (3, 9)
-        or (3, 9, 18) <= sys.version_info < (3, 10)
+        (3, 9, 18) <= sys.version_info < (3, 10)
         or (3, 10, 13) <= sys.version_info < (3, 11)
         or (3, 11, 5) <= sys.version_info < (3, 12)
         or (3, 12) <= sys.version_info < (3, 14)
