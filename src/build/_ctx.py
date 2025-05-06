@@ -51,9 +51,10 @@ def run_subprocess(cmd: Sequence[StrPath], env: Mapping[str, str] | None = None)
             for line in stream:
                 log(line, origin=('subprocess', stream_name))
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor, subprocess.Popen(
-            cmd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        ) as process:
+        with (
+            concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor,
+            subprocess.Popen(cmd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process,
+        ):
             log(subprocess.list2cmdline(cmd), origin=('subprocess', 'cmd'))
 
             # Logging in sub-thread to more-or-less ensure order of stdout and stderr whilst also
