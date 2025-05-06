@@ -134,6 +134,11 @@ filterwarnings = [
   "error",
   "ignore:path is deprecated.:DeprecationWarning",
   "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
+  "ignore:use poll_interval instead of poll_intervall:DeprecationWarning",  # old virtualenv
+  "ignore:'pipes' is deprecated and slated for removal in Python 3.13:DeprecationWarning",  # old virtualenv
+  "ignore:is still running:ResourceWarning",  # old virtualenv
+  "ignore:The distutils package is deprecated:DeprecationWarning",  # old virtualenv
+  "ignore:The distutils.sysconfig module is deprecated:DeprecationWarning",  # old virtualenv
   "default:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
 ]
 
