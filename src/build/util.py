@@ -16,7 +16,9 @@ from .env import DefaultIsolatedEnv
 def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        return importlib.metadata.PathDistribution(path).metadata
+        metadata = importlib.metadata.PathDistribution(path).metadata
+        assert metadata is not None
+        return metadata
 
 
 def project_wheel_metadata(

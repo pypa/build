@@ -202,18 +202,24 @@ class _PipBackend(_EnvBackend):
 
     def create(self, path: str) -> None:
         if self._create_with_virtualenv:
+            import packaging.version
             import virtualenv
 
-            result = virtualenv.cli_run(
-                [
-                    path,
-                    '--activators',
-                    '',
-                    '--no-setuptools',
-                    '--no-wheel',
-                ],
-                setup_logging=False,
-            )
+            from ._compat import importlib
+
+            virtualenv_ver = packaging.version.Version(importlib.metadata.version('virtualenv'))
+
+            opts = [
+                path,
+                '--activators',
+                '',
+                '--no-setuptools',
+            ]
+
+            if virtualenv_ver < packaging.version.Version('20.31.0'):
+                opts.append('--no-wheel')
+
+            result = virtualenv.cli_run(opts, setup_logging=False)
 
             # The creator attributes are `pathlib.Path`s.
             self.python_executable = str(result.creator.exe)
