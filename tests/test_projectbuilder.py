@@ -264,12 +264,12 @@ def test_check_dependencies(mocker, package_test_flit):
     builder._hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
-    assert builder.check_dependencies('sdist') == {('flit_core<3,>=2',)}
-    assert builder.check_dependencies('wheel') == {('flit_core<3,>=2',)}
+    assert builder.check_dependencies('sdist') == {('flit_core<4,>=2',)}
+    assert builder.check_dependencies('wheel') == {('flit_core<4,>=2',)}
 
     # requires = ['something']
-    assert builder.check_dependencies('sdist') == {('flit_core<3,>=2',), ('something',)}
-    assert builder.check_dependencies('wheel') == {('flit_core<3,>=2',), ('something',)}
+    assert builder.check_dependencies('sdist') == {('flit_core<4,>=2',), ('something',)}
+    assert builder.check_dependencies('wheel') == {('flit_core<4,>=2',), ('something',)}
 
     # BackendUnavailable
     with pytest.raises(build.BuildBackendException):

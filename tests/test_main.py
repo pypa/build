@@ -141,7 +141,7 @@ def test_build_isolated(mocker, package_test_flit):
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
-    install.assert_any_call({'flit_core >=2,<3'})
+    install.assert_any_call({'flit_core >=2,<4'})
 
     required_cmd.assert_called_with('sdist', {})
     install.assert_any_call(['dep1', 'dep2'])
