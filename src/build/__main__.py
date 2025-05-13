@@ -289,9 +289,13 @@ def main_parser() -> argparse.ArgumentParser:
     """
     Construct the main parser.
     """
-    fmtopts = {} if sys.version_info < (3, 14) else {'color': True}
-    argopts = {} if sys.version_info < (3, 14) else {'suggest_on_error': True, 'color': True}
-    parser = argparse.ArgumentParser(
+    formatter_class = partial(argparse.RawDescriptionHelpFormatter, width=min(_max_terminal_width, 127))
+    # Workaround for 3.14.0 beta 1, can remove once beta 2 is out
+    if sys.version_info >= (3, 14):
+        formatter_class = partial(formatter_class, color=True)
+
+    make_parser = partial(
+        argparse.ArgumentParser,
         description=textwrap.indent(
             textwrap.dedent(
                 """
@@ -312,9 +316,12 @@ def main_parser() -> argparse.ArgumentParser:
         ),
         # Prevent argparse from taking up the entire width of the terminal window
         # which impedes readability. Also keep the description formatted.
-        formatter_class=partial(argparse.RawDescriptionHelpFormatter, width=min(_max_terminal_width, 127), **fmtopts),
-        **argopts,
+        formatter_class=formatter_class,
     )
+    if sys.version_info >= (3, 14):
+        make_parser = partial(make_parser, suggest_on_error=True, color=True)
+
+    parser = make_parser()
     parser.add_argument(
         'srcdir',
         type=str,
