@@ -23,6 +23,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -76,7 +77,8 @@ uv = [
 ]
 virtualenv = [
   "virtualenv >= 20.11; python_version < '3.10'",
-  "virtualenv >= 20.17; python_version >= '3.10'",
+  "virtualenv >= 20.17; python_version >= '3.10' and python_version < '3.14'",
+  "virtualenv >= 20.31; python_version >= '3.14'",
 ]
 
 [project.scripts]
@@ -134,6 +136,7 @@ filterwarnings = [
   "error",
   "ignore:path is deprecated.:DeprecationWarning",
   "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
+  "ignore:check_home argument is deprecated and ignored:DeprecationWarning:",  # PyPy 3.11
   "default:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
 ]
 

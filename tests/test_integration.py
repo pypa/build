@@ -22,10 +22,10 @@ MISSING_UV = not shutil.which('uv')
 
 
 INTEGRATION_SOURCES = {
-    'dateutil': ('dateutil/dateutil', '2.8.1'),
-    'pip': ('pypa/pip', '20.2.1'),
-    'Solaar': ('pwr-Solaar/Solaar', '1.0.3'),
-    'flit': ('takluyver/flit', '2.3.0'),
+    'dateutil': ('dateutil/dateutil', '2.9.0'),
+    'pip': ('pypa/pip', '25.0.1'),
+    'Solaar': ('pwr-Solaar/Solaar', '1.1.14'),
+    'flit': ('pypa/flit', '3.12.0'),
 }
 
 _SDIST = re.compile('.*.tar.gz')
