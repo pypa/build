@@ -77,7 +77,8 @@ uv = [
 ]
 virtualenv = [
   "virtualenv >= 20.11; python_version < '3.10'",
-  "virtualenv >= 20.17; python_version >= '3.10'",
+  "virtualenv >= 20.17; python_version >= '3.10' and python_version < '3.14'",
+  "virtualenv >= 20.31; python_version >= '3.14'",
 ]
 
 [project.scripts]
