@@ -64,7 +64,7 @@ def run_subprocess(cmd: Sequence[StrPath], env: Mapping[str, str] | None = None)
             )
 
             code = process.wait()
-            if code:
+            if code:  # pragma: no cover
                 raise subprocess.CalledProcessError(code, process.args)
 
     else:
