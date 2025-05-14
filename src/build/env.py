@@ -322,7 +322,7 @@ class _UvBackend(_EnvBackend):
         return 'venv+uv'
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _fs_supports_symlink() -> bool:
     """Return True if symlinks are supported"""
     # Using definition used by venv.main()

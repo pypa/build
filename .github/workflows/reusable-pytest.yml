@@ -15,15 +15,13 @@ jobs:
           - macos
           - windows
         py:
-          - "pypy3.8"
           - "pypy3.9-v7.3.14"
-          - "pypy3.10-v7.3.17"
+          - "pypy3.10-v7.3.19"
           - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
         tox-target:
           - "tox"
           - "min"
@@ -47,12 +45,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Install tox (uv)
-        if: matrix.py != 'pypy3.8'
         run: uv tool install tox --with tox-uv
-
-      - name: Install tox (pypy 3.8)
-        if: matrix.py == 'pypy3.8'
-        run: uv tool install tox
 
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
