@@ -69,7 +69,7 @@ def _showwarning(
 
 
 _max_terminal_width = shutil.get_terminal_size().columns - 2
-if _max_terminal_width <= 0:
+if _max_terminal_width <= 0:  # pragma: no cover
     _max_terminal_width = 78
 
 
@@ -191,7 +191,7 @@ def _handle_build_error() -> Iterator[None]:
                 limit=-1,
             )
             tb = ''.join(tb_lines)
-        else:
+        else:  # pragma: no cover
             tb = traceback.format_exc(-1)
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _error(str(e))

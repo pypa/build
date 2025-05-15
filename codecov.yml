@@ -4,3 +4,5 @@ coverage:
       default:
         informational: true
 comment: false
+codecov:
+  token: 40abb3bf-5066-4ba9-9b69-b522472b230c
