@@ -161,7 +161,7 @@ class _PipBackend(_EnvBackend):
         """
 
         # Version to have added the `--python` option.
-        if not _has_dependency('pip', '22.3'):
+        if not _has_dependency('pip', '22.3'):  # pragma: no cover
             return False
 
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
