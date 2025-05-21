@@ -96,7 +96,6 @@ exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/b
 source = [
   "build",
   "tests",
-
 ]
 omit = ["tests/conftest.py"]
 disable_warnings = [
