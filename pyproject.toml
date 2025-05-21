@@ -96,7 +96,9 @@ exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/b
 source = [
   "build",
   "tests",
+
 ]
+omit = ["tests/conftest.py"]
 disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
   "no-sysmon",
