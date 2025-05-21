@@ -164,6 +164,7 @@ def pytest_report_header() -> str:
     interesting_packages = [
         'build',
         'colorama',
+        'coverage',
         'filelock',
         'packaging',
         'pip',
