@@ -159,6 +159,11 @@ class _PipBackend(_EnvBackend):
         This checks for a valid global pip. Returns None if pip is missing, False
         if pip is too old, and True if it can be used.
         """
+
+        # Version to have added the `--python` option.
+        if not _has_dependency('pip', '22.3'):  # pragma: no cover
+            return False
+
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
         # Detect that by checking if pip._vendor` module exists.  However,
         # searching for pip could yield warnings from _distutils_hack,
@@ -168,8 +173,7 @@ class _PipBackend(_EnvBackend):
             if importlib.util.find_spec('pip._vendor') is None:
                 return False  # pragma: no cover
 
-        # Version to have added the `--python` option.
-        return _has_dependency('pip', '22.3')
+        return True
 
     @functools.cached_property
     def _has_virtualenv(self) -> bool:
