@@ -24,6 +24,7 @@ IS_PYPY = sys.implementation.name == 'pypy'
 IS_WINDOWS = sys.platform.startswith('win')
 
 MISSING_UV = importlib.util.find_spec('uv') is None and not shutil.which('uv')
+MISSING_VIRTUALENV = importlib.util.find_spec('virtualenv') is None
 
 
 @pytest.mark.isolated
@@ -243,8 +244,18 @@ def test_uv_impl_install_cmd_well_formed(
     ('installer', 'env_backend_display_name', 'has_virtualenv'),
     [
         ('pip', 'venv+pip', False),
-        ('pip', 'virtualenv+pip', True),
-        ('pip', 'virtualenv+pip', None),  # Fall-through
+        pytest.param(
+            'pip',
+            'virtualenv+pip',
+            True,
+            marks=pytest.mark.skipif(MISSING_VIRTUALENV, reason='virtualenv not found'),
+        ),
+        pytest.param(
+            'pip',
+            'virtualenv+pip',
+            None,
+            marks=pytest.mark.skipif(MISSING_VIRTUALENV, reason='virtualenv not found'),
+        ),  # Fall-through
         pytest.param(
             'uv',
             'venv+uv',
