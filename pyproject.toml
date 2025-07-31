@@ -15,7 +15,6 @@ authors = [
   { name = "Henry Schreiner", email = "henryschreineriii@gmail.com" },
 ]
 classifiers = [
-  "License :: OSI Approved :: MIT License",  # for compatibility with tooling such as pip-licenses
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.9",
