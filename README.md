@@ -27,8 +27,9 @@ $ python -m build
 ```
 
 This will build the package in an isolated environment, generating a
-source-distribution and wheel in the directory `dist/`.
-See the [documentation](https://build.pypa.io) for full information.
+source-distribution and wheel in the directory `dist/`. See the
+[documentation](https://build.pypa.io) for full information. Build is also
+available via the command line as `pyproject-build` once installed.
 
 ### Common arguments
 
@@ -59,12 +60,18 @@ $ pipx run build
 
 #### uv
 
-If you want to use [uv][] to speed up the virtual environment creation, you can use
-`--installer=uv`. You can get a Python wheel for `uv` with the `[uv]` extra.
-Combining both suggestions yields the following:
+If you want to use [uv][] to speed up the virtual environment creation, you can
+use `--installer=uv`. You can get a Python wheel for `uv` with the `[uv]`
+extra. For example, using pipx like above:
 
 ```console
-$ pipx run build[uv] --installer=uv
+$ pipx run 'build[uv]' --installer uv
+```
+
+If you already have uv, you don't need the extra. For example:
+
+```console
+$ uvx --from build pyproject-build --installer uv
 ```
 
 #### cibuildwheel
