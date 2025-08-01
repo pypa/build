@@ -95,12 +95,12 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         ),
         (
             ['--config-json={"one": 1, "two": [2, 3], "three": {"in": "out"}}'],
-            [cwd, out, ['wheel'], {"one": 1, "two": [2, 3], "three": {"in": "out"}}, True, False, None],
+            [cwd, out, ['wheel'], {'one': 1, 'two': [2, 3], 'three': {'in': 'out'}}, True, False, None],
             'build_package_via_sdist',
         ),
         (
             ['--config-json', '{"outer": {"inner": {"deeper": 2}}}'],
-            [cwd, out, ['wheel'], {"outer": {"inner": {"deeper": 2}}}, True, False, None],
+            [cwd, out, ['wheel'], {'outer': {'inner': {'deeper': 2}}}, True, False, None],
             'build_package_via_sdist',
         ),
         (
@@ -206,7 +206,6 @@ def test_config_json_errors(cli_args, err_msg, capsys):
 
     outerr = capsys.readouterr()
     assert err_msg in outerr.out or err_msg in outerr.err
-
 
 
 @pytest.mark.isolated

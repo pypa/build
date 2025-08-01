@@ -78,7 +78,6 @@ $ uvx --from build pyproject-build --installer uv
 
 If you are using [cibuildwheel][], build is integrated and the default builder in 3.0+. If you want to use `uv` as the installer, you can use:
 
-
 ```toml
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
