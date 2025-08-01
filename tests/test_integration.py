@@ -32,6 +32,8 @@ _SDIST = re.compile('.*.tar.gz')
 _WHEEL = re.compile('.*.whl')
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+EXCL = frozenset(['.tox', 'dist', '.git', '__pycache__', '.integration-sources', '.github', 'tests', 'docs'])
+
 
 def get_project(name, tmp_path):
     dest = tmp_path / name
@@ -39,12 +41,13 @@ def get_project(name, tmp_path):
         # our own project is available in-source, just ignore development files
 
         def _ignore_folder(base, filenames):
-            ignore = [n for n in filenames if n in excl or any(n.endswith(i) for i in ('_cache', '.egg-info', '.pyc'))]
+            ignore = [
+                n for n in filenames if n in EXCL or n.endswith(('_cache', '.egg-info', '.pyc') or n.startswith('.coverage'))
+            ]
             if os.path.basename == ROOT and 'build' in filenames:  # ignore build only at root (our module is build too)
                 ignore.append('build')
             return ignore
 
-        excl = '.tox', 'dist', '.git', '__pycache__', '.integration-sources', '.github', 'tests', 'docs'
         shutil.copytree(ROOT, str(dest), ignore=_ignore_folder)
         return dest
 

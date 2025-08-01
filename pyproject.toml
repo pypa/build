@@ -149,6 +149,7 @@ filterwarnings = [
   "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
   "ignore:check_home argument is deprecated and ignored:DeprecationWarning:",  # PyPy 3.11
   "default:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
+  "default:unclosed:ResourceWarning", # Python 3.11 Windows
 ]
 
 [tool.mypy]
