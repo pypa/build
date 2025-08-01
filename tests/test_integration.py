@@ -42,9 +42,9 @@ def get_project(name, tmp_path):
 
         def _ignore_folder(base, filenames):
             ignore = [
-                n for n in filenames if n in EXCL or n.endswith(('_cache', '.egg-info', '.pyc') or n.startswith('.coverage'))
+                n for n in filenames if n in EXCL or n.endswith(('_cache', '.egg-info', '.pyc')) or n.startswith('.coverage')
             ]
-            if os.path.basename == ROOT and 'build' in filenames:  # ignore build only at root (our module is build too)
+            if os.path.basename(base) == ROOT and 'build' in filenames:  # ignore build only at root (our module is build too)
                 ignore.append('build')
             return ignore
 
