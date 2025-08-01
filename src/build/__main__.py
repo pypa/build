@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import contextvars
+import json
 import os
 import platform
 import shutil
@@ -385,7 +386,8 @@ def main_parser() -> argparse.ArgumentParser:
         choices=_env.INSTALLERS,
         help='Python package installer to use (defaults to pip)',
     )
-    parser.add_argument(
+    config_group = parser.add_mutually_exclusive_group()
+    config_group.add_argument(
         '--config-setting',
         '-C',
         dest='config_settings',
@@ -395,6 +397,15 @@ def main_parser() -> argparse.ArgumentParser:
         'by a space character; use ``--config-setting=--my-setting -C--my-other-setting``',
         metavar='KEY[=VALUE]',
     )
+    config_group.add_argument(
+        '--config-json',
+        dest='config_json',
+        help='settings to pass to the backend as a JSON object. '
+        'This is an alternative to --config-setting that allows complex nested structures. '
+        'Cannot be used together with --config-setting',
+        metavar='JSON_STRING',
+    )
+
     return parser
 
 
@@ -414,7 +425,17 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     config_settings = {}
 
-    if args.config_settings:
+    # Handle --config-json
+    if args.config_json:
+        try:
+            config_settings = json.loads(args.config_json)
+            if not isinstance(config_settings, dict):
+                _error('--config-json must contain a JSON object (dict), not a list or primitive value')
+        except json.JSONDecodeError as e:
+            _error(f'Invalid JSON in --config-json: {e}')
+
+    # Handle --config-setting (original logic)
+    elif args.config_settings:
         for arg in args.config_settings:
             setting, _, value = arg.partition('=')
             if setting not in config_settings:

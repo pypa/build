@@ -93,6 +93,21 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             [cwd, out, ['wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False, None],
             'build_package_via_sdist',
         ),
+        (
+            ['--config-json={"one": 1, "two": [2, 3], "three": {"in": "out"}}'],
+            [cwd, out, ['wheel'], {"one": 1, "two": [2, 3], "three": {"in": "out"}}, True, False, None],
+            'build_package_via_sdist',
+        ),
+        (
+            ['--config-json', '{"outer": {"inner": {"deeper": 2}}}'],
+            [cwd, out, ['wheel'], {"outer": {"inner": {"deeper": 2}}}, True, False, None],
+            'build_package_via_sdist',
+        ),
+        (
+            ['--config-json', '{}'],
+            [cwd, out, ['wheel'], {}, True, False, None],
+            'build_package_via_sdist',
+        ),
     ],
 )
 def test_parse_args(mocker, cli_args, build_args, hook):
@@ -175,6 +190,23 @@ def test_build_no_isolation_with_check_deps(mocker, package_test_flit, missing_d
 
     build_cmd.assert_called_with('sdist', '.', {})
     error.assert_called_with('Missing dependencies:' + output)
+
+
+@pytest.mark.parametrize(
+    ['cli_args', 'err_msg'],
+    [
+        (['-Cone=1', '--config-json={"two": 2}'], 'not allowed with argument'),
+        (['--config-json={"two": 2'], 'Invalid JSON in --config-json'),
+        (['--config-json=[1]'], '--config-json must contain a JSON object'),
+    ],
+)
+def test_config_json_errors(cli_args, err_msg, capsys):
+    with pytest.raises(SystemExit):
+        build.__main__.main(cli_args)
+
+    outerr = capsys.readouterr()
+    assert err_msg in outerr.out or err_msg in outerr.err
+
 
 
 @pytest.mark.isolated
