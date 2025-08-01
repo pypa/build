@@ -36,6 +36,7 @@ available via the command line as `pyproject-build` once installed.
 - `--sdist` (`-s`): Produce just an SDist
 - `--wheel` (`-w`): Produce just a wheel
 - `-C<option>=<value>`: A Config-setting, the PEP 517 way of passing options to a backend. Can be passed multiple times. Matching options will make a list. Note that setuptools has very limited support.
+- `--config-json=<value>`: An alternative way to pass in complex config settings as JSON strings. Can't be used with `-C`.
 - `--installer`: Pick an installer for the isolated build (`pip` or `uv`).
 - `--no-isolation` (`-n`): Disable build isolation.
 - `--skip-dependency-check` (`-x`): Disable dependency checking when not isolated; this should be done if some requirements or version ranges are not required for non-isolated builds.
@@ -75,14 +76,7 @@ $ uvx --from build pyproject-build --installer uv
 
 #### cibuildwheel
 
-If you are using [cibuildwheel][], build is integrated and can be use with either (in your `pyproject.toml`):
-
-```toml
-[tool.cibuildwheel]
-build-frontend = "build"
-```
-
-or
+If you are using [cibuildwheel][], build is integrated and the default builder in 3.0+. If you want to use `uv` as the installer, you can use:
 
 ```toml
 [tool.cibuildwheel]
