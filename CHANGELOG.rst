@@ -2,6 +2,34 @@
 Changelog
 +++++++++
 
+1.3.0 (2025-08-01)
+==================
+
+- Add ``--config-json``
+  (PR :pr:`916`, fixes issue :issue:`900`)
+- Drop Python 3.8
+  (PR :pr:`891`)
+- Test on Python 3.14, colorful help on 3.14+
+  (PR :pr:`895`)
+- Fix ``ModuleNotFoundError`` when ``pip`` is not installed
+  (PR :pr:`898`)
+- Disable use of ``pip install --python`` for debundled pip
+  (PR :pr:`861`)
+- Don't pass no-wheel to virtualenv if it would warn
+  (PR :pr:`892`)
+- Optimize our tests to run faster
+  (PR :pr:`871`, :pr:`872`, :pr:`738`)
+- Allow running our tests without virtualenv
+  (PR :pr:`911`)
+- Fix issues in our tests
+  (PR :pr:`824`, :pr:`918`, :pr:`870`, :pr:`915`, :pr:`862`, :pr:`863`, :pr:`899`, :pr:`896`, :pr:`854`)
+- Use SPDX identifiers for our license metadata
+  (PR :pr:`914`)
+- Use dependency-groups for our development
+  (PR :pr:`880`)
+- Mention conda and update uv mention in README/docs
+  (PR :pr:`842`, :pr:`816`, :pr:`917`)
+
 1.2.2 (2024-09-06)
 ==================
 
