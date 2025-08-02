@@ -92,6 +92,7 @@ typing = [
   { include-group = "extra" },
 ]
 dev = [
+  "flit-core",
   { include-group = "test" },
   { include-group = "typing" },
 ]
