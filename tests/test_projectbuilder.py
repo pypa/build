@@ -8,7 +8,7 @@ import pathlib
 import sys
 import textwrap
 
-from typing import Never
+from typing import NoReturn
 
 import pyproject_hooks
 import pytest
@@ -250,7 +250,7 @@ def test_build_missing_backend(packages_path, distribution, tmpdir):
         builder.build(distribution, str(tmpdir))
 
 
-def _nothing_installed(name: str) -> Never:
+def _nothing_installed(name: str) -> NoReturn:
     raise _importlib.metadata.PackageNotFoundError(name)
 
 
