@@ -8,6 +8,8 @@ import pathlib
 import sys
 import textwrap
 
+from typing import NoReturn
+
 import pyproject_hooks
 import pytest
 
@@ -248,9 +250,15 @@ def test_build_missing_backend(packages_path, distribution, tmpdir):
         builder.build(distribution, str(tmpdir))
 
 
-def test_check_dependencies(mocker, package_test_flit):
+def _nothing_installed(name: str) -> NoReturn:
+    raise _importlib.metadata.PackageNotFoundError(name)
+
+
+def test_check_dependencies(mocker, package_test_flit, monkeypatch):
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_sdist')
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_wheel')
+
+    monkeypatch.setattr(_importlib.metadata, 'distribution', _nothing_installed)
 
     builder = build.ProjectBuilder(package_test_flit)
 
