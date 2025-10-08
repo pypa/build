@@ -68,7 +68,7 @@ def test_venv_executable_missing_post_creation(
     mocker: pytest_mock.MockerFixture,
 ):
     venv_create = mocker.patch('venv.EnvBuilder.create')
-    with pytest.raises(RuntimeError, match='Virtual environment creation failed, executable .* missing'):
+    with pytest.raises(RuntimeError, match=r'Virtual environment creation failed, executable .* missing'):
         with build.env.DefaultIsolatedEnv():
             pass
     assert venv_create.call_count == 1
