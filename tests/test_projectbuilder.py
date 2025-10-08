@@ -424,7 +424,7 @@ def test_build_with_dep_on_console_script(tmp_path, demo_pkg_inline, capfd, mock
     with pytest.raises(SystemExit):
         main(['--wheel', '--outdir', str(tmp_path / 'dist'), str(tmp_path)])
 
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     lines = [line[3:] for line in out.splitlines() if line.startswith('BB ')]  # filter for our markers
     path_vars = lines[0].split(os.pathsep)
     which_detected = lines[1]
@@ -469,7 +469,7 @@ def test_prepare_not_dir_outdir(mocker, tmp_dir, package_test_flit):
     out = os.path.join(tmp_dir, 'out')
     with open(out, 'w', encoding='utf-8') as f:
         f.write('Not a directory')
-    with pytest.raises(build.BuildException, match='Build path .* exists and is not a directory'):
+    with pytest.raises(build.BuildException, match=r'Build path .* exists and is not a directory'):
         builder.prepare('wheel', out)
 
 

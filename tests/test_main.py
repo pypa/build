@@ -138,7 +138,7 @@ def test_prog():
 def test_version(capsys):
     with pytest.raises(SystemExit):
         build.__main__.main(['--version'])
-    out, err = capsys.readouterr()
+    out, _ = capsys.readouterr()
     assert out.startswith(f'build {build.__version__}')
 
 
@@ -342,7 +342,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
 @pytest.mark.flaky(reruns=5)
 def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
     build.__main__.main([package_test_setuptools, '-o', tmp_dir, *args])
-    stdout, stderr = capsys.readouterr()
+    stdout, _ = capsys.readouterr()
     assert set(stdout.splitlines()) <= set(output)
 
 

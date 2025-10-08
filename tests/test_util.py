@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import importlib.util
+import re
 
 import pytest
 
@@ -32,7 +33,7 @@ def test_wheel_metadata_isolation(package_test_flit):
 
     with pytest.raises(
         build.BuildBackendException,
-        match="Backend 'flit_core.buildapi' is not available.",
+        match=re.escape("Backend 'flit_core.buildapi' is not available."),
     ):
         build.util.project_wheel_metadata(package_test_flit, isolated=False)
 
