@@ -47,6 +47,6 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.6.0"
+    rev: "1.7.0"
     hooks:
       - id: tox-ini-fmt
