@@ -86,7 +86,7 @@ test = [
 ]
 typing = [
   "importlib-metadata >= 5.1",
-  "mypy ~= 1.15.0",
+  "mypy ~= 1.18.2",
   "tomli",
   "typing-extensions >= 3.7.4.3",
   { include-group = "extra" },
