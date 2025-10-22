@@ -33,7 +33,7 @@ urls.source = "https://github.com/pypa/build"
 # Version read from __version__ field in __init__.py by Flit
 dynamic = ["version"]
 dependencies = [
-  "packaging >= 19.1",
+  "packaging >= 24.0",
   "pyproject_hooks",
   # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
   'colorama; os_name == "nt"',
