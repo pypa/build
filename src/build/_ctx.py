@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from ._types import StrPath
 
 
-class _Logger(typing.Protocol):  # pragma: no cover
+class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, origin: tuple[str, ...] | None = None) -> None: ...
 
 
@@ -75,7 +75,7 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
 
 
 if typing.TYPE_CHECKING:
-    log: _Logger
+    log: Logger
     verbosity: bool
 
 else:
