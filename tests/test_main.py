@@ -626,5 +626,6 @@ def test_metadata_json_output(
 
     stdout = capsys.readouterr().out
     metadata = json.loads(stdout)
-    assert metadata['name'] == 'test_setuptools'
+    # Name normalised in old versions of setuptools.
+    assert metadata['name'] in {'test_setuptools', 'test-setuptools'}
     assert metadata['version'] == '1.0.0'
