@@ -620,11 +620,11 @@ def test_verbose_logging_output(
 
 def test_metadata_json_output(
     capsys: pytest.CaptureFixture,
-    package_test_flit,
+    package_test_setuptools,
 ):
-    build.__main__.main([package_test_flit, '--metadata', '-n'])
+    build.__main__.main([package_test_setuptools, '--metadata', '-n'])
 
     stdout = capsys.readouterr().out
     metadata = json.loads(stdout)
-    assert metadata['name'] == 'test_flit'
+    assert metadata['name'] == 'test_setuptools'
     assert metadata['version'] == '1.0.0'
