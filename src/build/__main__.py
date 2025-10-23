@@ -303,7 +303,10 @@ def _build_metadata(
     import packaging.metadata
 
     def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None) -> None:
-        _ctx.run_subprocess(cmd, cwd, extra_environ)
+        env = os.environ.copy()
+        if extra_environ:
+            env.update(extra_environ)
+        _ctx.run_subprocess(cmd, cwd, env)
 
     with (
         _bootstrap_build_env(
