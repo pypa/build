@@ -2,6 +2,7 @@
 
 import contextlib
 import io
+import json
 import os
 import re
 import subprocess
@@ -26,100 +27,212 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
 @pytest.mark.parametrize(
-    ('cli_args', 'build_args', 'hook'),
+    ('cli_args', 'build_args', 'build_kwargs', 'hook'),
     [
         (
             [],
-            [cwd, out, ['wheel'], {}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['-n'],
-            [cwd, out, ['wheel'], {}, False, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': False,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['-s'],
-            [cwd, out, ['sdist'], {}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['sdist'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package',
         ),
         (
             ['-w'],
-            [cwd, out, ['wheel'], {}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package',
         ),
         (
             ['-s', '-w'],
-            [cwd, out, ['sdist', 'wheel'], {}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['sdist', 'wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package',
         ),
         (
             ['source'],
-            ['source', os.path.join('source', 'dist'), ['wheel'], {}, True, False, None],
+            ('source', os.path.join('source', 'dist')),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['-o', 'out'],
-            [cwd, 'out', ['wheel'], {}, True, False, None],
+            (cwd, 'out'),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['source', '-o', 'out'],
-            ['source', 'out', ['wheel'], {}, True, False, None],
+            ('source', 'out'),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['-x'],
-            [cwd, out, ['wheel'], {}, True, True, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': True,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['--installer', 'uv'],
-            [cwd, out, ['wheel'], {}, True, False, 'uv'],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': 'uv',
+            },
             'build_package_via_sdist',
         ),
         (
             ['-C--flag1', '-C--flag2'],
-            [cwd, out, ['wheel'], {'--flag1': '', '--flag2': ''}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {'--flag1': '', '--flag2': ''},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['-C--flag=value'],
-            [cwd, out, ['wheel'], {'--flag': 'value'}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {'--flag': 'value'},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
-            [cwd, out, ['wheel'], {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['--config-json={"one": 1, "two": [2, 3], "three": {"in": "out"}}'],
-            [cwd, out, ['wheel'], {'one': 1, 'two': [2, 3], 'three': {'in': 'out'}}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {'one': 1, 'two': [2, 3], 'three': {'in': 'out'}},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['--config-json', '{"outer": {"inner": {"deeper": 2}}}'],
-            [cwd, out, ['wheel'], {'outer': {'inner': {'deeper': 2}}}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {'outer': {'inner': {'deeper': 2}}},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
         (
             ['--config-json', '{}'],
-            [cwd, out, ['wheel'], {}, True, False, None],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'installer': None,
+            },
             'build_package_via_sdist',
         ),
     ],
 )
-def test_parse_args(mocker, cli_args, build_args, hook):
+def test_parse_args(mocker, cli_args, build_args, build_kwargs, hook):
     build_package = mocker.patch('build.__main__.build_package', return_value=['something'])
     build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
 
     build.__main__.main(cli_args)
 
     if hook == 'build_package':
-        build_package.assert_called_with(*build_args)
+        build_package.assert_called_with(*build_args, **build_kwargs)
     elif hook == 'build_package_via_sdist':
-        build_package_via_sdist.assert_called_with(*build_args)
+        build_package_via_sdist.assert_called_with(*build_args, **build_kwargs)
     else:  # pragma: no cover
         msg = f'Unknown hook {hook}'
         raise ValueError(msg)
@@ -158,10 +271,10 @@ def test_build_isolated(mocker, package_test_flit):
 
     install.assert_any_call({'flit_core >=2,<4'})
 
-    required_cmd.assert_called_with('sdist', {})
+    required_cmd.assert_called_with('sdist', None)
     install.assert_any_call(['dep1', 'dep2'])
 
-    build_cmd.assert_called_with('sdist', '.', {})
+    build_cmd.assert_called_with('sdist', '.', None)
 
 
 def test_build_no_isolation_check_deps_empty(mocker, package_test_flit):
@@ -171,7 +284,7 @@ def test_build_no_isolation_check_deps_empty(mocker, package_test_flit):
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
-    build_cmd.assert_called_with('sdist', '.', {})
+    build_cmd.assert_called_with('sdist', '.', None)
 
 
 @pytest.mark.parametrize(
@@ -188,7 +301,7 @@ def test_build_no_isolation_with_check_deps(mocker, package_test_flit, missing_d
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
-    build_cmd.assert_called_with('sdist', '.', {})
+    build_cmd.assert_called_with('sdist', '.', None)
     error.assert_called_with('Missing dependencies:' + output)
 
 
@@ -337,18 +450,38 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
             ],
             id='sdist-and-wheel-direct-no-isolation',
         ),
+        pytest.param(
+            ['--metadata'],
+            [
+                '* Creating isolated environment: venv+pip...',
+                '* Getting metadata for wheel...',
+                '* Getting build dependencies for wheel...',
+                '* Installing packages in isolated environment:',
+                '  - setuptools >= 42.0.0',
+            ],
+            id='metadata-isolation',
+            marks=[pytest.mark.network, pytest.mark.isolated],
+        ),
+        pytest.param(
+            ['--metadata', '--no-isolation'],
+            [
+                '* Getting build dependencies for wheel...',
+                '* Getting metadata for wheel...',
+            ],
+            id='metadata-no-isolation',
+        ),
     ],
 )
 @pytest.mark.flaky(reruns=5)
-def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
+def test_logging_output(package_test_setuptools, tmp_dir, capsys, args, output):
     build.__main__.main([package_test_setuptools, '-o', tmp_dir, *args])
-    stdout, _ = capsys.readouterr()
-    assert set(stdout.splitlines()) <= set(output)
+    _, stderr = capsys.readouterr()
+    assert set(stderr.splitlines()) <= set(output)
 
 
 @pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
-    ('color', 'stdout_error', 'stdout_body'),
+    ('color', 'stderr_error', 'stderr_body'),
     [
         (
             False,
@@ -374,15 +507,15 @@ def test_output(package_test_setuptools, tmp_dir, capsys, args, output):
     ids=['no-color', 'color'],
 )
 @pytest.mark.usefixtures('local_pip')
-def test_output_env_subprocess_error(
+def test_logging_output_env_subprocess_error(
     mocker,
     monkeypatch,
     package_test_invalid_requirements,
     tmp_dir,
-    capsys,
+    capsys: pytest.CaptureFixture,
     color,
-    stdout_body,
-    stdout_error,
+    stderr_body,
+    stderr_error,
 ):
     try:
         # do not inject hook to have clear output on capsys
@@ -395,15 +528,14 @@ def test_output_env_subprocess_error(
 
     with pytest.raises(SystemExit):
         build.__main__.main([package_test_invalid_requirements, '-o', tmp_dir])
-    stdout, stderr = capsys.readouterr()
-    stdout, stderr = stdout.splitlines(), stderr.splitlines()
+    outerr = capsys.readouterr()
+    stderr = outerr.err.splitlines()
 
-    assert stdout[:4] == stdout_body
-    assert stdout[-1].startswith(stdout_error)
+    assert stderr[:4] == stderr_body
+    assert stderr[-1].startswith(stderr_error)
 
     # Newer versions of pip also color stderr - strip them if present
-    cleaned_stderr = ANSI_STRIP.sub('', '\n'.join(stderr)).strip()
-    assert cleaned_stderr.startswith('< ERROR: Invalid requirement: ')
+    assert any(ANSI_STRIP.sub('', e).strip().startswith('< ERROR: Invalid requirement: ') for e in stderr)
 
 
 @pytest.mark.parametrize(
@@ -441,7 +573,7 @@ def test_colors_conflict(monkeypatch):
         assert build.__main__._styles.get() == build.__main__._NO_COLORS
 
 
-def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
+def test_logging_output_venv_failure(monkeypatch, package_test_flit, tmp_dir, capsys):
     def raise_called_process_err(*args, **kwargs):
         raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
 
@@ -451,28 +583,23 @@ def test_venv_fail(monkeypatch, package_test_flit, tmp_dir, capsys):
     with pytest.raises(SystemExit):
         build.__main__.main([package_test_flit, '-o', tmp_dir])
 
-    stdout, stderr = capsys.readouterr()
+    _, stderr = capsys.readouterr()
 
     assert (
-        stdout
+        stderr
         == """\
 * Creating isolated environment: venv+pip...
 > test args
 < stdoutput
-ERROR Failed to create venv. Maybe try installing virtualenv.
-"""
-    )
-    assert (
-        stderr
-        == """\
 < stderror
+ERROR Failed to create venv. Maybe try installing virtualenv.
 """
     )
 
 
 @pytest.mark.network
 @pytest.mark.parametrize('verbosity', [0, 1])
-def test_verbose_output(
+def test_verbose_logging_output(
     capsys: pytest.CaptureFixture,
     monkeypatch,
     tmp_dir,
@@ -487,5 +614,18 @@ def test_verbose_output(
 
     build.__main__.main(cmd)
 
-    stdout = capsys.readouterr().out.splitlines()
-    assert sum(1 for o in stdout if o.startswith('> ')) == verbosity
+    stderr = capsys.readouterr().err.splitlines()
+    assert sum(1 for o in stderr if o.startswith('> ')) == verbosity
+
+
+def test_metadata_json_output(
+    capsys: pytest.CaptureFixture,
+    package_test_setuptools,
+):
+    build.__main__.main([package_test_setuptools, '--metadata', '-n'])
+
+    stdout = capsys.readouterr().out
+    metadata = json.loads(stdout)
+    # Name normalised in old versions of setuptools.
+    assert metadata['name'] in {'test_setuptools', 'test-setuptools'}
+    assert metadata['version'] == '1.0.0'
