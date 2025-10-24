@@ -66,7 +66,7 @@ def _showwarning(
     file: TextIO | None = None,
     line: str | None = None,
 ) -> None:  # pragma: no cover
-    _cprint('{yellow}WARNING{reset} {}', str(message), file if file is not None else None)
+    _cprint('{yellow}WARNING{reset} {}', str(message), file)
 
 
 def _make_logger() -> _ctx.Logger:
