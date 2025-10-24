@@ -92,11 +92,11 @@ def _make_logger() -> _ctx.Logger:
 
 
 def _setup_cli(*, verbosity: int) -> None:
-    warnings.showwarning = _showwarning  # ty: ignore[invalid-assignment]
+    warnings.showwarning = _showwarning
 
     if platform.system() == 'Windows':
         try:
-            import colorama  # ty: ignore[unresolved-import]
+            import colorama
 
             colorama.init()
         except ModuleNotFoundError:
