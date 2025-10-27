@@ -30,7 +30,7 @@ repos:
     hooks:
       - id: prettier
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0
+    rev: v0.14.2
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
@@ -47,6 +47,6 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.6.0"
+    rev: "1.7.0"
     hooks:
       - id: tox-ini-fmt
