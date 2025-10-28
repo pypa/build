@@ -47,7 +47,7 @@ Some common combinations of arguments:
 
 - `--sdist --wheel` (`-sw`): Produce and SDist and a wheel, both from the source distribution. The default (if no flag is passed) is to build an SDist and then build a wheel _from_ the SDist.
 - `-nx`: Disable build isolation and dependency checking. Identical to pip and uv's `--no-build-isolation` flag.
-- `--metadata 2>/dev/null | jq -r .version`: get the version in a bash-like environment.
+- `--metadata | jq -r .version`: get the version in a bash-like environment.
 
 ### Integration with other tools
 
