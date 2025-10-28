@@ -88,6 +88,7 @@ typing = [
   "importlib-metadata >= 5.1",
   "tomli",
   "typing-extensions >= 3.7.4.3",
+  "types-colorama",
   { include-group = "extra" },
 ]
 mypy = [
@@ -164,7 +165,6 @@ warn_unreachable = true
 
 [[tool.mypy.overrides]]
 module = [
-  "colorama",   # Optional dependency
   "virtualenv", # Optional dependency
 ]
 ignore_missing_imports = true
