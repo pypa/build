@@ -131,7 +131,7 @@ show_contexts = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = ["--strict-config", "--strict-markers"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
 log_cli_level = "info"
 testpaths = ["tests"]
 xfail_strict = true
@@ -156,8 +156,8 @@ filterwarnings = [
 files = "src"
 python_version = "3.9"
 strict = true
-show_error_codes = true
 enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
+warn_unreachable = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -202,6 +202,10 @@ lines-after-imports = 2
 ignore = [
   "W005",  # We _are_ build
 ]
+
+[tool.repo-review]
+ignore = ["PC140"]  # mypy in tox
+
 
 [tool.bumpversion]
 current_version = "1.0.0"
