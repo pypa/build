@@ -35,6 +35,7 @@ available via the command line as `pyproject-build` once installed.
 
 - `--sdist` (`-s`): Produce just an SDist
 - `--wheel` (`-w`): Produce just a wheel
+- `--metadata`: Produce just the metadata as JSON. Cannot be used with `--sdist`/`--wheel`.
 - `-C<option>=<value>`: A Config-setting, the PEP 517 way of passing options to a backend. Can be passed multiple times. Matching options will make a list. Note that setuptools has very limited support.
 - `--config-json=<value>`: An alternative way to pass in complex config settings as JSON strings. Can't be used with `-C`.
 - `--installer`: Pick an installer for the isolated build (`pip` or `uv`).
@@ -46,6 +47,7 @@ Some common combinations of arguments:
 
 - `--sdist --wheel` (`-sw`): Produce and SDist and a wheel, both from the source distribution. The default (if no flag is passed) is to build an SDist and then build a wheel _from_ the SDist.
 - `-nx`: Disable build isolation and dependency checking. Identical to pip and uv's `--no-build-isolation` flag.
+- `--metadata | jq -r .version`: get the version in a bash-like environment.
 
 ### Integration with other tools
 

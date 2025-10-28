@@ -390,7 +390,7 @@ def main_parser() -> argparse.ArgumentParser:
         '--outdir',
         '-o',
         type=str,
-        help=f'output directory (defaults to {{srcdir}}{os.sep}dist).  Cannot be used together with `--metadata`',
+        help=f'output directory (defaults to {{srcdir}}{os.sep}dist).  Cannot be used together with ``--metadata``',
         metavar='PATH',
     )
     build_group.add_argument(
@@ -412,7 +412,7 @@ def main_parser() -> argparse.ArgumentParser:
     build_group.add_argument(
         '--metadata',
         action='store_true',
-        help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with `--sdist` or `--wheel`",
+        help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with ``--sdist`` or ``--wheel``",
     )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
     config_exclusive_group.add_argument(
@@ -422,15 +422,15 @@ def main_parser() -> argparse.ArgumentParser:
         action='append',
         help='settings to pass to the backend.  Multiple settings can be provided. '
         'Settings beginning with a hyphen will erroneously be interpreted as options to build if separated '
-        'by a space; use `--config-setting=--my-setting -C--my-other-setting` instead',
+        'by a space; use ``--config-setting=--my-setting -C--my-other-setting`` instead',
         metavar='KEY[=VALUE]',
     )
     config_exclusive_group.add_argument(
         '--config-json',
         dest='config_json',
         help='settings to pass to the backend as a JSON object. '
-        'This is an alternative to `--config-setting` that allows complex nested structures. '
-        'Cannot be used together with `--config-setting`',
+        'This is an alternative to ``--config-setting`` that allows complex nested structures. '
+        'Cannot be used together with ``--config-setting``',
         metavar='JSON_STRING',
     )
 

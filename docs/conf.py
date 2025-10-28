@@ -71,6 +71,7 @@ autoclass_content = 'both'
 nitpick_ignore = [
     # https://github.com/python/importlib_metadata/issues/316
     ('py:class', 'importlib.metadata._meta.PackageMetadata'),
+    ('py:data', 'typing.Union'),
 ]
 
 
