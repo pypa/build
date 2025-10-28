@@ -33,7 +33,7 @@ urls.source = "https://github.com/pypa/build"
 # Version read from __version__ field in __init__.py by Flit
 dynamic = ["version"]
 dependencies = [
-  "packaging >= 19.1",
+  "packaging >= 24.0",
   "pyproject_hooks",
   # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
   'colorama; os_name == "nt"',
@@ -86,7 +86,7 @@ test = [
 ]
 typing = [
   "importlib-metadata >= 5.1",
-  "mypy ~= 1.15.0",
+  "mypy ~= 1.18.2",
   "tomli",
   "typing-extensions >= 3.7.4.3",
   { include-group = "extra" },

@@ -6,12 +6,11 @@ import subprocess
 import typing
 
 from collections.abc import Mapping, Sequence
-from functools import partial
 
 from ._types import StrPath
 
 
-class _Logger(typing.Protocol):  # pragma: no cover
+class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, origin: tuple[str, ...] | None = None) -> None: ...
 
 
@@ -39,7 +38,7 @@ def log_subprocess_error(error: subprocess.CalledProcessError) -> None:
             log(stream.decode() if isinstance(stream, bytes) else stream, origin=('subprocess', stream_name))
 
 
-def run_subprocess(cmd: Sequence[StrPath], env: Mapping[str, str] | None = None) -> None:
+def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[str, str] | None = None) -> None:
     verbosity = VERBOSITY.get()
 
     if verbosity:
@@ -47,21 +46,21 @@ def run_subprocess(cmd: Sequence[StrPath], env: Mapping[str, str] | None = None)
 
         log = LOGGER.get()
 
-        def log_stream(stream_name: str, stream: typing.IO[str]) -> None:
-            for line in stream:
-                log(line, origin=('subprocess', stream_name))
-
         with (
-            concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor,
-            subprocess.Popen(cmd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process,
+            concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor,
+            subprocess.Popen(
+                cmd, cwd=cwd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            ) as process,
         ):
             log(subprocess.list2cmdline(cmd), origin=('subprocess', 'cmd'))
 
-            # Logging in sub-thread to more-or-less ensure order of stdout and stderr whilst also
-            # being able to distinguish between the two.
-            concurrent.futures.wait(
-                [executor.submit(partial(log_stream, n, getattr(process, n))) for n in ('stdout', 'stderr')]
-            )
+            @executor.submit
+            def log_stream() -> None:
+                assert process.stdout
+                for line in process.stdout:
+                    log(line, origin=('subprocess', 'stdout'))
+
+            concurrent.futures.wait([log_stream])
 
             code = process.wait()
             if code:  # pragma: no cover
@@ -69,14 +68,14 @@ def run_subprocess(cmd: Sequence[StrPath], env: Mapping[str, str] | None = None)
 
     else:
         try:
-            subprocess.run(cmd, capture_output=True, check=True, env=env)
+            subprocess.run(cmd, capture_output=True, check=True, cwd=cwd, env=env)
         except subprocess.CalledProcessError as error:
             log_subprocess_error(error)
             raise
 
 
 if typing.TYPE_CHECKING:
-    log: _Logger
+    log: Logger
     verbosity: bool
 
 else:
