@@ -86,15 +86,18 @@ test = [
 ]
 typing = [
   "importlib-metadata >= 5.1",
-  "mypy ~= 1.18.2",
   "tomli",
   "typing-extensions >= 3.7.4.3",
   { include-group = "extra" },
 ]
+mypy = [
+  "mypy ~= 1.18.2",
+  { include-group = "typing" },
+]
 dev = [
   "flit-core",
   { include-group = "test" },
-  { include-group = "typing" },
+  { include-group = "mypy" },
 ]
 
 [tool.flit.sdist]
