@@ -414,8 +414,8 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with `--sdist` or `--wheel`",
     )
-    config_exlusive_group = build_group.add_mutually_exclusive_group()
-    config_exlusive_group.add_argument(
+    config_exclusive_group = build_group.add_mutually_exclusive_group()
+    config_exclusive_group.add_argument(
         '--config-setting',
         '-C',
         dest='config_settings',
@@ -425,7 +425,7 @@ def main_parser() -> argparse.ArgumentParser:
         'by a space; use `--config-setting=--my-setting -C--my-other-setting` instead',
         metavar='KEY[=VALUE]',
     )
-    config_exlusive_group.add_argument(
+    config_exclusive_group.add_argument(
         '--config-json',
         dest='config_json',
         help='settings to pass to the backend as a JSON object. '
@@ -435,13 +435,13 @@ def main_parser() -> argparse.ArgumentParser:
     )
 
     install_group = parser.add_argument_group('installation options')
-    env_exlusive_group = install_group.add_mutually_exclusive_group()
-    env_exlusive_group.add_argument(
+    env_exclusive_group = install_group.add_mutually_exclusive_group()
+    env_exclusive_group.add_argument(
         '--installer',
         choices=_env.INSTALLERS,
         help='Python package installer to use (defaults to pip)',
     )
-    env_exlusive_group.add_argument(
+    env_exclusive_group.add_argument(
         '--no-isolation',
         '-n',
         action='store_true',
