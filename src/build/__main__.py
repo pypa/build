@@ -198,7 +198,7 @@ def _handle_build_error() -> Iterator[None]:
             )
             tb = ''.join(tb_lines)
         else:  # pragma: no cover
-            tb = traceback.format_exc(-1)
+            tb = traceback.format_exc(-1)  # type: ignore[unreachable]
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _error(str(e))
     except Exception as e:  # pragma: no cover
