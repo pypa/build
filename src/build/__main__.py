@@ -507,7 +507,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
 
     if args.metadata and args.distributions:
-        parser.error('--metadata: not allowed with argument --sdist or --wheel')
+        parser.error('--metadata: not allowed with --sdist or --wheel')
     elif args.metadata:
         build = partial(_build_metadata, distributions=['wheel'])
     elif args.distributions:
