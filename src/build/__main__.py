@@ -20,6 +20,8 @@ from collections.abc import Iterator, Mapping, Sequence
 from functools import partial
 from typing import Any, NoReturn, TextIO
 
+import pyproject_hooks
+
 import build
 
 from . import ProjectBuilder, _ctx
@@ -77,6 +79,9 @@ def _make_logger() -> _ctx.Logger:
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
 
     def log(message: str, *, origin: tuple[str, ...] | None = None) -> None:
+        if _ctx.verbosity < 0:
+            return
+
         if origin is None:
             (first, *rest) = message.splitlines()
             _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
@@ -174,7 +179,15 @@ def _build(
     skip_dependency_check: bool,
     installer: _env.Installer,
 ) -> str:
-    with _bootstrap_build_env(isolation, srcdir, distribution, config_settings, skip_dependency_check, installer) as builder:
+    with _bootstrap_build_env(
+        isolation,
+        srcdir,
+        distribution,
+        config_settings,
+        skip_dependency_check,
+        installer,
+        pyproject_hooks.quiet_subprocess_runner if _ctx.verbosity < 0 else None,
+    ) as builder:
         return builder.build(distribution, outdir, config_settings)
 
 
@@ -373,7 +386,17 @@ def main_parser() -> argparse.ArgumentParser:
         action='version',
         version=f'build {build.__version__} ({",".join(build.__path__)})',
     )
-    global_group.add_argument(
+    verbosity_exclusive_group = global_group.add_mutually_exclusive_group()
+    verbosity_exclusive_group.add_argument(
+        '--quiet',
+        '-q',
+        dest='verbosity',
+        action='store_const',
+        const=-1,
+        default=0,
+        help='reduce verbosity',
+    )
+    verbosity_exclusive_group.add_argument(
         '--verbose',
         '-v',
         dest='verbosity',
@@ -521,7 +544,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             skip_dependency_check=args.skip_dependency_check,
             installer=args.installer,
         )
-        if built:
+        if _ctx.verbosity >= 0 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )
