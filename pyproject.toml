@@ -136,7 +136,7 @@ show_contexts = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = ["-ra", "--strict-config", "--strict-markers"]
-log_cli_level = "info"
+log_level = "INFO"
 testpaths = ["tests"]
 xfail_strict = true
 junit_family = "xunit2"
