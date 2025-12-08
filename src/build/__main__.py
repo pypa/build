@@ -348,7 +348,7 @@ def main_parser() -> argparse.ArgumentParser:
         formatter_class=formatter_class,
     )
     if sys.version_info >= (3, 14):
-        make_parser = partial(make_parser, suggest_on_error=True, color=True)
+        make_parser = partial(make_parser, suggest_on_error=True)
 
     parser = make_parser()
     parser.add_argument(
