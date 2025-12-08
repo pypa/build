@@ -331,9 +331,6 @@ def main_parser() -> argparse.ArgumentParser:
     Construct the main parser.
     """
     formatter_class = argparse.RawDescriptionHelpFormatter
-    # Workaround for 3.14.0 beta 1, can remove once beta 2 is out
-    if sys.version_info >= (3, 14):
-        formatter_class = partial(formatter_class, color=True)
 
     make_parser = partial(
         argparse.ArgumentParser,
