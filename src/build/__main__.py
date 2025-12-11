@@ -79,19 +79,17 @@ def _make_logger() -> _ctx.Logger:
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
 
     def log(message: str, *, origin: tuple[str, ...] | None = None) -> None:
-        if _ctx.verbosity < 0:
-            return
+        if _ctx.verbosity >= -1:
+            if origin is None:
+                (first, *rest) = message.splitlines()
+                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+                for line in rest:
+                    print(fill(line, initial_indent='  '), file=sys.stderr)
 
-        if origin is None:
-            (first, *rest) = message.splitlines()
-            _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-            for line in rest:
-                print(fill(line, initial_indent='  '), file=sys.stderr)
-
-        elif origin[0] == 'subprocess':
-            initial_indent = '> ' if origin[1] == 'cmd' else '< '
-            for line in message.splitlines():
-                _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
+            elif origin[0] == 'subprocess':
+                initial_indent = '> ' if origin[1] == 'cmd' else '< '
+                for line in message.splitlines():
+                    _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
 
     return log
 
@@ -343,6 +341,32 @@ def main_parser() -> argparse.ArgumentParser:
     """
     Construct the main parser.
     """
+
+    class NegativeCountAction(argparse.Action):
+        def __init__(
+            self,
+            option_strings: Sequence[str],
+            dest: str,
+            default: Any = None,
+            help: str | None = None,
+        ) -> None:
+            super().__init__(
+                option_strings=option_strings,
+                dest=dest,
+                nargs=0,
+                default=default,
+                help=help,
+            )
+
+        def __call__(
+            self,
+            parser: argparse.ArgumentParser,
+            namespace: object,
+            values: str | Sequence[Any] | None,
+            option_string: str | None = None,
+        ) -> None:
+            setattr(namespace, self.dest, getattr(namespace, self.dest, 0) - 1)
+
     formatter_class = argparse.RawDescriptionHelpFormatter
 
     make_parser = partial(
@@ -391,8 +415,7 @@ def main_parser() -> argparse.ArgumentParser:
         '--quiet',
         '-q',
         dest='verbosity',
-        action='store_const',
-        const=-1,
+        action=NegativeCountAction,
         default=0,
         help='reduce verbosity',
     )
@@ -544,7 +567,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             skip_dependency_check=args.skip_dependency_check,
             installer=args.installer,
         )
-        if _ctx.verbosity >= 0 and built:
+        if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )
