@@ -20,6 +20,8 @@ from collections.abc import Iterator, Mapping, Sequence
 from functools import partial
 from typing import Any, NoReturn, TextIO
 
+import pyproject_hooks
+
 import build
 
 from . import ProjectBuilder, _ctx
@@ -77,16 +79,17 @@ def _make_logger() -> _ctx.Logger:
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
 
     def log(message: str, *, origin: tuple[str, ...] | None = None) -> None:
-        if origin is None:
-            (first, *rest) = message.splitlines()
-            _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-            for line in rest:
-                print(fill(line, initial_indent='  '), file=sys.stderr)
+        if _ctx.verbosity >= -1:
+            if origin is None:
+                (first, *rest) = message.splitlines()
+                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+                for line in rest:
+                    print(fill(line, initial_indent='  '), file=sys.stderr)
 
-        elif origin[0] == 'subprocess':
-            initial_indent = '> ' if origin[1] == 'cmd' else '< '
-            for line in message.splitlines():
-                _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
+            elif origin[0] == 'subprocess':
+                initial_indent = '> ' if origin[1] == 'cmd' else '< '
+                for line in message.splitlines():
+                    _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
 
     return log
 
@@ -174,7 +177,15 @@ def _build(
     skip_dependency_check: bool,
     installer: _env.Installer,
 ) -> str:
-    with _bootstrap_build_env(isolation, srcdir, distribution, config_settings, skip_dependency_check, installer) as builder:
+    with _bootstrap_build_env(
+        isolation,
+        srcdir,
+        distribution,
+        config_settings,
+        skip_dependency_check,
+        installer,
+        pyproject_hooks.quiet_subprocess_runner if _ctx.verbosity < 0 else None,
+    ) as builder:
         return builder.build(distribution, outdir, config_settings)
 
 
@@ -330,6 +341,32 @@ def main_parser() -> argparse.ArgumentParser:
     """
     Construct the main parser.
     """
+
+    class NegativeCountAction(argparse.Action):
+        def __init__(
+            self,
+            option_strings: Sequence[str],
+            dest: str,
+            default: Any = None,
+            help: str | None = None,
+        ) -> None:
+            super().__init__(
+                option_strings=option_strings,
+                dest=dest,
+                nargs=0,
+                default=default,
+                help=help,
+            )
+
+        def __call__(
+            self,
+            parser: argparse.ArgumentParser,
+            namespace: object,
+            values: str | Sequence[Any] | None,
+            option_string: str | None = None,
+        ) -> None:
+            setattr(namespace, self.dest, getattr(namespace, self.dest, 0) - 1)
+
     formatter_class = argparse.RawDescriptionHelpFormatter
 
     make_parser = partial(
@@ -373,7 +410,16 @@ def main_parser() -> argparse.ArgumentParser:
         action='version',
         version=f'build {build.__version__} ({",".join(build.__path__)})',
     )
-    global_group.add_argument(
+    verbosity_exclusive_group = global_group.add_mutually_exclusive_group()
+    verbosity_exclusive_group.add_argument(
+        '--quiet',
+        '-q',
+        dest='verbosity',
+        action=NegativeCountAction,
+        default=0,
+        help='reduce verbosity',
+    )
+    verbosity_exclusive_group.add_argument(
         '--verbose',
         '-v',
         dest='verbosity',
@@ -521,7 +567,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             skip_dependency_check=args.skip_dependency_check,
             installer=args.installer,
         )
-        if built:
+        if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )

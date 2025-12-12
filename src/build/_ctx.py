@@ -41,7 +41,7 @@ def log_subprocess_error(error: subprocess.CalledProcessError) -> None:
 def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[str, str] | None = None) -> None:
     verbosity = VERBOSITY.get()
 
-    if verbosity:
+    if verbosity > 0:
         import concurrent.futures
 
         log = LOGGER.get()

@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import contextlib
 import contextvars
 import importlib.metadata
@@ -181,3 +183,17 @@ def pytest_report_header() -> str:
             valid.append(f'{package}=={importlib.metadata.version(package)}')
     reqs = ' '.join(valid)
     return f'installed packages of interest: {reqs}'
+
+
+@pytest.fixture
+def subtests(request: pytest.FixtureRequest):
+    try:
+        return request.getfixturevalue('subtests')
+    except pytest.FixtureLookupError:
+
+        class Subtests:
+            @contextlib.contextmanager
+            def test(msg: str | None = None, **kwargs: object):
+                yield
+
+        return Subtests()

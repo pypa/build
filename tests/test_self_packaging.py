@@ -1,5 +1,7 @@
 # These tests check the sdist, path, and wheel of build to ensure that all are valid.
 
+from __future__ import annotations
+
 import subprocess
 import sys
 import tarfile

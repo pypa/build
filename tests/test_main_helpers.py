@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from build.__main__ import _natural_language_list
