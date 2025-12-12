@@ -598,24 +598,28 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
 
 
 @pytest.mark.network
-@pytest.mark.parametrize('verbosity', [0, 1])
 def test_verbose_logging_output(
-    capsys: pytest.CaptureFixture,
+    subtests: pytest.Subtests,
+    capfd: pytest.CaptureFixture,
     monkeypatch,
     tmp_dir,
-    package_test_flit,
-    verbosity: int,
+    package_test_setuptools,
 ):
     monkeypatch.setenv('NO_COLOR', '')
 
-    cmd = [package_test_flit, '-w', '-o', tmp_dir]
-    if verbosity:
-        cmd.insert(0, f'-{"v" * verbosity}')
+    no_of_lines = -1
 
-    build.__main__.main(cmd)
+    for verbosity in range(-2, 3):
+        with subtests.test(verbosity=verbosity):
+            cmd = [package_test_setuptools, '-w', '-o', tmp_dir]
+            if verbosity:
+                cmd.insert(0, f'-{("v" if verbosity > 0 else "q") * abs(verbosity)}')
 
-    stderr = capsys.readouterr().err.splitlines()
-    assert sum(1 for o in stderr if o.startswith('> ')) == verbosity
+            build.__main__.main(cmd)
+
+            new_no_of_lines = sum(1 for s in capfd.readouterr() for i in s.splitlines())
+            assert new_no_of_lines > no_of_lines
+            no_of_lines = new_no_of_lines
 
 
 def test_metadata_json_output(
