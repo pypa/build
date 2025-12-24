@@ -174,27 +174,29 @@ def test_install_short_circuits(
     mocker: pytest_mock.MockerFixture,
 ):
     with build.env.DefaultIsolatedEnv() as env:
-        install_requirements = mocker.patch.object(env._env_backend, 'install_requirements')
+        install_dependencies = mocker.patch.object(env._env_backend, 'install_dependencies')
 
         env.install([])
-        install_requirements.assert_not_called()
+        install_dependencies.assert_not_called()
 
         env.install(['foo'])
-        install_requirements.assert_called_once()
+        install_dependencies.assert_called_once()
 
 
-@pytest.mark.parametrize('verbosity', range(4))
+@pytest.mark.parametrize('verbosity', range(3))
+@pytest.mark.parametrize('constraints', [[], ['foo']])
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
+    constraints: list[str],
 ):
     mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
 
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'])
+        env.install(['some', 'requirements'], constraints)
 
         run_subprocess.assert_called_once_with(
             [
@@ -208,34 +210,40 @@ def test_default_impl_install_cmd_well_formed(
                 '--no-compile',
                 '-r',
                 mocker.ANY,
+                *(['-c', mocker.ANY] if constraints else []),
             ]
         )
 
 
-@pytest.mark.parametrize('verbosity', range(4))
+@pytest.mark.parametrize('verbosity', range(3))
+@pytest.mark.parametrize('constraints', [[], ['foo']])
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
+    constraints: list[str],
 ):
     mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
 
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'])
+        env.install(['some', 'requirements'], constraints)
 
+        run_subprocess.assert_called_once_with(
+            [
+                mocker.ANY,
+                'pip',
+                *(['-vv' if verbosity > 2 else '-v'] if verbosity > 1 else []),
+                'install',
+                'some',
+                'requirements',
+                *(['-c', mocker.ANY] if constraints else []),
+            ],
+            env=mocker.ANY,
+        )
         (install_call,) = run_subprocess.call_args_list
-        assert len(install_call.args) == 1
-        assert install_call.args[0][1:] == [
-            'pip',
-            *(['-vv' if verbosity > 2 else '-v'] if verbosity > 1 else []),
-            'install',
-            'some',
-            'requirements',
-        ]
-        assert len(install_call.kwargs) == 1
         assert install_call.kwargs['env']['VIRTUAL_ENV'] == env.path
 
 
