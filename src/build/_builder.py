@@ -24,7 +24,7 @@ from ._exceptions import (
     TypoWarning,
 )
 from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
-from ._util import check_dependency, parse_wheel_filename
+from ._util import check_dependency, debug, parse_wheel_filename
 
 
 _TProjectBuilder = TypeVar('_TProjectBuilder', bound='ProjectBuilder')
@@ -162,6 +162,7 @@ class ProjectBuilder:
         self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
 
         self._backend = self._build_system['build-backend']
+        debug("build:backend  " + self._backend)
 
         self._hook = pyproject_hooks.BuildBackendHookCaller(
             self._source_dir,
@@ -170,6 +171,7 @@ class ProjectBuilder:
             python_executable=self._python_executable,
             runner=self._runner,
         )
+        debug("build:python_executable  " + str(self._python_executable))
 
     @classmethod
     def from_isolated_env(

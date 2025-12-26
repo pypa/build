@@ -12,6 +12,10 @@ _WHEEL_FILENAME_REGEX = re.compile(
 )
 
 
+def debug(msg: str) -> None:
+    print(msg)
+
+
 def check_dependency(
     req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: Set[str] = frozenset()
 ) -> Iterator[tuple[str, ...]]:
