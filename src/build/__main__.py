@@ -90,6 +90,9 @@ def _make_logger() -> _ctx.Logger:
                 initial_indent = '> ' if origin[1] == 'cmd' else '< '
                 for line in message.splitlines():
                     _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
+            elif origin[0] == 'build':
+                if _ctx.verbosity >= 1:
+                    print('build:' + message)
 
     return log
 
