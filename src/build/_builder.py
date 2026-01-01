@@ -278,7 +278,7 @@ class ProjectBuilder:
         cmd = [self.python_executable, '-c', script]
         version = 'Unknown'
         try:
-            version = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+            version = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout
         except subprocess.CalledProcessError as exc:
             _ctx.log_subprocess_error(exc)
         return f'{lib} {version}'
