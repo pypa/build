@@ -271,6 +271,14 @@ class ProjectBuilder:
                 return None
             raise
 
+    def get_backend_version(self) -> str | None:
+        # setuptools.build_meta:__legacy__  -->  setuptools
+        lib = self._backend.split('.')[0]
+        script = f'import {lib}; print({lib}.__version__)'
+        cmd = [self.python_executable, '-c', script]
+        version = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+        return version
+
     def build(
         self,
         distribution: Distribution,

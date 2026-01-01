@@ -189,6 +189,8 @@ def _build(
         installer,
         pyproject_hooks.quiet_subprocess_runner if _ctx.verbosity < 0 else None,
     ) as builder:
+        version = builder.get_backend_version()
+        _ctx.log('backend_version  ' + version, origin=('build',))
         return builder.build(distribution, outdir, config_settings)
 
 
