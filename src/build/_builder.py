@@ -271,13 +271,17 @@ class ProjectBuilder:
                 return None
             raise
 
-    def get_backend_version(self) -> str | None:
+    def get_backend_version(self) -> str:
         # setuptools.build_meta:__legacy__  -->  setuptools
         lib = self._backend.split('.')[0]
         script = f'import {lib}; print({lib}.__version__)'
         cmd = [self.python_executable, '-c', script]
-        version = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
-        return version
+        version = 'Unknown'
+        try:
+            version = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+        except subprocess.CalledProcessError as exc:
+            _ctx.log_subprocess_error(exc)
+        return f'{lib} {version}'
 
     def build(
         self,
