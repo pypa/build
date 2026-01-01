@@ -278,7 +278,7 @@ class ProjectBuilder:
         cmd = [self.python_executable, '-c', script]
         version = 'Unknown'
         try:
-            version = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout
+            version = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.strip()
         except subprocess.CalledProcessError as exc:
             _ctx.log_subprocess_error(exc)
         return f'{lib} {version}'
@@ -301,6 +301,9 @@ class ProjectBuilder:
         :returns: The full path to the built distribution
         """
         _ctx.log(f'Building {distribution}...')
+        version = self.get_backend_version()
+        _ctx.log('backend_version  ' + version, origin=('build',))
+
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
