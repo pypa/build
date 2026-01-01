@@ -300,9 +300,8 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        _ctx.log(f'Building {distribution}...')
         version = self.get_backend_version()
-        _ctx.log('backend_version  ' + version, origin=('build',))
+        _ctx.log(f'Building {distribution}...\n(using {version})')
 
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
