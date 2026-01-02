@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import difflib
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -273,8 +274,10 @@ class ProjectBuilder:
             raise
 
     def get_backend_version(self) -> str:
-        # setuptools.build_meta:__legacy__  -->  setuptools
-        module = self._backend.split('.')[0]
+        reqlist = []
+        # setuptools >= 40.8.0  -->  setuptools
+        for req in self.build_system_requires:
+            reqlist.append(re.findall(r'\w+', req)[0])
         script = textwrap.dedent(f"""
             import sys
             try:
@@ -282,13 +285,13 @@ class ProjectBuilder:
             except ModuleNotFoundError:
                 # Python < (3, 10, 2)
                 import importlib_metadata as metadata
-            lib = metadata.packages_distributions()['{module}'][0]
-            print(lib + ' ' + metadata.version(lib))
+            for lib in {reqlist}:
+                print('  ' + lib + '==' + metadata.version(lib))
         """)
         cmd = [self.python_executable, '-c', script]
-        info = f'{module} Unknown'
+        info = 'No build requirements'
         try:
-            info = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.strip()
+            info = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.rstrip()
         except subprocess.CalledProcessError as exc:
             _ctx.log_subprocess_error(exc)
         return info
@@ -310,8 +313,8 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        version = self.get_backend_version()
-        _ctx.log(f'Building {distribution}...\n(using {version})')
+        versions = self.get_backend_version()
+        _ctx.log(f'Building {distribution}...\n{versions}')
 
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
