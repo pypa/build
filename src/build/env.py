@@ -304,7 +304,7 @@ class _UvBackend(_EnvBackend):
 
             self._uv_bin = uv.find_uv_bin()
         except (ModuleNotFoundError, FileNotFoundError):
-            uv_bin = shutil.which('uv')
+            uv_bin = shutil.which(os.environ.get('UV') or 'uv')
             if uv_bin is None:
                 msg = 'uv executable not found'
                 raise RuntimeError(msg) from None
