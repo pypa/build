@@ -274,23 +274,24 @@ class ProjectBuilder:
 
     def get_backend_version(self) -> str:
         # setuptools.build_meta:__legacy__  -->  setuptools
-        lib = self._backend.split('.')[0]
-        script = textwrap.dedent(f'''
+        module = self._backend.split('.')[0]
+        script = textwrap.dedent(f"""
             import sys
             try:
                 from importlib import metadata
             except ModuleNotFoundError:
                 # Python < (3, 10, 2)
                 import importlib_metadata as metadata
-            print(metadata.version('{lib}'))
-        ''')
+            lib = metadata.packages_distributions()['{module}'][0]
+            print(lib + ' ' + metadata.version(lib))
+        """)
         cmd = [self.python_executable, '-c', script]
-        version = 'Unknown'
+        info = f'{module} Unknown'
         try:
-            version = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.strip()
+            info = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.strip()
         except subprocess.CalledProcessError as exc:
             _ctx.log_subprocess_error(exc)
-        return f'{lib} {version}'
+        return info
 
     def build(
         self,
