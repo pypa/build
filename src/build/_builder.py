@@ -7,6 +7,7 @@ import difflib
 import os
 import subprocess
 import sys
+import textwrap
 import warnings
 import zipfile
 
@@ -274,7 +275,15 @@ class ProjectBuilder:
     def get_backend_version(self) -> str:
         # setuptools.build_meta:__legacy__  -->  setuptools
         lib = self._backend.split('.')[0]
-        script = f'import {lib}; print({lib}.__version__)'
+        script = textwrap.dedent(f'''
+            import sys
+            try:
+                from importlib import metadata
+            except ModuleNotFoundError:
+                # Python < (3, 10, 2)
+                import importlib_metadata as metadata
+            print(metadata.version('{lib}'))
+        ''')
         cmd = [self.python_executable, '-c', script]
         version = 'Unknown'
         try:
