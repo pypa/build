@@ -41,7 +41,7 @@ class IsolatedEnv(typing.Protocol):
 
 def _has_dependency(name: str, minimum_version_str: str | None = None, /, **distargs: object) -> bool | None:
     """
-    Given a path, see if a package is present and return True if the version is
+    Given a distribution name, see if it is present and return True if the version is
     sufficient for build, False if it is not, None if the package is missing.
     """
     from packaging.version import Version
