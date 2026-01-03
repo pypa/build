@@ -5,8 +5,10 @@ from __future__ import annotations
 import contextlib
 import difflib
 import os
+import re
 import subprocess
 import sys
+import textwrap
 import warnings
 import zipfile
 
@@ -162,6 +164,7 @@ class ProjectBuilder:
         self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
 
         self._backend = self._build_system['build-backend']
+        _ctx.log('backend  ' + self._backend, origin=('debug', 'build'))
 
         self._hook = pyproject_hooks.BuildBackendHookCaller(
             self._source_dir,
@@ -170,6 +173,7 @@ class ProjectBuilder:
             python_executable=self._python_executable,
             runner=self._runner,
         )
+        _ctx.log('python_executable  ' + str(self._python_executable), origin=('debug', 'build'))
 
     @classmethod
     def from_isolated_env(
@@ -269,6 +273,29 @@ class ProjectBuilder:
                 return None
             raise
 
+    def get_backend_version(self) -> str:
+        reqlist = []
+        # setuptools >= 40.8.0  -->  setuptools
+        for req in self.build_system_requires:
+            reqlist.append(re.findall(r'\w+', req)[0])
+        script = textwrap.dedent(f"""
+            import sys
+            try:
+                from importlib import metadata
+            except ModuleNotFoundError:
+                # Python < (3, 10, 2)
+                import importlib_metadata as metadata
+            for lib in {reqlist}:
+                print('  ' + lib + '==' + metadata.version(lib))
+        """)
+        cmd = [self.python_executable, '-c', script]
+        info = 'No build requirements'
+        try:
+            info = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.rstrip()
+        except subprocess.CalledProcessError as exc:
+            _ctx.log_subprocess_error(exc)
+        return info
+
     def build(
         self,
         distribution: Distribution,
@@ -286,7 +313,9 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        _ctx.log(f'Building {distribution}...')
+        versions = self.get_backend_version()
+        _ctx.log(f'Building {distribution}...\n{versions}')
+
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
