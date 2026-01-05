@@ -550,6 +550,7 @@ def test_metadata_invalid_wheel(tmp_dir, package_test_bad_wheel):
 def test_log(mocker, caplog, package_test_flit):
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
     mocker.patch('build.ProjectBuilder._call_backend', return_value='some_path')
+    mocker.patch('build.env.BaseEnv.get_package_version', return_value='3.12.0')
     caplog.set_level(logging.DEBUG)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -564,7 +565,9 @@ def test_log(mocker, caplog, package_test_flit):
         ('INFO', 'Getting build dependencies for wheel...'),
         ('INFO', 'Getting metadata for wheel...'),
         ('INFO', 'Building sdist...'),
+        ('INFO', '  flit_core==3.12.0'),
         ('INFO', 'Building wheel...'),
+        ('INFO', '  flit_core==3.12.0'),
     ]
 
 
