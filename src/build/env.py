@@ -103,6 +103,18 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if os.path.exists(self._path):  # in case the user already deleted skip remove
             shutil.rmtree(self._path)
 
+    def get_package_version(self, name) -> str | None:
+        """Return package version installed in the environment, or None."""
+        from ._compat.importlib import metadata
+
+        # importlib discovery API docs are pending
+        # https://github.com/python/cpython/pull/134751
+        try:
+            distribution = next(metadata.Distribution.discover(name=name, path=[self._env_backend.purelib_dir]))
+        except StopIteration:
+            return None
+        return distribution.version
+
     @property
     def path(self) -> str:
         """The location of the isolated build environment."""
@@ -140,6 +152,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
 class _EnvBackend(typing.Protocol):  # pragma: no cover
     python_executable: str
     scripts_dir: str
+    purelib_dir: str
 
     def create(self, path: str) -> None: ...
 
@@ -241,14 +254,14 @@ class _PipBackend(_EnvBackend):
                 _ctx.log_subprocess_error(exc)
                 raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
-            self.python_executable, self.scripts_dir, purelib = _find_executable_and_scripts(path)
+            self.python_executable, self.scripts_dir, self.purelib_dir = _find_executable_and_scripts(path)
 
             if with_pip:
                 minimum_pip_version_str = self._get_minimum_pip_version_str()
                 if not _has_dependency(
                     'pip',
                     minimum_pip_version_str,
-                    path=[purelib],
+                    path=[self.purelib_dir],
                 ):
                     run_subprocess([self.python_executable, '-Im', 'pip', 'install', f'pip>={minimum_pip_version_str}'])
 
@@ -256,7 +269,7 @@ class _PipBackend(_EnvBackend):
                 # Pythons 3.12 and up do not install setuptools, check if it exists first.
                 if _has_dependency(
                     'setuptools',
-                    path=[purelib],
+                    path=[self.purelib_dir],
                 ):
                     run_subprocess([self.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools'])
 
@@ -313,7 +326,7 @@ class _UvBackend(_EnvBackend):
             self._uv_bin = uv_bin
 
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
-        self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
+        self.python_executable, self.scripts_dir, self.purelib_dir = _find_executable_and_scripts(self._env_path)
 
     def install_requirements(self, requirements: Collection[str]) -> None:
         cmd = [self._uv_bin, 'pip']

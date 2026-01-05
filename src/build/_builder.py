@@ -8,7 +8,6 @@ import os
 import re
 import subprocess
 import sys
-import textwrap
 import warnings
 import zipfile
 
@@ -136,6 +135,7 @@ class ProjectBuilder:
         source_dir: StrPath,
         python_executable: str = sys.executable,
         runner: SubprocessRunner = pyproject_hooks.default_subprocess_runner,
+        env: env.IsolatedEnv = None,
     ) -> None:
         """
         :param source_dir: The source directory
@@ -175,6 +175,8 @@ class ProjectBuilder:
         )
         _ctx.log('python_executable  ' + str(self._python_executable), origin=('debug', 'build'))
 
+        self._env = env
+
     @classmethod
     def from_isolated_env(
         cls: type[_TProjectBuilder],
@@ -186,6 +188,7 @@ class ProjectBuilder:
             source_dir=source_dir,
             python_executable=env.python_executable,
             runner=_wrap_subprocess_runner(runner, env),
+            env=env,
         )
 
     @property
@@ -274,27 +277,16 @@ class ProjectBuilder:
             raise
 
     def get_backend_version(self) -> str:
-        reqlist = []
-        # setuptools >= 40.8.0  -->  setuptools
+        info = []
         for req in self.build_system_requires:
-            reqlist.append(re.findall(r'\w+', req)[0])
-        script = textwrap.dedent(f"""
-            import sys
-            try:
-                from importlib import metadata
-            except ModuleNotFoundError:
-                # Python < (3, 10, 2)
-                import importlib_metadata as metadata
-            for lib in {reqlist}:
-                print('  ' + lib + '==' + metadata.version(lib))
-        """)
-        cmd = [self.python_executable, '-c', script]
-        info = 'No build requirements'
-        try:
-            info = subprocess.run(cmd, capture_output=True, check=True, encoding='utf-8').stdout.rstrip()
-        except subprocess.CalledProcessError as exc:
-            _ctx.log_subprocess_error(exc)
-        return info
+            # setuptools >= 40.8.0  -->  setuptools
+            name = re.findall(r'\w+', req)[0]
+            version = self._env.get_package_version(name)
+            info.append(f'  {name}=={version}')
+        if info:
+            return '\n'.join(info)
+        else:
+            return 'No build requirements'
 
     def build(
         self,
