@@ -135,7 +135,7 @@ class ProjectBuilder:
         source_dir: StrPath,
         python_executable: str = sys.executable,
         runner: SubprocessRunner = pyproject_hooks.default_subprocess_runner,
-        env: env.IsolatedEnv = None,
+        build_env: env.BaseEnv | None = None,
     ) -> None:
         """
         :param source_dir: The source directory
@@ -175,7 +175,7 @@ class ProjectBuilder:
         )
         _ctx.log('python_executable  ' + str(self._python_executable), origin=('debug', 'build'))
 
-        self._env = env
+        self._env = env.BaseEnv() if build_env is None else build_env
 
     @classmethod
     def from_isolated_env(
@@ -188,7 +188,7 @@ class ProjectBuilder:
             source_dir=source_dir,
             python_executable=env.python_executable,
             runner=_wrap_subprocess_runner(runner, env),
-            env=env,
+            build_env=env,
         )
 
     @property

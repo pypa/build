@@ -39,6 +39,26 @@ class IsolatedEnv(typing.Protocol):
         """Generate additional env vars specific to the isolated environment."""
 
 
+class BaseEnv:
+    """Common build environment API"""
+
+    @staticmethod
+    def get_package_version(name: str, paths: list[str] = sys.path) -> str | None:
+        """Return package version installed in the environment, or None.
+        paths is a list of site-packages paths for package discovery
+        (used to query packages in venv without activating it).
+        """
+        from ._compat.importlib import metadata
+
+        # importlib discovery API docs are pending
+        # https://github.com/python/cpython/pull/134751
+        try:
+            distribution = next(iter(metadata.Distribution.discover(name=name, path=paths)))
+        except StopIteration:
+            return None
+        return distribution.version
+
+
 def _has_dependency(name: str, minimum_version_str: str | None = None, /, **distargs: object) -> bool | None:
     """
     Given a path, see if a package is present and return True if the version is
@@ -59,7 +79,7 @@ def _has_dependency(name: str, minimum_version_str: str | None = None, /, **dist
     return Version(distribution.version) >= Version(minimum_version_str)
 
 
-class DefaultIsolatedEnv(IsolatedEnv):
+class DefaultIsolatedEnv(BaseEnv):
     """
     Isolated environment which supports several different underlying implementations.
     """
@@ -104,16 +124,8 @@ class DefaultIsolatedEnv(IsolatedEnv):
             shutil.rmtree(self._path)
 
     def get_package_version(self, name) -> str | None:
-        """Return package version installed in the environment, or None."""
-        from ._compat.importlib import metadata
-
-        # importlib discovery API docs are pending
-        # https://github.com/python/cpython/pull/134751
-        try:
-            distribution = next(metadata.Distribution.discover(name=name, path=[self._env_backend.purelib_dir]))
-        except StopIteration:
-            return None
-        return distribution.version
+        """Get package version installed in the environment, or None."""
+        return BaseEnv.get_package_version(name, paths=[self._env_backend.purelib_dir])
 
     @property
     def path(self) -> str:
