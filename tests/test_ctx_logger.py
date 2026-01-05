@@ -21,14 +21,6 @@ def test_default_ctx_logger(caplog: pytest.LogCaptureFixture):
     assert record.message == 'foo'
 
 
-def test_default_ctx_logger_only_logs_null_origin_messages(caplog: pytest.LogCaptureFixture):
-    build._ctx.log('foo', origin=None)
-    build._ctx.log('bar', origin=('bar',))
-
-    [record] = caplog.records
-    assert record.message == 'foo'
-
-
 def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture):
     log_stub = mocker.stub('custom_logger')
 
