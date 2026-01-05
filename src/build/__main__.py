@@ -81,10 +81,9 @@ def _make_logger() -> _ctx.Logger:
     def log(message: str, *, origin: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
             if origin is None:
-                (first, *rest) = message.splitlines()
-                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-                for line in rest:
-                    print(fill(line, initial_indent='  '), file=sys.stderr)
+                print(message, file=sys.stderr)
+            elif origin[0] == 'step':
+                _cprint('{bold}{}{reset}', fill(message, initial_indent='* '), file=sys.stderr)
 
             elif origin[0] == 'subprocess':
                 initial_indent = '> ' if origin[1] == 'cmd' else '< '
@@ -292,7 +291,7 @@ def build_package_via_sdist(
         with tarfile.TarFile.open(sdist) as t:
             t.extractall(sdist_out)
             try:
-                _ctx.log(f'Building {_natural_language_list(distributions)} from sdist')
+                _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', origin=('step',))
                 srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
                 for distribution in distributions:
                     out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check, installer)
