@@ -164,7 +164,7 @@ class ProjectBuilder:
         self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
 
         self._backend = self._build_system['build-backend']
-        _ctx.log('backend  ' + self._backend, origin=('debug', 'build'))
+        _ctx.log('build:backend  ' + self._backend, origin=('debug',))
 
         self._hook = pyproject_hooks.BuildBackendHookCaller(
             self._source_dir,
@@ -173,7 +173,6 @@ class ProjectBuilder:
             python_executable=self._python_executable,
             runner=self._runner,
         )
-        _ctx.log('python_executable  ' + str(self._python_executable), origin=('debug', 'build'))
 
         self._env = env.BaseEnv() if build_env is None else build_env
 

@@ -91,7 +91,7 @@ def _make_logger() -> _ctx.Logger:
                     _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
             elif origin[0] == 'debug':
                 if _ctx.verbosity >= 1:
-                    print(f'{origin[1]}:{message}')
+                    print(f'{message}', file=sys.stderr)
 
     return log
 
