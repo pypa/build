@@ -2,6 +2,33 @@
 Changelog
 +++++++++
 
+1.4.0 (2026-01-08)
+==================
+
+- Add ``--quiet`` flag
+  (:pr:`947`)
+- Add option to dump PEP 517 metadata with ``--metadata``
+  (:pr:`940`, :pr:`943`)
+- Support ``UV`` environment variable
+  (:pr:`971`)
+- Remove a workaround for 3.14b1
+  (:pr:`960`)
+- In 3.14 final release, ``color`` defaults to ``True`` already
+  (:pr:`962`)
+- Pass sp-repo-review
+  (:pr:`942`)
+- In pytest configuration, ``log_level`` is better than ``log_cli_level``
+  (:pr:`950`)
+- Split up typing and mypy
+  (:pr:`944`)
+- Use ``types-colorama``
+  (:pr:`945`)
+- In docs, first argument for ``_has_dependency`` is a name
+  (PR :pr:`970`)
+- Fix test failure when ``flit-core`` is installed
+  (PR :pr:`921`)
+
+
 1.3.0 (2025-08-01)
 ==================
 
