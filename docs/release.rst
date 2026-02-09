@@ -4,7 +4,7 @@ Release Process
 
 You may release the project by following these steps:
 
-#. Bump the version ``src/build/__init__.py``
+#. Bump the version in ``src/build/__init__.py``
 #. Update ``CHANGELOG.rst`` with the new version and current date
 #. Make a release commit with the changes made above
     - The commit message should follow the ``release X.Y.Z`` format

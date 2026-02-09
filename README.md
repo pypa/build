@@ -45,7 +45,7 @@ available via the command line as `pyproject-build` once installed.
 
 Some common combinations of arguments:
 
-- `--sdist --wheel` (`-sw`): Produce and SDist and a wheel, both from the source distribution. The default (if no flag is passed) is to build an SDist and then build a wheel _from_ the SDist.
+- `--sdist --wheel` (`-sw`): Produce an SDist and a wheel, both from the source distribution. The default (if no flag is passed) is to build an SDist and then build a wheel _from_ the SDist.
 - `-nx`: Disable build isolation and dependency checking. Identical to pip and uv's `--no-build-isolation` flag.
 - `--metadata | jq -r .version`: get the version in a bash-like environment.
 
@@ -93,7 +93,7 @@ On conda-forge, this package is called [python-build][].
 
 ### Code of Conduct
 
-Everyone interacting in the build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
+Everyone interacting with build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow
 the [PSF Code of Conduct].
 
 [psf code of conduct]: https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md
