@@ -13,7 +13,6 @@ import tempfile
 import typing
 
 from collections.abc import Collection, Mapping
-from pathlib import Path
 
 from . import _ctx
 from ._ctx import run_subprocess
@@ -39,7 +38,9 @@ class IsolatedEnv(typing.Protocol):
         """Generate additional env vars specific to the isolated environment."""
 
 
-def _has_dependency(name: str, minimum_version_str: str | None = None, /, **distargs: object) -> bool | None:
+def _has_dependency(
+    name: str, minimum_version_str: str | None = None, /, *, require_dir: None | str = None, **distargs: object
+) -> bool | None:
     """
     Given a distribution name, see if it is present and return True if the version is
     sufficient for build, False if it is not, None if the package is missing.
@@ -56,7 +57,14 @@ def _has_dependency(name: str, minimum_version_str: str | None = None, /, **dist
     if minimum_version_str is None:
         return True
 
-    return Version(distribution.version) >= Version(minimum_version_str)
+    if Version(distribution.version) < Version(minimum_version_str):
+        return False
+
+    if require_dir is None:
+        return True
+
+    files = distribution.files or []
+    return any(str(f).startswith(require_dir) for f in files)
 
 
 class DefaultIsolatedEnv(IsolatedEnv):
@@ -161,17 +169,9 @@ class _PipBackend(_EnvBackend):
         """
 
         # Version to have added the `--python` option.
-        if not _has_dependency('pip', '22.3'):  # pragma: no cover
-            return False
-
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        # Detect that by checking if pip._vendor` module exists.
-        if (spec := importlib.util.find_spec('pip')) is not None:
-            for loc in spec.submodule_search_locations:
-                vendor_loc = Path(loc) / '_vendor'
-                if vendor_loc.is_dir():
-                    return True
-            return False  # pragma: no cover
+        if not _has_dependency('pip', '22.3', require_dir='pip/_vendor'):  # pragma: no cover
+            return False
 
         return True
 
