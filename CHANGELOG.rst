@@ -60,7 +60,7 @@ Changelog
 1.2.2 (2024-09-06)
 ==================
 
-- Add editable to ``builder.get_requries_for_build``'s static types
+- Add editable to ``builder.get_requires_for_build``'s static types
   (PR :pr:`764`, fixes issue :issue:`763`)
 - Include artifact attestations in our release
   (PR :pr:`782`)
@@ -191,7 +191,7 @@ Changelog
   dependencies (PR :pr:`512`, Fixes :issue:`511`)
 - Only import colorama on Windows (PR :pr:`494`, Fixes :issue:`493`)
 - Flush output more often to reduce interleaved output (PR :pr:`494`)
-- Small API cleanup, like better ``_all__`` and srcdir being read only. (PR :pr:`477`)
+- Small API cleanup, like better ``__all__`` and srcdir being read only. (PR :pr:`477`)
 - Only use ``importlib_metadata`` when needed (PR :pr:`401`)
 - Clarify in printout when build dependencies are being installed (PR :pr:`514`)
 
@@ -219,7 +219,7 @@ Breaking Changes
 0.7.0 (2021-09-16)
 ==================
 
-- Add ``build.util`` module with an high-level utility API (PR :pr:`340`)
+- Add ``build.util`` module with a high-level utility API (PR :pr:`340`)
 
 
 
@@ -373,7 +373,7 @@ Breaking changes
 - Added --no-isolation/-n flag to build in the current environment
 - Add --config-setting/-C option to pass options to the backend
 - Add IsolatedEnvironment class
-- Fix creating the output directory if it doesn't exit
+- Fix creating the output directory if it doesn't exist
 - Fix building with in-tree backends
 - Fix broken entrypoint script (python-build)
 - Add warning about incomplete verification when verifying extras
