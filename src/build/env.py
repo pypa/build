@@ -11,9 +11,9 @@ import sys
 import sysconfig
 import tempfile
 import typing
-import warnings
 
 from collections.abc import Collection, Mapping
+from pathlib import Path
 
 from . import _ctx
 from ._ctx import run_subprocess
@@ -157,7 +157,7 @@ class _PipBackend(_EnvBackend):
     def _has_valid_outer_pip(self) -> bool | None:
         """
         This checks for a valid global pip. Returns None if pip is missing, False
-        if pip is too old, and True if it can be used.
+        if pip is too old or debundled, and True if it can be used.
         """
 
         # Version to have added the `--python` option.
@@ -165,13 +165,13 @@ class _PipBackend(_EnvBackend):
             return False
 
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        # Detect that by checking if pip._vendor` module exists.  However,
-        # searching for pip could yield warnings from _distutils_hack,
-        # so silence them.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            if importlib.util.find_spec('pip._vendor') is None:
-                return False  # pragma: no cover
+        # Detect that by checking if pip._vendor` module exists.
+        if (spec := importlib.util.find_spec('pip')) is not None:
+            for loc in spec.submodule_search_locations:
+                vendor_loc = Path(loc) / '_vendor'
+                if vendor_loc.is_dir():
+                    return True
+            return False  # pragma: no cover
 
         return True
 
