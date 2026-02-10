@@ -21,6 +21,10 @@ from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
 
+if typing.TYPE_CHECKING:
+    from ._compat.importlib import metadata as importlib_metadata
+
+
 Installer = typing.Literal['pip', 'uv']
 
 INSTALLERS = typing.get_args(Installer)
@@ -39,10 +43,13 @@ class IsolatedEnv(typing.Protocol):
         """Generate additional env vars specific to the isolated environment."""
 
 
-def _has_dependency(name: str, minimum_version_str: str | None = None, /, **distargs: object) -> bool | None:
+def _has_dependency(
+    name: str, minimum_version_str: str | None = None, /, **distargs: object
+) -> importlib_metadata.Distribution | None:
     """
-    Given a distribution name, see if it is present and return True if the version is
-    sufficient for build, False if it is not, None if the package is missing.
+    Given a distribution name, see if it is present and return the distribution
+    if the version is sufficient for build, None if the package is missing or
+    too old.
     """
     from packaging.version import Version
 
@@ -54,9 +61,12 @@ def _has_dependency(name: str, minimum_version_str: str | None = None, /, **dist
         return None
 
     if minimum_version_str is None:
-        return True
+        return distribution
 
-    return Version(distribution.version) >= Version(minimum_version_str)
+    if Version(distribution.version) < Version(minimum_version_str):
+        return None
+
+    return distribution
 
 
 class DefaultIsolatedEnv(IsolatedEnv):
@@ -157,21 +167,25 @@ class _PipBackend(_EnvBackend):
     def _has_valid_outer_pip(self) -> bool | None:
         """
         This checks for a valid global pip. Returns None if pip is missing, False
-        if pip is too old, and True if it can be used.
+        if pip is too old or debundled, and True if it can be used.
         """
 
         # Version to have added the `--python` option.
-        if not _has_dependency('pip', '22.3'):  # pragma: no cover
-            return False
-
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        # Detect that by checking if pip._vendor` module exists.  However,
-        # searching for pip could yield warnings from _distutils_hack,
-        # so silence them.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            if importlib.util.find_spec('pip._vendor') is None:
-                return False  # pragma: no cover
+        if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
+            files = dist.files
+            if files:
+                return any(str(f).startswith('pip/_vendor') for f in files)
+            # The distribution package manager deleted the RECORD file,
+            # generally to force pip to be unable to uninstall itself
+            # Only try this on 3.12+ since it can have side effects before 3.12
+            # due to _distutils_hack and pip interacting.
+            if sys.version_info >= (3, 12):
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    if importlib.util.find_spec('pip._vendor') is not None:
+                        return True
+            return False
 
         return True
 
