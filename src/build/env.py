@@ -11,6 +11,7 @@ import sys
 import sysconfig
 import tempfile
 import typing
+import warnings
 
 from collections.abc import Collection, Mapping
 
@@ -18,6 +19,10 @@ from . import _ctx
 from ._ctx import run_subprocess
 from ._exceptions import FailedProcessError
 from ._util import check_dependency
+
+
+if typing.TYPE_CHECKING:
+    from ._compat.importlib import metadata as importlib_metadata
 
 
 Installer = typing.Literal['pip', 'uv']
@@ -39,11 +44,12 @@ class IsolatedEnv(typing.Protocol):
 
 
 def _has_dependency(
-    name: str, minimum_version_str: str | None = None, /, *, require_dir: None | str = None, **distargs: object
-) -> bool | None:
+    name: str, minimum_version_str: str | None = None, /, **distargs: object
+) -> importlib_metadata.Distribution | None:
     """
-    Given a distribution name, see if it is present and return True if the version is
-    sufficient for build, False if it is not, None if the package is missing.
+    Given a distribution name, see if it is present and return the distribution
+    if the version is sufficient for build, None if the package is missing or
+    too old.
     """
     from packaging.version import Version
 
@@ -55,16 +61,12 @@ def _has_dependency(
         return None
 
     if minimum_version_str is None:
-        return True
+        return distribution
 
     if Version(distribution.version) < Version(minimum_version_str):
-        return False
+        return None
 
-    if require_dir is None:
-        return True
-
-    files = distribution.files or []
-    return any(str(f).startswith(require_dir) for f in files)
+    return distribution
 
 
 class DefaultIsolatedEnv(IsolatedEnv):
@@ -170,7 +172,19 @@ class _PipBackend(_EnvBackend):
 
         # Version to have added the `--python` option.
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        if not _has_dependency('pip', '22.3', require_dir='pip/_vendor'):  # pragma: no cover
+        if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
+            files = dist.files
+            if files:
+                return any(str(f).startswith('pip/_vendor') for f in files)
+            # The distribution package manager deleted the RECORD file,
+            # generally to force pip to be unable to uninstall itself
+            # Only try this on 3.12+ since it can have side effects before 3.12
+            # due to _distutils_hack and pip interacting.
+            if sys.version_info >= (3, 12):
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    if importlib.util.find_spec('pip._vendor') is not None:
+                        return True
             return False
 
         return True
