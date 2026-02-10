@@ -19,8 +19,8 @@ _default_logger = logging.getLogger(_package_name)
 
 
 def _log_default(message: str, *, origin: tuple[str, ...] | None = None) -> None:
-    if origin is None:
-        _default_logger.log(logging.INFO, message, stacklevel=2)
+    # the log function that works in tests, real log function is set in __main__
+    _default_logger.log(logging.INFO, message, stacklevel=2)
 
 
 LOGGER = contextvars.ContextVar('LOGGER', default=_log_default)
