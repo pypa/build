@@ -6,12 +6,14 @@ import contextlib
 import io
 import json
 import os
+import pathlib
 import re
 import subprocess
 import sys
 import venv
 
 import pytest
+import pytest_mock
 
 import build
 import build.__main__
@@ -39,6 +41,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -51,6 +54,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': False,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -63,6 +67,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package',
@@ -75,6 +80,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package',
@@ -87,6 +93,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package',
@@ -99,6 +106,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -111,6 +119,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -123,6 +132,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -135,6 +145,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': True,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -147,6 +158,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': 'uv',
             },
             'build_package_via_sdist',
@@ -159,6 +171,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {'--flag1': '', '--flag2': ''},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -171,6 +184,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {'--flag': 'value'},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -183,6 +197,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -195,6 +210,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {'one': 1, 'two': [2, 3], 'three': {'in': 'out'}},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -207,6 +223,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {'outer': {'inner': {'deeper': 2}}},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -219,6 +236,20 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 'config_settings': {},
                 'isolation': True,
                 'skip_dependency_check': False,
+                'dependency_constraints_txt': None,
+                'installer': None,
+            },
+            'build_package_via_sdist',
+        ),
+        (
+            ['--dependency-constraints-txt', 'contraints.txt'],
+            (cwd, out),
+            {
+                'distributions': ['wheel'],
+                'config_settings': {},
+                'isolation': True,
+                'skip_dependency_check': False,
+                'dependency_constraints_txt': 'contraints.txt',
                 'installer': None,
             },
             'build_package_via_sdist',
@@ -365,7 +396,7 @@ def test_build_package_via_sdist(tmp_dir, package_test_setuptools):
 
 
 @pytest.mark.pypy3323bug
-def test_build_package_via_sdist_cant_build(tmp_dir, package_test_cant_build_via_sdist):
+def test_build_package_via_sdist_incomplete_sdist(tmp_dir, package_test_cant_build_via_sdist):
     with pytest.raises(build.BuildBackendException):
         build.__main__.build_package_via_sdist(package_test_cant_build_via_sdist, tmp_dir, ['wheel'])
 
@@ -373,6 +404,25 @@ def test_build_package_via_sdist_cant_build(tmp_dir, package_test_cant_build_via
 def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setuptools):
     with pytest.raises(ValueError, match='Only binary distributions are allowed but sdist was specified'):
         build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['sdist'])
+
+
+@pytest.mark.isolated
+def test_build_package_with_constraints(mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, package_test_flit):
+    install = mocker.patch('build.env.DefaultIsolatedEnv.install')
+
+    constraints_txt_path = tmp_path.joinpath('constraints.txt')
+    constraints_txt_path.write_text(
+        """\
+flit-core==12.34
+foo==wot
+""",
+        encoding='utf-8',
+    )
+
+    with pytest.raises(build.BuildBackendException, match=re.escape("Backend 'flit_core.buildapi' is not available.")):
+        build.__main__.build_package(package_test_flit, tmp_path, ['wheel'], dependency_constraints_txt=constraints_txt_path)
+
+    install.assert_called_with({'flit_core >=2,<4'}, constraints={'flit-core==12.34', 'foo==wot'})
 
 
 @pytest.mark.pypy3323bug
@@ -599,6 +649,7 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
     )
 
 
+@pytest.mark.contextvars
 @pytest.mark.network
 def test_verbose_logging_output(
     subtests: pytest.Subtests,
