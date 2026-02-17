@@ -133,6 +133,7 @@ def _bootstrap_build_env(
     distribution: Distribution,
     config_settings: ConfigSettings | None,
     skip_dependency_check: bool,
+    dependency_constraints_txt: os.PathLike[str] | None,
     installer: _env.Installer,
     runner: SubprocessRunner | None = None,
 ) -> Iterator[ProjectBuilder]:
@@ -143,10 +144,15 @@ def _bootstrap_build_env(
                 make_builder = partial(make_builder, runner=runner)
             builder = make_builder()
 
+            install = env.install
+            if dependency_constraints_txt:
+                with open(dependency_constraints_txt, encoding='utf-8') as dependency_constraints_file:
+                    install = partial(install, constraints=set(map(str.strip, dependency_constraints_file)))
+
             # first install the build dependencies
-            env.install(builder.build_system_requires)
+            install(builder.build_system_requires)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
-            env.install(builder.get_requires_for_build(distribution, config_settings))
+            install(builder.get_requires_for_build(distribution, config_settings))
 
             yield builder
 
@@ -175,6 +181,7 @@ def _build(
     distribution: Distribution,
     config_settings: ConfigSettings | None,
     skip_dependency_check: bool,
+    dependency_constraints_txt: os.PathLike[str] | None,
     installer: _env.Installer,
 ) -> str:
     with _bootstrap_build_env(
@@ -183,6 +190,7 @@ def _build(
         distribution,
         config_settings,
         skip_dependency_check,
+        dependency_constraints_txt,
         installer,
         pyproject_hooks.quiet_subprocess_runner if _ctx.verbosity < 0 else None,
     ) as builder:
@@ -238,6 +246,7 @@ def build_package(
     config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
+    dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
 ) -> list[str]:
     """
@@ -252,7 +261,16 @@ def build_package(
     """
     built: list[str] = []
     for distribution in distributions:
-        out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check, installer)
+        out = _build(
+            isolation,
+            srcdir,
+            outdir,
+            distribution,
+            config_settings,
+            skip_dependency_check,
+            dependency_constraints_txt,
+            installer,
+        )
         built.append(os.path.basename(out))
     return built
 
@@ -264,6 +282,7 @@ def build_package_via_sdist(
     config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
+    dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
 ) -> list[str]:
     """
@@ -282,7 +301,9 @@ def build_package_via_sdist(
         msg = 'Only binary distributions are allowed but sdist was specified'
         raise ValueError(msg)
 
-    sdist = _build(isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check, installer)
+    sdist = _build(
+        isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check, dependency_constraints_txt, installer
+    )
 
     sdist_name = os.path.basename(sdist)
     sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
@@ -295,7 +316,16 @@ def build_package_via_sdist(
                 _ctx.log(f'Building {_natural_language_list(distributions)} from sdist')
                 srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
                 for distribution in distributions:
-                    out = _build(isolation, srcdir, outdir, distribution, config_settings, skip_dependency_check, installer)
+                    out = _build(
+                        isolation,
+                        srcdir,
+                        outdir,
+                        distribution,
+                        config_settings,
+                        skip_dependency_check,
+                        dependency_constraints_txt,
+                        installer,
+                    )
                     built.append(os.path.basename(out))
             finally:
                 shutil.rmtree(sdist_out, ignore_errors=True)
@@ -309,6 +339,7 @@ def _build_metadata(
     config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
+    dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
 ) -> list[str]:
     import packaging.metadata
@@ -321,7 +352,14 @@ def _build_metadata(
 
     with (
         _bootstrap_build_env(
-            isolation, srcdir, 'wheel', config_settings, skip_dependency_check, installer, runner=run_subprocess
+            isolation,
+            srcdir,
+            'wheel',
+            config_settings,
+            skip_dependency_check,
+            dependency_constraints_txt,
+            installer,
+            runner=run_subprocess,
         ) as builder,
         tempfile.TemporaryDirectory() as tempdir,
         open(
@@ -367,8 +405,6 @@ def main_parser() -> argparse.ArgumentParser:
         ) -> None:
             setattr(namespace, self.dest, getattr(namespace, self.dest, 0) - 1)
 
-    formatter_class = argparse.RawDescriptionHelpFormatter
-
     make_parser = partial(
         argparse.ArgumentParser,
         add_help=False,
@@ -382,7 +418,7 @@ def main_parser() -> argparse.ArgumentParser:
     """.rstrip(),
         # Prevent argparse from taking up the entire width of the terminal window
         # which impedes readability. Also keep the description formatted.
-        formatter_class=formatter_class,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     if sys.version_info >= (3, 14):
         make_parser = partial(make_parser, suggest_on_error=True)
@@ -432,7 +468,6 @@ def main_parser() -> argparse.ArgumentParser:
     build_group.add_argument(
         '--outdir',
         '-o',
-        type=str,
         help=f'output directory (defaults to {{srcdir}}{os.sep}dist).  Cannot be used together with ``--metadata``',
         metavar='PATH',
     )
@@ -470,7 +505,6 @@ def main_parser() -> argparse.ArgumentParser:
     )
     config_exclusive_group.add_argument(
         '--config-json',
-        dest='config_json',
         help='settings to pass to the backend as a JSON object. '
         'This is an alternative to ``--config-setting`` that allows complex nested structures. '
         'Cannot be used together with ``--config-setting``',
@@ -490,6 +524,11 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='disable building the project in an isolated virtual environment. '
         'Build dependencies must be installed separately when this option is used',
+    )
+    install_group.add_argument(
+        '--dependency-constraints-txt',
+        help='constrain build dependencies using a constraints.txt when installing dependencies',
+        metavar='PATH',
     )
     install_group.add_argument(
         '--skip-dependency-check',
@@ -565,6 +604,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             config_settings=config_settings,
             isolation=not args.no_isolation,
             skip_dependency_check=args.skip_dependency_check,
+            dependency_constraints_txt=args.dependency_constraints_txt,
             installer=args.installer,
         )
         if _ctx.verbosity >= -1 and built:
