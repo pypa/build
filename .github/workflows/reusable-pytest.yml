@@ -27,6 +27,13 @@ jobs:
         tox-target:
           - "tox"
           - "min"
+        include:
+          - os: ubuntu
+            py: "graalpy-24.2"
+            tox-target: "tox"
+          - os: macos
+            py: "graalpy-24.2"
+            tox-target: "tox"
 
     continue-on-error: >- # jobs not required in branch protection
       ${{
