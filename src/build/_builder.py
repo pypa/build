@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import difflib
 import os
+import re
 import subprocess
 import sys
 import warnings
@@ -134,6 +135,7 @@ class ProjectBuilder:
         source_dir: StrPath,
         python_executable: str = sys.executable,
         runner: SubprocessRunner = pyproject_hooks.default_subprocess_runner,
+        build_env: env.BaseEnv | None = None,
     ) -> None:
         """
         :param source_dir: The source directory
@@ -162,6 +164,7 @@ class ProjectBuilder:
         self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
 
         self._backend = self._build_system['build-backend']
+        _ctx.log('build:backend  ' + self._backend, origin=('debug',))
 
         self._hook = pyproject_hooks.BuildBackendHookCaller(
             self._source_dir,
@@ -170,6 +173,8 @@ class ProjectBuilder:
             python_executable=self._python_executable,
             runner=self._runner,
         )
+
+        self._env = env.BaseEnv() if build_env is None else build_env
 
     @classmethod
     def from_isolated_env(
@@ -182,6 +187,7 @@ class ProjectBuilder:
             source_dir=source_dir,
             python_executable=env.python_executable,
             runner=_wrap_subprocess_runner(runner, env),
+            build_env=env,
         )
 
     @property
@@ -218,7 +224,7 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        _ctx.log(f'Getting build dependencies for {distribution}...')
+        _ctx.log(f'Getting build dependencies for {distribution}...', origin=('step',))
         hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
@@ -256,7 +262,7 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
-        _ctx.log(f'Getting metadata for {distribution}...')
+        _ctx.log(f'Getting metadata for {distribution}...', origin=('step',))
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
@@ -268,6 +274,18 @@ class ProjectBuilder:
             if isinstance(exception.exception, pyproject_hooks.HookMissing):
                 return None
             raise
+
+    def get_backend_version(self) -> str:
+        info = []
+        for req in self.build_system_requires:
+            # setuptools >= 40.8.0  -->  setuptools
+            name = re.findall(r'\w+', req)[0]
+            version = self._env.get_package_version(name)
+            info.append(f'  {name}=={version}')
+        if info:
+            return '\n'.join(info)
+        else:
+            return 'No build requirements'
 
     def build(
         self,
@@ -286,7 +304,10 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        _ctx.log(f'Building {distribution}...')
+        versions = self.get_backend_version()
+        _ctx.log(f'Building {distribution}...', origin=('step',))
+        _ctx.log(versions)
+
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
