@@ -218,7 +218,7 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        _ctx.log(f'Getting build dependencies for {distribution}...')
+        _ctx.log(f'Getting build dependencies for {distribution}...', origin=('step',))
         hook_name = f'get_requires_for_build_{distribution}'
         get_requires = getattr(self._hook, hook_name)
 
@@ -256,7 +256,7 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
-        _ctx.log(f'Getting metadata for {distribution}...')
+        _ctx.log(f'Getting metadata for {distribution}...', origin=('step',))
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
@@ -286,7 +286,8 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        _ctx.log(f'Building {distribution}...')
+        _ctx.log(f'Building {distribution}...', origin=('step',))
+
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
