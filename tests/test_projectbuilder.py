@@ -25,7 +25,7 @@ build_open_owner = 'builtins'
 
 DEFAULT_BACKEND = {
     'build-backend': 'setuptools.build_meta:__legacy__',
-    'requires': ['setuptools >= 40.8.0'],
+    'requires': ['setuptools >= 40.8.0', 'wheel'],
 }
 
 
@@ -47,6 +47,8 @@ class MockDistribution(_importlib.metadata.Distribution):
             return CircularMockDistribution()
         elif name == 'nested_circular_dep':
             return NestedCircularMockDistribution()
+        elif name == 'malformed_dep':
+            return MalformedMockDistribution()
         raise _importlib.metadata.PackageNotFoundError
 
 
@@ -131,6 +133,11 @@ class NestedCircularMockDistribution(MockDistribution):
                 """
             ).strip()
 
+class MalformedMockDistribution(MockDistribution):
+    def read_text(self, filename):
+        if filename == 'METADATA':
+            return ""
+
 
 @pytest.mark.parametrize(
     ('requirement_string', 'expected'),
@@ -168,6 +175,12 @@ class NestedCircularMockDistribution(MockDistribution):
 def test_check_dependency(monkeypatch, requirement_string, expected):
     monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
+
+def test_check_dependency_bad_metadata(monkeypatch):
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    with pytest.raises(TypeError) as excinfo:
+        next(build.check_dependency("malformed_dep==1.0.0"), None)
+    assert "Package malformed_dep has malformed metadata and no version information could be found" in str(excinfo)
 
 
 def test_bad_project(package_test_no_project):
