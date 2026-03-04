@@ -35,6 +35,8 @@ sdist_files = {
 
 sdist_patterns = {
     'docs/*.rst',
+    'docs/*/*.rst',
+    'docs/_static/*',
     'src/build/*.py',
     'src/build/_compat/*.py',
     'tests/*.py',
