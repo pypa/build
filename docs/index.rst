@@ -11,34 +11,39 @@ Mission Statement
 
 Many Python tools combine multiple capabilities into one project. For example, pip_ both installs packages and can build them. While convenient, this tight coupling isn't always desirable. Some users need standalone build tools for custom environments (outside PyPI_), or they manage packages themselves (like Linux distributions do).
 
-This project fills that gap by providing a standalone build tool following modern Python packaging standards (:pep:`517` defines how build tools communicate with backends, :pep:`518` defines the pyproject.toml configuration format).
+This project fills that gap by providing a standalone build tool following modern Python packaging standards for how build tools communicate with backends and how ``pyproject.toml`` defines build requirements.
 
 We keep dependencies minimal to make build easy to install and use in restricted environments.
 
 Differences from other tools
 =============================
 
+Thanks to standardization, all compliant build frontends produce the same outputs (`source distributions <https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ and `wheels <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_) from the same project. The differences are mainly in scope, dependencies, and extra features.
+
 ``uv build``
 ------------
 
-`uv build <https://docs.astral.sh/uv/>`_ is essentially equivalent to ``python -m build --installer=uv``. Both create the same outputs (`source distributions <https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ and `wheels <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_), but ``uv build`` uses uv's faster dependency installer by default. build provides more flexibility in choosing installers and offers additional options like ``--no-isolation`` for advanced use cases.
+`uv build <https://docs.astral.sh/uv/>`_ is essentially equivalent to ``python -m build --installer=uv``. Both produce the same outputs, but ``uv build`` uses uv's faster dependency installer. build offers features like ``--config-json`` for passing complex nested configuration to backends, and has minimal dependencies making it easy to bootstrap in restricted environments.
 
 ``setup.py sdist bdist_wheel``
 -------------------------------
 
-build is roughly the equivalent of ``setup.py sdist bdist_wheel`` but with :pep:`517` support, allowing use with projects that don't use `setuptools <https://setuptools.pypa.io/>`_.
+build is the modern equivalent of ``setup.py sdist bdist_wheel``, supporting any backend — not just `setuptools <https://setuptools.pypa.io/>`_.
 
 ``hatch build``
 ---------------
 
-`hatch build <https://hatch.pypa.io/>`_ is the build command from the Hatch project management tool. Like ``uv build``, it provides a convenient wrapper around the build process. build is a standalone tool focused solely on building, while ``hatch build`` is part of the larger Hatch ecosystem for managing Python projects.
+`hatch build <https://hatch.pypa.io/>`_ is the build command from the Hatch project management tool. It provides a convenient wrapper around the build process as part of the larger Hatch ecosystem for managing Python projects, while build is a standalone tool focused solely on building.
 
-``pep517.build``
+``flit build``
+--------------
+
+`flit build <https://flit.pypa.io/>`_ is the build command from the Flit project. One important difference: flit-core produces slightly different source distributions when built by flit itself compared to other frontends. Using build (or any standards-compliant frontend) ensures consistent outputs regardless of the backend.
+
+``cibuildwheel``
 ----------------
 
-build implements a CLI tailored to end users.
-
-`pep517.build <https://pypi.org/project/pep517/>`_ contained a proof-of-concept of a :pep:`517` frontend. It *"implement[ed] essentially the simplest possible frontend tool, to exercise and illustrate how the core functionality can be used"*. It has since been `deprecated and is scheduled for removal <https://github.com/pypa/pep517/pull/83>`_.
+`cibuildwheel <https://cibuildwheel.pypa.io/>`_ is a different kind of tool. While build creates a single wheel for the current platform, cibuildwheel orchestrates building wheels across many platforms and Python versions in CI. It actually calls a build frontend (like build or pip) internally for each platform. Use build to create a pure-Python wheel or a single native wheel; use cibuildwheel when you need to produce native wheels for many platforms.
 
 Where to start
 ==============
