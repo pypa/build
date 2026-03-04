@@ -397,14 +397,16 @@ You can test if your build backend works independently:
 Preserve build logs and temporary directories
 =============================================
 
-By default, build cleans up the temporary build directory after completion. To keep it for debugging:
+By default, build cleans up the temporary build directory after completion. To control where the temporary directory is
+created (useful for debugging or placing it on a specific filesystem):
 
 .. code-block:: console
 
     $ TMPDIR=/tmp/debug-build python -m build
 
-The build will create its temporary environment in ``/tmp/debug-build`` and you can inspect it after the build completes
-or fails. On Windows, use ``TEMP`` instead of ``TMPDIR``:
+The build will create its temporary environment inside ``/tmp/debug-build``. The directory is automatically cleaned up
+after a successful build, but persists if the build fails, allowing you to inspect the environment for debugging. On
+Windows, use ``TEMP`` instead of ``TMPDIR``:
 
 .. code-block:: console
 

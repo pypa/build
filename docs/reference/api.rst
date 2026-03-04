@@ -4,6 +4,11 @@
 
 build provides a Python API for programmatic use in build tools, CI systems, and automation scripts.
 
+.. note::
+
+    Most API examples below require the build backend to be installed in the current environment. Either install the
+    backend manually (for ``--no-isolation`` workflows) or use isolated environments as shown in the examples.
+
 *************
  Basic Usage
 *************
@@ -52,10 +57,12 @@ Getting package metadata without building:
 .. code-block:: python
 
     from build import ProjectBuilder
+    import tempfile
 
     builder = ProjectBuilder(".")
-    metadata = builder.metadata
-    print(f"Package: {metadata.name} {metadata.version}")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        metadata_dir = builder.metadata_path(tmpdir)
+        # Read METADATA file from metadata_dir to extract package info
 
 Accessing build dependencies:
 
