@@ -81,7 +81,7 @@ def _make_logger() -> _ctx.Logger:
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
             if kind is None:
-                print(message, file=sys.stderr)
+                print(fill(message, initial_indent='  '), file=sys.stderr)
             elif kind[0] == 'step':
                 _cprint('{bold}{}{reset}', fill(message, initial_indent='* '), file=sys.stderr)
 
