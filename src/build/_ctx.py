@@ -11,14 +11,14 @@ from ._types import StrPath
 
 
 class Logger(typing.Protocol):  # pragma: no cover
-    def __call__(self, message: str, *, origin: tuple[str, ...] | None = None) -> None: ...
+    def __call__(self, message: str, *, kind: tuple[str, ...] | None = None) -> None: ...
 
 
 _package_name = __spec__.parent
 _default_logger = logging.getLogger(_package_name)
 
 
-def _log_default(message: str, *, origin: tuple[str, ...] | None = None) -> None:
+def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None:
     # the log function that works in tests, real log function is set in __main__
     _default_logger.log(logging.INFO, message, stacklevel=2)
 
@@ -30,12 +30,12 @@ VERBOSITY = contextvars.ContextVar('VERBOSITY', default=0)
 def log_subprocess_error(error: subprocess.CalledProcessError) -> None:
     log = LOGGER.get()
 
-    log(subprocess.list2cmdline(error.cmd), origin=('subprocess', 'cmd'))
+    log(subprocess.list2cmdline(error.cmd), kind=('subprocess', 'cmd'))
 
     for stream_name in ('stdout', 'stderr'):
         stream = getattr(error, stream_name)
         if stream:
-            log(stream.decode() if isinstance(stream, bytes) else stream, origin=('subprocess', stream_name))
+            log(stream.decode() if isinstance(stream, bytes) else stream, kind=('subprocess', stream_name))
 
 
 def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[str, str] | None = None) -> None:
@@ -52,13 +52,13 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
                 cmd, cwd=cwd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             ) as process,
         ):
-            log(subprocess.list2cmdline(cmd), origin=('subprocess', 'cmd'))
+            log(subprocess.list2cmdline(cmd), kind=('subprocess', 'cmd'))
 
             @executor.submit
             def log_stream() -> None:
                 assert process.stdout
                 for line in process.stdout:
-                    log(line, origin=('subprocess', 'stdout'))
+                    log(line, kind=('subprocess', 'stdout'))
 
             concurrent.futures.wait([log_stream])
 

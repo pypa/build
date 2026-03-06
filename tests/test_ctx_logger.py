@@ -63,4 +63,4 @@ def test_custom_subprocess_runner_ctx_logging(
     build._ctx.run_subprocess([sys.executable, '-m', 'build', '-V'])
 
     assert log_stub.call_count == len(kwarg_origins)
-    assert [c.kwargs['origin'] for c in log_stub.call_args_list] == kwarg_origins
+    assert [c.kwargs['kind'] for c in log_stub.call_args_list] == kwarg_origins

@@ -101,7 +101,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             else:
                 self._env_backend = _PipBackend()
 
-            _ctx.log(f'Creating isolated environment: {self._env_backend.display_name}...', origin=('step',))
+            _ctx.log(f'Creating isolated environment: {self._env_backend.display_name}...', kind=('step',))
             self._env_backend.create(self._path)
 
         except Exception:  # cleanup folder if creation fails
@@ -144,7 +144,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
-        _ctx.log('Installing packages in isolated environment:', origin=('step',))
+        _ctx.log('Installing packages in isolated environment:', kind=('step',))
         _ctx.log('\n'.join(f'  - {r}' for r in sorted(requirements)))
         self._env_backend.install_dependencies(requirements, constraints)
 
