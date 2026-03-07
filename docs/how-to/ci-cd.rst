@@ -41,7 +41,8 @@ For more details, see the `action documentation <https://github.com/hynek/build-
 Manual build with isolation
 ===========================
 
-If you need more control, use build directly with isolated environments:
+If you need more control, use build directly with isolated environments. ``pipx`` is pre-installed on all GitHub Actions
+runners:
 
 .. code-block:: yaml
 
@@ -59,11 +60,8 @@ If you need more control, use build directly with isolated environments:
             with:
               python-version: "3.12"
 
-          - name: Install build
-            run: pip install build
-
           - name: Build package
-            run: python -m build
+            run: pipx run build
 
           - name: Upload artifacts
             uses: actions/upload-artifact@v4

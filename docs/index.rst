@@ -23,7 +23,7 @@ Thanks to standardization, all compliant build frontends produce the same output
 ``uv build``
 ------------
 
-`uv build <https://docs.astral.sh/uv/>`_ is essentially equivalent to ``python -m build --installer=uv``. Both produce the same outputs, but ``uv build`` uses uv's faster dependency installer. build offers features like ``--config-json`` for passing complex nested configuration to backends, and has minimal dependencies making it easy to bootstrap in restricted environments.
+`uv build <https://docs.astral.sh/uv/>`_ is essentially equivalent to ``python -m build --installer=uv``. Both follow packaging standards. build offers features like ``--config-json`` for passing complex nested configuration to backends, and the pip installer works on systems that don't have pre-compiled uv wheels.
 
 ``setup.py sdist bdist_wheel``
 -------------------------------

@@ -24,7 +24,7 @@ Build will read your ``pyproject.toml`` and install all required dependencies.
 
 .. code-block:: console
 
-    $ pip install setuptools wheel your-build-backend
+    $ pip install setuptools your-build-backend
     $ python -m build --no-isolation
 
 *******************************
@@ -202,7 +202,7 @@ Flit includes all files tracked by `git <https://git-scm.com/>`_ by default. Ens
 
 .. code-block:: console
 
-    $ pip install --upgrade pip setuptools wheel
+    $ pip install --upgrade pip setuptools
 
 Then try building again:
 

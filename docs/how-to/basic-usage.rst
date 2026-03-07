@@ -16,12 +16,6 @@ By default, build creates both a `source distribution
 
     $ python -m build
 
-This is equivalent to:
-
-.. code-block:: console
-
-    $ python -m build --sdist --wheel
-
 The process:
 
 1. Builds the source distribution from your source code
@@ -30,6 +24,9 @@ The process:
 
 This two-step process ensures your source distribution contains all necessary files to build your package. If files are
 missing, the wheel build will fail, alerting you to the problem.
+
+This is different from ``python -m build --sdist --wheel``, which builds both directly from source. The default behavior
+is preferable because it verifies your sdist is complete.
 
 ***********************
  Building only a wheel

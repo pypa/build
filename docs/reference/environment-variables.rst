@@ -21,9 +21,15 @@ Build backends can use this to detect they're running in an isolated environment
  Package Index Configuration
 *****************************
 
-build uses `pip <https://pip.pypa.io/>`_ to install build dependencies in isolated environments. Configure pip using
-these environment variables to work with private package indexes or mirrors. For detailed examples, see
+By default, build uses `pip <https://pip.pypa.io/>`_ to install build dependencies in isolated environments. Configure
+pip using these environment variables to work with private package indexes or mirrors. For detailed examples, see
 :doc:`../how-to/corporate-environments`.
+
+.. note::
+
+    These ``PIP_*`` variables only apply when using the default pip installer. When using ``--installer=uv``, configure
+    uv through its own `environment variables <https://docs.astral.sh/uv/configuration/environment/>`_ instead (e.g.,
+    ``UV_INDEX_URL``, ``UV_EXTRA_INDEX_URL``).
 
 ``PIP_INDEX_URL``
 =================
