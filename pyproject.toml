@@ -63,11 +63,16 @@ extra = [
   "virtualenv >= 20.0.35",
 ]
 docs = [
-  "furo >= 2023.08.17",
-  "sphinx ~= 7.0",
-  "sphinx-argparse-cli >= 1.5",
-  "sphinx-autodoc-typehints >= 1.10",
-  "sphinx-issues >= 3.0.0",
+  "furo >= 2025.12.19",
+  "pre-commit >= 3.0",
+  "proselint >= 0.16",
+  "sphinx >= 8.1",
+  "sphinx-argparse-cli >= 1.17",
+  "sphinx-autodoc-typehints >= 2.3",
+  "sphinx-copybutton >= 0.5.2",
+  "sphinx-inline-tabs >= 2025.12.21",
+  "sphinx-issues >= 5.0",
+  "sphinxcontrib-mermaid >= 2.0",
 ]
 test = [
   "filelock >= 3",

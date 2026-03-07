@@ -10,7 +10,13 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import warnings
+
 import build
+
+
+if hasattr(__builtins__, 'EncodingWarning'):
+    warnings.filterwarnings('ignore', category=EncodingWarning, module='sphinx_copybutton')  # noqa: F821
 
 
 # -- Project information -----------------------------------------------------
@@ -35,7 +41,10 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
     'sphinx_argparse_cli',
+    'sphinx_copybutton',
+    'sphinx_inline_tabs',
     'sphinx_issues',
+    'sphinxcontrib.mermaid',
 ]
 
 intersphinx_mapping = {
@@ -59,12 +68,19 @@ default_role = 'any'
 # a list of builtin themes.
 #
 html_theme = 'furo'
-html_title = f'build {version}'
+html_title = f'build - {version}'
+html_show_sourcelink = False
+html_favicon = '_static/logo.svg'
+html_theme_options = {
+    'light_logo': 'logo.svg',
+    'dark_logo': 'logo.svg',
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named 'default.css' will overwrite the builtin 'default.css'.
-# html_static_path = ['_static']
+html_static_path = ['_static']
+html_css_files = ['custom.css']
 
 autoclass_content = 'both'
 
@@ -76,3 +92,8 @@ nitpick_ignore = [
 
 
 issues_github_path = 'pypa/build'
+
+copybutton_prompt_text = r'>>> |\.\.\. |\$ '
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = False
+copybutton_remove_prompts = True
