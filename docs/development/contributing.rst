@@ -28,6 +28,11 @@ Before committing, run the test suite locally to verify your changes don't break
 uses `pytest <https://docs.pytest.org/>`_ for testing, and you can run tests using tox. After ensuring tests pass,
 commit your changes with a clear, descriptive commit message following the project's commit conventions.
 
+Each pull request should include a changelog fragment. Create a file in ``docs/changelog/`` named
+``<pr_number>.<type>.rst`` where type is ``feature``, ``bugfix``, ``doc``, ``removal``, or ``misc``. The file should
+contain a single line describing the change. For example, ``123.feature.rst`` might contain ``Add support for custom
+backends - by :user:`contributor```. See ``docs/changelog/README.rst`` for complete details.
+
 When your changes are ready, push your branch to your fork on GitHub and open a pull request against the main build
 repository. The pull request description should clearly explain what changes you've made and why. Reference any related
 issues using GitHub's issue linking syntax.
@@ -98,6 +103,38 @@ The CI system runs the full test suite across all supported Python versions, ver
 documentation, and performs other checks. All CI checks must pass before a pull request can be merged. If CI fails,
 review the output to understand what went wrong and push fixes to your branch.
 
+*****************************
+ Workflow Security Practices
+*****************************
+
+If your contribution involves modifying GitHub Actions workflows in the ``.github/workflows/`` directory, additional
+security considerations apply. The project follows modern security best practices to protect the release process and
+prevent supply chain attacks. All workflow modifications must maintain these security properties.
+
+Actions must be pinned to specific commit SHAs rather than tags or branch names. This prevents attacks where an attacker
+gains control of an action repository and moves a tag to point to malicious code. When adding or updating an action
+reference, use the full commit SHA as a comment alongside the action version for maintainability. For example, ``uses:
+actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6`` pins to a specific commit while documenting the version
+for future reference.
+
+Workflows must follow the principle of least privilege by setting ``permissions: {}`` at the workflow level and granting
+only the minimal necessary permissions to individual jobs. Each job should explicitly declare the permissions it
+requires, such as ``contents: read`` for jobs that only need to read repository contents or ``id-token: write`` for jobs
+that need to authenticate with external services using OIDC. Never grant broader permissions than necessary, as
+excessive permissions increase the impact of potential vulnerabilities.
+
+Checkout actions must include ``persist-credentials: false`` to prevent GitHub tokens from being persisted in the
+working directory where they could be leaked through artifacts or caches. This protection is particularly important for
+workflows that upload artifacts or create caches that might be accessible to others. The only exception is the
+pre-release workflow which needs persistent credentials to push commits and tags, and this exception is acceptable
+because the workflow runs in a protected environment requiring manual approval.
+
+When proposing workflow changes, consider the security implications of each modification. Adding new permissions,
+introducing new actions, or changing environment configurations all affect the project's security posture. If you're
+unsure whether a workflow change has security implications, ask a maintainer for guidance. The project uses automated
+security scanning with tools like zizmor to catch common workflow vulnerabilities, but manual review remains essential
+for maintaining security.
+
 ****************
  Issue Tracking
 ****************
@@ -112,24 +149,6 @@ information about your environment such as Python version and operating system.
 
 For feature requests, explain the use case and why the feature would benefit build's users. Include examples of how the
 feature would be used if implemented.
-
-*****************
- Release Process
-*****************
-
-build uses a structured release process managed by maintainers. Releases follow `semantic versioning
-<https://semver.org/>`_, with version numbers indicating the level of changes. The changelog documents all changes in
-each release, organized by type such as features, bug fixes, and deprecations.
-
-As a contributor, you don't need to worry about creating releases, but understanding the process can help you write
-better changelog entries and commit messages. Maintainers release the project by first bumping the version in
-``src/build/__init__.py`` and updating ``CHANGELOG.rst`` with the new version and current date. They then make a release
-commit with these changes using the format ``release X.Y.Z`` for the commit message. Next, they create a signed tag with
-``git tag --sign X.Y.Z`` where the tag title follows the ``build X.Y.Z`` format and the tag body contains a plaintext
-version of the changelog for the current release. Finally, they push both the commit and tag to the repository using
-``git push`` and ``git push --tags``, then make a release on GitHub or with the gh CLI tool, copying the release notes
-into the release. If you have questions about the release process, look at previous releases or reach out to other
-maintainers.
 
 **********************
  Community Guidelines

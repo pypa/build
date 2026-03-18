@@ -1,0 +1,1 @@
+Automate releases with pre-release workflow and trusted publishing - by :user:`gaborbernat`

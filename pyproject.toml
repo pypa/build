@@ -73,6 +73,7 @@ docs = [
   "sphinx-inline-tabs >= 2025.12.21",
   "sphinx-issues >= 5.0",
   "sphinxcontrib-mermaid >= 2.0",
+  "towncrier >= 24.8",
 ]
 test = [
   "filelock >= 3",
@@ -108,7 +109,7 @@ dev = [
 
 [tool.flit.sdist]
 include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.ini"]
-exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/build"]
+exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/build", "docs/changelog/template.jinja2"]
 
 
 [tool.coverage.run]
@@ -214,6 +215,43 @@ ignore = [
 [tool.repo-review]
 ignore = ["PC140"]  # mypy in tox
 
+
+[tool.towncrier]
+name = "build"
+filename = "CHANGELOG.rst"
+directory = "docs/changelog"
+title_format = false
+issue_format = ":issue:`{issue}`"
+template = "docs/changelog/template.jinja2"
+underlines = ["*", "=", "-"]
+
+[[tool.towncrier.section]]
+path = ""
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Deprecations and Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
+showcontent = false
 
 [tool.bumpversion]
 current_version = "1.0.0"

@@ -94,6 +94,7 @@ Where to start
    :hidden:
 
    development/contributing
+   development/release
 
 .. toctree::
    :caption: Project
