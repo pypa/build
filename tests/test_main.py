@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import venv
+from unittest.mock import call
 
 import pytest
 import pytest_mock
@@ -318,6 +319,81 @@ def test_build_no_isolation_check_deps_empty(mocker, package_test_flit):
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
     build_cmd.assert_called_with('sdist', '.', None)
+
+
+def test_build_package_passes_config_settings_to_build(mocker, package_test_flit):
+    build_cmd = mocker.patch(
+        'build.__main__._build',
+        side_effect=[
+            os.path.join('dist', 'test_flit-1.0.0.tar.gz'),
+            os.path.join('dist', 'test_flit-1.0.0-py3-none-any.whl'),
+        ],
+    )
+    config_settings = {'--flag': 'value'}
+
+    built = build.__main__.build_package(
+        package_test_flit,
+        '.',
+        ['sdist', 'wheel'],
+        config_settings=config_settings,
+        isolation=False,
+        skip_dependency_check=True,
+        dependency_constraints_txt='constraints.txt',
+        installer='uv',
+    )
+
+    assert built == ['test_flit-1.0.0.tar.gz', 'test_flit-1.0.0-py3-none-any.whl']
+    build_cmd.assert_has_calls(
+        [
+            call(False, package_test_flit, '.', 'sdist', config_settings, True, 'constraints.txt', 'uv'),
+            call(False, package_test_flit, '.', 'wheel', config_settings, True, 'constraints.txt', 'uv'),
+        ]
+    )
+
+
+def test_build_package_via_sdist_passes_config_settings_to_build(mocker):
+    build_cmd = mocker.patch(
+        'build.__main__._build',
+        side_effect=[
+            os.path.join('dist', 'demo-1.0.0.tar.gz'),
+            os.path.join('dist', 'demo-1.0.0-py3-none-any.whl'),
+        ],
+    )
+    mocker.patch('build.__main__.tempfile.mkdtemp', return_value='temp-sdist-dir')
+    mocker.patch('build.__main__.shutil.rmtree')
+    tar_open = mocker.patch('build._compat.tarfile.TarFile.open')
+    mocker.patch('build.__main__._ctx.log')
+    config_settings = {'--flag': 'value'}
+
+    built = build.__main__.build_package_via_sdist(
+        'src',
+        'dist',
+        ['wheel'],
+        config_settings=config_settings,
+        isolation=False,
+        skip_dependency_check=True,
+        dependency_constraints_txt='constraints.txt',
+        installer='uv',
+    )
+
+    assert built == ['demo-1.0.0.tar.gz', 'demo-1.0.0-py3-none-any.whl']
+    tar_open.return_value.__enter__.return_value.extractall.assert_called_once_with('temp-sdist-dir')
+    build_cmd.assert_has_calls(
+        [
+            call(False, 'src', 'dist', 'sdist', config_settings, True, 'constraints.txt', 'uv'),
+            call(
+                False,
+                os.path.join('temp-sdist-dir', 'demo-1.0.0'),
+                'dist',
+                'wheel',
+                config_settings,
+                True,
+                'constraints.txt',
+                'uv',
+            ),
+        ]
+    )
+    build.__main__.shutil.rmtree.assert_called_once_with('temp-sdist-dir', ignore_errors=True)
 
 
 @pytest.mark.parametrize(
