@@ -57,3 +57,7 @@ repos:
     rev: "1.7.1"
     hooks:
       - id: tox-ini-fmt
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.23.1
+    hooks:
+      - id: zizmor
