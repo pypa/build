@@ -1,0 +1,1 @@
+Fix documentation grammar and typos

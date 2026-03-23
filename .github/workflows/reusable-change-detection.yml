@@ -18,11 +18,13 @@ jobs:
       run-docs: ${{ steps.docs-changes.outputs.run-docs || false }}
       run-tests: ${{ steps.tests-changes.outputs.run-tests || false }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - name: Get a list of the changed runtime-related files
         if: github.event_name == 'pull_request'
         id: changed-testable-files
-        uses: Ana06/get-changed-files@v2.3.0
+        uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
         with:
           filter: |
             src/**
@@ -42,7 +44,7 @@ jobs:
       - name: Get a list of the changed documentation-related files
         if: github.event_name == 'pull_request'
         id: changed-docs-files
-        uses: Ana06/get-changed-files@v2.3.0
+        uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
         with:
           filter: |
             docs/**
