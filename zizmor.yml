@@ -1,0 +1,6 @@
+rules:
+  template-injection:
+    ignore:
+      - reusable-pytest.yml:78
+      - reusable-pytest.yml:79
+      - reusable-pytest.yml:83
