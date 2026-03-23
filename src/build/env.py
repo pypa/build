@@ -343,6 +343,7 @@ class _UvBackend(_EnvBackend):
                 cmd += [f'-{"v" * min(2, _ctx.verbosity - 1)}']
 
             cmd += ['install', *requirements]
+            cmd += ['--python', sys.executable]
 
             if constraints:
                 with tempfile.NamedTemporaryFile(
@@ -353,7 +354,10 @@ class _UvBackend(_EnvBackend):
 
                 cmd += ['-c', os.path.abspath(constraint_file.name)]
 
-            run_subprocess(cmd, env={**os.environ, 'VIRTUAL_ENV': self._env_path})
+            env = os.environ.copy()
+            env.pop('UV_PYTHON', None)
+            env['VIRTUAL_ENV'] = self._env_path
+            run_subprocess(cmd, env=env)
 
     @property
     def display_name(self) -> str:
