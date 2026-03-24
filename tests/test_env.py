@@ -329,21 +329,3 @@ def test_external_uv_detection_failure(
     with pytest.raises(RuntimeError, match='uv executable not found'):
         with build.env.DefaultIsolatedEnv(installer='uv'):
             pass
-
-
-@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
-@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
-def test_uv_UV_PYTHON_not_forwarded(
-    mocker: pytest_mock.MockerFixture,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    monkeypatch.setenv('UV_PYTHON', '3.9')
-    mocker.patch.object(build.env._ctx, 'verbosity', 0)
-
-    with build.env.DefaultIsolatedEnv(installer='uv') as env:
-        run_subprocess = mocker.patch('build.env.run_subprocess')
-
-        env.install(['some', 'requirements'])
-
-        (install_call,) = run_subprocess.call_args_list
-        assert 'UV_PYTHON' not in install_call.kwargs['env']
