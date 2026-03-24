@@ -354,10 +354,7 @@ class _UvBackend(_EnvBackend):
 
                 cmd += ['-c', os.path.abspath(constraint_file.name)]
 
-            env = os.environ.copy()
-            env.pop('UV_PYTHON', None)
-            env['VIRTUAL_ENV'] = self._env_path
-            run_subprocess(cmd, env=env)
+            run_subprocess(cmd, env={**os.environ, 'VIRTUAL_ENV': self._env_path})
 
     @property
     def display_name(self) -> str:
