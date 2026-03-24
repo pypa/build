@@ -239,6 +239,8 @@ def test_uv_impl_install_cmd_well_formed(
                 'install',
                 'some',
                 'requirements',
+                '--python',
+                mocker.ANY,
                 *(['-c', mocker.ANY] if constraints else []),
             ],
             env=mocker.ANY,

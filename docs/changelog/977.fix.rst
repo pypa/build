@@ -1,0 +1,1 @@
+Ensure the ``uv`` installer uses the current version of Python, avoiding an issue if ``UV_PYTHON`` is set, for example.
