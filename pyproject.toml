@@ -104,6 +104,7 @@ mypy = [
 release = [
   "gitpython >= 3.1.44",
   "packaging >= 25",
+  "pre-commit >= 3.0",
   "towncrier >= 24.8",
 ]
 dev = [
