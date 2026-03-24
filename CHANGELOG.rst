@@ -1,37 +1,40 @@
-********************
+####################
  1.4.1 (2026-03-24)
-********************
+####################
 
-Features
-========
+**********
+ Features
+**********
 
 - Allow setting build constraints - by :user:`gaborbernat` (:issue:`963`)
 - Automate releases with pre-release workflow and trusted publishing - by :user:`gaborbernat` (:issue:`991`)
 
-Documentation
-=============
+***************
+ Documentation
+***************
 
 - Fix documentation grammar and typos (:issue:`979`)
 - Reorganize documentation using Diataxis framework - by :user:`gaborbernat` (:issue:`988`)
 - Document release process and workflow security practices in contributing guide (:issue:`991`)
 
-Miscellaneous
-=============
+***************
+ Miscellaneous
+***************
 
 - :issue:`991`
 
-Bugfixes
-========
+**********
+ Bugfixes
+**********
 
 - Fix pip hack workaround - by :user:`gaborbernat` (:issue:`980`)
 
-###########
- Changelog
-###########
+Changelog
+=========
 
-********************
+####################
  1.4.0 (2026-01-08)
-********************
+####################
 
 - Add ``--quiet`` flag (:pr:`947`)
 - Add option to dump PEP 517 metadata with ``--metadata`` (:pr:`940`, :pr:`943`)
@@ -45,9 +48,9 @@ Bugfixes
 - In docs, first argument for ``_has_dependency`` is a name (PR :pr:`970`)
 - Fix test failure when ``flit-core`` is installed (PR :pr:`921`)
 
-********************
+####################
  1.3.0 (2025-08-01)
-********************
+####################
 
 - Add ``--config-json`` (PR :pr:`916`, fixes issue :issue:`900`)
 - Drop Python 3.8 (PR :pr:`891`)
@@ -63,9 +66,9 @@ Bugfixes
 - Use dependency-groups for our development (PR :pr:`880`)
 - Mention conda and update uv mention in README/docs (PR :pr:`842`, :pr:`816`, :pr:`917`)
 
-********************
+####################
  1.2.2 (2024-09-06)
-********************
+####################
 
 - Add editable to ``builder.get_requires_for_build``'s static types (PR :pr:`764`, fixes issue :issue:`763`)
 - Include artifact attestations in our release (PR :pr:`782`)
@@ -74,31 +77,31 @@ Bugfixes
 - Add more intersphinx links to docs (PR :pr:`804`)
 - Make ``uv`` optional for tests (PR :pr:`807` and :pr:`813`)
 
-********************
+####################
  1.2.1 (2024-03-28)
-********************
+####################
 
 - Avoid error when terminal width is undetectable on Python < 3.11 (PR :pr:`761`)
 
-********************
+####################
  1.2.0 (2024-03-27)
-********************
+####################
 
 - Add ``--installer`` option, supporting ``pip`` and ``uv``. Added ``uv`` extra. (PR :pr:`751`)
 - Improve console output and provide ``-v`` for dependency installation (PR :pr:`749`)
 - Avoid compiling unused bytecode when using ``pip`` (PR :pr:`752`)
 - Dropped support for Python 3.7 (PR :pr:`743`)
 
-********************
+####################
  1.1.1 (2024-02-29)
-********************
+####################
 
 - Fixed invoking outer pip from user site packages (PR :pr:`746`, fixes issue :issue:`745`)
 - Corrected the minimum pip version required to use an outer pip (PR :pr:`746`, fixes issue :issue:`745`)
 
-********************
+####################
  1.1.0 (2024-02-29)
-********************
+####################
 
 - Use external pip if available instead of installing, speeds up environment setup with virtualenv slightly and venv
   significantly. (PR :pr:`736`)
@@ -107,16 +110,16 @@ Bugfixes
 - Use ``importlib_metadata`` on Python <3.10.2 for bugfixes not present in those CPython standard libraries (not
   required when bootstrapping) -- by :user:`GianlucaFicarelli`. (PR :pr:`693`, fixes issue :issue:`692`)
 
-********************
+####################
  1.0.3 (2023-09-06)
-********************
+####################
 
 - Avoid CPython 3.8.17, 3.9.17, 3.10.12, and 3.11.4 tarfile symlink bug triggered by adding ``data_filter`` in 1.0.0.
   (PR :pr:`675`, fixes issue :issue:`674`)
 
-********************
+####################
  1.0.0 (2023-09-01)
-********************
+####################
 
 - Removed the ``toml`` library fallback; ``toml`` can no longer be used as a substitute for ``tomli`` (PR :pr:`567`)
 - Added ``runner`` parameter to ``util.project_wheel_metadata`` (PR :pr:`566`, fixes issue :issue:`553`)
@@ -141,18 +144,18 @@ Bugfixes
 - Specify encoding, fixing issues when ``PYTHONWARNDEFAULTENCODING`` is set. (PR :pr:`587`, fixes issue :issue:`577`)
 - Ruff is now used for linting.
 
-*********************
+#####################
  0.10.0 (2023-01-11)
-*********************
+#####################
 
 - Replace ``pep517`` dependency with ``pyproject_hooks``, into which ``pep517`` has been renamed (PR :pr:`539`, Fixes
   :issue:`529`)
 - Change build backend from ``setuptools`` to ``flit`` (PR :pr:`470`, Fixes :issue:`394`)
 - Dropped support for Python 3.6 (PR :pr:`532`)
 
-********************
+####################
  0.9.0 (2022-10-27)
-********************
+####################
 
 - Hide a Python 3.11.0 unavoidable warning with venv (PR :pr:`527`)
 - Fix infinite recursion error in ``check_dependency`` with circular dependencies (PR :pr:`512`, Fixes :issue:`511`)
@@ -162,9 +165,9 @@ Bugfixes
 - Only use ``importlib_metadata`` when needed (PR :pr:`401`)
 - Clarify in printout when build dependencies are being installed (PR :pr:`514`)
 
-********************
+####################
  0.8.0 (2022-05-22)
-********************
+####################
 
 - Accept ``os.PathLike[str]`` in addition to ``str`` for paths in public API (PR :pr:`392`, Fixes :issue:`372`)
 - Add schema validation for ``build-system`` table to check conformity with PEP 517 and PEP 518 (PR :pr:`365`, Fixes
@@ -174,27 +177,28 @@ Bugfixes
 - Improved error printouts (PR :pr:`442`)
 - Avoid importing packaging unless needed (PR :pr:`395`, Fixes :issue:`393`)
 
-Breaking Changes
-================
+******************
+ Breaking Changes
+******************
 
 - Failure to create a virtual environment in the ``build.env`` module now raises ``build.FailedProcessError`` (PR
   :pr:`442`)
 
-********************
+####################
  0.7.0 (2021-09-16)
-********************
+####################
 
 - Add ``build.util`` module with a high-level utility API (PR :pr:`340`)
 
-**************************
+##########################
  0.6.0.post1 (2021-08-05)
-**************************
+##########################
 
 - Fix compatibility with Python 3.6 and 3.7 (PR :pr:`339`, Fixes :issue:`338`)
 
-********************
+####################
  0.6.0 (2021-08-02)
-********************
+####################
 
 - Improved output (PR :pr:`333`, Fixes :issue:`142`)
 - The CLI now honors ``NO_COLOR`` (PR :pr:`333`)
@@ -202,28 +206,30 @@ Breaking Changes
 - Added logging to ``build`` and ``build.env`` (PR :pr:`333`)
 - Switch to a TOML v1 compliant parser (PR :pr:`336`, Fixes :issue:`308`)
 
-Breaking Changes
-================
+******************
+ Breaking Changes
+******************
 
 - Dropped support for Python 2 and 3.5.
 
-********************
+####################
  0.5.1 (2021-06-22)
-********************
+####################
 
 - Fix invoking the backend on an inexistent output directory with multiple levels (PR :pr:`318`, Fixes :issue:`316`)
 - When building wheels via sdists, use an isolated temporary directory (PR :pr:`321`, Fixes :issue:`320`)
 
-********************
+####################
  0.5.0 (2021-06-19)
-********************
+####################
 
 - Add ``ProjectBuilder.metadata_path`` helper (PR :pr:`303`, Fixes :issue:`301`)
 - Added a ``build.__main__.build_package_via_sdist`` method (PR :pr:`304`)
 - Use appropriate installation scheme for Apple Python venvs (PR :pr:`314`, Fixes :issue:`310`)
 
-Breaking Changes
-================
+******************
+ Breaking Changes
+******************
 
 - Binary distributions are now built via the sdist by default in the CLI (PR :pr:`304`, Fixes :issue:`257`) - ``python
   -m build`` will now build a sdist, extract it, and build a wheel from the source
@@ -232,9 +238,9 @@ Breaking Changes
 - Importing ``build.__main__`` no longer has any side-effects, it no longer overrides ``warnings.showwarning`` or runs
   ``colorama.init`` on import (PR :pr:`312`)
 
-********************
+####################
  0.4.0 (2021-05-23)
-********************
+####################
 
 - Validate that the supplied source directory is valid (PR :pr:`260`, Fixes :issue:`259`)
 - Set and test minimum versions of build's runtime dependencies (PR :pr:`267`, Fixes :issue:`263`)
@@ -244,8 +250,9 @@ Breaking Changes
 - Hide irrelevant ``pep517`` error traceback and improve error messages (PR :pr:`296`)
 - Try to use ``colorama`` to fix colors on Windows (PR :pr:`300`)
 
-Breaking Changes
-================
+******************
+ Breaking Changes
+******************
 
 - As a side-effect of PR :pr:`260`, projects not containing either a ``pyproject.toml`` or ``setup.py`` will be reported
   as invalid. This affects projects specifying only a ``setup.cfg``, such projects are recommended to add a
@@ -260,16 +267,16 @@ Breaking Changes
 - ``build.ProjectBuilder.get_dependencies`` to ``build.ProjectBuilder.get_requires_for_build`` (PR :pr:`284`, Fixes
   :issue:`182`)
 
-********************
+####################
  0.3.1 (2021-03-09)
-********************
+####################
 
 - Support direct usage from pipx run in 0.16.1.0+ (PR :pr:`247`)
 - Use UTF-8 encoding when reading pyproject.toml (PR :pr:`251`, Fixes :issue:`250`)
 
-********************
+####################
  0.3.0 (2021-02-19)
-********************
+####################
 
 - Upgrade pip based on venv pip version, avoids error on Debian Python 3.6.5-3.8 or issues installing wheels on Big Sur
   (PR :pr:`229`, PR :pr:`230`, Fixes :issue:`228`)
@@ -277,15 +284,15 @@ Breaking Changes
 - Fallback on venv if virtualenv is too old (PR :pr:`241`)
 - Add metadata preparation hook (PR :pr:`217`, Fixes :issue:`130`)
 
-********************
+####################
  0.2.1 (2021-02-09)
-********************
+####################
 
 - Fix error from unrecognised pip flag on Python 3.6.0 to 3.6.5 (PR :pr:`227`, Fixes :issue:`226`)
 
-********************
+####################
  0.2.0 (2021-02-07)
-********************
+####################
 
 - Check dependencies recursively (PR :pr:`183`, Fixes :issue:`25`)
 - Build wheel and sdist distributions in separate environments, as they may have different dependencies (PR :pr:`195`,
@@ -298,14 +305,15 @@ Breaking Changes
 - Improve documentation (PR :pr:`178`, PR :pr:`203`)
 - Add changelog (PR :pr:`219`, Fixes :issue:`169`)
 
-Breaking changes
-================
+******************
+ Breaking changes
+******************
 
 - Move ``config_settings`` argument to the hook calls (PR :pr:`218`, Fixes :issue:`216`)
 
-********************
+####################
  0.1.0 (2020-10-29)
-********************
+####################
 
 - Moved the upstream to PyPA
 - Fixed building with isolation in a virtual environment
@@ -320,8 +328,9 @@ Breaking changes
 - Documentation moved to the furo theme
 - Updated the CoC to the PSF CoC, which PyPA has adopted
 
-Breaking changes
-================
+******************
+ Breaking changes
+******************
 
 - Renamed the entrypoint script to pyproject-build
 - Removed default arguments from all paths in ProjectBuilder
@@ -330,9 +339,9 @@ Breaking changes
 - Changed the default outdir value to {srcdir}/dest
 - Removed env.IsolatedEnvironment
 
-********************
+####################
  0.0.4 (2020-09-08)
-********************
+####################
 
 - Packages are now built in isolation by default
 - Added --no-isolation/-n flag to build in the current environment
@@ -345,29 +354,29 @@ Breaking changes
 - Automatically detect typos in the build system table
 - Minor documentation improvements
 
-**********************
+######################
  0.0.3.1 (2020-06-10)
-**********************
+######################
 
 - Fix bug preventing the CLI from being invoked
 - Improved documentation
 
-********************
+####################
  0.0.3 (2020-06-09)
-********************
+####################
 
 - Misc improvements
 - Added documentation
 
-********************
+####################
  0.0.2 (2020-05-29)
-********************
+####################
 
 - Add setuptools as a default fallback backend
 - Fix extras handling in requirement strings
 
-********************
+####################
  0.0.1 (2020-05-17)
-********************
+####################
 
 - Initial release
