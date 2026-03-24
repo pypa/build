@@ -1,3 +1,30 @@
+********************
+ 1.4.1 (2026-03-24)
+********************
+
+Features
+========
+
+- Allow setting build constraints - by :user:`gaborbernat` (:issue:`963`)
+- Automate releases with pre-release workflow and trusted publishing - by :user:`gaborbernat` (:issue:`991`)
+
+Documentation
+=============
+
+- Fix documentation grammar and typos (:issue:`979`)
+- Reorganize documentation using Diataxis framework - by :user:`gaborbernat` (:issue:`988`)
+- Document release process and workflow security practices in contributing guide (:issue:`991`)
+
+Miscellaneous
+=============
+
+- :issue:`991`
+
+Bugfixes
+========
+
+- Fix pip hack workaround - by :user:`gaborbernat` (:issue:`980`)
+
 ###########
  Changelog
 ###########

@@ -1,1 +1,0 @@
-Document release process and workflow security practices in contributing guide

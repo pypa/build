@@ -1,1 +1,0 @@
-Reorganize documentation using Diataxis framework - by :user:`gaborbernat`

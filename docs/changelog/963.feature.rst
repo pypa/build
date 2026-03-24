@@ -1,1 +1,0 @@
-Allow setting build constraints - by :user:`gaborbernat`
