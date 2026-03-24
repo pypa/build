@@ -69,7 +69,10 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     repo.git.add('.')
-    check_call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
+    check_call(['pre-commit', 'run', '--all-files', '--show-diff-on-failure'], cwd=str(ROOT_SRC_DIR))
+    if repo.is_dirty():
+        msg = 'Pre-commit hooks modified files after final run. This indicates an environment inconsistency.'
+        raise RuntimeError(msg)
     return repo.index.commit(f'chore: prepare for {version}')
 
 
