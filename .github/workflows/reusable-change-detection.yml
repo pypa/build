@@ -51,7 +51,7 @@ jobs:
             CHANGELOG.rst
             README.md
             .github/workflows/test.yml
-            .github/workflows/reusable-check.yml
+            .github/workflows/reusable-docs.yml
       - name: Set a flag for building the docs
         if: >-
           github.event_name != 'pull_request'

@@ -44,4 +44,11 @@ jobs:
           git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
           git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
       - name: Generate release commit and tag
-        run: uv tool run --with tox-uv tox r -e release -- --version "${{ inputs.bump }}"
+        run: uv tool run --with tox-uv tox r -e release -- --version "${{ inputs.bump }}" --no-push
+      - name: Push release commit and tag
+        run: |
+          git remote set-url origin "https://x-access-token:${GH_RELEASE_TOKEN}@github.com/${{ github.repository }}.git"
+          git push origin HEAD:main
+          git push origin "$(git describe --tags --abbrev=0)"
+        env:
+          GH_RELEASE_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
