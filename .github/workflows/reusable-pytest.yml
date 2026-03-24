@@ -74,13 +74,15 @@ jobs:
 
       - name: Run test suite via tox
         if: matrix.tox-target == 'tox'
+        shell: bash
         run: |
-          tox -vv --notest -e ${{env.BASE}}
-          tox -e ${{env.BASE}} --skip-pkg-install
+          tox -vv --notest -e $BASE
+          tox -e $BASE --skip-pkg-install
 
       - name: Run minimum version test
         if: matrix.tox-target == 'min'
-        run: tox -e ${{env.BASE}}-${{ matrix.tox-target }}
+        shell: bash
+        run: tox -e $BASE-${{ matrix.tox-target }}
 
       - name: Run path test
         if: matrix.tox-target == 'tox' && matrix.py == '3.10'
