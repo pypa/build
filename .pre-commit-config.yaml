@@ -61,3 +61,10 @@ repos:
     rev: v1.23.1
     hooks:
       - id: zizmor
+  - repo: local
+    hooks:
+      - id: changelog-filenames
+        name: Enforce towncrier fragment filenames
+        files: ^docs/changelog/(?!([0-9]+\.(feature|bugfix|doc|removal|misc)\.rst|template\.jinja2|README\.rst)$).*
+        entry: files in changelog must be valid (N.type.rst)
+        language: fail
