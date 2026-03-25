@@ -1,0 +1,2 @@
+Fix ``_has_valid_outer_pip`` returning ``True`` when pip is missing, causing build to try using a non-existent pip
+instead of falling back to virtualenv.

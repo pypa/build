@@ -188,7 +188,7 @@ class _PipBackend(_EnvBackend):
                         return True
             return False
 
-        return True
+        return None  # pragma: no cover
 
     @functools.cached_property
     def _has_virtualenv(self) -> bool:
