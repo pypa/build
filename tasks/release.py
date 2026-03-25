@@ -68,22 +68,22 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     print('build changelog from fragments with towncrier')
     check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
-    repo.git.add('.')
+    repo.git.add('src/build/__init__.py', 'CHANGELOG.rst', 'docs/changelog/*')
     check_call(['pre-commit', 'run', '--all-files', '--show-diff-on-failure'], cwd=str(ROOT_SRC_DIR))
-    if repo.is_dirty():
+    if repo.is_dirty(index=False, working_tree=True, untracked_files=False):
         msg = 'Pre-commit hooks modified files after final run. This indicates an environment inconsistency.'
         raise RuntimeError(msg)
     return repo.index.commit(f'chore: prepare for {version}')
 
 
 def update_version_file(version: Version) -> None:
-    content = VERSION_FILE.read_text()
+    content = VERSION_FILE.read_text(encoding='utf-8')
     lines = content.splitlines(keepends=True)
     for i, line in enumerate(lines):
         if line.startswith('__version__ = '):
             lines[i] = f"__version__ = '{version}'\n"
             break
-    VERSION_FILE.write_text(''.join(lines))
+    VERSION_FILE.write_text(''.join(lines), encoding='utf-8')
 
 
 def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> TagReference:
@@ -102,7 +102,7 @@ def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> 
 
 
 def extract_changelog_for_version(version: Version) -> str:
-    content = CHANGELOG_FILE.read_text()
+    content = CHANGELOG_FILE.read_text(encoding='utf-8')
     lines = content.splitlines()
     in_version_section = False
     version_header = str(version)
