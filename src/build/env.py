@@ -277,10 +277,7 @@ class _PipBackend(_EnvBackend):
 
     def install_dependencies(self, requirements: Collection[str], constraints: Collection[str]) -> None:
         with contextlib.ExitStack() as exit_stack:
-            if self._has_valid_outer_pip:
-                cmd = [sys.executable, '-m', 'pip', '--python', self.python_executable]
-            else:
-                cmd = [self.python_executable, '-Im', 'pip']
+            cmd = [self.python_executable, '-Im', 'pip']
 
             if _ctx.verbosity > 1:
                 cmd += [f'-{"v" * (_ctx.verbosity - 1)}']
