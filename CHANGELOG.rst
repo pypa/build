@@ -1,12 +1,13 @@
-********************
+####################
  1.4.2 (2026-03-25)
-********************
+####################
 
-==========
+**********
  Bugfixes
-==========
+**********
 
-- Ensure the ``uv`` installer uses the current version of Python, avoiding an issue if ``UV_PYTHON`` is set, for example. (:issue:`977`)
+- Ensure the ``uv`` installer uses the current version of Python, avoiding an issue if ``UV_PYTHON`` is set, for
+  example. (:issue:`977`)
 - Fix ``_has_valid_outer_pip`` returning ``True`` when pip is missing, causing build to try using a non-existent pip
   instead of falling back to virtualenv. (:issue:`1003`)
 
@@ -40,9 +41,6 @@
 **********
 
 - Fix pip hack workaround - by :user:`gaborbernat` (:issue:`980`)
-
-Changelog
-=========
 
 ####################
  1.4.0 (2026-01-08)
