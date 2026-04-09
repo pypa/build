@@ -1,0 +1,2 @@
+Fix misleading missing dependency error display where transitive dependency chains showed the top-level package on a
+separate line, making it appear as if the top-level package itself was missing - by :user:`gaborbernat`
