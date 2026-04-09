@@ -111,8 +111,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         return self
 
     def __exit__(self, *args: object) -> None:
-        if os.path.exists(self._path):  # in case the user already deleted skip remove
-            shutil.rmtree(self._path)
+        shutil.rmtree(self._path, ignore_errors=True)
 
     @property
     def path(self) -> str:
@@ -282,8 +281,8 @@ class _PipBackend(_EnvBackend):
             else:
                 cmd = [self.python_executable, '-Im', 'pip']
 
-            if _ctx.verbosity > 1:
-                cmd += [f'-{"v" * (_ctx.verbosity - 1)}']
+            if (verbosity := _ctx.verbosity) > 1:
+                cmd += [f'-{"v" * (verbosity - 1)}']
 
             cmd += ['install', '--use-pep517', '--no-warn-script-location', '--no-compile']
 
@@ -339,8 +338,8 @@ class _UvBackend(_EnvBackend):
         with contextlib.ExitStack() as exit_stack:
             cmd = [self._uv_bin, 'pip']
 
-            if _ctx.verbosity > 1:
-                cmd += [f'-{"v" * min(2, _ctx.verbosity - 1)}']
+            if (verbosity := _ctx.verbosity) > 1:
+                cmd += [f'-{"v" * min(2, verbosity - 1)}']
 
             cmd += ['install', *requirements]
             cmd += ['--python', self.python_executable]

@@ -332,7 +332,7 @@ class ProjectBuilder:
                 msg = f"Build path '{outdir}' exists and is not a directory"
                 raise BuildException(msg)
         else:
-            os.makedirs(outdir)
+            os.makedirs(outdir, exist_ok=True)
 
         with self._handle_backend(hook_name):
             basename: str = callback(outdir, config_settings, **kwargs)
