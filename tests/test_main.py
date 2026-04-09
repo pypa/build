@@ -14,7 +14,7 @@ import unittest.mock
 import venv
 
 import pytest
-import pytest_mock
+from typing import Any
 
 import build
 import build.__main__
@@ -483,7 +483,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir, package_test_setu
 
 
 @pytest.mark.isolated
-def test_build_package_with_constraints(mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, package_test_flit):
+def test_build_package_with_constraints(mocker: Any, tmp_path: pathlib.Path, package_test_flit):
     install = mocker.patch('build.env.DefaultIsolatedEnv.install')
 
     constraints_txt_path = tmp_path.joinpath('constraints.txt')

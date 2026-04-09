@@ -4,7 +4,7 @@ import logging
 import sys
 
 import pytest
-import pytest_mock
+from typing import Any
 
 import build._ctx
 
@@ -21,6 +21,14 @@ def test_default_ctx_logger(caplog: pytest.LogCaptureFixture):
     assert record.message == 'foo'
 
 
+def test_default_ctx_logger_only_logs_null_origin_messages(caplog: pytest.LogCaptureFixture):
+    build._ctx.log('foo', origin=None)
+    build._ctx.log('bar', origin=('bar',))
+
+    [record] = caplog.records
+    assert record.message == 'foo'
+
+
 def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture):
     log_stub = mocker.stub('custom_logger')
 
@@ -30,7 +38,7 @@ def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture):
     log_stub.assert_called_once_with('foo')
 
 
-def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixture):
+def test_ctx_custom_logger_with_custom_verbosity(mocker: Any):
     log_stub = mocker.stub('custom_logger')
 
     def log(message: str, **kwargs):
@@ -53,7 +61,7 @@ def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixtu
     ],
 )
 def test_custom_subprocess_runner_ctx_logging(
-    mocker: pytest_mock.MockerFixture, verbosity: int, kwarg_origins: list[tuple[str, ...]]
+    mocker: Any, verbosity: int, kwarg_origins: list[tuple[str, ...]]
 ):
     log_stub = mocker.stub('custom_logger')
 

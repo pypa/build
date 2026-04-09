@@ -13,7 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-import pytest_mock
+from typing import Any
 
 from packaging.version import Version
 
@@ -39,7 +39,7 @@ def test_isolation():
 @pytest.mark.skipif(IS_PYPY, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
     with build.env.DefaultIsolatedEnv():
@@ -53,7 +53,7 @@ SCHEME_NAMES = sysconfig.get_scheme_names()
 @pytest.mark.skipif('posix_local' not in SCHEME_NAMES, reason='workaround for Debian/Ubuntu Python')
 @pytest.mark.skipif('venv' in SCHEME_NAMES, reason='different call if venv is in scheme names')
 def test_can_get_venv_paths_with_posix_local_default_scheme(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     get_paths = mocker.spy(sysconfig, 'get_paths')
     # We should never call this, but we patch it to ensure failure if we do
@@ -65,7 +65,7 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(
 
 
 def test_venv_executable_missing_post_creation(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     venv_create = mocker.patch('venv.EnvBuilder.create')
     with pytest.raises(RuntimeError, match=r'Virtual environment creation failed, executable .* missing'):
@@ -98,7 +98,7 @@ def test_isolated_env_abstract():
 @pytest.mark.pypy3323bug
 def test_isolated_env_log(
     caplog: pytest.LogCaptureFixture,
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     caplog.set_level(logging.DEBUG)
     mocker.patch('build.env.run_subprocess')
@@ -129,7 +129,7 @@ def test_default_pip_is_never_too_old():
 @pytest.mark.parametrize('arch', ['x86_64', 'arm64'])
 @pytest.mark.usefixtures('local_pip')
 def test_pip_needs_upgrade_mac_os_11(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
     pip_version: str,
     arch: str,
 ):
@@ -154,7 +154,7 @@ def test_pip_needs_upgrade_mac_os_11(
 
 @pytest.mark.parametrize('has_symlink', [True, False] if sys.platform.startswith('win') else [True])
 def test_venv_symlink(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
     has_symlink: bool,
 ):
     if has_symlink:
@@ -172,7 +172,7 @@ def test_venv_symlink(
 
 
 def test_install_short_circuits(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     with build.env.DefaultIsolatedEnv() as env:
         install_dependencies = mocker.patch.object(env._env_backend, 'install_dependencies')
@@ -188,7 +188,7 @@ def test_install_short_circuits(
 @pytest.mark.parametrize('constraints', [[], ['foo']])
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_cmd_well_formed(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
     verbosity: int,
     constraints: list[str],
 ):
@@ -221,7 +221,7 @@ def test_default_impl_install_cmd_well_formed(
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
     verbosity: int,
     constraints: list[str],
 ):
@@ -309,7 +309,7 @@ def test_requirement_installation(
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_external_uv_detection_success(
     caplog: pytest.LogCaptureFixture,
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     mocker.patch.dict(sys.modules, {'uv': None})
 
@@ -322,7 +322,7 @@ def test_external_uv_detection_success(
 
 
 def test_external_uv_detection_failure(
-    mocker: pytest_mock.MockerFixture,
+    mocker: Any,
 ):
     mocker.patch.dict(sys.modules, {'uv': None})
     mocker.patch('shutil.which', return_value=None)

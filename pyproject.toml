@@ -92,6 +92,7 @@ test = [
 ]
 typing = [
   "importlib-metadata >= 5.1",
+  "pytest",
   "tomli",
   "typing-extensions >= 3.7.4.3",
   "types-colorama",
@@ -169,7 +170,8 @@ filterwarnings = [
 ]
 
 [tool.mypy]
-files = "src"
+files = ["src", "tests"]
+exclude = ["tests/packages"]
 python_version = "3.9"
 strict = true
 enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
