@@ -535,6 +535,7 @@ def test_metadata_path_no_prepare(tmp_dir: str, package_test_no_prepare: str) ->
     metadata = _importlib.metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
+    assert metadata is not None
 
     assert metadata['name'] == 'test-no-prepare'
     assert metadata['Version'] == '1.0.0'
@@ -546,6 +547,7 @@ def test_metadata_path_with_prepare(tmp_dir: str, package_test_setuptools: str) 
     metadata = _importlib.metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
+    assert metadata is not None
 
     # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
     assert metadata['name'].replace('-', '_') == 'test_setuptools'
@@ -558,6 +560,7 @@ def test_metadata_path_legacy(tmp_dir: str, package_legacy: str) -> None:
     metadata = _importlib.metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
+    assert metadata is not None
 
     assert metadata['name'] == 'legacy'
     assert metadata['Version'] == '1.0.0'

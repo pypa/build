@@ -353,8 +353,12 @@ def test_build_package_passes_config_settings_to_build(mocker: pytest_mock.Mocke
     assert built == ['test_flit-1.0.0.tar.gz', 'test_flit-1.0.0-py3-none-any.whl']
     build_cmd.assert_has_calls(
         [
-            unittest.mock.call(False, package_test_flit, '.', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv'),
-            unittest.mock.call(False, package_test_flit, '.', 'wheel', config_settings, True, pathlib.Path('constraints.txt'), 'uv'),
+            unittest.mock.call(
+                False, package_test_flit, '.', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv'
+            ),
+            unittest.mock.call(
+                False, package_test_flit, '.', 'wheel', config_settings, True, pathlib.Path('constraints.txt'), 'uv'
+            ),
         ]
     )
 
