@@ -115,6 +115,14 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
     return build_system_table
 
 
+def _validate_backend_path(source_dir: str, backend_paths: Sequence[str]) -> None:
+    for path in backend_paths:
+        resolved = os.path.join(source_dir, path)
+        if not os.path.isdir(resolved):
+            msg = f'`backend-path` entry {path!r} does not exist or is not a directory'
+            raise BuildSystemTableValidationError(msg)
+
+
 def _wrap_subprocess_runner(runner: SubprocessRunner, env: env.IsolatedEnv) -> SubprocessRunner:
     def _invoke_wrapped_runner(
         cmd: Sequence[str], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None
@@ -162,6 +170,9 @@ class ProjectBuilder:
         self._build_system = _parse_build_system_table(_read_pyproject_toml(pyproject_toml_path))
 
         self._backend = self._build_system['build-backend']
+
+        if backend_paths := self._build_system.get('backend-path'):
+            _validate_backend_path(self._source_dir, backend_paths)
 
         self._hook = pyproject_hooks.BuildBackendHookCaller(
             self._source_dir,

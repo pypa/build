@@ -9,6 +9,7 @@ import pathlib
 import sys
 import textwrap
 
+from collections.abc import Callable
 from typing import NoReturn
 
 import pyproject_hooks
@@ -623,3 +624,25 @@ def test_parse_valid_build_system_table_type(pyproject_toml, parse_output):
 def test_parse_invalid_build_system_table_type(pyproject_toml, error_message):
     with pytest.raises(build.BuildSystemTableValidationError, match=error_message):
         build._builder._parse_build_system_table(pyproject_toml)
+
+
+@pytest.mark.parametrize(
+    'setup',
+    [
+        pytest.param(lambda _tmp_path: None, id='nonexistent'),
+        pytest.param(lambda tmp_path: (tmp_path / 'bad').write_text('', encoding='utf-8'), id='file-not-dir'),
+    ],
+)
+def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[[pathlib.Path], None]) -> None:
+    (tmp_path / 'pyproject.toml').write_text(
+        textwrap.dedent("""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["bad"]
+        """),
+        encoding='utf-8',
+    )
+    setup(tmp_path)
+    with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
+        build.ProjectBuilder(tmp_path)
