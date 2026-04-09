@@ -78,7 +78,7 @@ def _make_logger() -> _ctx.Logger:
 
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
 
-    def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
+    def log(message: str, *, kind: tuple[str, ...] | None = None, origin: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
             if kind is None:
                 print(fill(message, initial_indent='  '), file=sys.stderr)
