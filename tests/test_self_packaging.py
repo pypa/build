@@ -90,7 +90,7 @@ def test_build_sdist(monkeypatch, tmpdir):
     (sdist,) = tmpdir.visit('*.tar.gz')
 
     with tarfile.open(str(sdist), 'r:gz') as tar:
-        simpler = {n.split('/', 1)[-1] for n in tar.getnames()}
+        simpler = {n.split('/', 1)[-1] for n in tar.getnames() if '/__pycache__/' not in n}
 
     assert simpler == sdist_files
 
