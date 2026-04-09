@@ -10,9 +10,8 @@ import pathlib
 import re
 import subprocess
 import sys
+import unittest.mock
 import venv
-
-from unittest.mock import call
 
 import pytest
 import pytest_mock
@@ -346,8 +345,8 @@ def test_build_package_passes_config_settings_to_build(mocker, package_test_flit
     assert built == ['test_flit-1.0.0.tar.gz', 'test_flit-1.0.0-py3-none-any.whl']
     build_cmd.assert_has_calls(
         [
-            call(False, package_test_flit, '.', 'sdist', config_settings, True, 'constraints.txt', 'uv'),
-            call(False, package_test_flit, '.', 'wheel', config_settings, True, 'constraints.txt', 'uv'),
+            unittest.mock.call(False, package_test_flit, '.', 'sdist', config_settings, True, 'constraints.txt', 'uv'),
+            unittest.mock.call(False, package_test_flit, '.', 'wheel', config_settings, True, 'constraints.txt', 'uv'),
         ]
     )
 
@@ -381,8 +380,8 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker):
     tar_open.return_value.__enter__.return_value.extractall.assert_called_once_with('temp-sdist-dir')
     build_cmd.assert_has_calls(
         [
-            call(False, 'src', 'dist', 'sdist', config_settings, True, 'constraints.txt', 'uv'),
-            call(
+            unittest.mock.call(False, 'src', 'dist', 'sdist', config_settings, True, 'constraints.txt', 'uv'),
+            unittest.mock.call(
                 False,
                 os.path.join('temp-sdist-dir', 'demo-1.0.0'),
                 'dist',
