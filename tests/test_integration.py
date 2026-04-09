@@ -13,6 +13,7 @@ import tarfile
 import typing
 import urllib.request
 
+from pathlib import Path
 from typing import Any
 
 import filelock
@@ -40,12 +41,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXCL = frozenset(['.tox', 'dist', '.git', '__pycache__', '.integration-sources', '.github', 'tests', 'docs'])
 
 
-def get_project(name: Any, tmp_path: Any) -> Any:
+def get_project(name: str, tmp_path: Path) -> Path:
     dest = tmp_path / name
     if name == 'build':
         # our own project is available in-source, just ignore development files
 
-        def _ignore_folder(base: Any, filenames: Any) -> Any:
+        def _ignore_folder(base: str, filenames: list[str]) -> list[str]:
             ignore = [
                 n for n in filenames if n in EXCL or n.endswith(('_cache', '.egg-info', '.pyc')) or n.startswith('.coverage')
             ]
@@ -109,7 +110,9 @@ def get_project(name: Any, tmp_path: Any) -> Any:
     ],
 )
 @pytest.mark.isolated
-def test_build(request: Any, monkeypatch: Any, project: Any, args: Any, call: Any, tmp_path: Any) -> None:
+def test_build(
+    request: Any, monkeypatch: pytest.MonkeyPatch, project: str, args: list[str], call: list[str] | None, tmp_path: Path
+) -> None:
     if args == ['--installer', 'uv'] and IS_WINDOWS and IS_PYPY:
         pytest.xfail('uv cannot find PyPy executable')
     if project in {'build', 'flit'} and '--no-isolation' in args:

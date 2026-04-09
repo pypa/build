@@ -258,7 +258,9 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         ),
     ],
 )
-def test_parse_args(mocker: Any, cli_args: Any, build_args: Any, build_kwargs: Any, hook: Any) -> None:
+def test_parse_args(
+    mocker: Any, cli_args: list[str], build_args: tuple[Any, Any], build_kwargs: dict[str, Any], hook: str
+) -> None:
     build_package = mocker.patch('build.__main__.build_package', return_value=['something'])
     build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
 
@@ -291,7 +293,7 @@ def test_version(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 @pytest.mark.isolated
-def test_build_isolated(mocker: Any, package_test_flit: Any) -> None:
+def test_build_isolated(mocker: Any, package_test_flit: str) -> None:
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     required_cmd = mocker.patch(
         'build.ProjectBuilder.get_requires_for_build',
@@ -312,7 +314,7 @@ def test_build_isolated(mocker: Any, package_test_flit: Any) -> None:
     build_cmd.assert_called_with('sdist', '.', None)
 
 
-def test_build_no_isolation_check_deps_empty(mocker: Any, package_test_flit: Any) -> None:
+def test_build_no_isolation_check_deps_empty(mocker: Any, package_test_flit: str) -> None:
     # check_dependencies = []
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
@@ -404,7 +406,9 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker):
         ([('foo',), ('bar', 'baz', 'qux')], '\n\tfoo\n\tbar -> baz -> qux'),
     ],
 )
-def test_build_no_isolation_with_check_deps(mocker: Any, package_test_flit: Any, missing_deps: Any, output: Any) -> None:
+def test_build_no_isolation_with_check_deps(
+    mocker: Any, package_test_flit: str, missing_deps: list[tuple[str, ...]], output: str
+) -> None:
     error = mocker.patch('build.__main__._error')
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=missing_deps)
@@ -423,7 +427,7 @@ def test_build_no_isolation_with_check_deps(mocker: Any, package_test_flit: Any,
         (['--config-json=[1]'], '--config-json must contain a JSON object'),
     ],
 )
-def test_config_json_errors(cli_args: Any, err_msg: Any, capsys: pytest.CaptureFixture[str]) -> None:
+def test_config_json_errors(cli_args: list[str], err_msg: str, capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main(cli_args)
 
@@ -432,7 +436,7 @@ def test_config_json_errors(cli_args: Any, err_msg: Any, capsys: pytest.CaptureF
 
 
 @pytest.mark.isolated
-def test_build_raises_build_exception(mocker: Any, package_test_flit: Any) -> None:
+def test_build_raises_build_exception(mocker: Any, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
     mocker.patch('build.env.DefaultIsolatedEnv.install')
 
@@ -441,7 +445,7 @@ def test_build_raises_build_exception(mocker: Any, package_test_flit: Any) -> No
 
 
 @pytest.mark.isolated
-def test_build_raises_build_backend_exception(mocker: Any, package_test_flit: Any) -> None:
+def test_build_raises_build_backend_exception(mocker: Any, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
     mocker.patch('build.env.DefaultIsolatedEnv.install')
 
@@ -452,7 +456,7 @@ def test_build_raises_build_backend_exception(mocker: Any, package_test_flit: An
 
 @pytest.mark.network
 @pytest.mark.pypy3323bug
-def test_build_package(tmp_dir: Any, package_test_setuptools: Any) -> None:
+def test_build_package(tmp_dir: str, package_test_setuptools: str) -> None:
     build.__main__.build_package(package_test_setuptools, tmp_dir, ['sdist', 'wheel'])
 
     assert sorted(os.listdir(tmp_dir)) == [
@@ -463,7 +467,7 @@ def test_build_package(tmp_dir: Any, package_test_setuptools: Any) -> None:
 
 @pytest.mark.network
 @pytest.mark.pypy3323bug
-def test_build_package_via_sdist(tmp_dir: Any, package_test_setuptools: Any) -> None:
+def test_build_package_via_sdist(tmp_dir: str, package_test_setuptools: str) -> None:
     build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['wheel'])
 
     assert sorted(os.listdir(tmp_dir)) == [
@@ -473,18 +477,18 @@ def test_build_package_via_sdist(tmp_dir: Any, package_test_setuptools: Any) -> 
 
 
 @pytest.mark.pypy3323bug
-def test_build_package_via_sdist_incomplete_sdist(tmp_dir: Any, package_test_cant_build_via_sdist: Any) -> None:
+def test_build_package_via_sdist_incomplete_sdist(tmp_dir: str, package_test_cant_build_via_sdist: str) -> None:
     with pytest.raises(build.BuildBackendException):
         build.__main__.build_package_via_sdist(package_test_cant_build_via_sdist, tmp_dir, ['wheel'])
 
 
-def test_build_package_via_sdist_invalid_distribution(tmp_dir: Any, package_test_setuptools: Any) -> None:
+def test_build_package_via_sdist_invalid_distribution(tmp_dir: str, package_test_setuptools: str) -> None:
     with pytest.raises(ValueError, match='Only binary distributions are allowed but sdist was specified'):
         build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['sdist'])
 
 
 @pytest.mark.isolated
-def test_build_package_with_constraints(mocker: Any, tmp_path: pathlib.Path, package_test_flit: Any) -> None:
+def test_build_package_with_constraints(mocker: Any, tmp_path: pathlib.Path, package_test_flit: str) -> None:
     install = mocker.patch('build.env.DefaultIsolatedEnv.install')
 
     constraints_txt_path = tmp_path.joinpath('constraints.txt')
@@ -603,7 +607,7 @@ foo==wot
 )
 @pytest.mark.flaky(reruns=5)
 def test_logging_output(
-    package_test_setuptools: Any, tmp_dir: Any, capsys: pytest.CaptureFixture[str], args: Any, output: Any
+    package_test_setuptools: str, tmp_dir: str, capsys: pytest.CaptureFixture[str], args: list[str], output: list[str]
 ) -> None:
     build.__main__.main([package_test_setuptools, '-o', tmp_dir, *args])
     _, stderr = capsys.readouterr()
@@ -640,13 +644,13 @@ def test_logging_output(
 @pytest.mark.usefixtures('local_pip')
 def test_logging_output_env_subprocess_error(
     mocker: Any,
-    monkeypatch: Any,
-    package_test_invalid_requirements: Any,
-    tmp_dir: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    package_test_invalid_requirements: str,
+    tmp_dir: str,
     capsys: pytest.CaptureFixture[str],
-    color: Any,
-    stderr_body: Any,
-    stderr_error: Any,
+    color: bool,
+    stderr_body: list[str],
+    stderr_error: str,
 ) -> None:
     try:
         # do not inject hook to have clear output on capsys
@@ -680,7 +684,9 @@ def test_logging_output_env_subprocess_error(
         (True, {'FORCE_COLOR': ''}, build.__main__._COLORS),
     ],
 )
-def test_colors(mocker: Any, monkeypatch: Any, tty: Any, env: Any, colors: Any) -> None:
+def test_colors(
+    mocker: Any, monkeypatch: pytest.MonkeyPatch, tty: bool, env: dict[str, str], colors: dict[str, object]
+) -> None:
     mocker.patch('sys.stdout.isatty', return_value=tty)
     for key, value in env.items():
         monkeypatch.setenv(key, value)
@@ -690,7 +696,7 @@ def test_colors(mocker: Any, monkeypatch: Any, tty: Any, env: Any, colors: Any) 
     assert build.__main__._styles.get() == colors
 
 
-def test_colors_conflict(monkeypatch: Any) -> None:
+def test_colors_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
     with monkeypatch.context() as m:
         m.setenv('NO_COLOR', '')
         m.setenv('FORCE_COLOR', '')
@@ -705,9 +711,9 @@ def test_colors_conflict(monkeypatch: Any) -> None:
 
 
 def test_logging_output_venv_failure(
-    monkeypatch: Any, package_test_flit: Any, tmp_dir: Any, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, package_test_flit: str, tmp_dir: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    def raise_called_process_err(*args: Any, **kwargs: Any) -> Any:
+    def raise_called_process_err(*args: Any, **kwargs: Any) -> None:
         raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
 
     monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)
@@ -735,9 +741,9 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
 def test_verbose_logging_output(
     subtests: Any,
     capfd: pytest.CaptureFixture[str],
-    monkeypatch: Any,
-    tmp_dir: Any,
-    package_test_setuptools: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_dir: str,
+    package_test_setuptools: str,
 ) -> None:
     monkeypatch.setenv('NO_COLOR', '')
 
@@ -758,7 +764,7 @@ def test_verbose_logging_output(
 
 def test_metadata_json_output(
     capsys: pytest.CaptureFixture[str],
-    package_test_setuptools: Any,
+    package_test_setuptools: str,
 ) -> None:
     build.__main__.main([package_test_setuptools, '--metadata', '-n'])
 

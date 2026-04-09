@@ -92,7 +92,8 @@ test = [
 ]
 typing = [
   "importlib-metadata >= 5.1",
-  "pytest",
+  "pytest < 7.5",
+  "pytest-mock >= 2",
   "tomli",
   "typing-extensions >= 3.7.4.3",
   "types-colorama",
@@ -101,7 +102,6 @@ typing = [
 mypy = [
   "mypy ~= 1.18.2",
   { include-group = "typing" },
-  "pytest < 7.5",
 ]
 release = [
   "gitpython >= 3.1.44",
