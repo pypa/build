@@ -8,7 +8,8 @@
 {% for section, _ in sections.items() %}
 {% set section_entries = sections[section] %}
 {% if section_entries %}
-{% for category, entries in section_entries.items() if entries %}
+{% for category in definitions.keys() if section_entries.get(category) %}
+{% set entries = section_entries[category] %}
 {{ underlines[0] * (definitions[category]['name']|length + 2) }}
  {{ definitions[category]['name'] }}
 {{ underlines[0] * (definitions[category]['name']|length + 2) }}

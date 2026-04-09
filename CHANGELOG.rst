@@ -22,6 +22,12 @@
 - Allow setting build constraints - by :user:`gaborbernat` (:issue:`963`)
 - Automate releases with pre-release workflow and trusted publishing - by :user:`gaborbernat` (:issue:`991`)
 
+**********
+ Bugfixes
+**********
+
+- Fix pip hack workaround - by :user:`gaborbernat` (:issue:`980`)
+
 ***************
  Documentation
 ***************
@@ -35,12 +41,6 @@
 ***************
 
 - :issue:`991`
-
-**********
- Bugfixes
-**********
-
-- Fix pip hack workaround - by :user:`gaborbernat` (:issue:`980`)
 
 ####################
  1.4.0 (2026-01-08)
