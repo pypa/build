@@ -400,7 +400,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker):
     ['missing_deps', 'output'],
     [
         ([('foo',)], '\n\tfoo'),
-        ([('foo',), ('bar', 'baz', 'qux')], '\n\tfoo\n\tbar\n\tbaz -> qux'),
+        ([('foo',), ('bar', 'baz', 'qux')], '\n\tfoo\n\tbar -> baz -> qux'),
     ],
 )
 def test_build_no_isolation_with_check_deps(mocker, package_test_flit, missing_deps, output):

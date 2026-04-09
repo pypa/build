@@ -121,7 +121,7 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     raise SystemExit(code)
 
 
-def _format_dep_chain(dep_chain: Sequence[str]) -> str:
+def _format_dep_chain(dep_chain: tuple[str, ...]) -> str:
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
 
@@ -164,9 +164,7 @@ def _bootstrap_build_env(
         if not skip_dependency_check:
             missing = builder.check_dependencies(distribution, config_settings)
             if missing:
-                dependencies = ''.join(
-                    '\n\t' + dep for deps in missing for dep in (deps[0], _format_dep_chain(deps[1:])) if dep
-                )
+                dependencies = ''.join('\n\t' + _format_dep_chain(deps) for deps in missing)
                 _cprint()
                 _error(f'Missing dependencies:{dependencies}')
 
