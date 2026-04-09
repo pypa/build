@@ -11,9 +11,9 @@ import typing
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
-from typing import Any
 
 from packaging.version import Version
 
@@ -28,7 +28,7 @@ MISSING_VIRTUALENV = importlib.util.find_spec('virtualenv') is None
 
 
 @pytest.mark.isolated
-def test_isolation():
+def test_isolation() -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
     with build.env.DefaultIsolatedEnv() as env:
         with pytest.raises(subprocess.CalledProcessError):
@@ -40,7 +40,7 @@ def test_isolation():
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(
     mocker: Any,
-):
+) -> None:
     get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
     with build.env.DefaultIsolatedEnv():
         pass
@@ -54,7 +54,7 @@ SCHEME_NAMES = sysconfig.get_scheme_names()
 @pytest.mark.skipif('venv' in SCHEME_NAMES, reason='different call if venv is in scheme names')
 def test_can_get_venv_paths_with_posix_local_default_scheme(
     mocker: Any,
-):
+) -> None:
     get_paths = mocker.spy(sysconfig, 'get_paths')
     # We should never call this, but we patch it to ensure failure if we do
     get_default_scheme = mocker.patch('sysconfig.get_default_scheme', return_value='posix_local')
@@ -66,7 +66,7 @@ def test_can_get_venv_paths_with_posix_local_default_scheme(
 
 def test_venv_executable_missing_post_creation(
     mocker: Any,
-):
+) -> None:
     venv_create = mocker.patch('venv.EnvBuilder.create')
     with pytest.raises(RuntimeError, match=r'Virtual environment creation failed, executable .* missing'):
         with build.env.DefaultIsolatedEnv():
@@ -75,7 +75,7 @@ def test_venv_executable_missing_post_creation(
 
 
 @typing.no_type_check
-def test_isolated_env_abstract():
+def test_isolated_env_abstract() -> None:
     with pytest.raises(TypeError):
         build.env.IsolatedEnv()
 
@@ -87,19 +87,19 @@ def test_isolated_env_abstract():
     with pytest.raises(TypeError):
         PartialEnv()
 
-    class PartialEnv(build.env.IsolatedEnv):
+    class PartialEnv2(build.env.IsolatedEnv):
         def make_extra_environ(self):
             raise NotImplementedError
 
     with pytest.raises(TypeError):
-        PartialEnv()
+        PartialEnv2()
 
 
 @pytest.mark.pypy3323bug
 def test_isolated_env_log(
     caplog: pytest.LogCaptureFixture,
     mocker: Any,
-):
+) -> None:
     caplog.set_level(logging.DEBUG)
     mocker.patch('build.env.run_subprocess')
 
@@ -115,7 +115,7 @@ def test_isolated_env_log(
 
 @pytest.mark.isolated
 @pytest.mark.usefixtures('local_pip')
-def test_default_pip_is_never_too_old():
+def test_default_pip_is_never_too_old() -> None:
     with build.env.DefaultIsolatedEnv() as env:
         version = subprocess.check_output(
             [env.python_executable, '-c', 'import pip; print(pip.__version__, end="")'],
@@ -132,7 +132,7 @@ def test_pip_needs_upgrade_mac_os_11(
     mocker: Any,
     pip_version: str,
     arch: str,
-):
+) -> None:
     run_subprocess = mocker.patch('build.env.run_subprocess')
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), arch))
@@ -156,7 +156,7 @@ def test_pip_needs_upgrade_mac_os_11(
 def test_venv_symlink(
     mocker: Any,
     has_symlink: bool,
-):
+) -> None:
     if has_symlink:
         mocker.patch('os.symlink')
         mocker.patch('os.unlink')
@@ -173,7 +173,7 @@ def test_venv_symlink(
 
 def test_install_short_circuits(
     mocker: Any,
-):
+) -> None:
     with build.env.DefaultIsolatedEnv() as env:
         install_dependencies = mocker.patch.object(env._env_backend, 'install_dependencies')
 
@@ -191,8 +191,8 @@ def test_default_impl_install_cmd_well_formed(
     mocker: Any,
     verbosity: int,
     constraints: list[str],
-):
-    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
+) -> None:
+    mocker.patch.object(typing.cast(Any, build.env)._ctx, 'verbosity', verbosity)
 
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
@@ -224,8 +224,8 @@ def test_uv_impl_install_cmd_well_formed(
     mocker: Any,
     verbosity: int,
     constraints: list[str],
-):
-    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)
+) -> None:
+    mocker.patch.object(typing.cast(Any, build.env)._ctx, 'verbosity', verbosity)
 
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
@@ -279,7 +279,7 @@ def test_uv_impl_install_cmd_well_formed(
 def test_venv_creation(
     installer: build.env.Installer,
     env_backend_display_name: str,
-):
+) -> None:
     with build.env.DefaultIsolatedEnv(installer=installer) as env:
         assert env._env_backend.display_name == env_backend_display_name
 
@@ -301,7 +301,7 @@ def test_venv_creation(
 def test_requirement_installation(
     package_test_flit: str,
     installer: build.env.Installer,
-):
+) -> None:
     with build.env.DefaultIsolatedEnv(installer=installer) as env:
         env.install([f'test-flit @ {Path(package_test_flit).as_uri()}'])
 
@@ -310,7 +310,7 @@ def test_requirement_installation(
 def test_external_uv_detection_success(
     caplog: pytest.LogCaptureFixture,
     mocker: Any,
-):
+) -> None:
     mocker.patch.dict(sys.modules, {'uv': None})
 
     with build.env.DefaultIsolatedEnv(installer='uv'):
@@ -323,7 +323,7 @@ def test_external_uv_detection_success(
 
 def test_external_uv_detection_failure(
     mocker: Any,
-):
+) -> None:
     mocker.patch.dict(sys.modules, {'uv': None})
     mocker.patch('shutil.which', return_value=None)
 

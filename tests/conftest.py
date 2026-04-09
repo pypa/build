@@ -12,9 +12,12 @@ import stat
 import sys
 import sysconfig
 import tempfile
+import typing
 
+from collections.abc import Generator
 from functools import partial, update_wrapper
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 
@@ -23,7 +26,7 @@ import build.env
 from build._compat import tomllib
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Any) -> None:
     os.environ['PYTHONWARNINGS'] = 'ignore:DEPRECATION::pip._internal.cli.base_command'  # for when not run within tox
     os.environ['PIP_DISABLE_PIP_VERSION_CHECK'] = '1'  # do not pollute stderr with upgrade advisory
     parser.addoption('--run-integration', action='store_true', help='run the integration tests')
@@ -36,7 +39,7 @@ PYPY3_WIN_VENV_BAD = (
 PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: Any, items: Any) -> None:
     skip_int = pytest.mark.skip(reason='integration tests not run (no --run-integration flag)')
     skip_other = pytest.mark.skip(reason='only integration tests are run (got --only-integration flag)')
 
@@ -64,11 +67,12 @@ def pytest_collection_modifyitems(config, items):
     items.sort(key=lambda i: 1 if is_integration(i) else 0)
 
 
-def is_integration(item):
-    return os.path.basename(item.location[0]) == 'test_integration.py'
+def is_integration(item: Any) -> bool:
+    # item.location is typically a (path, lineno) tuple; cast to str for typing
+    return os.path.basename(typing.cast(str, item.location[0])) == 'test_integration.py'
 
 
-def pytest_runtest_call(item: pytest.Item):
+def pytest_runtest_call(item: pytest.Item) -> None:
     if item.get_closest_marker('contextvars'):
         if isinstance(item, pytest.Function):
             wrapped_function = partial(contextvars.copy_context().run, item.obj)
@@ -79,34 +83,34 @@ def pytest_runtest_call(item: pytest.Item):
 
 
 @pytest.fixture
-def local_pip(monkeypatch):
+def local_pip(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(build.env._PipBackend, '_has_valid_outer_pip', None)
 
 
 @pytest.fixture(autouse=True)
-def avoid_constraints(monkeypatch):
+def avoid_constraints(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv('PIP_CONSTRAINT', raising=False)
     monkeypatch.delenv('UV_CONSTRAINT', raising=False)
 
 
 @pytest.fixture(autouse=True, params=[False])
-def has_virtualenv(request, monkeypatch):
+def has_virtualenv(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
     if request.param is not None:
         monkeypatch.setattr(build.env._PipBackend, '_has_virtualenv', request.param)
 
 
 @pytest.fixture(scope='session', autouse=True)
-def ensure_syconfig_vars_created():
+def ensure_syconfig_vars_created() -> None:
     # the config vars are globally cached and may use get_path, make sure they are created
     sysconfig.get_config_vars()
 
 
 @pytest.fixture
-def packages_path():
+def packages_path() -> str:
     return os.path.realpath(os.path.join(__file__, '..', 'packages'))
 
 
-def is_setuptools(package_path):
+def is_setuptools(package_path: Path) -> bool:
     if package_path.joinpath('setup.py').is_file():
         return True
     pyproject = package_path / 'pyproject.toml'
@@ -118,9 +122,9 @@ def is_setuptools(package_path):
     return 'setuptools' in pp.get('build-system', {}).get('build-backend', 'setuptools')
 
 
-def generate_package_path_fixture(package_name):
+def generate_package_path_fixture(package_name: str) -> Callable[..., str]:
     @pytest.fixture
-    def fixture(packages_path, tmp_path):
+    def fixture(packages_path: str, tmp_path: Path) -> str:
         package_path = Path(packages_path) / package_name
         if not is_setuptools(package_path):
             return str(package_path)
@@ -141,7 +145,7 @@ for package_name in package_names:
 
 
 @pytest.fixture
-def test_no_permission(packages_path):
+def test_no_permission(packages_path: str) -> Generator[str, None, None]:
     path = os.path.join(packages_path, 'test-no-permission')
     file = os.path.join(path, 'pyproject.toml')
     orig_stat = os.stat(file).st_mode
@@ -154,7 +158,7 @@ def test_no_permission(packages_path):
 
 
 @pytest.fixture
-def tmp_dir():
+def tmp_dir() -> Generator[str, None, None]:
     path = tempfile.mkdtemp(prefix='python-build-test-')
 
     yield path
@@ -186,14 +190,15 @@ def pytest_report_header() -> str:
 
 
 @pytest.fixture
-def subtests(request: pytest.FixtureRequest):
+def subtests(request: pytest.FixtureRequest) -> Any:
     try:
         return request.getfixturevalue('subtests')
     except pytest.FixtureLookupError:
 
         class Subtests:
+            @staticmethod
             @contextlib.contextmanager
-            def test(msg: str | None = None, **kwargs: object):
+            def test(msg: str | None = None, **kwargs: object) -> Generator[None, None, None]:
                 yield
 
         return Subtests()

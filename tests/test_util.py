@@ -5,6 +5,8 @@ from __future__ import annotations
 import importlib.util
 import re
 
+from typing import Any
+
 import pytest
 
 import build.util
@@ -12,7 +14,7 @@ import build.util
 
 @pytest.mark.pypy3323bug
 @pytest.mark.parametrize('isolated', [False, pytest.param(True, marks=[pytest.mark.network, pytest.mark.isolated])])
-def test_wheel_metadata(package_test_setuptools, isolated):
+def test_wheel_metadata(package_test_setuptools: Any, isolated: bool) -> None:
     metadata = build.util.project_wheel_metadata(package_test_setuptools, isolated)
 
     # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
@@ -23,7 +25,7 @@ def test_wheel_metadata(package_test_setuptools, isolated):
 
 @pytest.mark.network
 @pytest.mark.pypy3323bug
-def test_wheel_metadata_isolation(package_test_flit):
+def test_wheel_metadata_isolation(package_test_flit: Any) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
@@ -42,7 +44,7 @@ def test_wheel_metadata_isolation(package_test_flit):
 
 @pytest.mark.network
 @pytest.mark.pypy3323bug
-def test_with_get_requires(package_test_metadata):
+def test_with_get_requires(package_test_metadata: Any) -> None:
     metadata = build.util.project_wheel_metadata(package_test_metadata)
 
     # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
