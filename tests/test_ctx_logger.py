@@ -6,6 +6,7 @@ import sys
 from typing import Any
 
 import pytest
+import pytest_mock
 
 import build._ctx
 
@@ -39,7 +40,7 @@ def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture) -> None:
     log_stub.assert_called_once_with('foo')
 
 
-def test_ctx_custom_logger_with_custom_verbosity(mocker: Any) -> None:
+def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixture) -> None:
     log_stub = mocker.stub('custom_logger')
 
     def log(message: str, **kwargs: Any) -> None:
@@ -61,7 +62,9 @@ def test_ctx_custom_logger_with_custom_verbosity(mocker: Any) -> None:
         (1, [('subprocess', 'cmd'), ('subprocess', 'stdout')]),
     ],
 )
-def test_custom_subprocess_runner_ctx_logging(mocker: Any, verbosity: int, kwarg_origins: list[tuple[str, ...]]) -> None:
+def test_custom_subprocess_runner_ctx_logging(
+    mocker: pytest_mock.MockerFixture, verbosity: int, kwarg_origins: list[tuple[str, ...]]
+) -> None:
     log_stub = mocker.stub('custom_logger')
 
     build._ctx.LOGGER.set(log_stub)

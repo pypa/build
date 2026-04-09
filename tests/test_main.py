@@ -16,6 +16,7 @@ import venv
 from typing import Any
 
 import pytest
+import pytest_mock
 
 import build
 import build.__main__
@@ -259,7 +260,11 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     ],
 )
 def test_parse_args(
-    mocker: Any, cli_args: list[str], build_args: tuple[Any, Any], build_kwargs: dict[str, Any], hook: str
+    mocker: pytest_mock.MockerFixture,
+    cli_args: list[str],
+    build_args: tuple[Any, Any],
+    build_kwargs: dict[str, Any],
+    hook: str,
 ) -> None:
     build_package = mocker.patch('build.__main__.build_package', return_value=['something'])
     build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
@@ -293,7 +298,7 @@ def test_version(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 @pytest.mark.isolated
-def test_build_isolated(mocker: Any, package_test_flit: str) -> None:
+def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     required_cmd = mocker.patch(
         'build.ProjectBuilder.get_requires_for_build',
@@ -314,7 +319,7 @@ def test_build_isolated(mocker: Any, package_test_flit: str) -> None:
     build_cmd.assert_called_with('sdist', '.', None)
 
 
-def test_build_no_isolation_check_deps_empty(mocker: Any, package_test_flit: str) -> None:
+def test_build_no_isolation_check_deps_empty(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     # check_dependencies = []
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
@@ -407,7 +412,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker):
     ],
 )
 def test_build_no_isolation_with_check_deps(
-    mocker: Any, package_test_flit: str, missing_deps: list[tuple[str, ...]], output: str
+    mocker: pytest_mock.MockerFixture, package_test_flit: str, missing_deps: list[tuple[str, ...]], output: str
 ) -> None:
     error = mocker.patch('build.__main__._error')
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
@@ -436,7 +441,7 @@ def test_config_json_errors(cli_args: list[str], err_msg: str, capsys: pytest.Ca
 
 
 @pytest.mark.isolated
-def test_build_raises_build_exception(mocker: Any, package_test_flit: str) -> None:
+def test_build_raises_build_exception(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
     mocker.patch('build.env.DefaultIsolatedEnv.install')
 
@@ -445,7 +450,7 @@ def test_build_raises_build_exception(mocker: Any, package_test_flit: str) -> No
 
 
 @pytest.mark.isolated
-def test_build_raises_build_backend_exception(mocker: Any, package_test_flit: str) -> None:
+def test_build_raises_build_backend_exception(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
     mocker.patch('build.env.DefaultIsolatedEnv.install')
 
@@ -488,7 +493,9 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir: str, package_test
 
 
 @pytest.mark.isolated
-def test_build_package_with_constraints(mocker: Any, tmp_path: pathlib.Path, package_test_flit: str) -> None:
+def test_build_package_with_constraints(
+    mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, package_test_flit: str
+) -> None:
     install = mocker.patch('build.env.DefaultIsolatedEnv.install')
 
     constraints_txt_path = tmp_path.joinpath('constraints.txt')
@@ -643,7 +650,7 @@ def test_logging_output(
 )
 @pytest.mark.usefixtures('local_pip')
 def test_logging_output_env_subprocess_error(
-    mocker: Any,
+    mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
     package_test_invalid_requirements: str,
     tmp_dir: str,
@@ -685,7 +692,11 @@ def test_logging_output_env_subprocess_error(
     ],
 )
 def test_colors(
-    mocker: Any, monkeypatch: pytest.MonkeyPatch, tty: bool, env: dict[str, str], colors: dict[str, object]
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    tty: bool,
+    env: dict[str, str],
+    colors: dict[str, object],
 ) -> None:
     mocker.patch('sys.stdout.isatty', return_value=tty)
     for key, value in env.items():

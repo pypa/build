@@ -15,6 +15,7 @@ from typing import Any, NoReturn
 
 import pyproject_hooks
 import pytest
+import pytest_mock
 
 import build
 import build._builder
@@ -191,7 +192,11 @@ def test_bad_project(package_test_no_project: str) -> None:
 
 
 def test_init(
-    mocker: Any, package_test_flit: str, package_legacy: str, test_no_permission: str, package_test_bad_syntax: str
+    mocker: pytest_mock.MockerFixture,
+    package_test_flit: str,
+    package_legacy: str,
+    test_no_permission: str,
+    package_test_bad_syntax: str,
 ) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller')
 
@@ -271,7 +276,9 @@ def _nothing_installed(name: str) -> NoReturn:
     raise _importlib.metadata.PackageNotFoundError(name)
 
 
-def test_check_dependencies(mocker: Any, package_test_flit: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_dependencies(
+    mocker: pytest_mock.MockerFixture, package_test_flit: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_sdist')
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_wheel')
 
@@ -303,7 +310,7 @@ def test_check_dependencies(mocker: Any, package_test_flit: str, monkeypatch: py
         not builder.check_dependencies('wheel')
 
 
-def test_build(mocker: Any, package_test_flit: str, tmp_dir: str) -> None:
+def test_build(mocker: pytest_mock.MockerFixture, package_test_flit: str, tmp_dir: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -324,7 +331,7 @@ def test_build(mocker: Any, package_test_flit: str, tmp_dir: str) -> None:
         builder.build('wheel', tmp_dir)
 
 
-def test_default_backend(mocker: Any, package_legacy: str) -> None:
+def test_default_backend(mocker: pytest_mock.MockerFixture, package_legacy: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_legacy)
@@ -332,7 +339,7 @@ def test_default_backend(mocker: Any, package_legacy: str) -> None:
     assert builder._build_system == DEFAULT_BACKEND
 
 
-def test_missing_backend(mocker: Any, package_test_no_backend: str) -> None:
+def test_missing_backend(mocker: pytest_mock.MockerFixture, package_test_no_backend: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_no_backend)
@@ -340,21 +347,21 @@ def test_missing_backend(mocker: Any, package_test_no_backend: str) -> None:
     assert builder._build_system == {'requires': [], 'build-backend': DEFAULT_BACKEND['build-backend']}
 
 
-def test_missing_requires(mocker: Any, package_test_no_requires: str) -> None:
+def test_missing_requires(mocker: pytest_mock.MockerFixture, package_test_no_requires: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(package_test_no_requires)
 
 
-def test_build_system_typo(mocker: Any, package_test_typo: str) -> None:
+def test_build_system_typo(mocker: pytest_mock.MockerFixture, package_test_typo: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     with pytest.warns(build.TypoWarning):
         build.ProjectBuilder(package_test_typo)
 
 
-def test_missing_outdir(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_missing_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -366,7 +373,7 @@ def test_missing_outdir(mocker: Any, tmp_dir: str, package_test_flit: str) -> No
     assert os.path.isdir(out)
 
 
-def test_relative_outdir(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_relative_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -377,7 +384,7 @@ def test_relative_outdir(mocker: Any, tmp_dir: str, package_test_flit: str) -> N
     typing.cast(Any, builder._hook).build_sdist.assert_called_with(os.path.abspath('.'), None)
 
 
-def test_build_not_dir_outdir(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_build_not_dir_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -403,7 +410,7 @@ def demo_pkg_inline(tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
 @pytest.mark.contextvars
 @pytest.mark.isolated
 def test_build_with_dep_on_console_script(
-    tmp_path: pathlib.Path, demo_pkg_inline: pathlib.Path, capfd: pytest.CaptureFixture[str], mocker: Any
+    tmp_path: pathlib.Path, demo_pkg_inline: pathlib.Path, capfd: pytest.CaptureFixture[str], mocker: pytest_mock.MockerFixture
 ) -> None:
     """All command-line scripts provided by the build-required packages must be present in the build environment's PATH."""
     # we first install demo pkg inline as build dependency (as this provides a console script we can check)
@@ -448,7 +455,7 @@ def test_build_with_dep_on_console_script(
     assert which_detected.startswith(path_vars[0]), out
 
 
-def test_prepare(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_prepare(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -458,7 +465,7 @@ def test_prepare(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
     typing.cast(Any, builder._hook).prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)
 
 
-def test_prepare_no_hook(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_prepare_no_hook(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -468,7 +475,7 @@ def test_prepare_no_hook(mocker: Any, tmp_dir: str, package_test_flit: str) -> N
     assert builder.prepare('wheel', tmp_dir) is None
 
 
-def test_prepare_error(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_prepare_error(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -478,7 +485,7 @@ def test_prepare_error(mocker: Any, tmp_dir: str, package_test_flit: str) -> Non
         builder.prepare('wheel', tmp_dir)
 
 
-def test_prepare_not_dir_outdir(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_prepare_not_dir_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -490,7 +497,7 @@ def test_prepare_not_dir_outdir(mocker: Any, tmp_dir: str, package_test_flit: st
         builder.prepare('wheel', out)
 
 
-def test_no_outdir_single(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_no_outdir_single(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -501,7 +508,7 @@ def test_no_outdir_single(mocker: Any, tmp_dir: str, package_test_flit: str) -> 
     assert os.path.isdir(out)
 
 
-def test_no_outdir_multiple(mocker: Any, tmp_dir: str, package_test_flit: str) -> None:
+def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -563,7 +570,7 @@ def test_metadata_invalid_wheel(tmp_dir: str, package_test_bad_wheel: str) -> No
         builder.metadata_path(tmp_dir)
 
 
-def test_log(mocker: Any, caplog: pytest.LogCaptureFixture, package_test_flit: str) -> None:
+def test_log(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
     mocker.patch('build.ProjectBuilder._call_backend', return_value='some_path')
     caplog.set_level(logging.DEBUG)

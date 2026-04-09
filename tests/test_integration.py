@@ -18,6 +18,7 @@ from typing import Any
 
 import filelock
 import pytest
+import pytest_mock
 
 import build.__main__
 
@@ -144,7 +145,7 @@ def test_build(
     assert list(filter(_WHEEL.match, pkg_names))
 
 
-def test_isolation(tmp_dir: Any, package_test_flit: Any, mocker: Any) -> None:
+def test_isolation(tmp_dir: Any, package_test_flit: Any, mocker: pytest_mock.MockerFixture) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
