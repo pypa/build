@@ -25,7 +25,7 @@ _package_name = __spec__.parent
 _default_logger = logging.getLogger(_package_name)
 
 
-def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None:
+def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None:  # noqa: ARG001
     # the log function that works in tests, real log function is set in __main__
     _default_logger.log(logging.INFO, message, stacklevel=2)
 
@@ -55,7 +55,7 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
 
         with (
             concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor,
-            subprocess.Popen(
+            subprocess.Popen(  # noqa: S603
                 cmd, cwd=cwd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             ) as process,
         ):
@@ -75,7 +75,7 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
 
     else:
         try:
-            subprocess.run(cmd, capture_output=True, check=True, cwd=cwd, env=env)
+            subprocess.run(cmd, capture_output=True, check=True, cwd=cwd, env=env)  # noqa: S603
         except subprocess.CalledProcessError as error:
             log_subprocess_error(error)
             raise
@@ -87,7 +87,7 @@ if TYPE_CHECKING:
 
 else:
 
-    def __getattr__(name):
+    def __getattr__(name: str) -> object:
         if name == 'log':
             return LOGGER.get()
         if name == 'verbosity':

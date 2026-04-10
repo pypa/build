@@ -112,7 +112,7 @@ def get_project(name: str, tmp_path: Path) -> Path:
 )
 @pytest.mark.isolated
 def test_build(
-    request: pytest.FixtureRequest,
+    request: pytest.FixtureRequest,  # noqa: ARG001
     monkeypatch: pytest.MonkeyPatch,
     project: str,
     args: list[str],

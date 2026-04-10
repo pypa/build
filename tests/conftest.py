@@ -202,7 +202,7 @@ def subtests(request: pytest.FixtureRequest) -> Any:
         class Subtests:
             @staticmethod
             @contextlib.contextmanager
-            def test(msg: str | None = None, **kwargs: object) -> Generator[None, None, None]:
+            def test(msg: str | None = None, **_kwargs: object) -> Generator[None, None, None]:  # noqa: ARG004
                 yield
 
         return Subtests()

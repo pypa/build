@@ -43,7 +43,7 @@ def resolve_version(version_str: str, repo: Repo) -> Version:
         parts = [parts[0] + 1, 0, 0]
     elif version_str == 'minor':
         parts = [parts[0], parts[1] + 1, 0]
-    elif version_str == 'patch' or version_str == 'auto':
+    elif version_str in {'patch', 'auto'}:
         parts[2] += 1
     return Version('.'.join(str(p) for p in parts))
 
@@ -64,7 +64,7 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     print('update version in __init__.py')
     update_version_file(version)
     print('build changelog from fragments with towncrier')
-    check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))
+    check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S603
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     repo.git.add('src/build/__init__.py', 'CHANGELOG.rst', 'docs/changelog/*')
     check_call(['pre-commit', 'run', '--all-files', '--show-diff-on-failure'], cwd=str(ROOT_SRC_DIR))

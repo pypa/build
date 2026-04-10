@@ -35,7 +35,7 @@ DEFAULT_BACKEND = {
 class MockDistribution(_importlib.metadata.Distribution):
     _metadata: str = ''
 
-    def locate_file(self, path: Any) -> Any:  # pragma: no cover
+    def locate_file(self, path: Any) -> Any:  # pragma: no cover  # noqa: ARG002
         return ''
 
     def read_text(self, filename: str) -> str:
@@ -343,7 +343,7 @@ def test_missing_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package
     assert os.path.isdir(out)
 
 
-def test_relative_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
+def test_relative_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:  # noqa: ARG001
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
@@ -490,7 +490,7 @@ def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, pac
 
 
 def test_runner_user_specified(tmp_dir: str, package_test_flit: str) -> None:
-    def dummy_runner(cmd: typing.Sequence[str], cwd: str | None = None, extra_environ: dict[str, str] | None = None) -> None:
+    def dummy_runner(cmd: typing.Sequence[str], cwd: str | None = None, extra_environ: dict[str, str] | None = None) -> None:  # noqa: ARG001
         msg = 'Runner was called'
         raise RuntimeError(msg)
 

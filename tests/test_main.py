@@ -725,7 +725,7 @@ def test_colors_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_logging_output_venv_failure(
     monkeypatch: pytest.MonkeyPatch, package_test_flit: str, tmp_dir: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    def raise_called_process_err(*args: object, **kwargs: object) -> None:
+    def raise_called_process_err(*_args: object, **_kwargs: object) -> None:
         raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
 
     monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)
@@ -864,7 +864,7 @@ def test_build_metadata_runner_without_extra_environ(
     captured_runners: list[Any] = []
 
     @contextlib.contextmanager
-    def fake_bootstrap(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+    def fake_bootstrap(*_args: object, **kwargs: object) -> Any:
         captured_runners.append(kwargs['runner'])
         builder = mocker.MagicMock()
         metadata_dir = tmp_path / 'metadata'
