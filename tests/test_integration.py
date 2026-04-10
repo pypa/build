@@ -10,11 +10,9 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import typing
 import urllib.request
 
 from pathlib import Path
-from typing import Any
 
 import filelock
 import pytest
@@ -157,4 +155,4 @@ def test_isolation(tmp_dir: str, package_test_flit: str, mocker: pytest_mock.Moc
     mocker.patch('build.__main__._error')
 
     build.__main__.main([package_test_flit, '-o', tmp_dir, '--no-isolation'])
-    typing.cast(Any, build.__main__._error).assert_called_with("Backend 'flit_core.buildapi' is not available.")
+    build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available.")  # type: ignore[attr-defined]

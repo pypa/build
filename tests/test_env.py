@@ -11,7 +11,6 @@ import typing
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
 
 import pytest
 import pytest_mock
@@ -193,7 +192,7 @@ def test_default_impl_install_cmd_well_formed(
     verbosity: int,
     constraints: list[str],
 ) -> None:
-    mocker.patch.object(typing.cast(Any, build.env)._ctx, 'verbosity', verbosity)
+    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)  # type: ignore[attr-defined]
 
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
@@ -226,7 +225,7 @@ def test_uv_impl_install_cmd_well_formed(
     verbosity: int,
     constraints: list[str],
 ) -> None:
-    mocker.patch.object(typing.cast(Any, build.env)._ctx, 'verbosity', verbosity)
+    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)  # type: ignore[attr-defined]
 
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
