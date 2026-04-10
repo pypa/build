@@ -59,6 +59,9 @@ def get_project(name: str, tmp_path: Path) -> Path:
 
     # for other projects download from github and cache it
     tar_store = os.path.join(ROOT, '.integration-sources')
+    # Checking with exists is not parallel safe so just ignore,
+    # if the creation failed we will have another failure soon
+    # that will notify the user.
     with contextlib.suppress(OSError):
         os.makedirs(tar_store)
 

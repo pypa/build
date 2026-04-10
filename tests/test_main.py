@@ -662,7 +662,7 @@ def test_logging_output_env_subprocess_error(
     stderr_body: list[str],
     stderr_error: str,
 ) -> None:
-    with contextlib.suppress(ModuleNotFoundError):  # colorama might not be available  # pragma: win32 no cover
+    with contextlib.suppress(ModuleNotFoundError):  # colorama might not be available
         # do not inject hook to have clear output on capsys
         mocker.patch('colorama.init')
 
