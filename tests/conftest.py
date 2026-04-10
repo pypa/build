@@ -94,7 +94,16 @@ def local_pip(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def avoid_constraints(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv('PIP_CONSTRAINT', raising=False)
+    monkeypatch.delenv('PIP_KEYRING_PROVIDER', raising=False)
     monkeypatch.delenv('UV_CONSTRAINT', raising=False)
+    monkeypatch.delenv('UV_KEYRING_PROVIDER', raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _clear_keyring_cache() -> Generator[None, None, None]:
+    build.env._has_keyring_cli.cache_clear()
+    yield
+    build.env._has_keyring_cli.cache_clear()
 
 
 @pytest.fixture(autouse=True, params=[False])

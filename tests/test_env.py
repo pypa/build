@@ -164,12 +164,19 @@ def test_pip_needs_upgrade_mac_os_11(
     with build.env.DefaultIsolatedEnv() as env:
         if Version(pip_version) < Version(min_pip_version):
             assert run_subprocess.call_args_list == [
-                mocker.call([env.python_executable, '-Im', 'pip', 'install', f'pip>={min_pip_version}']),
-                mocker.call([env.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools']),
+                mocker.call(
+                    [env.python_executable, '-Im', 'pip', 'install', '--no-input', f'pip>={min_pip_version}'],
+                    env=mocker.ANY,
+                ),
+                mocker.call(
+                    [env.python_executable, '-Im', 'pip', 'uninstall', '--no-input', '-y', 'setuptools'],
+                    env=mocker.ANY,
+                ),
             ]
         else:
             run_subprocess.assert_called_once_with(
-                [env.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools'],
+                [env.python_executable, '-Im', 'pip', 'uninstall', '--no-input', '-y', 'setuptools'],
+                env=mocker.ANY,
             )
 
 
@@ -231,10 +238,12 @@ def test_default_impl_install_cmd_well_formed(
                 '--use-pep517',
                 '--no-warn-script-location',
                 '--no-compile',
+                '--no-input',
                 '-r',
                 mocker.ANY,
                 *(['-c', mocker.ANY] if constraints else []),
-            ]
+            ],
+            env=mocker.ANY,
         )
 
 
@@ -485,3 +494,82 @@ def test_venv_creation_no_setuptools(
         assert env.python_executable
 
     assert all('setuptools' not in str(c) for c in run_subprocess.call_args_list)
+
+
+def test_has_keyring_cli_found(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+    assert build.env._has_keyring_cli() is True
+
+
+def test_has_keyring_cli_missing(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('shutil.which', return_value=None)
+    assert build.env._has_keyring_cli() is False
+
+
+def test_pip_env_with_keyring(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+
+    result = build.env._pip_env()
+
+    assert result is not None
+    assert result['PIP_KEYRING_PROVIDER'] == 'subprocess'
+
+
+def test_pip_env_without_keyring(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('shutil.which', return_value=None)
+    assert build.env._pip_env() is None
+
+
+def test_pip_env_respects_existing_env_var(
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+    monkeypatch.setenv('PIP_KEYRING_PROVIDER', 'import')
+    assert build.env._pip_env() is None
+
+
+@pytest.mark.usefixtures('local_pip')
+def test_install_dependencies_passes_keyring_env(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+
+    with build.env.DefaultIsolatedEnv() as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.kwargs['env']['PIP_KEYRING_PROVIDER'] == 'subprocess'
+
+
+@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
+def test_uv_install_dependencies_passes_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'subprocess'
+
+
+@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
+def test_uv_install_respects_existing_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+    monkeypatch.setenv('UV_KEYRING_PROVIDER', 'disabled')
+
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'disabled'
