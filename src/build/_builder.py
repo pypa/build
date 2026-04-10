@@ -2,6 +2,21 @@
 
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    'contextlib',
+    'difflib',
+    f'{__spec__.parent}._compat',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}._util',
+    'os',
+    'pyproject_hooks',
+    'subprocess',
+    'sys',
+    'warnings',
+    'zipfile',
+]
+
 import contextlib
 import difflib
 import os
@@ -10,7 +25,6 @@ import sys
 import warnings
 import zipfile
 
-from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, TypeVar
 
 import pyproject_hooks
@@ -23,8 +37,15 @@ from ._exceptions import (
     BuildSystemTableValidationError,
     TypoWarning,
 )
-from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 from ._util import check_dependency, parse_wheel_filename
+
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Mapping, Sequence
+
+    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
 
 _TProjectBuilder = TypeVar('_TProjectBuilder', bound='ProjectBuilder')

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+
+__lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile']
+
 import pathlib
 import tempfile
 
@@ -9,8 +12,12 @@ import pyproject_hooks
 
 from . import ProjectBuilder
 from ._compat import importlib
-from ._types import StrPath, SubprocessRunner
 from .env import DefaultIsolatedEnv
+
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from ._types import StrPath, SubprocessRunner
 
 
 def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.PackageMetadata:

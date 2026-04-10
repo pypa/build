@@ -2,6 +2,25 @@
 
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    'argparse',
+    'build._exceptions',
+    'build.env',
+    'functools',
+    'json',
+    'os',
+    'platform',
+    'pyproject_hooks',
+    'shutil',
+    'subprocess',
+    'tempfile',
+    'textwrap',
+    'traceback',
+    'typing',
+    'warnings',
+]
+
 import argparse
 import contextlib
 import contextvars
@@ -16,19 +35,25 @@ import textwrap
 import traceback
 import warnings
 
-from collections.abc import Iterator, Mapping, Sequence
 from functools import partial
 from typing import Any, NoReturn, TextIO
 
 import pyproject_hooks
 
 import build
+import build.env as _env
 
-from . import ProjectBuilder, _ctx
-from . import env as _env
-from ._exceptions import BuildBackendException, BuildException, FailedProcessError
-from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
-from .env import DefaultIsolatedEnv
+from build import ProjectBuilder, _ctx
+from build._exceptions import BuildBackendException, BuildException, FailedProcessError
+from build.env import DefaultIsolatedEnv
+
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Mapping, Sequence
+
+    from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
 
 _COLORS = {

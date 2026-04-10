@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+
+__lazy_modules__ = ['subprocess']
+
 import contextvars
 import logging
 import subprocess
 import typing
 
-from collections.abc import Mapping, Sequence
 
-from ._types import StrPath
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from ._types import StrPath
 
 
 class Logger(typing.Protocol):  # pragma: no cover
@@ -74,7 +81,7 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
             raise
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     log: Logger
     verbosity: bool
 

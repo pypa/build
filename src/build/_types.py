@@ -11,7 +11,9 @@ Distribution = typing.Literal['sdist', 'wheel', 'editable']
 
 StrPath = typing.Union[str, os.PathLike[str]]
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from pyproject_hooks import SubprocessRunner
 else:
     SubprocessRunner = typing.Callable[

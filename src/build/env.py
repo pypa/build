@@ -1,5 +1,24 @@
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    'abc',
+    'contextlib',
+    f'{__spec__.parent}._ctx',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}._util',
+    'importlib',
+    'importlib.util',
+    'os',
+    'platform',
+    'shutil',
+    'subprocess',
+    'sys',
+    'sysconfig',
+    'tempfile',
+    'warnings',
+]
+
 import abc
 import contextlib
 import functools
@@ -14,15 +33,17 @@ import tempfile
 import typing
 import warnings
 
-from collections.abc import Collection, Mapping
-
 from . import _ctx
 from ._ctx import run_subprocess
 from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Collection, Mapping
+
     from ._compat.importlib import metadata as importlib_metadata
 
 

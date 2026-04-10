@@ -4,6 +4,14 @@ build - A simple, correct Python build frontend
 
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    f'{__spec__.parent}._builder',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}._types',
+    f'{__spec__.parent}._util',
+]
+
 from ._builder import ProjectBuilder
 from ._exceptions import (
     BuildBackendException,
