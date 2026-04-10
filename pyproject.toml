@@ -193,18 +193,22 @@ quote-style = "single"
 
 [tool.ruff.lint]
 extend-select = [
-  "B",    # flake8-bugbear
-  "C4",   # flake8-comprehensions
-  "C9",   # mccabe
-  "I",    # isort
-  "PGH",  # pygrep-hooks
-  "RUF",  # ruff
-  "UP",   # pyupgrade
-  "W",    # pycodestyle
-  "YTT",  # flake8-2020
-  "TRY",  # tryceratops
-  "EM",   # flake8-errmsg
+  "B",      # flake8-bugbear
+  "C4",     # flake8-comprehensions
+  "C9",     # mccabe
+  "I",      # isort
+  "PGH",    # pygrep-hooks
+  "RUF",    # ruff
+  "UP",     # pyupgrade
+  "W",      # pycodestyle
+  "YTT",    # flake8-2020
+  "TRY",    # tryceratops
+  "EM",     # flake8-errmsg
+  "TID251", # flake8-tidy-imports
 ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

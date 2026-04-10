@@ -22,7 +22,9 @@ from ._exceptions import FailedProcessError
 from ._util import check_dependency
 
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from ._compat.importlib import metadata as importlib_metadata
 
 

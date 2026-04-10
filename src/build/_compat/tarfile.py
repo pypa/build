@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import sys
 import tarfile
-import typing
 
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     TarFile = tarfile.TarFile
 
 else:

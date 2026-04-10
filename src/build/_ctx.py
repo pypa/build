@@ -74,7 +74,9 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
             raise
 
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     log: Logger
     verbosity: bool
 
