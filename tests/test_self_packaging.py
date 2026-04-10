@@ -96,7 +96,7 @@ def test_build_sdist(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
 
 
 @pytest.mark.network
-@pytest.mark.parametrize('args', ((), ('--wheel',)), ids=('from_sdist', 'direct'))
+@pytest.mark.parametrize('args', [(), ('--wheel',)], ids=('from_sdist', 'direct'))
 def test_build_wheel(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, args: tuple[str, ...]) -> None:
     monkeypatch.chdir(MAIN_DIR)
 

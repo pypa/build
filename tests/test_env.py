@@ -31,9 +31,9 @@ MISSING_VIRTUALENV = importlib.util.find_spec('virtualenv') is None
 @pytest.mark.isolated
 def test_isolation() -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
+    debug = 'import sys; import os; print(os.linesep.join(sys.path));'
     with build.env.DefaultIsolatedEnv() as env:
         with pytest.raises(subprocess.CalledProcessError):
-            debug = 'import sys; import os; print(os.linesep.join(sys.path));'
             subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
 
 
