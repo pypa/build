@@ -53,7 +53,7 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sequence
 
-    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
+    from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
 
 _COLORS = {
