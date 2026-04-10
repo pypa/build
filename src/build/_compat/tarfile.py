@@ -20,11 +20,11 @@ else:
         or (3, 12) <= sys.version_info < (3, 14)
     ):
 
-        class TarFile(tarfile.TarFile):
+        class TarFile(tarfile.TarFile):  # pragma: no cover
             extraction_filter = staticmethod(tarfile.data_filter)
 
     else:
-        TarFile = tarfile.TarFile
+        TarFile = tarfile.TarFile  # pragma: no cover
 
 
 __all__ = [

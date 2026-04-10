@@ -17,6 +17,7 @@ import pytest_mock
 
 from packaging.version import Version
 
+import build
 import build.env
 
 
@@ -38,7 +39,7 @@ def test_isolation() -> None:
 
 @pytest.mark.skipif(IS_PYPY, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
-def test_can_get_venv_paths_with_conflicting_default_scheme(
+def test_can_get_venv_paths_with_conflicting_default_scheme(  # pragma: no cover -- skipped on PyPy and non-darwin
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
@@ -52,7 +53,7 @@ SCHEME_NAMES = sysconfig.get_scheme_names()
 
 @pytest.mark.skipif('posix_local' not in SCHEME_NAMES, reason='workaround for Debian/Ubuntu Python')
 @pytest.mark.skipif('venv' in SCHEME_NAMES, reason='different call if venv is in scheme names')
-def test_can_get_venv_paths_with_posix_local_default_scheme(
+def test_can_get_venv_paths_with_posix_local_default_scheme(  # pragma: no cover
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     get_paths = mocker.spy(sysconfig, 'get_paths')
@@ -70,7 +71,7 @@ def test_venv_executable_missing_post_creation(
     venv_create = mocker.patch('venv.EnvBuilder.create')
     with pytest.raises(RuntimeError, match=r'Virtual environment creation failed, executable .* missing'):
         with build.env.DefaultIsolatedEnv():
-            pass
+            raise AssertionError
     assert venv_create.call_count == 1
 
 
@@ -160,7 +161,7 @@ def test_venv_symlink(
     if has_symlink:
         mocker.patch('os.symlink')
         mocker.patch('os.unlink')
-    else:
+    else:  # pragma: win32 cover
         mocker.patch('os.symlink', side_effect=OSError())
 
     # Cache must be cleared to rerun
@@ -175,6 +176,7 @@ def test_install_short_circuits(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     with build.env.DefaultIsolatedEnv() as env:
+        assert env.path
         install_dependencies = mocker.patch.object(env._env_backend, 'install_dependencies')
 
         env.install([])
@@ -220,7 +222,7 @@ def test_default_impl_install_cmd_well_formed(
 @pytest.mark.parametrize('constraints', [[], ['foo']])
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
-def test_uv_impl_install_cmd_well_formed(
+def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
     constraints: list[str],
@@ -316,9 +318,7 @@ def test_external_uv_detection_success(
     with build.env.DefaultIsolatedEnv(installer='uv'):
         pass
 
-    assert any(
-        r.message == f'Using external uv from {shutil.which("uv", path=sysconfig.get_path("scripts"))}' for r in caplog.records
-    )
+    assert any(r.message == f'Using external uv from {shutil.which("uv")}' for r in caplog.records)
 
 
 def test_external_uv_detection_failure(
@@ -329,4 +329,140 @@ def test_external_uv_detection_failure(
 
     with pytest.raises(RuntimeError, match='uv executable not found'):
         with build.env.DefaultIsolatedEnv(installer='uv'):
-            pass
+            raise AssertionError
+
+
+def test_get_minimum_pip_version_non_darwin(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('platform.system', return_value='Linux')
+    assert build.env._PipBackend._get_minimum_pip_version_str() == '19.1.0'
+
+
+def test_get_minimum_pip_version_old_darwin(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('platform.system', return_value='Darwin')
+    mocker.patch('platform.mac_ver', return_value=('10.15', ('', '', ''), 'x86_64'))
+    assert build.env._PipBackend._get_minimum_pip_version_str() == '19.1.0'
+
+
+@pytest.mark.parametrize(
+    ('version', 'has_no_wheel'),
+    [
+        pytest.param('20.30.0', True, id='old'),
+        pytest.param('20.31.0', False, id='new'),
+    ],
+)
+def test_virtualenv_no_wheel_flag(
+    mocker: pytest_mock.MockerFixture,
+    version: str,
+    has_no_wheel: bool,
+) -> None:
+    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', None)
+    mocker.patch.object(build.env._PipBackend, '_has_virtualenv', True)
+
+    mocker.patch('build._compat.importlib.metadata.version', return_value=version)
+    cli_run = mocker.patch('virtualenv.cli_run')
+    cli_run.return_value = SimpleNamespace(creator=SimpleNamespace(exe=Path('/fake/python'), script_dir=Path('/fake/scripts')))
+
+    backend = build.env._PipBackend()
+    backend.create('/some/path')
+
+    call_args = cli_run.call_args[0][0]
+    assert ('--no-wheel' in call_args) is has_no_wheel
+
+
+def test_install_dependencies_with_outer_pip(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', True)
+
+    run_subprocess = mocker.patch('build.env.run_subprocess')
+
+    with build.env.DefaultIsolatedEnv() as env:
+        env.install(['some-package'])
+
+    cmd = run_subprocess.call_args_list[-1][0][0]
+    assert cmd[:4] == [sys.executable, '-m', 'pip', '--python']
+
+
+def test_find_executable_osx_framework_scheme(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library', 'posix_prefix'))
+    get_paths = mocker.patch(
+        'sysconfig.get_paths',
+        return_value={
+            'scripts': '/fake/bin',
+            'purelib': '/fake/lib',
+        },
+    )
+    mocker.patch('os.path.exists', return_value=True)
+
+    _exe, scripts, _purelib = build.env._find_executable_and_scripts('/fake/venv')
+
+    get_paths.assert_called_once_with(scheme='posix_prefix', vars=mocker.ANY)
+    assert scripts == '/fake/bin'
+
+
+def test_find_executable_posix_local_scheme(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('sysconfig.get_scheme_names', return_value=('posix_local', 'posix_prefix'))
+    get_paths = mocker.patch(
+        'sysconfig.get_paths',
+        return_value={
+            'scripts': '/fake/bin',
+            'purelib': '/fake/lib',
+        },
+    )
+    mocker.patch('os.path.exists', return_value=True)
+
+    _exe, scripts, _purelib = build.env._find_executable_and_scripts('/fake/venv')
+
+    get_paths.assert_called_once_with(scheme='posix_prefix', vars=mocker.ANY)
+    assert scripts == '/fake/bin'
+
+
+def test_find_executable_fallback_scheme(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('sysconfig.get_scheme_names', return_value=('posix_prefix',))
+    get_paths = mocker.patch(
+        'sysconfig.get_paths',
+        return_value={
+            'scripts': '/fake/bin',
+            'purelib': '/fake/lib',
+        },
+    )
+    mocker.patch('os.path.exists', return_value=True)
+
+    _exe, scripts, _purelib = build.env._find_executable_and_scripts('/fake/venv')
+
+    get_paths.assert_called_once_with(vars=mocker.ANY)
+    assert scripts == '/fake/bin'
+
+
+def test_has_dependency_missing() -> None:
+    assert build.env._has_dependency('nonexistent_package_xyz_123') is None
+
+
+@pytest.mark.usefixtures('local_pip')
+def test_venv_creation_no_setuptools(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    original = build.env._has_dependency
+
+    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: object) -> object:
+        if name == 'setuptools':
+            return None
+        return original(name, min_ver, **kwargs)
+
+    mocker.patch('build.env._has_dependency', side_effect=no_setuptools)
+    run_subprocess = mocker.patch('build.env.run_subprocess')
+
+    with build.env.DefaultIsolatedEnv() as env:
+        assert env.python_executable
+
+    assert all('setuptools' not in str(c) for c in run_subprocess.call_args_list)

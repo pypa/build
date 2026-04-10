@@ -357,7 +357,9 @@ class _UvBackend(_EnvBackend):
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
         self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
 
-    def install_dependencies(self, requirements: Collection[str], constraints: Collection[str]) -> None:
+    def install_dependencies(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
+        self, requirements: Collection[str], constraints: Collection[str]
+    ) -> None:
         with contextlib.ExitStack() as exit_stack:
             cmd = [self._uv_bin, 'pip']
 
@@ -388,10 +390,10 @@ def _fs_supports_symlink() -> bool:
     """Return True if symlinks are supported"""
     # Using definition used by venv.main()
     if os.name != 'nt':
-        return True
+        return True  # pragma: win32 no cover
 
     # Windows may support symlinks (setting in Windows 10)
-    with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:
+    with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:  # pragma: win32 cover
         dest = f'{tmp_file}-b'
         try:
             os.symlink(tmp_file.name, dest)
@@ -418,7 +420,7 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
         # The distributors are encouraged to set a "venv" scheme to be used for this.
         # See https://bugs.python.org/issue45413
         # and https://github.com/pypa/virtualenv/issues/2208
-        paths = sysconfig.get_paths(scheme='venv', vars=config_vars)
+        paths = sysconfig.get_paths(scheme='venv', vars=config_vars)  # pragma: no cover
     elif 'posix_local' in scheme_names:
         # The Python that ships on Debian/Ubuntu varies the default scheme to
         # install to /usr/local

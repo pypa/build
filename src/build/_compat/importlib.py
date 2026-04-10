@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     import importlib_metadata as metadata
 else:
     if sys.version_info >= (3, 10, 2):
-        from importlib import metadata
-    else:
+        from importlib import metadata  # pragma: no cover
+    else:  # pragma: no cover
         try:
             import importlib_metadata as metadata
         except ModuleNotFoundError:

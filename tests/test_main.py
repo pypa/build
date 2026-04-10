@@ -666,7 +666,7 @@ def test_logging_output_env_subprocess_error(
     try:
         # do not inject hook to have clear output on capsys
         mocker.patch('colorama.init')
-    except ModuleNotFoundError:  # colorama might not be available
+    except ModuleNotFoundError:  # colorama might not be available  # pragma: win32 no cover
         pass
 
     monkeypatch.delenv('NO_COLOR', raising=False)
@@ -788,3 +788,100 @@ def test_metadata_json_output(
     # Name normalised in old versions of setuptools.
     assert metadata['name'] in {'test_setuptools', 'test-setuptools'}
     assert metadata['version'] == '1.0.0'
+
+
+def test_setup_cli_windows_colorama_available(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('platform.system', return_value='Windows')
+    colorama = mocker.MagicMock()
+    mocker.patch.dict('sys.modules', {'colorama': colorama})
+    build.__main__._setup_cli(verbosity=0)
+    colorama.init.assert_called_once()
+
+
+def test_setup_cli_windows_colorama_missing(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('platform.system', return_value='Windows')
+    mocker.patch.dict('sys.modules', {'colorama': None})
+    build.__main__._setup_cli(verbosity=0)
+
+
+def test_setup_cli_non_windows(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('platform.system', return_value='Linux')
+    build.__main__._setup_cli(verbosity=0)
+
+
+def test_metadata_with_distributions_error() -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--metadata', '--sdist'])
+
+
+def test_entrypoint(mocker: pytest_mock.MockerFixture) -> None:
+    main = mocker.patch('build.__main__.main')
+    build.__main__.entrypoint()
+    main.assert_called_once_with(sys.argv[1:])
+
+
+def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('build.__main__._error', side_effect=SystemExit(1))
+
+    exc = ValueError('test error')
+    try:
+        raise exc
+    except ValueError:
+        exc_info = sys.exc_info()
+
+    with pytest.raises(SystemExit):
+        with build.__main__._handle_build_error():
+            raise build.BuildBackendException(exc, exc_info=exc_info)
+
+
+def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('build.__main__._cprint')
+    log = build.__main__._make_logger()
+    log('message', kind=('unknown',))
+
+
+def test_build_no_isolation_skip_dependency_check(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+    build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
+    build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False, skip_dependency_check=True)
+    build_cmd.assert_called_with('sdist', '.', None)
+
+
+def test_build_package_via_sdist_empty_distributions(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch(
+        'build.__main__._build',
+        return_value=os.path.join('dist', 'demo-1.0.0.tar.gz'),
+    )
+    result = build.__main__.build_package_via_sdist('src', 'dist', [])
+    assert result == ['demo-1.0.0.tar.gz']
+
+
+def test_parse_config_settings_triple_duplicate() -> None:
+    result = build.__main__._parse_config_settings(['--flag=a', '--flag=b', '--flag=c'])
+    assert result == {'--flag': ['a', 'b', 'c']}
+
+
+def test_build_metadata_runner_without_extra_environ(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    package_test_setuptools: str,
+) -> None:
+    captured_runners: list[Any] = []
+
+    @contextlib.contextmanager
+    def fake_bootstrap(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+        captured_runners.append(kwargs['runner'])
+        builder = mocker.MagicMock()
+        metadata_dir = tmp_path / 'metadata'
+        metadata_dir.mkdir()
+        (metadata_dir / 'METADATA').write_bytes(b'Metadata-Version: 2.2\nName: test\nVersion: 1.0\n')
+        builder.metadata_path.return_value = str(metadata_dir)
+        yield builder
+
+    mocker.patch('build.__main__._bootstrap_build_env', side_effect=fake_bootstrap)
+    ctx_run = mocker.patch('build.__main__._ctx.run_subprocess')
+
+    build.__main__._build_metadata(package_test_setuptools, '.', ['wheel'], isolation=False, skip_dependency_check=True)
+
+    assert captured_runners
+    captured_runners[0](['echo', 'test'])
+    ctx_run.assert_called_once_with(['echo', 'test'], None, mocker.ANY)

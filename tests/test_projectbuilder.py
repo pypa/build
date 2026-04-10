@@ -33,112 +33,81 @@ DEFAULT_BACKEND = {
 
 
 class MockDistribution(_importlib.metadata.Distribution):
+    _metadata: str = ''
+
     def locate_file(self, path: Any) -> Any:  # pragma: no cover
-        return ''  # pragma: no cover
+        return ''
+
+    def read_text(self, filename: str) -> str:
+        if filename == 'METADATA':
+            return self._metadata
+        return ''
 
     @classmethod
     def from_name(cls, name: str) -> MockDistribution:
-        if name == 'extras_dep':
-            return ExtraMockDistribution()
-        elif name == 'requireless_dep':
-            return RequirelessMockDistribution()
-        elif name == 'recursive_dep':
-            return RecursiveMockDistribution()
-        elif name == 'prerelease_dep':
-            return PrereleaseMockDistribution()
-        elif name == 'circular_dep':
-            return CircularMockDistribution()
-        elif name == 'nested_circular_dep':
-            return NestedCircularMockDistribution()
+        registry: dict[str, type[MockDistribution]] = {
+            'extras_dep': ExtraMockDistribution,
+            'requireless_dep': RequirelessMockDistribution,
+            'recursive_dep': RecursiveMockDistribution,
+            'prerelease_dep': PrereleaseMockDistribution,
+            'circular_dep': CircularMockDistribution,
+            'nested_circular_dep': NestedCircularMockDistribution,
+        }
+        if (dist_cls := registry.get(name)) is not None:
+            return dist_cls()
         raise _importlib.metadata.PackageNotFoundError
 
 
 class ExtraMockDistribution(MockDistribution):
-    def read_text(self, filename: str) -> str:
-        if filename == 'METADATA':
-            return textwrap.dedent(
-                """
-                Metadata-Version: 2.2
-                Name: extras_dep
-                Version: 1.0.0
-                Provides-Extra: extra-without-associated-deps
-                Provides-Extra: extra-with_unmet-deps
-                Requires-Dist: unmet_dep; extra == 'extra-with-unmet-deps'
-                Provides-Extra: extra-with-met-deps
-                Requires-Dist: extras_dep; extra == 'extra-with-met-deps'
-                Provides-Extra: recursive-extra-with-unmet-deps
-                Requires-Dist: recursive_dep; extra == 'recursive-extra-with-unmet-deps'
-                """
-            ).strip()
-        return ''  # pragma: no cover
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: extras_dep
+        Version: 1.0.0
+        Provides-Extra: extra-without-associated-deps
+        Provides-Extra: extra-with_unmet-deps
+        Requires-Dist: unmet_dep; extra == 'extra-with-unmet-deps'
+        Provides-Extra: extra-with-met-deps
+        Requires-Dist: extras_dep; extra == 'extra-with-met-deps'
+        Provides-Extra: recursive-extra-with-unmet-deps
+        Requires-Dist: recursive_dep; extra == 'recursive-extra-with-unmet-deps'""")
 
 
 class RequirelessMockDistribution(MockDistribution):
-    def read_text(self, filename: str) -> str:
-        if filename == 'METADATA':
-            return textwrap.dedent(
-                """
-                Metadata-Version: 2.2
-                Name: requireless_dep
-                Version: 1.0.0
-                """
-            ).strip()
-        return ''  # pragma: no cover
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: requireless_dep
+        Version: 1.0.0""")
 
 
 class RecursiveMockDistribution(MockDistribution):
-    def read_text(self, filename: str) -> str:
-        if filename == 'METADATA':
-            return textwrap.dedent(
-                """
-                Metadata-Version: 2.2
-                Name: recursive_dep
-                Version: 1.0.0
-                Requires-Dist: recursive_unmet_dep
-                """
-            ).strip()
-        return ''  # pragma: no cover
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: recursive_dep
+        Version: 1.0.0
+        Requires-Dist: recursive_unmet_dep""")
 
 
 class PrereleaseMockDistribution(MockDistribution):
-    def read_text(self, filename: str) -> str:
-        if filename == 'METADATA':
-            return textwrap.dedent(
-                """
-                Metadata-Version: 2.2
-                Name: prerelease_dep
-                Version: 1.0.1a0
-                """
-            ).strip()
-        return ''  # pragma: no cover
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: prerelease_dep
+        Version: 1.0.1a0""")
 
 
 class CircularMockDistribution(MockDistribution):
-    def read_text(self, filename: str) -> str:
-        if filename == 'METADATA':
-            return textwrap.dedent(
-                """
-                Metadata-Version: 2.2
-                Name: circular_dep
-                Version: 1.0.0
-                Requires-Dist: nested_circular_dep
-                """
-            ).strip()
-        return ''  # pragma: no cover
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: circular_dep
+        Version: 1.0.0
+        Requires-Dist: nested_circular_dep""")
 
 
 class NestedCircularMockDistribution(MockDistribution):
-    def read_text(self, filename: str) -> str:
-        if filename == 'METADATA':
-            return textwrap.dedent(
-                """
-                Metadata-Version: 2.2
-                Name: nested_circular_dep
-                Version: 1.0.0
-                Requires-Dist: circular_dep
-                """
-            ).strip()
-        return ''  # pragma: no cover
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: nested_circular_dep
+        Version: 1.0.0
+        Requires-Dist: circular_dep""")
 
 
 @pytest.mark.parametrize(
@@ -195,7 +164,6 @@ def test_init(
     mocker: pytest_mock.MockerFixture,
     package_test_flit: str,
     package_legacy: str,
-    test_no_permission: str,
     package_test_bad_syntax: str,
 ) -> None:
     mock_buildcaller = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
@@ -209,6 +177,7 @@ def test_init(
 
     # custom python
     builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
+    assert builder.python_executable == 'some-python'
     mock_buildcaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
     )
@@ -224,14 +193,15 @@ def test_init(
         runner=builder._runner,
     )
 
-    # PermissionError
-    if not sys.platform.startswith('win'):  # can't correctly set the permissions required for this
-        with pytest.raises(build.BuildException):
-            build.ProjectBuilder(test_no_permission)
-
     # TomlDecodeError
     with pytest.raises(build.BuildException):
         build.ProjectBuilder(package_test_bad_syntax)
+
+
+@pytest.mark.skipif(sys.platform.startswith('win'), reason="can't correctly set the permissions required for this")
+def test_init_permission_error(test_no_permission: str) -> None:  # pragma: win32 no cover
+    with pytest.raises(build.BuildException):
+        build.ProjectBuilder(test_no_permission)
 
 
 def test_init_makes_source_dir_absolute(package_test_flit: str) -> None:
