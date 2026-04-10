@@ -68,23 +68,51 @@ You can embed credentials directly in the index URL:
 Using keyring
 =============
 
-Install the keyring package to store credentials securely:
+Build passes ``--no-input`` to pip, preventing hidden credential prompts that cause the process to appear stuck. When
+the ``keyring`` CLI is available on ``PATH``, build automatically sets ``PIP_KEYRING_PROVIDER=subprocess`` so pip
+delegates credential lookups to the system keyring without needing keyring installed inside the isolated build
+environment.
+
+Install keyring system-wide so it is available on ``PATH``:
 
 .. code-block:: console
 
-    $ pip install keyring
+    $ pipx install keyring
 
-Build will automatically use keyring when available. Configure it with:
+Or install build with the keyring extra:
+
+.. code-block:: console
+
+    $ pip install build[keyring]
+
+Then store your credentials:
 
 .. code-block:: console
 
     $ keyring set https://pypi.company.com username
 
-Build will prompt for the password when needed, or you can use:
+For specialized backends (e.g., Google Artifact Registry, Azure Artifacts), install the corresponding keyring plugin
+alongside keyring:
 
 .. code-block:: console
 
-    $ export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring  # Disable keyring if needed
+    $ pipx install keyring
+    $ pipx inject keyring keyrings.google-artifactregistry-auth
+
+You can also set the keyring provider explicitly via environment variable, which is useful in CI or when keyring is
+installed in a non-standard location:
+
+.. code-block:: console
+
+    $ export PIP_KEYRING_PROVIDER=subprocess
+    $ python -m build
+
+To disable keyring entirely:
+
+.. code-block:: console
+
+    $ export PIP_KEYRING_PROVIDER=disabled
+    $ python -m build
 
 Using .netrc
 ============
@@ -275,13 +303,12 @@ See :doc:`troubleshooting` for more details on warnings.
  Common issues
 ***************
 
-Build hangs waiting for input
-=============================
+Build fails with authentication errors
+=======================================
 
-If build appears to hang, it may be waiting for authentication. This happens when pip prompts for credentials but the
-prompt is hidden.
-
-Solution: Use one of the authentication methods above (embedded credentials, keyring, or .netrc).
+Build passes ``--no-input`` to pip to prevent hidden credential prompts. If your private index requires authentication,
+pip will fail instead of hanging. Configure one of the authentication methods above (embedded credentials, keyring, or
+``.netrc``) to provide credentials non-interactively.
 
 401/403 errors
 ==============

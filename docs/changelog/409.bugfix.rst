@@ -1,0 +1,1 @@
+Pass ``--no-input`` to pip to prevent hidden credential prompts that cause hangs, and automatically set ``PIP_KEYRING_PROVIDER=subprocess`` when the ``keyring`` CLI is on ``PATH`` -- by :user:`gaborbernat`

@@ -191,6 +191,17 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
     def display_name(self) -> str: ...
 
 
+@functools.cache
+def _has_keyring_cli() -> bool:
+    return shutil.which('keyring') is not None
+
+
+def _pip_env() -> dict[str, str] | None:
+    if 'PIP_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
+        return {**os.environ, 'PIP_KEYRING_PROVIDER': 'subprocess'}
+    return None
+
+
 class _PipBackend(_EnvBackend):
     def __init__(self) -> None:
         self._create_with_virtualenv = not self._has_valid_outer_pip and self._has_virtualenv
@@ -296,7 +307,10 @@ class _PipBackend(_EnvBackend):
                     minimum_pip_version_str,
                     path=[purelib],
                 ):
-                    run_subprocess([self.python_executable, '-Im', 'pip', 'install', f'pip>={minimum_pip_version_str}'])
+                    run_subprocess(
+                        [self.python_executable, '-Im', 'pip', 'install', '--no-input', f'pip>={minimum_pip_version_str}'],
+                        env=_pip_env(),
+                    )
 
                 # Uninstall setuptools from the build env to prevent depending on it implicitly.
                 # Pythons 3.12 and up do not install setuptools, check if it exists first.
@@ -304,7 +318,10 @@ class _PipBackend(_EnvBackend):
                     'setuptools',
                     path=[purelib],
                 ):
-                    run_subprocess([self.python_executable, '-Im', 'pip', 'uninstall', '-y', 'setuptools'])
+                    run_subprocess(
+                        [self.python_executable, '-Im', 'pip', 'uninstall', '--no-input', '-y', 'setuptools'],
+                        env=_pip_env(),
+                    )
 
     def install_dependencies(self, requirements: Collection[str], constraints: Collection[str]) -> None:
         with contextlib.ExitStack() as exit_stack:
@@ -316,7 +333,7 @@ class _PipBackend(_EnvBackend):
             if (verbosity := _ctx.verbosity) > 1:
                 cmd += [f'-{"v" * (verbosity - 1)}']
 
-            cmd += ['install', '--use-pep517', '--no-warn-script-location', '--no-compile']
+            cmd += ['install', '--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
 
             # pip does not honour environment markers in command line arguments
             # but it does from requirement files.
@@ -337,7 +354,7 @@ class _PipBackend(_EnvBackend):
 
                 cmd += ['-c', os.path.abspath(constraint_file.name)]
 
-            run_subprocess(cmd)
+            run_subprocess(cmd, env=_pip_env())
 
     @property
     def display_name(self) -> str:
