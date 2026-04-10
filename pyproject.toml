@@ -207,15 +207,36 @@ extend-select = [
   "YTT",    # flake8-2020
   "TRY",    # tryceratops
   "EM",     # flake8-errmsg
+  "DTZ",    # flake8-datetimez
+  "EXE",    # flake8-executable
+  "FA",     # flake8-future-annotations
+  "FLY",    # flynt
+  "FURB",   # refurb
+  "G",      # flake8-logging-format
+  "ICN",    # flake8-import-conventions
+  "ISC",    # flake8-implicit-str-concat
+  "LOG",    # flake8-logging
+  "PERF",   # Perflint
+  "PIE",    # flake8-pie
+ # "PT",    # flake8-pytest-style
+ # "PTH",   # flake8-use-pathlib
+ # "PYI",   # flake8-pyi
+ # "RET",   # flake8-return
+  "RSE",    # flake8-raise
+ # "SIM",   # flake8-simplify
+  "SLOT",   # flake8-slots
+  "T10",    # flake8-debugger
+  "T20",    # flake8-print
+  "TC",     # flake8-type-checking
   "TID251", # flake8-tidy-imports
-  "TC",   # flake8-type-checking
 ]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = ["TID251", "TC"]
+"tasks/*.py" = ["T20"]
+"tests/**.py" = ["TID251", "TC", "T20"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
