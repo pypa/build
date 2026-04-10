@@ -90,7 +90,7 @@ else:
     def __getattr__(name):
         if name == 'log':
             return LOGGER.get()
-        elif name == 'verbosity':
+        if name == 'verbosity':
             return VERBOSITY.get()
         raise AttributeError(name)  # pragma: no cover
 

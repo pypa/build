@@ -32,9 +32,8 @@ MISSING_VIRTUALENV = importlib.util.find_spec('virtualenv') is None
 def test_isolation() -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
     debug = 'import sys; import os; print(os.linesep.join(sys.path));'
-    with build.env.DefaultIsolatedEnv() as env:
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
+    with build.env.DefaultIsolatedEnv() as env, pytest.raises(subprocess.CalledProcessError):
+        subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
 
 
 @pytest.mark.skipif(IS_PYPY, reason='PyPy3 uses get path to create and provision venv')
@@ -69,9 +68,11 @@ def test_venv_executable_missing_post_creation(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     venv_create = mocker.patch('venv.EnvBuilder.create')
-    with pytest.raises(RuntimeError, match=r'Virtual environment creation failed, executable .* missing'):
-        with build.env.DefaultIsolatedEnv():
-            raise AssertionError
+    with (
+        pytest.raises(RuntimeError, match=r'Virtual environment creation failed, executable .* missing'),
+        build.env.DefaultIsolatedEnv(),
+    ):
+        raise AssertionError
     assert venv_create.call_count == 1
 
 
@@ -327,9 +328,8 @@ def test_external_uv_detection_failure(
     mocker.patch.dict(sys.modules, {'uv': None})
     mocker.patch('shutil.which', return_value=None)
 
-    with pytest.raises(RuntimeError, match='uv executable not found'):
-        with build.env.DefaultIsolatedEnv(installer='uv'):
-            raise AssertionError
+    with pytest.raises(RuntimeError, match='uv executable not found'), build.env.DefaultIsolatedEnv(installer='uv'):
+        raise AssertionError
 
 
 def test_get_minimum_pip_version_non_darwin(

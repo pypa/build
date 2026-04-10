@@ -43,9 +43,7 @@ def resolve_version(version_str: str, repo: Repo) -> Version:
         parts = [parts[0] + 1, 0, 0]
     elif version_str == 'minor':
         parts = [parts[0], parts[1] + 1, 0]
-    elif version_str == 'patch':
-        parts[2] += 1
-    elif version_str == 'auto':
+    elif version_str == 'patch' or version_str == 'auto':
         parts[2] += 1
     return Version('.'.join(str(p) for p in parts))
 
