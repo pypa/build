@@ -409,7 +409,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
 
 
 @pytest.mark.parametrize(
-    ['missing_deps', 'output'],
+    ('missing_deps', 'output'),
     [
         ([('foo',)], '\n\tfoo'),
         ([('foo',), ('bar', 'baz', 'qux')], '\n\tfoo\n\tbar -> baz -> qux'),
@@ -429,7 +429,7 @@ def test_build_no_isolation_with_check_deps(
 
 
 @pytest.mark.parametrize(
-    ['cli_args', 'err_msg'],
+    ('cli_args', 'err_msg'),
     [
         (['-Cone=1', '--config-json={"two": 2}'], 'not allowed with argument'),
         (['--config-json={"two": 2'], 'Invalid JSON in --config-json'),
