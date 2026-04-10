@@ -2,6 +2,21 @@
 
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    'contextlib',
+    'difflib',
+    f'{__spec__.parent}._compat',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}._util',
+    'os',
+    'pyproject_hooks',
+    'subprocess',
+    'sys',
+    'warnings',
+    'zipfile',
+]
+
 import contextlib
 import difflib
 import os

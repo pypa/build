@@ -2,6 +2,25 @@
 
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    'argparse',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}.env',
+    'functools',
+    'json',
+    'os',
+    'platform',
+    'pyproject_hooks',
+    'shutil',
+    'subprocess',
+    'tempfile',
+    'textwrap',
+    'traceback',
+    'typing',
+    'warnings',
+]
+
 import argparse
 import contextlib
 import contextvars
