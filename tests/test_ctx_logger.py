@@ -33,7 +33,7 @@ def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture) -> None:
 def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixture) -> None:
     log_stub = mocker.stub('custom_logger')
 
-    def log(message: str, **kwargs: object) -> None:
+    def log(message: str, **_kwargs: object) -> None:
         if build._ctx.verbosity >= 9000:
             log_stub(message)
 

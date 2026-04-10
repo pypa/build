@@ -87,11 +87,11 @@ def _cprint(fmt: str = '', msg: str = '', file: TextIO | None = None) -> None:
 
 def _showwarning(
     message: Warning | str,
-    category: type[Warning],
-    filename: str,
-    lineno: int,
+    category: type[Warning],  # noqa: ARG001
+    filename: str,  # noqa: ARG001
+    lineno: int,  # noqa: ARG001
     file: TextIO | None = None,
-    line: str | None = None,
+    line: str | None = None,  # noqa: ARG001
 ) -> None:  # pragma: no cover
     _cprint('{yellow}WARNING{reset} {}', str(message), file)
 
@@ -355,8 +355,8 @@ def build_package_via_sdist(
 
 def _build_metadata(
     srcdir: StrPath,
-    outdir: StrPath,
-    distributions: Sequence[Distribution],
+    outdir: StrPath,  # noqa: ARG001
+    distributions: Sequence[Distribution],  # noqa: ARG001
     config_settings: ConfigSettings | None = None,
     isolation: bool = True,
     skip_dependency_check: bool = False,
@@ -419,10 +419,10 @@ def main_parser() -> argparse.ArgumentParser:
 
         def __call__(
             self,
-            parser: argparse.ArgumentParser,
+            parser: argparse.ArgumentParser,  # noqa: ARG002
             namespace: object,
-            values: str | Sequence[Any] | None,
-            option_string: str | None = None,
+            values: str | Sequence[Any] | None,  # noqa: ARG002
+            option_string: str | None = None,  # noqa: ARG002
         ) -> None:
             setattr(namespace, self.dest, getattr(namespace, self.dest, 0) - 1)
 

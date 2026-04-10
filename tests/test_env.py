@@ -102,14 +102,14 @@ def test_isolated_env_abstract() -> None:
 
     class PartialEnv(build.env.IsolatedEnv):
         @property
-        def executable(self):
+        def executable(self) -> None:
             raise NotImplementedError
 
     with pytest.raises(TypeError):
         PartialEnv()
 
     class PartialEnv2(build.env.IsolatedEnv):
-        def make_extra_environ(self):
+        def make_extra_environ(self) -> None:
             raise NotImplementedError
 
     with pytest.raises(TypeError):

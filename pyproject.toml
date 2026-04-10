@@ -188,47 +188,35 @@ line-length = 127
 quote-style = "single"
 
 [tool.ruff.lint]
-extend-select = [
-  "B",      # flake8-bugbear
-  "C4",     # flake8-comprehensions
-  "C9",     # mccabe
-  "I",      # isort
-  "PGH",    # pygrep-hooks
-  "RUF",    # ruff
-  "UP",     # pyupgrade
-  "W",      # pycodestyle
-  "YTT",    # flake8-2020
-  "TRY",    # tryceratops
-  "EM",     # flake8-errmsg
-  "DTZ",    # flake8-datetimez
-  "EXE",    # flake8-executable
-  "FA",     # flake8-future-annotations
-  "FLY",    # flynt
-  "FURB",   # refurb
-  "G",      # flake8-logging-format
-  "ICN",    # flake8-import-conventions
-  "ISC",    # flake8-implicit-str-concat
-  "LOG",    # flake8-logging
-  "PERF",   # Perflint
-  "PIE",    # flake8-pie
-  "PT",     # flake8-pytest-style
-  "PYI",    # flake8-pyi
-  "RET",   # flake8-return
-  "RSE",    # flake8-raise
-  "SIM",   # flake8-simplify
-  "SLOT",   # flake8-slots
-  "T10",    # flake8-debugger
-  "T20",    # flake8-print
-  "TC",     # flake8-type-checking
-  "TID251", # flake8-tidy-imports
+select = ["ALL"]
+ignore = [
+  "A002",    # Arguments can shadow builtins
+  "ANN401",  # Disallow Any
+  "BLE001",  # Blind exceptions are fine if re-raised or passed on
+  "COM812",  # Trailing commas teach the formatter
+  "D",       # Too many doc requests
+  "ERA",     # Commented out code
+  "FBT",     # Boolean trap hard to fix on existing API
+  "N818",    # Using Exception suffix
+  "PLC0415", # Import should be at top of file
+  "PLR09",   # Too many ...
+  "PLR2004", # Magic values
+  "PTH",     # Too many change for now
+  "Q",       # Using formatter for quotes
+  "S101",    # Assert is used by mypy and pytest
+  "SLF001",  # Private members are okay to access
 ]
+
+
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
 
 [tool.ruff.lint.per-file-ignores]
-"tasks/*.py" = ["T20"]
-"tests/**.py" = ["TID251", "TC", "T20"]
+"tasks/**.py" = ["T20", "INP", "S607"]
+"tests/**.py" = ["TID251", "TC", "T20", "INP", "S"]
+"tests/packages/**.py" = ["ANN", "INP", "ARG001"]
+"docs/**.py" = ["INP", "A001"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
