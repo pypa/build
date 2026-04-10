@@ -34,7 +34,7 @@ DEFAULT_BACKEND = {
 
 class MockDistribution(_importlib.metadata.Distribution):
     def locate_file(self, path: Any) -> Any:  # pragma: no cover
-        return ''
+        return ''  # pragma: no cover
 
     @classmethod
     def from_name(cls, name: str) -> MockDistribution:
@@ -70,7 +70,7 @@ class ExtraMockDistribution(MockDistribution):
                 Requires-Dist: recursive_dep; extra == 'recursive-extra-with-unmet-deps'
                 """
             ).strip()
-        return ''
+        return ''  # pragma: no cover
 
 
 class RequirelessMockDistribution(MockDistribution):
@@ -83,7 +83,7 @@ class RequirelessMockDistribution(MockDistribution):
                 Version: 1.0.0
                 """
             ).strip()
-        return ''
+        return ''  # pragma: no cover
 
 
 class RecursiveMockDistribution(MockDistribution):
@@ -97,7 +97,7 @@ class RecursiveMockDistribution(MockDistribution):
                 Requires-Dist: recursive_unmet_dep
                 """
             ).strip()
-        return ''
+        return ''  # pragma: no cover
 
 
 class PrereleaseMockDistribution(MockDistribution):
@@ -110,7 +110,7 @@ class PrereleaseMockDistribution(MockDistribution):
                 Version: 1.0.1a0
                 """
             ).strip()
-        return ''
+        return ''  # pragma: no cover
 
 
 class CircularMockDistribution(MockDistribution):
@@ -124,7 +124,7 @@ class CircularMockDistribution(MockDistribution):
                 Requires-Dist: nested_circular_dep
                 """
             ).strip()
-        return ''
+        return ''  # pragma: no cover
 
 
 class NestedCircularMockDistribution(MockDistribution):
@@ -138,7 +138,7 @@ class NestedCircularMockDistribution(MockDistribution):
                 Requires-Dist: circular_dep
                 """
             ).strip()
-        return ''
+        return ''  # pragma: no cover
 
 
 @pytest.mark.parametrize(
