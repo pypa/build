@@ -1,0 +1,2 @@
+Strip ``PYTHONPATH`` from the environment during isolated builds to prevent host packages from leaking into the build -
+by :user:`gaborbernat`

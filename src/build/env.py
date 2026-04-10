@@ -154,7 +154,11 @@ class DefaultIsolatedEnv(IsolatedEnv):
         return {
             'PATH': os.pathsep.join([self._env_backend.scripts_dir, path])
             if path is not None
-            else self._env_backend.scripts_dir
+            else self._env_backend.scripts_dir,
+            # Set PYTHONPATH to empty to override any host value. An empty
+            # PYTHONPATH is treated as unset by CPython's path initialization
+            # (the ``if pythonpath_env:`` check makes it a no-op).
+            'PYTHONPATH': '',
         }
 
     def install(self, requirements: Collection[str], constraints: Collection[str] = []) -> None:
@@ -383,7 +387,9 @@ class _UvBackend(_EnvBackend):
 
                 cmd += ['-c', os.path.abspath(constraint_file.name)]
 
-            run_subprocess(cmd, env={**os.environ, 'VIRTUAL_ENV': self._env_path})
+            env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
+            env['VIRTUAL_ENV'] = self._env_path
+            run_subprocess(cmd, env=env)
 
     @property
     def display_name(self) -> str:
