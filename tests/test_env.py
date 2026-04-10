@@ -28,6 +28,25 @@ MISSING_UV = importlib.util.find_spec('uv') is None and not shutil.which('uv')
 MISSING_VIRTUALENV = importlib.util.find_spec('virtualenv') is None
 
 
+def test_make_extra_environ_overrides_pythonpath() -> None:
+    with build.env.DefaultIsolatedEnv() as env:
+        extra = env.make_extra_environ()
+        assert extra['PYTHONPATH'] == ''
+        assert env._env_backend.scripts_dir in extra['PATH']
+
+
+def test_uv_install_strips_pythonpath(
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv('PYTHONPATH', '/some/leaky/path')
+    run_subprocess = mocker.patch('build.env.run_subprocess')
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+        env.install(['some-package'])
+    (install_call,) = run_subprocess.call_args_list
+    assert 'PYTHONPATH' not in install_call.kwargs['env']
+
+
 @pytest.mark.isolated
 def test_isolation() -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
