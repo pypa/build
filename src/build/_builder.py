@@ -84,7 +84,7 @@ def _read_pyproject_toml(path: StrPath) -> Mapping[str, Any]:
             return tomllib.loads(f.read().decode())
     except FileNotFoundError:
         return {}
-    except PermissionError as e:
+    except PermissionError as e:  # pragma: win32 no cover
         msg = f"{e.strerror}: '{e.filename}' "
         raise BuildException(msg) from None
     except tomllib.TOMLDecodeError as e:

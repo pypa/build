@@ -442,8 +442,8 @@ def main_parser() -> argparse.ArgumentParser:
         # which impedes readability. Also keep the description formatted.
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    if sys.version_info >= (3, 14):
-        make_parser = partial(make_parser, suggest_on_error=True)
+    if sys.version_info >= (3, 14):  # pragma: no branch
+        make_parser = partial(make_parser, suggest_on_error=True)  # pragma: no cover
 
     parser = make_parser()
     parser.add_argument(

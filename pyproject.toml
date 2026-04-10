@@ -80,6 +80,7 @@ test = [
   "pytest >= 6.2.4",
   "pytest-cov >= 2.12",
   "pytest-mock >= 2",
+  "covdefaults >= 2.3",
   "pytest-rerunfailures >= 9.1",
   "pytest-xdist >= 1.34",
   "wheel >= 0.36.0",
@@ -120,32 +121,24 @@ include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "t
 exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/build", "docs/changelog/template.jinja2"]
 
 
-[tool.coverage.run]
-source = [
-  "build",
-  "tests",
-]
-omit = ["tests/conftest.py"]
-disable_warnings = [
+[tool.coverage]
+run.plugins = ["covdefaults"]
+run.source = ["build", "tests"]
+run.omit = ["tests/conftest.py", "tests/test_integration.py"]
+run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
   "no-sysmon",
 ]
-
-[tool.coverage.report]
-exclude_also = [
-  '^\s*raise NotImplementedError\b',
+covdefaults.subtract_omit = "*/__main__.py"
+report.exclude_also = [
   "if typing.TYPE_CHECKING:",
 ]
-
-[tool.coverage.paths]
-build = [
+paths.build = [
   "src",
   "*/site-packages",
   '*\site-packages',
 ]
-
-[tool.coverage.html]
-show_contexts = true
+html.show_contexts = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
