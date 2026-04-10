@@ -1,0 +1,1 @@
+Use lazy imports on Python 3.15+.
