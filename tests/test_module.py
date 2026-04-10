@@ -5,9 +5,9 @@ from __future__ import annotations
 import build
 
 
-def test_version():
+def test_version() -> None:
     assert build.__version__
 
 
-def test_dir():
+def test_dir() -> None:
     assert set(dir(build)) == set(build.__all__)

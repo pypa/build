@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import sys
 
+from typing import Any
+
 import pytest
 import pytest_mock
 
@@ -12,7 +14,7 @@ import build._ctx
 pytestmark = pytest.mark.contextvars
 
 
-def test_default_ctx_logger(caplog: pytest.LogCaptureFixture):
+def test_default_ctx_logger(caplog: pytest.LogCaptureFixture) -> None:
     build._ctx.log('foo')
 
     [record] = caplog.records
@@ -21,7 +23,7 @@ def test_default_ctx_logger(caplog: pytest.LogCaptureFixture):
     assert record.message == 'foo'
 
 
-def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture):
+def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture) -> None:
     log_stub = mocker.stub('custom_logger')
 
     build._ctx.LOGGER.set(log_stub)
@@ -30,10 +32,10 @@ def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture):
     log_stub.assert_called_once_with('foo')
 
 
-def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixture):
+def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixture) -> None:
     log_stub = mocker.stub('custom_logger')
 
-    def log(message: str, **kwargs):
+    def log(message: str, **kwargs: Any) -> None:
         if build._ctx.verbosity >= 9000:
             log_stub(message)
 
@@ -54,7 +56,7 @@ def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixtu
 )
 def test_custom_subprocess_runner_ctx_logging(
     mocker: pytest_mock.MockerFixture, verbosity: int, kwarg_origins: list[tuple[str, ...]]
-):
+) -> None:
     log_stub = mocker.stub('custom_logger')
 
     build._ctx.LOGGER.set(log_stub)

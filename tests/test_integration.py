@@ -10,10 +10,15 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import typing
 import urllib.request
+
+from pathlib import Path
+from typing import Any
 
 import filelock
 import pytest
+import pytest_mock
 
 import build.__main__
 
@@ -37,12 +42,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXCL = frozenset(['.tox', 'dist', '.git', '__pycache__', '.integration-sources', '.github', 'tests', 'docs'])
 
 
-def get_project(name, tmp_path):
+def get_project(name: str, tmp_path: Path) -> Path:
     dest = tmp_path / name
     if name == 'build':
         # our own project is available in-source, just ignore development files
 
-        def _ignore_folder(base, filenames):
+        def _ignore_folder(base: str, filenames: list[str]) -> list[str]:
             ignore = [
                 n for n in filenames if n in EXCL or n.endswith(('_cache', '.egg-info', '.pyc')) or n.startswith('.coverage')
             ]
@@ -106,7 +111,9 @@ def get_project(name, tmp_path):
     ],
 )
 @pytest.mark.isolated
-def test_build(request, monkeypatch, project, args, call, tmp_path):
+def test_build(
+    request: Any, monkeypatch: pytest.MonkeyPatch, project: str, args: list[str], call: list[str] | None, tmp_path: Path
+) -> None:
     if args == ['--installer', 'uv'] and IS_WINDOWS and IS_PYPY:
         pytest.xfail('uv cannot find PyPy executable')
     if project in {'build', 'flit'} and '--no-isolation' in args:
@@ -138,11 +145,11 @@ def test_build(request, monkeypatch, project, args, call, tmp_path):
     assert list(filter(_WHEEL.match, pkg_names))
 
 
-def test_isolation(tmp_dir, package_test_flit, mocker):
+def test_isolation(tmp_dir: Any, package_test_flit: Any, mocker: pytest_mock.MockerFixture) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
     mocker.patch('build.__main__._error')
 
     build.__main__.main([package_test_flit, '-o', tmp_dir, '--no-isolation'])
-    build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available.")
+    typing.cast(Any, build.__main__._error).assert_called_with("Backend 'flit_core.buildapi' is not available.")

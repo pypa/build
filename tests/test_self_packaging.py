@@ -72,7 +72,7 @@ wheel_files = {
 
 
 @pytest.mark.network
-def test_build_sdist(monkeypatch, tmpdir):
+def test_build_sdist(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(MAIN_DIR)
 
     subprocess.run(
@@ -82,12 +82,12 @@ def test_build_sdist(monkeypatch, tmpdir):
             'build',
             '--sdist',
             '--outdir',
-            str(tmpdir),
+            str(tmp_path),
         ],
         check=True,
     )
 
-    (sdist,) = tmpdir.visit('*.tar.gz')
+    (sdist,) = tmp_path.glob('*.tar.gz')
 
     with tarfile.open(str(sdist), 'r:gz') as tar:
         simpler = {n.split('/', 1)[-1] for n in tar.getnames() if '/__pycache__/' not in n}
@@ -97,7 +97,7 @@ def test_build_sdist(monkeypatch, tmpdir):
 
 @pytest.mark.network
 @pytest.mark.parametrize('args', ((), ('--wheel',)), ids=('from_sdist', 'direct'))
-def test_build_wheel(monkeypatch, tmpdir, args):
+def test_build_wheel(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, args: tuple[str, ...]) -> None:
     monkeypatch.chdir(MAIN_DIR)
 
     subprocess.run(
@@ -107,12 +107,12 @@ def test_build_wheel(monkeypatch, tmpdir, args):
             'build',
             *args,
             '--outdir',
-            str(tmpdir),
+            str(tmp_path),
         ],
         check=True,
     )
 
-    (wheel,) = tmpdir.visit('*.whl')
+    (wheel,) = tmp_path.glob('*.whl')
 
     with zipfile.ZipFile(str(wheel)) as z:
         names = z.namelist()
