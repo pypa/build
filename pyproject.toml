@@ -205,10 +205,14 @@ extend-select = [
   "TRY",    # tryceratops
   "EM",     # flake8-errmsg
   "TID251", # flake8-tidy-imports
+  "TC",   # flake8-type-checking
 ]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = ["TID251", "TC"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

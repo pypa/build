@@ -14,8 +14,6 @@ import tempfile
 import typing
 import warnings
 
-from collections.abc import Collection, Mapping
-
 from . import _ctx
 from ._ctx import run_subprocess
 from ._exceptions import FailedProcessError
@@ -25,6 +23,8 @@ from ._util import check_dependency
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
+    from collections.abc import Collection, Mapping
+
     from ._compat.importlib import metadata as importlib_metadata
 
 

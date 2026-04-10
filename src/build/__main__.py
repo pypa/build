@@ -16,7 +16,6 @@ import textwrap
 import traceback
 import warnings
 
-from collections.abc import Iterator, Mapping, Sequence
 from functools import partial
 from typing import Any, NoReturn, TextIO
 
@@ -27,8 +26,15 @@ import build
 from . import ProjectBuilder, _ctx
 from . import env as _env
 from ._exceptions import BuildBackendException, BuildException, FailedProcessError
-from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 from .env import DefaultIsolatedEnv
+
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Mapping, Sequence
+
+    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
 
 _COLORS = {

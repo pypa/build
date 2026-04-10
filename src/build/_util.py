@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import re
 
-from collections.abc import Iterator, Set
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Set
 
 
 _WHEEL_FILENAME_REGEX = re.compile(

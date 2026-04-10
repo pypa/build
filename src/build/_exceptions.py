@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-import subprocess
-import types
+
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    import subprocess
+    import types
 
 
 class BuildException(Exception):
