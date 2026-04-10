@@ -26,7 +26,7 @@ from ._types import SubprocessRunner as RunnerType
 from ._util import check_dependency
 
 
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
 __all__ = [
     'BuildBackendException',

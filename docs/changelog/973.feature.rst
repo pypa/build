@@ -1,1 +1,0 @@
-Add ``kind`` parameter to log messages to separate semantic and representation - by :user:`abitrolly`

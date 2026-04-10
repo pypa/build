@@ -1,2 +1,0 @@
-``check_dependency`` now reports URL requirements as unmet instead of silently accepting them when a package with the
-same name is installed - by :user:`gaborbernat`

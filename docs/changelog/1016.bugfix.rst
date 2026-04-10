@@ -1,1 +1,0 @@
-Validate ``backend-path`` entries exist on disk with a clear error - by :user:`gaborbernat`

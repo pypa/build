@@ -1,1 +1,0 @@
-Fix towncrier template to generate changelog categories in definition order - by :user:`gaborbernat`
