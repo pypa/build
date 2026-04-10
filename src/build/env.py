@@ -46,6 +46,11 @@ if TYPE_CHECKING:
 
     from ._compat.importlib import metadata as importlib_metadata
 
+    if sys.version_info < (3, 11):
+        from typing_extensions import Self
+    else:
+        from typing import Self
+
 
 Installer = typing.Literal['pip', 'uv']
 
@@ -103,7 +108,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
     ) -> None:
         self.installer: Installer = installer
 
-    def __enter__(self) -> DefaultIsolatedEnv:
+    def __enter__(self) -> Self:
         try:
             path = tempfile.mkdtemp(prefix='build-env-')
             # Call ``realpath`` to prevent spurious warning from being emitted
