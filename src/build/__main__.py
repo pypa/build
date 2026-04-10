@@ -5,8 +5,8 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     'argparse',
-    f'{__spec__.parent}._exceptions',
-    f'{__spec__.parent}.env',
+    'build._exceptions',
+    'build.env',
     'functools',
     'json',
     'os',
@@ -41,11 +41,11 @@ from typing import Any, NoReturn, TextIO
 import pyproject_hooks
 
 import build
+import build.env as _env
 
-from . import ProjectBuilder, _ctx
-from . import env as _env
-from ._exceptions import BuildBackendException, BuildException, FailedProcessError
-from .env import DefaultIsolatedEnv
+from build import ProjectBuilder, _ctx
+from build._exceptions import BuildBackendException, BuildException, FailedProcessError
+from build.env import DefaultIsolatedEnv
 
 
 TYPE_CHECKING = False
