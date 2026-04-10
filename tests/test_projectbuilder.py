@@ -174,7 +174,7 @@ class NestedCircularMockDistribution(MockDistribution):
         ('circular_dep', None),
     ],
 )
-def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: Any) -> None:
+def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: tuple[str, ...] | None) -> None:
     monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
 
@@ -520,11 +520,11 @@ def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, pac
 
 
 def test_runner_user_specified(tmp_dir: str, package_test_flit: str) -> None:
-    def dummy_runner(cmd: Any, cwd: Any = None, extra_environ: Any = None) -> NoReturn:
+    def dummy_runner(cmd: typing.Sequence[str], cwd: str | None = None, extra_environ: dict[str, str] | None = None) -> None:
         msg = 'Runner was called'
         raise RuntimeError(msg)
 
-    builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)
+    builder = build.ProjectBuilder(package_test_flit, runner=typing.cast(build._types.SubprocessRunner, dummy_runner))
     with pytest.raises(build.BuildBackendException, match='Runner was called'):
         builder.build('wheel', tmp_dir)
 

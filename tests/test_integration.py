@@ -112,7 +112,12 @@ def get_project(name: str, tmp_path: Path) -> Path:
 )
 @pytest.mark.isolated
 def test_build(
-    request: Any, monkeypatch: pytest.MonkeyPatch, project: str, args: list[str], call: list[str] | None, tmp_path: Path
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+    project: str,
+    args: list[str],
+    call: list[str] | None,
+    tmp_path: Path,
 ) -> None:
     if args == ['--installer', 'uv'] and IS_WINDOWS and IS_PYPY:
         pytest.xfail('uv cannot find PyPy executable')
@@ -145,7 +150,7 @@ def test_build(
     assert list(filter(_WHEEL.match, pkg_names))
 
 
-def test_isolation(tmp_dir: Any, package_test_flit: Any, mocker: pytest_mock.MockerFixture) -> None:
+def test_isolation(tmp_dir: str, package_test_flit: str, mocker: pytest_mock.MockerFixture) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
