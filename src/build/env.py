@@ -406,6 +406,8 @@ class _UvBackend(_EnvBackend):
 
             env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
             env['VIRTUAL_ENV'] = self._env_path
+            if 'UV_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
+                env['UV_KEYRING_PROVIDER'] = 'subprocess'
             run_subprocess(cmd, env=env)
 
     @property

@@ -69,9 +69,9 @@ Using keyring
 =============
 
 Build passes ``--no-input`` to pip, preventing hidden credential prompts that cause the process to appear stuck. When
-the ``keyring`` CLI is available on ``PATH``, build automatically sets ``PIP_KEYRING_PROVIDER=subprocess`` so pip
-delegates credential lookups to the system keyring without needing keyring installed inside the isolated build
-environment.
+the ``keyring`` CLI is available on ``PATH``, build automatically sets ``PIP_KEYRING_PROVIDER=subprocess`` (or
+``UV_KEYRING_PROVIDER=subprocess`` when using the uv installer) so the installer delegates credential lookups to the
+system keyring without needing keyring installed inside the isolated build environment.
 
 Install keyring system-wide so it is available on ``PATH``:
 
@@ -104,7 +104,8 @@ installed in a non-standard location:
 
 .. code-block:: console
 
-    $ export PIP_KEYRING_PROVIDER=subprocess
+    $ export PIP_KEYRING_PROVIDER=subprocess  # for pip installer
+    $ export UV_KEYRING_PROVIDER=subprocess   # for uv installer
     $ python -m build
 
 To disable keyring entirely:
@@ -112,6 +113,7 @@ To disable keyring entirely:
 .. code-block:: console
 
     $ export PIP_KEYRING_PROVIDER=disabled
+    $ export UV_KEYRING_PROVIDER=disabled
     $ python -m build
 
 Using .netrc

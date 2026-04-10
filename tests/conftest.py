@@ -96,6 +96,7 @@ def avoid_constraints(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv('PIP_CONSTRAINT', raising=False)
     monkeypatch.delenv('PIP_KEYRING_PROVIDER', raising=False)
     monkeypatch.delenv('UV_CONSTRAINT', raising=False)
+    monkeypatch.delenv('UV_KEYRING_PROVIDER', raising=False)
 
 
 @pytest.fixture(autouse=True)

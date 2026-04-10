@@ -541,3 +541,35 @@ def test_install_dependencies_passes_keyring_env(
 
     (install_call,) = run_subprocess.call_args_list
     assert install_call.kwargs['env']['PIP_KEYRING_PROVIDER'] == 'subprocess'
+
+
+@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
+def test_uv_install_dependencies_passes_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'subprocess'
+
+
+@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
+def test_uv_install_respects_existing_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+    monkeypatch.setenv('UV_KEYRING_PROVIDER', 'disabled')
+
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'disabled'
