@@ -728,7 +728,7 @@ def test_colors_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_logging_output_venv_failure(
     monkeypatch: pytest.MonkeyPatch, package_test_flit: str, tmp_dir: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    def raise_called_process_err(*args: Any, **kwargs: Any) -> None:
+    def raise_called_process_err(*args: object, **kwargs: object) -> None:
         raise subprocess.CalledProcessError(1, ['test', 'args'], b'stdoutput', b'stderror')
 
     monkeypatch.setattr(venv.EnvBuilder, 'create', raise_called_process_err)

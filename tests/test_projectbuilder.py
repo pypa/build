@@ -174,7 +174,7 @@ class NestedCircularMockDistribution(MockDistribution):
         ('circular_dep', None),
     ],
 )
-def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: Any) -> None:
+def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: tuple[str, ...] | None) -> None:
     monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
 
@@ -198,25 +198,25 @@ def test_init(
     test_no_permission: str,
     package_test_bad_syntax: str,
 ) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller')
+    mock_buildcaller = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     # correct flit pyproject.toml
     builder = build.ProjectBuilder(package_test_flit)
-    typing.cast(Any, pyproject_hooks.BuildBackendHookCaller).assert_called_with(
+    mock_buildcaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable, runner=builder._runner
     )
-    typing.cast(Any, pyproject_hooks.BuildBackendHookCaller).reset_mock()
+    mock_buildcaller.reset_mock()
 
     # custom python
     builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
-    typing.cast(Any, pyproject_hooks.BuildBackendHookCaller).assert_called_with(
+    mock_buildcaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
     )
-    typing.cast(Any, pyproject_hooks.BuildBackendHookCaller).reset_mock()
+    mock_buildcaller.reset_mock()
 
     # FileNotFoundError
     builder = build.ProjectBuilder(package_legacy)
-    typing.cast(Any, pyproject_hooks.BuildBackendHookCaller).assert_called_with(
+    mock_buildcaller.assert_called_with(
         package_legacy,
         'setuptools.build_meta:__legacy__',
         backend_path=None,
@@ -292,8 +292,8 @@ def test_check_dependencies(
         pyproject_hooks.BackendUnavailable,
     ]
 
-    typing.cast(Any, builder._hook).get_requires_for_build_sdist.side_effect = copy.copy(side_effects)
-    typing.cast(Any, builder._hook).get_requires_for_build_wheel.side_effect = copy.copy(side_effects)
+    builder._hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)  # type: ignore[attr-defined]
+    builder._hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)  # type: ignore[attr-defined]
 
     # requires = []
     assert builder.check_dependencies('sdist') == {('flit_core<4,>=2',)}
@@ -315,14 +315,14 @@ def test_build(mocker: pytest_mock.MockerFixture, package_test_flit: str, tmp_di
 
     builder = build.ProjectBuilder(package_test_flit)
 
-    typing.cast(Any, builder._hook).build_sdist.side_effect = ['dist.tar.gz', Exception]
-    typing.cast(Any, builder._hook).build_wheel.side_effect = ['dist.whl', Exception]
+    builder._hook.build_sdist.side_effect = ['dist.tar.gz', Exception]  # type: ignore[attr-defined]
+    builder._hook.build_wheel.side_effect = ['dist.whl', Exception]  # type: ignore[attr-defined]
 
     assert builder.build('sdist', tmp_dir) == os.path.join(tmp_dir, 'dist.tar.gz')
-    typing.cast(Any, builder._hook).build_sdist.assert_called_with(tmp_dir, None)
+    builder._hook.build_sdist.assert_called_with(tmp_dir, None)  # type: ignore[attr-defined]
 
     assert builder.build('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist.whl')
-    typing.cast(Any, builder._hook).build_wheel.assert_called_with(tmp_dir, None)
+    builder._hook.build_wheel.assert_called_with(tmp_dir, None)  # type: ignore[attr-defined]
 
     with pytest.raises(build.BuildBackendException):
         builder.build('sdist', tmp_dir)
@@ -365,7 +365,7 @@ def test_missing_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
-    typing.cast(Any, builder._hook).build_sdist.return_value = 'dist.tar.gz'
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'  # type: ignore[attr-defined]
     out = os.path.join(tmp_dir, 'out')
 
     builder.build('sdist', out)
@@ -377,18 +377,18 @@ def test_relative_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, packag
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
-    typing.cast(Any, builder._hook).build_sdist.return_value = 'dist.tar.gz'
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'  # type: ignore[attr-defined]
 
     builder.build('sdist', '.')
 
-    typing.cast(Any, builder._hook).build_sdist.assert_called_with(os.path.abspath('.'), None)
+    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)  # type: ignore[attr-defined]
 
 
 def test_build_not_dir_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
-    typing.cast(Any, builder._hook).build_sdist.return_value = 'dist.tar.gz'
+    builder._hook.build_sdist.return_value = 'dist.tar.gz'  # type: ignore[attr-defined]
     out = os.path.join(tmp_dir, 'out')
 
     open(out, 'a', encoding='utf-8').close()  # create empty file
@@ -459,10 +459,10 @@ def test_prepare(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_f
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
-    typing.cast(Any, builder._hook).prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'
+    builder._hook.prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'  # type: ignore[attr-defined]
 
     assert builder.prepare('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist-1.0.dist-info')
-    typing.cast(Any, builder._hook).prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)
+    builder._hook.prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)  # type: ignore[attr-defined]
 
 
 def test_prepare_no_hook(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
@@ -470,7 +470,7 @@ def test_prepare_no_hook(mocker: pytest_mock.MockerFixture, tmp_dir: str, packag
 
     builder = build.ProjectBuilder(package_test_flit)
     failure = pyproject_hooks.HookMissing('prepare_metadata_for_build_wheel')
-    typing.cast(Any, builder._hook).prepare_metadata_for_build_wheel.side_effect = failure
+    builder._hook.prepare_metadata_for_build_wheel.side_effect = failure  # type: ignore[attr-defined]
 
     assert builder.prepare('wheel', tmp_dir) is None
 
@@ -479,7 +479,7 @@ def test_prepare_error(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_flit)
-    typing.cast(Any, builder._hook).prepare_metadata_for_build_wheel.side_effect = Exception
+    builder._hook.prepare_metadata_for_build_wheel.side_effect = Exception  # type: ignore[attr-defined]
 
     with pytest.raises(build.BuildBackendException, match='Backend operation failed: Exception'):
         builder.prepare('wheel', tmp_dir)
@@ -520,11 +520,11 @@ def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, pac
 
 
 def test_runner_user_specified(tmp_dir: str, package_test_flit: str) -> None:
-    def dummy_runner(cmd: Any, cwd: Any = None, extra_environ: Any = None) -> NoReturn:
+    def dummy_runner(cmd: typing.Sequence[str], cwd: str | None = None, extra_environ: dict[str, str] | None = None) -> None:
         msg = 'Runner was called'
         raise RuntimeError(msg)
 
-    builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)
+    builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)  # type: ignore[arg-type]
     with pytest.raises(build.BuildBackendException, match='Runner was called'):
         builder.build('wheel', tmp_dir)
 

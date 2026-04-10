@@ -26,7 +26,7 @@ import build.env
 from build._compat import tomllib
 
 
-def pytest_addoption(parser: Any) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
     os.environ['PYTHONWARNINGS'] = 'ignore:DEPRECATION::pip._internal.cli.base_command'  # for when not run within tox
     os.environ['PIP_DISABLE_PIP_VERSION_CHECK'] = '1'  # do not pollute stderr with upgrade advisory
     parser.addoption('--run-integration', action='store_true', help='run the integration tests')
@@ -39,7 +39,7 @@ PYPY3_WIN_VENV_BAD = (
 PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
 
 
-def pytest_collection_modifyitems(config: Any, items: Any) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: list[typing.Any]) -> None:
     skip_int = pytest.mark.skip(reason='integration tests not run (no --run-integration flag)')
     skip_other = pytest.mark.skip(reason='only integration tests are run (got --only-integration flag)')
 
@@ -67,9 +67,9 @@ def pytest_collection_modifyitems(config: Any, items: Any) -> None:
     items.sort(key=lambda i: 1 if is_integration(i) else 0)
 
 
-def is_integration(item: Any) -> bool:
+def is_integration(item: pytest.Item) -> bool:
     # item.location is typically a (path, lineno) tuple; cast to str for typing
-    return os.path.basename(typing.cast(str, item.location[0])) == 'test_integration.py'
+    return os.path.basename(str(item.location[0])) == 'test_integration.py'
 
 
 def pytest_runtest_call(item: pytest.Item) -> None:

@@ -10,11 +10,9 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import typing
 import urllib.request
 
 from pathlib import Path
-from typing import Any
 
 import filelock
 import pytest
@@ -112,7 +110,12 @@ def get_project(name: str, tmp_path: Path) -> Path:
 )
 @pytest.mark.isolated
 def test_build(
-    request: Any, monkeypatch: pytest.MonkeyPatch, project: str, args: list[str], call: list[str] | None, tmp_path: Path
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+    project: str,
+    args: list[str],
+    call: list[str] | None,
+    tmp_path: Path,
 ) -> None:
     if args == ['--installer', 'uv'] and IS_WINDOWS and IS_PYPY:
         pytest.xfail('uv cannot find PyPy executable')
@@ -145,11 +148,11 @@ def test_build(
     assert list(filter(_WHEEL.match, pkg_names))
 
 
-def test_isolation(tmp_dir: Any, package_test_flit: Any, mocker: pytest_mock.MockerFixture) -> None:
+def test_isolation(tmp_dir: str, package_test_flit: str, mocker: pytest_mock.MockerFixture) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
     mocker.patch('build.__main__._error')
 
     build.__main__.main([package_test_flit, '-o', tmp_dir, '--no-isolation'])
-    typing.cast(Any, build.__main__._error).assert_called_with("Backend 'flit_core.buildapi' is not available.")
+    build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available.")  # type: ignore[attr-defined]

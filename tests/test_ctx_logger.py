@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 import sys
 
-from typing import Any
-
 import pytest
 import pytest_mock
 
@@ -35,7 +33,7 @@ def test_ctx_custom_logger(mocker: pytest_mock.MockerFixture) -> None:
 def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixture) -> None:
     log_stub = mocker.stub('custom_logger')
 
-    def log(message: str, **kwargs: Any) -> None:
+    def log(message: str, **kwargs: object) -> None:
         if build._ctx.verbosity >= 9000:
             log_stub(message)
 
