@@ -106,7 +106,7 @@ def _make_logger() -> _ctx.Logger:
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
             if kind is None:
-                print(fill(message, initial_indent='  '), file=sys.stderr)
+                print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201
             elif kind[0] == 'step':
                 _cprint('{bold}{}{reset}', fill(message, initial_indent='* '), file=sys.stderr)
 
@@ -390,7 +390,7 @@ def _build_metadata(
         ) as metadata_file,
     ):
         valid_metadata, _ = packaging.metadata.parse_email(metadata_file.read())
-    print(
+    print(  # noqa: T201
         json.dumps(valid_metadata, ensure_ascii=False, indent=2),
     )
 
