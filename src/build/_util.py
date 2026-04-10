@@ -6,7 +6,8 @@ import re
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Set
+    from collections.abc import Iterator
+    from collections.abc import Set as AbstractSet
 
 
 _WHEEL_FILENAME_REGEX = re.compile(
@@ -17,7 +18,7 @@ _WHEEL_FILENAME_REGEX = re.compile(
 
 
 def check_dependency(
-    req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: Set[str] = frozenset()
+    req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: AbstractSet[str] = frozenset()
 ) -> Iterator[tuple[str, ...]]:
     """
     Verify that a dependency and all of its dependencies are met.

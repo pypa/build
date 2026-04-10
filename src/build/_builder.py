@@ -25,7 +25,7 @@ import sys
 import warnings
 import zipfile
 
-from typing import Any, TypeVar
+from typing import Any
 
 import pyproject_hooks
 
@@ -45,10 +45,12 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sequence
 
+    if sys.version_info < (3, 11):
+        from typing_extensions import Self
+    else:
+        from typing import Self
+
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
-
-
-_TProjectBuilder = TypeVar('_TProjectBuilder', bound='ProjectBuilder')
 
 
 _DEFAULT_BACKEND = {
@@ -205,11 +207,11 @@ class ProjectBuilder:
 
     @classmethod
     def from_isolated_env(
-        cls: type[_TProjectBuilder],
+        cls,
         env: env.IsolatedEnv,
         source_dir: StrPath,
         runner: SubprocessRunner = pyproject_hooks.default_subprocess_runner,
-    ) -> _TProjectBuilder:
+    ) -> Self:
         return cls(
             source_dir=source_dir,
             python_executable=env.python_executable,
