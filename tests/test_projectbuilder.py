@@ -43,17 +43,11 @@ class MockDistribution(_importlib.metadata.Distribution):
             return self._metadata
         return ''
 
+    _registry: typing.ClassVar[dict[str, type[MockDistribution]]] = {}
+
     @classmethod
     def from_name(cls, name: str) -> MockDistribution:
-        registry: dict[str, type[MockDistribution]] = {
-            'extras_dep': ExtraMockDistribution,
-            'requireless_dep': RequirelessMockDistribution,
-            'recursive_dep': RecursiveMockDistribution,
-            'prerelease_dep': PrereleaseMockDistribution,
-            'circular_dep': CircularMockDistribution,
-            'nested_circular_dep': NestedCircularMockDistribution,
-        }
-        if (dist_cls := registry.get(name)) is not None:
+        if (dist_cls := cls._registry.get(name)) is not None:
             return dist_cls()
         raise _importlib.metadata.PackageNotFoundError
 
@@ -110,6 +104,18 @@ class NestedCircularMockDistribution(MockDistribution):
         Requires-Dist: circular_dep""")
 
 
+MockDistribution._registry.update(
+    {
+        'extras_dep': ExtraMockDistribution,
+        'requireless_dep': RequirelessMockDistribution,
+        'recursive_dep': RecursiveMockDistribution,
+        'prerelease_dep': PrereleaseMockDistribution,
+        'circular_dep': CircularMockDistribution,
+        'nested_circular_dep': NestedCircularMockDistribution,
+    }
+)
+
+
 @pytest.mark.parametrize(
     ('requirement_string', 'expected'),
     [
@@ -146,6 +152,95 @@ class NestedCircularMockDistribution(MockDistribution):
 def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: tuple[str, ...] | None) -> None:
     monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
+
+
+class _DirectUrlMixin(MockDistribution):
+    _direct_url_json: str = ''
+
+    def read_text(self, filename: str) -> str:
+        if filename == 'direct_url.json':
+            return self._direct_url_json
+        return super().read_text(filename)
+
+
+class DirectUrlMockDistribution(_DirectUrlMixin):
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: direct_url_dep
+        Version: 1.0.0""")
+    _direct_url_json = '{"url": "https://example.com/direct_url_dep-1.0.0.tar.gz", "archive_info": {}}'
+
+
+class VcsDirectUrlMockDistribution(_DirectUrlMixin):
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: vcs_dep
+        Version: 1.0.0""")
+    _direct_url_json = (
+        '{"url": "https://github.com/example/vcs_dep.git",'
+        ' "vcs_info": {"vcs": "git", "requested_revision": "v1.0.0",'
+        ' "commit_id": "abc123"}}'
+    )
+
+
+class VcsNoRevisionMockDistribution(_DirectUrlMixin):
+    _metadata = textwrap.dedent("""\
+        Metadata-Version: 2.2
+        Name: vcs_dep
+        Version: 1.0.0""")
+    _direct_url_json = '{"url": "https://github.com/example/vcs_dep.git", "vcs_info": {"vcs": "git", "commit_id": "abc123"}}'
+
+
+MockDistribution._registry.update(
+    {
+        'direct_url_dep': DirectUrlMockDistribution,
+        'vcs_dep': VcsDirectUrlMockDistribution,
+    }
+)
+
+
+@pytest.mark.parametrize(
+    'requirement_string',
+    [
+        'extras_dep @ https://example.com/extras_dep-1.0.0.tar.gz',
+        'missing_dep @ https://example.com/missing_dep-1.0.0.tar.gz',
+    ],
+)
+def test_check_dependency_url_no_direct_url_is_unmet(monkeypatch: pytest.MonkeyPatch, requirement_string: str) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    assert next(build.check_dependency(requirement_string), None) is not None
+
+
+def test_check_dependency_url_matching_direct_url_is_met(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    assert next(build.check_dependency('direct_url_dep @ https://example.com/direct_url_dep-1.0.0.tar.gz'), None) is None
+
+
+def test_check_dependency_url_mismatched_direct_url_is_unmet(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    assert next(build.check_dependency('direct_url_dep @ https://example.com/other-1.0.0.tar.gz'), None) is not None
+
+
+def test_check_dependency_vcs_url_matching_direct_url_is_met(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    assert next(build.check_dependency('vcs_dep @ git+https://github.com/example/vcs_dep.git@v1.0.0'), None) is None
+
+
+def test_check_dependency_vcs_url_mismatched_direct_url_is_unmet(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    assert next(build.check_dependency('vcs_dep @ git+https://github.com/example/vcs_dep.git@v2.0.0'), None) is not None
+
+
+def test_check_dependency_vcs_url_no_revision_is_met(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    monkeypatch.setitem(MockDistribution._registry, 'vcs_dep', VcsNoRevisionMockDistribution)
+    assert next(build.check_dependency('vcs_dep @ git+https://github.com/example/vcs_dep.git'), None) is None
+
+
+def test_check_dependency_vcs_url_no_revision_mismatch_is_unmet(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    monkeypatch.setitem(MockDistribution._registry, 'vcs_dep', VcsNoRevisionMockDistribution)
+    assert next(build.check_dependency('vcs_dep @ git+https://github.com/other/repo.git'), None) is not None
 
 
 def test_bad_project(package_test_no_project: str) -> None:
