@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import os
 import os.path
@@ -58,10 +59,8 @@ def get_project(name: str, tmp_path: Path) -> Path:
 
     # for other projects download from github and cache it
     tar_store = os.path.join(ROOT, '.integration-sources')
-    try:
+    with contextlib.suppress(OSError):
         os.makedirs(tar_store)
-    except OSError:  # python 2 has no exist_ok, and checking with exists is not parallel safe
-        pass  # just ignore, if the creation failed we will have another failure soon that will notify the user
 
     github_org_repo, version = INTEGRATION_SOURCES[name]
     tar_filename = f'{name}-{version}.tar.gz'

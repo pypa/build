@@ -283,9 +283,8 @@ def test_parse_args(
 def test_prog() -> None:
     out = io.StringIO()
 
-    with pytest.raises(SystemExit):
-        with contextlib.redirect_stdout(out):
-            build.__main__.main(['--help'], prog='something')
+    with pytest.raises(SystemExit), contextlib.redirect_stdout(out):
+        build.__main__.main(['--help'], prog='something')
 
     assert out.getvalue().startswith('usage: something [-h]')
 
@@ -663,11 +662,9 @@ def test_logging_output_env_subprocess_error(
     stderr_body: list[str],
     stderr_error: str,
 ) -> None:
-    try:
+    with contextlib.suppress(ModuleNotFoundError):  # colorama might not be available  # pragma: win32 no cover
         # do not inject hook to have clear output on capsys
         mocker.patch('colorama.init')
-    except ModuleNotFoundError:  # colorama might not be available  # pragma: win32 no cover
-        pass
 
     monkeypatch.delenv('NO_COLOR', raising=False)
     monkeypatch.setenv('FORCE_COLOR' if color else 'NO_COLOR', '')
@@ -829,9 +826,8 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
     except ValueError:
         exc_info = sys.exc_info()
 
-    with pytest.raises(SystemExit):
-        with build.__main__._handle_build_error():
-            raise build.BuildBackendException(exc, exc_info=exc_info)
+    with pytest.raises(SystemExit), build.__main__._handle_build_error():
+        raise build.BuildBackendException(exc, exc_info=exc_info)
 
 
 def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:

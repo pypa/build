@@ -212,11 +212,10 @@ extend-select = [
   "PERF",   # Perflint
   "PIE",    # flake8-pie
   "PT",     # flake8-pytest-style
- # "PTH",   # flake8-use-pathlib
   "PYI",    # flake8-pyi
- # "RET",   # flake8-return
+  "RET",   # flake8-return
   "RSE",    # flake8-raise
- # "SIM",   # flake8-simplify
+  "SIM",   # flake8-simplify
   "SLOT",   # flake8-slots
   "T10",    # flake8-debugger
   "T20",    # flake8-print

@@ -53,11 +53,15 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[typing.Any]
         is_integration_file = is_integration(item)
         if PYPY3_WIN_VENV_BAD and item.get_closest_marker('pypy3323bug') and os.environ.get('PYPY3323BUG', None):
             item.add_marker(pytest.mark.xfail(reason=PYPY3_WIN_M, strict=False))
-        if PYPY3_WIN_VENV_BAD and item.get_closest_marker('isolated'):
-            if not (is_integration_file and item.originalname == 'test_build') or (
-                hasattr(item, 'callspec') and '--no-isolation' not in item.callspec.params.get('args', [])
-            ):
-                item.add_marker(pytest.mark.xfail(reason=PYPY3_WIN_M, strict=True))
+        if (
+            PYPY3_WIN_VENV_BAD
+            and item.get_closest_marker('isolated')
+            and (
+                not (is_integration_file and item.originalname == 'test_build')
+                or (hasattr(item, 'callspec') and '--no-isolation' not in item.callspec.params.get('args', []))
+            )
+        ):
+            item.add_marker(pytest.mark.xfail(reason=PYPY3_WIN_M, strict=True))
         if is_integration_file:  # pragma: no cover
             if not config.getoption('--run-integration') and not config.getoption('--only-integration'):
                 item.add_marker(skip_int)

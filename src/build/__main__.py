@@ -252,13 +252,12 @@ def _natural_language_list(elements: Sequence[str]) -> str:
     if len(elements) == 0:
         msg = 'no elements'
         raise IndexError(msg)
-    elif len(elements) == 1:
+    if len(elements) == 1:
         return elements[0]
-    else:
-        return '{} and {}'.format(
-            ', '.join(elements[:-1]),
-            elements[-1],
-        )
+    return '{} and {}'.format(
+        ', '.join(elements[:-1]),
+        elements[-1],
+    )
 
 
 def build_package(
