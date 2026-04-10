@@ -304,7 +304,7 @@ See :doc:`troubleshooting` for more details on warnings.
 ***************
 
 Build fails with authentication errors
-=======================================
+======================================
 
 Build passes ``--no-input`` to pip to prevent hidden credential prompts. If your private index requires authentication,
 pip will fail instead of hanging. Configure one of the authentication methods above (embedded credentials, keyring, or
