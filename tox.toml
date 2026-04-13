@@ -1,16 +1,19 @@
-requires = ["tox>=4.22", "tox-uv", "virtualenv>=20.0.34"]
+requires = ["tox-uv>=1.28"]
 env_list = [
     "fix",
     "type",
     "docs",
     "path",
-    { product = [["py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310"]] },
-    { product = [["min"], ["py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310"]] },
+    { product = [{ prefix = "py3", start = 10, stop = 15 }]},
+    { product = [{ prefix = "pypy3", start = 10, stop = 11 }]},
+    { product = [{ prefix = "min-py3", start = 10, stop = 15 }]},
+    { product = [{ prefix = "min-pypy3", start = 10, stop = 11 }]},
 ]
 skip_missing_interpreters = true
 
 [env_run_base]
 description = "run test suite with {basepython}"
+uv_seed = true
 pass_env = ["LC_ALL", "PIP_*", "PYTEST_*", "TERM"]
 commands = [
     [
@@ -31,13 +34,12 @@ PYTHONWARNDEFAULTENCODING = "1"
 TEST_STATUS_DIR = "{envtmpdir}"
 
 [env_base.min]
-factors = [["py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310"]]
+factors = [["py310", "py311", "py312", "py313", "py314", "py315", "pypy310", "pypy311"]]
 description = "check minimum versions required of all dependencies"
 set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
 
 [env.fix]
 description = "run static analysis and style checks"
-base_python = "python3.10"
 skip_install = true
 deps = ["prek"]
 pass_env = ["HOMEPATH", "PROGRAMDATA"]
@@ -54,7 +56,7 @@ dependency_groups = ["mypy"]
 
 [env.docs]
 description = "build documentations"
-base_python = "python3.14"
+base_python = "3.14"
 set_env = { PYTHONUTF8 = "1" }
 commands = [
     ["proselint", "check", "docs"],
@@ -96,8 +98,10 @@ commands = [
 ]
 depends = [
     "path",
-    "py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310",
-    "min-py315", "min-py314", "min-py313", "min-py312", "min-py311", "min-py310", "min-pypy311", "min-pypy310",
+    { product = [{ prefix = "py3", start = 10, stop = 15 }]},
+    { product = [{ prefix = "pypy3", start = 10, stop = 11 }]},
+    { product = [{ prefix = "min-py3", start = 10, stop = 15 }]},
+    { product = [{ prefix = "min-pypy3", start = 10, stop = 11 }]},
 ]
 
 [env.bump]
