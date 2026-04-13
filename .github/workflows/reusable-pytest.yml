@@ -81,7 +81,7 @@ jobs:
       - name: Run minimum version test
         if: matrix.tox-target == 'min'
         shell: bash
-        run: tox -e $BASE-${{ matrix.tox-target }}
+        run: tox -e ${{ matrix.tox-target }}-$BASE
 
       - name: Run path test
         if: matrix.tox-target == 'tox' && matrix.py == '3.10'

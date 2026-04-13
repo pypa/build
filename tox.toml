@@ -4,22 +4,8 @@ env_list = [
     "type",
     "docs",
     "path",
-    "py315",
-    "py315-min",
-    "py314",
-    "py314-min",
-    "py313",
-    "py313-min",
-    "py312",
-    "py312-min",
-    "py311",
-    "py311-min",
-    "py310",
-    "py310-min",
-    "pypy311",
-    "pypy311-min",
-    "pypy310",
-    "pypy310-min",
+    { product = [["py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310"]] },
+    { product = [["min"], ["py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310"]] },
 ]
 skip_missing_interpreters = true
 
@@ -44,37 +30,8 @@ PYPY3323BUG = "1"
 PYTHONWARNDEFAULTENCODING = "1"
 TEST_STATUS_DIR = "{envtmpdir}"
 
-# INI generative section [testenv:{py315,...}-min] has no TOML equivalent;
-# each variant is listed explicitly.
-[env.py315-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.py314-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.py313-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.py312-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.py311-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.py310-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.pypy311-min]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
-
-[env.pypy310-min]
+[env_base.min]
+factors = [["py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310"]]
 description = "check minimum versions required of all dependencies"
 set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
 
@@ -139,14 +96,8 @@ commands = [
 ]
 depends = [
     "path",
-    "py315", "py315-min",
-    "py314", "py314-min",
-    "py313", "py313-min",
-    "py312", "py312-min",
-    "py311", "py311-min",
-    "py310", "py310-min",
-    "pypy311", "pypy311-min",
-    "pypy310", "pypy310-min",
+    "py315", "py314", "py313", "py312", "py311", "py310", "pypy311", "pypy310",
+    "min-py315", "min-py314", "min-py313", "min-py312", "min-py311", "min-py310", "min-pypy311", "min-pypy310",
 ]
 
 [env.bump]
