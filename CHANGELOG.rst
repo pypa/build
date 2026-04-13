@@ -1,19 +1,19 @@
-********************
+####################
  1.4.3 (2026-04-10)
-********************
+####################
 
-==========
+**********
  Features
-==========
+**********
 
 - Add ``kind`` parameter to log messages to separate semantic and representation - by :user:`abitrolly` (:issue:`973`)
 
-==========
+**********
  Bugfixes
-==========
+**********
 
-- Strip ``PYTHONPATH`` from the environment during isolated builds to prevent host packages from leaking into the build -
-  by :user:`gaborbernat` (:issue:`405`)
+- Strip ``PYTHONPATH`` from the environment during isolated builds to prevent host packages from leaking into the build
+  - by :user:`gaborbernat` (:issue:`405`)
 - Pass ``--no-input`` to pip to prevent hidden credential prompts that cause hangs, and automatically set
   ``PIP_KEYRING_PROVIDER=subprocess`` (or ``UV_KEYRING_PROVIDER=subprocess`` for the uv installer) when the ``keyring``
   CLI is on ``PATH`` -- by :user:`gaborbernat` (:issue:`409`)
@@ -25,9 +25,9 @@
 - Resolve thread-safety races in the build API - by :user:`gaborbernat` (:issue:`1015`)
 - Validate ``backend-path`` entries exist on disk with a clear error - by :user:`gaborbernat` (:issue:`1016`)
 
-===============
+***************
  Miscellaneous
-===============
+***************
 
 - :issue:`1020`, :issue:`1021`
 
