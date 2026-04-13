@@ -106,8 +106,6 @@ def _make_logger() -> _ctx.Logger:
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
             match kind:
-                case None:
-                    print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201 # pragma: no cover
                 case ('step', *_):
                     (first, *rest) = message.splitlines()
                     _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
