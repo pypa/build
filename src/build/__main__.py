@@ -114,7 +114,7 @@ def _make_logger() -> _ctx.Logger:
                 case ('subprocess', 'cmd'):
                     for line in message.splitlines():
                         _cprint('{dim}{}{reset}', fill(line, initial_indent='> '), file=sys.stderr)
-                case ('subprocess', _):
+                case ('subprocess', 'stdout'):
                     for line in message.splitlines():
                         _cprint('{dim}{}{reset}', fill(line, initial_indent='< '), file=sys.stderr)
                 case _:

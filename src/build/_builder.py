@@ -127,7 +127,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
             build_system_table['build-backend'] = _DEFAULT_BACKEND['build-backend']
 
     match build_system_table:
-        case {'backend-path': list() as lst} if all(isinstance(i, str) for i in lst):
+        case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
             pass
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
