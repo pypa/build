@@ -114,21 +114,24 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str,
         msg = '`requires` must be an array of strings'
         raise BuildSystemTableValidationError(msg)
 
-    if 'build-backend' not in build_system_table:
-        _find_typo(build_system_table, 'build-backend')
-        # If ``build-backend`` is missing, inject the legacy setuptools backend
-        # but leave ``requires`` intact to emulate pip
-        build_system_table['build-backend'] = _DEFAULT_BACKEND['build-backend']
-    elif not isinstance(build_system_table['build-backend'], str):
-        msg = '`build-backend` must be a string'
-        raise BuildSystemTableValidationError(msg)
+    match build_system_table:
+        case {'build-backend': str()}:
+            pass
+        case {'build-backend': _}:
+            msg = '`build-backend` must be a string'
+            raise BuildSystemTableValidationError(msg)
+        case _:
+            _find_typo(build_system_table, 'build-backend')
+            # If ``build-backend`` is missing, inject the legacy setuptools backend
+            # but leave ``requires`` intact to emulate pip
+            build_system_table['build-backend'] = _DEFAULT_BACKEND['build-backend']
 
-    if 'backend-path' in build_system_table and (
-        not isinstance(build_system_table['backend-path'], list)
-        or not all(isinstance(i, str) for i in build_system_table['backend-path'])
-    ):
-        msg = '`backend-path` must be an array of strings'
-        raise BuildSystemTableValidationError(msg)
+    match build_system_table:
+        case {'backend-path': list() as lst} if all(isinstance(i, str) for i in lst):
+            pass
+        case {'backend-path': _}:
+            msg = '`backend-path` must be an array of strings'
+            raise BuildSystemTableValidationError(msg)
 
     unknown_props = build_system_table.keys() - {'requires', 'build-backend', 'backend-path'}
     if unknown_props:

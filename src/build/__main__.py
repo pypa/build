@@ -105,18 +105,22 @@ def _make_logger() -> _ctx.Logger:
 
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
-            if kind is None:
-                print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201 # pragma: no cover
-            elif kind[0] == 'step':
-                (first, *rest) = message.splitlines()
-                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-                for line in rest:
-                    print(fill(line, initial_indent='  '), file=sys.stderr)  # noqa: T201
-
-            elif kind[0] == 'subprocess':
-                initial_indent = '> ' if kind[1] == 'cmd' else '< '
-                for line in message.splitlines():
-                    _cprint('{dim}{}{reset}', fill(line, initial_indent=initial_indent), file=sys.stderr)
+            match kind:
+                case None:
+                    print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201 # pragma: no cover
+                case ('step', *_):
+                    (first, *rest) = message.splitlines()
+                    _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+                    for line in rest:
+                        print(fill(line, initial_indent='  '), file=sys.stderr)  # noqa: T201
+                case ('subprocess', 'cmd'):
+                    for line in message.splitlines():
+                        _cprint('{dim}{}{reset}', fill(line, initial_indent='> '), file=sys.stderr)
+                case ('subprocess', _):
+                    for line in message.splitlines():
+                        _cprint('{dim}{}{reset}', fill(line, initial_indent='< '), file=sys.stderr)
+                case _:
+                    print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201
 
     return log
 
