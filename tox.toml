@@ -1,0 +1,164 @@
+requires = ["tox>=4.22", "tox-uv", "virtualenv>=20.0.34"]
+env_list = [
+    "fix",
+    "type",
+    "docs",
+    "path",
+    "py315",
+    "py315-min",
+    "py314",
+    "py314-min",
+    "py313",
+    "py313-min",
+    "py312",
+    "py312-min",
+    "py311",
+    "py311-min",
+    "py310",
+    "py310-min",
+    "pypy311",
+    "pypy311-min",
+    "pypy310",
+    "pypy310-min",
+]
+skip_missing_interpreters = true
+
+[env_run_base]
+description = "run test suite with {basepython}"
+pass_env = ["LC_ALL", "PIP_*", "PYTEST_*", "TERM"]
+commands = [
+    [
+        "pytest", "-ra", "--cov", "--cov-config", "pyproject.toml",
+        "--cov-report=html:{envdir}/htmlcov", "--cov-context=test",
+        "--cov-report=xml:{toxworkdir}/coverage.{envname}.xml",
+        "--cov-report", "term-missing",
+        { replace = "posargs", default = ["-n", "auto"] },
+    ],
+]
+dependency_groups = ["test"]
+
+[env_run_base.set_env]
+COVERAGE_CORE = "sysmon"
+COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}"
+PYPY3323BUG = "1"
+PYTHONWARNDEFAULTENCODING = "1"
+TEST_STATUS_DIR = "{envtmpdir}"
+
+# INI generative section [testenv:{py315,...}-min] has no TOML equivalent;
+# each variant is listed explicitly.
+[env.py315-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.py314-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.py313-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.py312-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.py311-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.py310-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.pypy311-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.pypy310-min]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.fix]
+description = "run static analysis and style checks"
+base_python = "python3.10"
+skip_install = true
+deps = ["prek"]
+pass_env = ["HOMEPATH", "PROGRAMDATA"]
+commands = [
+    ["prek", "run", "--all-files", "--show-diff-on-failure"],
+    ["python", "-c", 'print("hint: run {envdir}/bin/prek install to add checks as pre-commit hook")'],
+]
+
+[env.type]
+description = "run type check on code base"
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
+commands = [["mypy", { replace = "posargs" }]]
+dependency_groups = ["mypy"]
+
+[env.docs]
+description = "build documentations"
+base_python = "python3.14"
+set_env = { PYTHONUTF8 = "1" }
+commands = [
+    ["proselint", "check", "docs"],
+    ["sphinx-build", "-W", "-n", "-b", "html", "docs", "{env:READTHEDOCS_OUTPUT:{envtmpdir}}/html"],
+    ["python", "-c", 'import os; print("Documentation available under file://" + os.environ.get("READTHEDOCS_OUTPUT", "{envtmpdir}") + "/html/index.html")'],
+]
+dependency_groups = ["docs"]
+
+[env.path]
+description = "verify build can run from source (bootstrap)"
+set_env = { COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}", PYTHONPATH = "{toxinidir}/src" }
+commands_pre = [
+    ["python", "-E", "-m", "pip", "uninstall", "-y", "build", "colorama"],
+]
+
+[env.dev]
+description = "generate a DEV environment"
+package = "editable"
+deps = ["virtualenv>=20.0.34"]
+commands = [
+    ["python", "-m", "pip", "list", "--format=columns"],
+    ["python", "-c", "import sys; print(sys.executable)"],
+]
+dependency_groups = ["docs", "test"]
+
+[env.coverage]
+description = "combine coverage from test environments"
+skip_install = true
+deps = ["coverage[toml]>=5.1", "diff_cover>=3"]
+parallel_show_output = true
+pass_env = ["DIFF_AGAINST"]
+set_env = {}
+commands = [
+    ["-", "coverage", "combine", "{toxworkdir}"],
+    ["coverage", "report", "--skip-covered", "--show-missing", "-i"],
+    ["coverage", "xml", "-o", "{toxworkdir}/coverage.xml", "-i"],
+    ["coverage", "html", "-d", "{toxworkdir}/htmlcov", "-i"],
+    ["python", "-m", "diff_cover.diff_cover_tool", "--compare-branch", "{env:DIFF_AGAINST:origin/main}", "{toxworkdir}/coverage.xml"],
+]
+depends = [
+    "path",
+    "py315", "py315-min",
+    "py314", "py314-min",
+    "py313", "py313-min",
+    "py312", "py312-min",
+    "py311", "py311-min",
+    "py310", "py310-min",
+    "pypy311", "pypy311-min",
+    "pypy310", "pypy310-min",
+]
+
+[env.bump]
+description = "bump versions, pass major/minor/patch"
+skip_install = true
+deps = ["bump-my-version>=0.10"]
+set_env = {}
+commands = [["bump-my-version", "bump", { replace = "posargs" }]]
+
+[env.release]
+description = "create a release (commit, tag, and push)"
+skip_install = true
+change_dir = "{toxinidir}/tasks"
+commands = [["python", "release.py", { replace = "posargs" }]]
+dependency_groups = ["release"]
