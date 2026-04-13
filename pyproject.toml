@@ -244,8 +244,7 @@ directory = "docs/changelog"
 title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
-underlines = ["*", "=", "-"]
-top_underline = "#"
+underlines = ["#", "*", "=", "-"]
 
 [[tool.towncrier.section]]
 path = ""
