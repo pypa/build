@@ -53,10 +53,6 @@ repos:
       - id: rst-backticks
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
-  - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.7.1"
-    hooks:
-      - id: tox-ini-fmt
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.24.1
     hooks:

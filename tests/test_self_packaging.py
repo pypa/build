@@ -30,7 +30,7 @@ sdist_files = {
     'tests/packages/test-cant-build-via-sdist/some-file-that-is-needed-for-build.txt',
     'tests/packages/test-no-project/empty.txt',
     'tests/packages/test-setuptools/MANIFEST.in',
-    'tox.ini',
+    'tox.toml',
 }
 
 sdist_patterns = {
