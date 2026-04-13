@@ -18,7 +18,7 @@ commands = [
         "--cov-report=html:{envdir}/htmlcov", "--cov-context=test",
         "--cov-report=xml:{toxworkdir}/coverage.{envname}.xml",
         "--cov-report", "term-missing",
-        { replace = "posargs", default = ["-n", "auto"] },
+        { replace = "posargs", default = ["-n", "auto"], extend = true },
     ],
 ]
 dependency_groups = ["test"]
@@ -49,7 +49,7 @@ commands = [
 [env.type]
 description = "run type check on code base"
 set_env = { PYTHONWARNDEFAULTENCODING = "" }
-commands = [["mypy", { replace = "posargs" }]]
+commands = [["mypy", { replace = "posargs", extend = true }]]
 dependency_groups = ["mypy"]
 
 [env.docs]
@@ -105,11 +105,11 @@ description = "bump versions, pass major/minor/patch"
 skip_install = true
 deps = ["bump-my-version>=0.10"]
 set_env = {}
-commands = [["bump-my-version", "bump", { replace = "posargs" }]]
+commands = [["bump-my-version", "bump", { replace = "posargs", extend = true }]]
 
 [env.release]
 description = "create a release (commit, tag, and push)"
 skip_install = true
 change_dir = "{toxinidir}/tasks"
-commands = [["python", "release.py", { replace = "posargs" }]]
+commands = [["python", "release.py", { replace = "posargs", extend = true }]]
 dependency_groups = ["release"]
