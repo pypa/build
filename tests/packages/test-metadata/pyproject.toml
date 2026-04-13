@@ -11,4 +11,4 @@ description = 'hello!'
 [tool.black]
 line-length = 127
 skip-string-normalization = true
-target-version = ['py39', 'py38', 'py37', 'py36']
+target-version = ['py310', 'py38', 'py37', 'py36']

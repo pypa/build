@@ -6,16 +6,14 @@ import typing
 
 __all__ = ['ConfigSettings', 'Distribution', 'StrPath', 'SubprocessRunner']
 
-ConfigSettings = typing.Mapping[str, typing.Union[str, typing.Sequence[str]]]
+ConfigSettings = typing.Mapping[str, str | typing.Sequence[str]]
 Distribution = typing.Literal['sdist', 'wheel', 'editable']
 
-StrPath = typing.Union[str, os.PathLike[str]]
+StrPath = str | os.PathLike[str]
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from pyproject_hooks import SubprocessRunner
 else:
-    SubprocessRunner = typing.Callable[
-        [typing.Sequence[str], typing.Optional[str], typing.Optional[typing.Mapping[str, str]]], None
-    ]
+    SubprocessRunner = typing.Callable[[typing.Sequence[str], str | None, typing.Mapping[str, str] | None], None]

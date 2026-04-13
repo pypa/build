@@ -296,9 +296,9 @@ Matrix builds
       extends: .build_template
       image: python:3.8
 
-    build:py39:
+    build:py310:
       extends: .build_template
-      image: python:3.9
+      image: python:3.10
 
     build:py312:
       extends: .build_template

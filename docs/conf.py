@@ -16,7 +16,7 @@ import build
 
 
 if hasattr(__builtins__, 'EncodingWarning'):
-    warnings.filterwarnings('ignore', category=EncodingWarning, module='sphinx_copybutton')  # noqa: F821
+    warnings.filterwarnings('ignore', category=EncodingWarning, module='sphinx_copybutton')
 
 
 # -- Project information -----------------------------------------------------

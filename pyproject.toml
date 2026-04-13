@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "build"
 description = "A simple, correct Python build frontend"
 readme = "README.md"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 license = "MIT"
 authors = [
   { name = "Filipe Laíns", email = "lains@riseup.net" },
@@ -17,7 +17,7 @@ authors = [
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
+
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -176,7 +176,7 @@ filterwarnings = [
 [tool.mypy]
 files = ["src", "tests"]
 exclude = ["tests/packages"]
-python_version = "3.9"
+python_version = "3.10"
 strict = true
 enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
 warn_unreachable = true
