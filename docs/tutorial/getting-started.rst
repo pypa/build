@@ -14,7 +14,7 @@ This tutorial will guide you through installing build and creating your first Py
  Prerequisites
 ***************
 
-You need Python 3.9 or later installed on your system. Check your Python version:
+You need Python 3.10 or later installed on your system. Check your Python version:
 
 .. code-block:: console
 
