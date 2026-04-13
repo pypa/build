@@ -95,14 +95,14 @@ Where to start
 
    development/contributing
    development/release
+   Source Code <https://github.com/pypa/build/>
+   Issue Tracker <https://github.com/pypa/build/issues>
 
 .. toctree::
-   :caption: Project
+   :caption: Changelog
    :hidden:
 
    changelog
-   Source Code <https://github.com/pypa/build/>
-   Issue Tracker <https://github.com/pypa/build/issues>
 
 .. _pip: https://github.com/pypa/pip
 .. _PyPI: https://pypi.org/
