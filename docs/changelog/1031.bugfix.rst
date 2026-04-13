@@ -1,0 +1,1 @@
+Fix release pipeline generating ``CHANGELOG.rst`` entries with inconsistent heading levels, which broke ``sphinx -W`` and pinned Read the Docs ``stable`` at 1.4.0 - by :user:`gaborbernat`.
