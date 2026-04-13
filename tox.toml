@@ -4,10 +4,10 @@ env_list = [
     "type",
     "docs",
     "path",
-    { product = [{ prefix = "py3", start = 10, stop = 15 }]},
-    { product = [{ prefix = "pypy3", start = 10, stop = 11 }]},
-    { product = [{ prefix = "min-py3", start = 10, stop = 15 }]},
-    { product = [{ prefix = "min-pypy3", start = 10, stop = 11 }]},
+    { product = [{ prefix = "3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "pypy3.", start = 10, stop = 11 }]},
+    { product = [{ prefix = "min-3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "min-pypy3.", start = 10, stop = 11 }]},
 ]
 skip_missing_interpreters = true
 
@@ -34,7 +34,7 @@ PYTHONWARNDEFAULTENCODING = "1"
 TEST_STATUS_DIR = "{envtmpdir}"
 
 [env_base.min]
-factors = [["py310", "py311", "py312", "py313", "py314", "py315", "pypy310", "pypy311"]]
+factors = [["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy3.10", "pypy3.11"]]
 description = "check minimum versions required of all dependencies"
 set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
 
@@ -98,10 +98,10 @@ commands = [
 ]
 depends = [
     "path",
-    { product = [{ prefix = "py3", start = 10, stop = 15 }]},
-    { product = [{ prefix = "pypy3", start = 10, stop = 11 }]},
-    { product = [{ prefix = "min-py3", start = 10, stop = 15 }]},
-    { product = [{ prefix = "min-pypy3", start = 10, stop = 11 }]},
+    { product = [{ prefix = "3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "pypy3.", start = 10, stop = 11 }]},
+    { product = [{ prefix = "min-3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "min-pypy3.", start = 10, stop = 11 }]},
 ]
 
 [env.bump]

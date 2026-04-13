@@ -55,33 +55,22 @@ jobs:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
 
-      - name: Pick environment to run
-        run: |
-          import platform
-          import os
-          import sys
-
-          if platform.python_implementation() == "PyPy":
-              base = f"pypy{sys.version_info.major}{sys.version_info.minor}"
-          else:
-              base = f"py{sys.version_info.major}{sys.version_info.minor}"
-          env = f"BASE={base}\n"
-          print(f"Picked:\n{env}for {sys.version}")
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as file:
-              file.write(env)
-        shell: python
-
       - name: Run test suite via tox
         if: matrix.tox-target == 'tox'
         shell: bash
         run: |
+          PYTHON_VERSION=${{ matrix.py }}
+          BASE=${PYTHON_VERSION%-*}
           tox -vv --notest -e $BASE
           tox -e $BASE --skip-pkg-install
 
       - name: Run minimum version test
         if: matrix.tox-target == 'min'
         shell: bash
-        run: tox -e ${{ matrix.tox-target }}-$BASE
+        run: |
+          PYTHON_VERSION=${{ matrix.py }}
+          BASE=${PYTHON_VERSION%-*}
+          tox -e ${{ matrix.tox-target }}-$BASE
 
       - name: Run path test
         if: matrix.tox-target == 'tox' && matrix.py == '3.10'
@@ -99,4 +88,4 @@ jobs:
           files: .tox/coverage.xml
           flags: tests
           env_vars: PYTHON
-          name: ${{ matrix.py }} - ${{ matrix.os }}
+          name: ${{ matrix.py }} - ${{ matrix.os }} - ${{ matrix.tox-target }}

@@ -47,7 +47,10 @@ check. To run tests we use ``tox``.
 
 .. code-block:: console
 
-    tox
+Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
+against Python 3.10 with ``tox run -e 3.10``, running both unit and integration tests with ``tox run --
+--run-integration``, running only integration tests with ``tox run -- --only-integration``, or running only integration
+tests with parallel tasks using ``tox run -- -n auto --only-integration``.
 
 Tests run in parallel by default, but if you pass any arguments, you need to include ``-n auto`` if you want to keep
 parallel runs.
