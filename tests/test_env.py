@@ -506,18 +506,22 @@ def test_has_keyring_cli_missing(mocker: pytest_mock.MockerFixture) -> None:
     assert build.env._has_keyring_cli() is False
 
 
-def test_pip_env_with_keyring(mocker: pytest_mock.MockerFixture) -> None:
+def test_pip_env_with_keyring(mocker: pytest_mock.MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
     mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+    monkeypatch.setenv('PYTHONPATH', 'INVALID')
 
     result = build.env._pip_env()
 
-    assert result is not None
+    assert 'PYTHONPATH' not in result
     assert result['PIP_KEYRING_PROVIDER'] == 'subprocess'
 
 
-def test_pip_env_without_keyring(mocker: pytest_mock.MockerFixture) -> None:
+def test_pip_env_without_keyring(mocker: pytest_mock.MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
     mocker.patch('shutil.which', return_value=None)
-    assert build.env._pip_env() is None
+    monkeypatch.setenv('PYTHONPATH', 'INVALID')
+    result = build.env._pip_env()
+    assert 'PYTHONPATH' not in result
+    assert 'PIP_KEYRING_PROVIDER' not in result
 
 
 def test_pip_env_respects_existing_env_var(
@@ -526,7 +530,10 @@ def test_pip_env_respects_existing_env_var(
 ) -> None:
     mocker.patch('shutil.which', return_value='/usr/bin/keyring')
     monkeypatch.setenv('PIP_KEYRING_PROVIDER', 'import')
-    assert build.env._pip_env() is None
+    monkeypatch.setenv('PYTHONPATH', 'INVALID')
+    result = build.env._pip_env()
+    assert 'PYTHONPATH' not in result
+    assert result['PIP_KEYRING_PROVIDER'] == 'import'
 
 
 @pytest.mark.usefixtures('local_pip')

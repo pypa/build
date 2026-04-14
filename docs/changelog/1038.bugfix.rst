@@ -1,0 +1,1 @@
+Keep ``PYTHONPATH`` out of the return for ``_pip_env`` - by :user:`henryiii`

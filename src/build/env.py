@@ -196,10 +196,14 @@ def _has_keyring_cli() -> bool:
     return shutil.which('keyring') is not None
 
 
-def _pip_env() -> dict[str, str] | None:
+def _pip_env() -> dict[str, str]:
+    env = os.environ.copy()
+    # Clear PYTHONPATH to avoid interference from the outer environment.
+    # The isolated build environment should not inherit PYTHONPATH.
+    env.pop('PYTHONPATH', None)
     if 'PIP_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
-        return {**os.environ, 'PIP_KEYRING_PROVIDER': 'subprocess'}
-    return None
+        env['PIP_KEYRING_PROVIDER'] = 'subprocess'
+    return env
 
 
 class _PipBackend(_EnvBackend):
