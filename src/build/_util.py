@@ -16,6 +16,7 @@ _WHEEL_FILENAME_REGEX = re.compile(
     r'-(?P<abi_tag>.+)-(?P<platform_tag>.+)\.whl'
 )
 
+
 def check_dependency(
     req_string: str, ancestral_req_strings: tuple[str, ...] = (), parent_extras: AbstractSet[str] = frozenset()
 ) -> Iterator[tuple[str, ...]]:
