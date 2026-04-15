@@ -1,0 +1,1 @@
+Revert :pr:`1039` from build 1.4.3, no longer check direct_url (for now) - by :user:`henryiii`
