@@ -235,6 +235,7 @@ def test_default_impl_install_cmd_well_formed(
                 'pip',
                 *([f'-{"v" * (verbosity - 1)}'] if verbosity > 1 else []),
                 'install',
+                '--ignore-installed',
                 '--use-pep517',
                 '--no-warn-script-location',
                 '--no-compile',
