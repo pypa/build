@@ -565,6 +565,44 @@ def test_uv_install_dependencies_passes_keyring_env(  # pragma: no cover -- uv t
     assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'subprocess'
 
 
+def test_has_valid_outer_pip_ignores_pythonpath_pip(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """pip only reachable via PYTHONPATH is not detected as a valid outer pip (e.g. Nix dev shells)."""
+    dist_info = tmp_path / 'pip-25.0.dist-info'
+    dist_info.mkdir()
+    (dist_info / 'METADATA').write_text('Metadata-Version: 2.1\nName: pip\nVersion: 25.0\n')
+    (dist_info / 'RECORD').write_text('pip/_vendor/something.py,,\n')
+
+    monkeypatch.setenv('PYTHONPATH', str(tmp_path))
+    # Restrict sys.path to only the PYTHONPATH dir so the filtered search_path is empty
+    monkeypatch.setattr(sys, 'path', [str(tmp_path)])
+
+    backend = build.env._PipBackend.__new__(build.env._PipBackend)
+    assert backend._has_valid_outer_pip is None
+
+
+def test_has_valid_outer_pip_passes_filtered_path_to_dependency_check(
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """PYTHONPATH entries are excluded from the pip search path."""
+    pythonpath_dir = str(tmp_path / 'nix-pip')
+    regular_dir = str(tmp_path / 'regular')
+
+    monkeypatch.setenv('PYTHONPATH', pythonpath_dir)
+    monkeypatch.setattr(sys, 'path', [pythonpath_dir, regular_dir])
+
+    has_dependency = mocker.patch('build.env._has_dependency', return_value=None)
+
+    backend = build.env._PipBackend.__new__(build.env._PipBackend)
+    _ = backend._has_valid_outer_pip
+
+    has_dependency.assert_called_once_with('pip', '22.3', path=[regular_dir])
+
+
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_install_respects_existing_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
