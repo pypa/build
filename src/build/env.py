@@ -219,7 +219,13 @@ class _PipBackend(_EnvBackend):
 
         # Version to have added the `--python` option.
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
+        #
+        # Only look for pip in paths that don't come from PYTHONPATH. Subprocesses
+        # run with PYTHONPATH cleared, so pip that is only reachable via PYTHONPATH
+        # (e.g. Nix dev shells) would not be found when invoked as `python -m pip`.
+        pythonpath_dirs = {os.path.realpath(p) for p in os.environ.get('PYTHONPATH', '').split(os.pathsep) if p}
+        search_path = [p for p in sys.path if os.path.realpath(p) not in pythonpath_dirs]
+        if dist := _has_dependency('pip', '22.3', path=search_path):  # pragma: no cover
             files = dist.files
             if files:
                 return any(str(f).startswith('pip/_vendor') for f in files)

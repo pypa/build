@@ -1,1 +1,3 @@
-Keep ``PYTHONPATH`` out of the return for ``_pip_env`` - by :user:`henryiii`
+Keep ``PYTHONPATH`` out of the return for ``_pip_env``; also exclude ``PYTHONPATH``-only paths when detecting a usable
+outer pip, so environments where pip is only reachable via ``PYTHONPATH`` (e.g. Nix dev shells) no longer attempt to
+invoke it with ``PYTHONPATH`` cleared - by :user:`henryiii`
