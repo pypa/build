@@ -130,8 +130,7 @@ def test_isolated_env_log(
 
     assert [(record.levelname, record.message) for record in caplog.records] == [
         ('INFO', 'Creating isolated environment: venv+pip...'),
-        ('INFO', 'Installing packages in isolated environment:'),
-        ('INFO', '- something'),
+        ('INFO', 'Installing packages in isolated environment:\n- something'),
     ]
 
 

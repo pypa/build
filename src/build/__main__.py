@@ -106,9 +106,12 @@ def _make_logger() -> _ctx.Logger:
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
         if _ctx.verbosity >= -1:
             if kind is None:
-                print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201
+                print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201 # pragma: no cover
             elif kind[0] == 'step':
-                _cprint('{bold}{}{reset}', fill(message, initial_indent='* '), file=sys.stderr)
+                (first, *rest) = message.splitlines()
+                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+                for line in rest:
+                    print(fill(line, initial_indent='  '), file=sys.stderr)  # noqa: T201
 
             elif kind[0] == 'subprocess':
                 initial_indent = '> ' if kind[1] == 'cmd' else '< '
