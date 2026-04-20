@@ -41,8 +41,8 @@ issues using GitHub's issue linking syntax.
  Running Tests
 ***************
 
-``build`` has with two sets of tests: unit tests and integration tests. Unit tests verify the code, while
-integration tests validate build functionality on real world projects. To run tests we use ``tox``.
+``build`` has with two sets of tests: unit tests and integration tests. Unit tests verify the code, while integration
+tests validate build functionality on real world projects. To run tests we use ``tox``.
 
 .. code-block:: console
 
@@ -74,8 +74,8 @@ Additional environments lint and build docs, and test code with minimum versions
 
     tox -e type
 
-Test generate code coverage, so try to get complete coverage of any new code you add. The CI
-system will report coverage metrics on your pull request and run all tests across all supported operating systems.
+Test generate code coverage, so try to get complete coverage of any new code you add. The CI system will report coverage
+metrics on your pull request and run all tests across all supported operating systems.
 
 ************************
  Code Style and Linting
