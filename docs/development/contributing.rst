@@ -41,27 +41,41 @@ issues using GitHub's issue linking syntax.
  Running Tests
 ***************
 
-Due to its nature, build has a somewhat complex test suite with two sets of tests: unit tests and integration tests.
-Unit tests verify the actual code implementation, while integration tests run build on real world projects as a sanity
-check. Integration tests take a long time to run and are not very helpful for tracking down issues, so they are disabled
-by default. They can be enabled by passing either ``--run-integration`` or ``--only-integration`` arguments to pytest,
-where the latter will disable unit tests and only run integration tests. Even though these tests are disabled by
-default, they will be run in CI where test suite run durations are not a big issue.
+``build`` has with two sets of tests: unit tests and integration tests. Unit tests verify the code, while
+integration tests validate build functionality on real world projects. To run tests we use ``tox``.
 
-To run the test suite, use tox which automates running tests on different environments. Simply run ``tox`` in the
-project directory to execute the full test suite. The project has a fairly large environment matrix, running tests for
-all supported Python versions and implementations, and with the module being invoked directly from path, sdist install,
-or wheel install. Additionally, there are environments for type checking and documentation building, plus extras like
-checking code with minimum versions of dependencies.
+.. code-block:: console
 
-Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
-against Python 3.9 with ``tox -e py39``, running both unit and integration tests with ``tox -- --run-integration``,
-running only integration tests with ``tox -- --only-integration``, or running only integration tests with parallel tasks
-using ``tox -- -n auto --only-integration``. You can also run unit tests against a specific Python version with wheel
-installation using ``tox -e py39-wheel``.
+    tox
 
-Code coverage is tracked to ensure all code paths are tested. Aim for complete coverage of any new code you add. The CI
-system will report coverage metrics on your pull request and runs the test suite across all supported operating systems.
+Integration tests take a long time to run and are disabled by default. Passing either ``--run-integration`` or
+``--only-integration`` arguments through ``tox`` to ``pytest`` to run them. CI still runs both test suites.
+
+.. code-block:: console
+
+    tox -- --run-integration
+
+It is also possible to run only the integrations tests in parallel.
+
+.. code-block:: console
+
+    tox -- -n auto --only-integration
+
+The test matrix coverts all supported Python versions and implementations, and with the module being invoked directly
+from path, sdist install, or wheel install. To run tests only for Python 3.9.
+
+.. code-block:: console
+
+    tox -e py39
+
+Additional environments lint and build docs, and test code with minimum versions of dependencies. For type checking,
+
+.. code-block:: console
+
+    tox -e type
+
+Test generate code coverage, so try to get complete coverage of any new code you add. The CI
+system will report coverage metrics on your pull request and run all tests across all supported operating systems.
 
 ************************
  Code Style and Linting
