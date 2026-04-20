@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -235,6 +236,7 @@ def test_default_impl_install_cmd_well_formed(
                 'pip',
                 *([f'-{"v" * (verbosity - 1)}'] if verbosity > 1 else []),
                 'install',
+                '--ignore-installed',
                 '--use-pep517',
                 '--no-warn-script-location',
                 '--no-compile',
@@ -573,3 +575,19 @@ def test_uv_install_respects_existing_keyring_env(  # pragma: no cover -- uv tes
 
     (install_call,) = run_subprocess.call_args_list
     assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'disabled'
+
+
+@pytest.mark.network
+def test_pythonpath_does_not_interfere_with_outer_pip(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    flit_core = tmp_path.joinpath('flit_core-0.0.0.dist-info/')
+    flit_core.mkdir()
+
+    monkeypatch.setenv('PYTHONPATH', str(tmp_path))
+
+    with build.env.DefaultIsolatedEnv(installer='pip') as env:
+        env.install({'flit_core'})
+
+        assert subprocess.check_call([env.python_executable, '-c', 'import flit_core']) == 0

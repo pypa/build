@@ -333,7 +333,7 @@ class _PipBackend(_EnvBackend):
             if (verbosity := _ctx.verbosity) > 1:
                 cmd += [f'-{"v" * (verbosity - 1)}']
 
-            cmd += ['install', '--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
+            cmd += ['install', '--ignore-installed', '--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
 
             # pip does not honour environment markers in command line arguments
             # but it does from requirement files.
