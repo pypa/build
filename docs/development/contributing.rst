@@ -61,7 +61,7 @@ It is also possible to run only the integrations tests in parallel.
 
     tox -- -n auto --only-integration
 
-The test matrix coverts all supported Python versions and implementations, and with the module being invoked directly
+The test matrix covers all supported Python versions and implementations, and with the module being invoked directly
 from path, sdist install, or wheel install. To run tests only for Python 3.9.
 
 .. code-block:: console
