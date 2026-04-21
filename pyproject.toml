@@ -128,7 +128,7 @@ exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/b
 [tool.coverage]
 run.plugins = ["covdefaults"]
 run.source = ["build", "tests"]
-run.omit = ["tests/conftest.py", "tests/test_integration.py", "src/build/_types.py"]
+run.omit = ["tests/conftest.py", "tests/test_integration.py", "build/_types.py"]
 run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
   "no-sysmon",

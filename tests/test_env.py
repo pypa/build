@@ -50,22 +50,8 @@ def test_uv_install_strips_pythonpath(
 
 
 @pytest.mark.isolated
-def test_isolation() -> None:
+def test_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
-    debug = 'import sys; import os; print(os.linesep.join(sys.path));'
-    with build.env.DefaultIsolatedEnv() as env:
-        isolated_env = {**os.environ, **env.make_extra_environ()}
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call(
-                [env.python_executable, '-c', f'{debug} import build.env'],
-                env=isolated_env,
-            )
-
-
-@pytest.mark.isolated
-def test_isolation_with_pythonpath_leak(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
     # Test that demonstrates the PYTHONPATH leak issue (issue #1047)
     # When PYTHONPATH is set to include build, and the subprocess env
     # is not properly isolated, the import will succeed instead of failing.
