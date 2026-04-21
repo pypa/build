@@ -342,12 +342,17 @@ def test_external_uv_detection_success(
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,
 ) -> None:
+    # Ensure INFO logs are captured
+    caplog.set_level(logging.INFO)
     mocker.patch.dict(sys.modules, {'uv': None})
 
     with build.env.DefaultIsolatedEnv(installer='uv'):
         pass
 
-    assert any(r.message == f'Using external uv from {shutil.which("uv")}' for r in caplog.records)
+    # Only check that we logged using an external uv binary (do not rely on
+    # which() at assertion time because it can find the environment one).
+    # And .text is used instead of .records so a failure message is helpful.
+    assert 'Using external uv' in caplog.text
 
 
 def test_external_uv_detection_failure(
