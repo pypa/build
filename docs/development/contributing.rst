@@ -49,32 +49,27 @@ check. To run tests we use ``tox``.
 
     tox
 
-Integration tests take a long time to run, so they are disabled by
-default. Passing either ``--run-integration`` or ``--only-integration`` arguments through ``tox`` to ``pytest`` will run
-them, where the latter will disable unit tests and only run integration tests. Even though these tests are disabled by
-default, they will be run in CI where test suite run durations are not a big issue. CI still runs both test suites.
+Tests run in parallel by default, but if you pass any arguments, you need to include ``-n auto`` if you want to keep
+parallel runs.
 
-.. code-block:: console
-
-    tox -- --run-integration
-
-It is also possible to run only the integrations tests in parallel.
+Integration tests take a long time to run, so they are disabled by default. Passing either ``--run-integration`` or
+``--only-integration`` arguments through ``tox`` to ``pytest`` will run them, where the latter will disable unit tests
+and only run integration tests. CI still runs both test suites.
 
 .. code-block:: console
 
     tox -- -n auto --only-integration
 
 The project has a fairly large environment matrix, running tests for all supported Python versions and implementations,
-and with the module being invoked directly from path, sdist install, or wheel install. To run tests only for Python 3.9.
-
-.. code-block:: console
-
-    tox -e py39
-and with the module being invoked directly from path, sdist install, or wheel install. To run tests only for Python 3.14:
+and with the module being invoked directly from path, sdist install, or wheel install. To run tests only for Python
+3.14:
 
 .. code-block:: console
 
     tox -e py314
+
+and with the module being invoked directly from path, sdist install, or wheel install.
+
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
 minimum versions of dependencies. For type checking,
 
@@ -82,7 +77,7 @@ minimum versions of dependencies. For type checking,
 
     tox -e type
 
-You can also run unit tests against a specific Python version with wheel installation using ``tox -e py39-wheel``. Code
+You can also run unit tests against a specific Python version with wheel installation using ``tox -e py314-wheel``. Code
 coverage is tracked to ensure all code paths are tested. Aim for complete coverage of any new code you add. The CI
 system will report coverage metrics on your pull request and runs the test suite across all supported operating systems.
 
