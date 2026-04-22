@@ -132,7 +132,8 @@ environments = ["python_version >= '3.10'"]
 [tool.coverage]
 run.plugins = ["covdefaults"]
 run.source = ["build", "tests"]
-run.omit = ["tests/conftest.py", "tests/test_integration.py"]
+run.omit = ["tests/conftest.py", "tests/test_integration.py",]
+report.omit = ["src/build/_types.py"]
 run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
   "no-sysmon",
@@ -169,6 +170,7 @@ filterwarnings = [
   "ignore:check_home argument is deprecated and ignored:DeprecationWarning:",  # PyPy 3.11
   "default:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
   "default:unclosed:ResourceWarning", # Python 3.11 Windows
+  "ignore:os.path.commonprefix:DeprecationWarning" # https://github.com/pypa/pyproject-hooks/pull/222
 ]
 
 [tool.mypy]
@@ -219,6 +221,7 @@ ignore = [
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
+"os.path.commonprefix".msg = "Use os.path.commonpath or manually implement string manip"
 
 [tool.ruff.lint.per-file-ignores]
 "tasks/**.py" = ["T20", "INP", "S607"]

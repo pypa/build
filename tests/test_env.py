@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import os
 import pathlib
 import shutil
 import subprocess
@@ -49,11 +50,21 @@ def test_uv_install_strips_pythonpath(
 
 
 @pytest.mark.isolated
-def test_isolation() -> None:
+def test_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])
+    # Test that demonstrates the PYTHONPATH leak issue (issue #1047)
+    # When PYTHONPATH is set to include build, and the subprocess env
+    # is not properly isolated, the import will succeed instead of failing.
+    # Only fails on 3.15+ (due to lazy loading)
+    monkeypatch.setenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.abspath(build.__file__))))
     debug = 'import sys; import os; print(os.linesep.join(sys.path));'
-    with build.env.DefaultIsolatedEnv() as env, pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call([env.python_executable, '-c', f'{debug} import build.env'])
+    with build.env.DefaultIsolatedEnv() as env:
+        isolated_env = {**os.environ, **env.make_extra_environ()}
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call(
+                [env.python_executable, '-c', f'{debug} import build.env'],
+                env=isolated_env,
+            )
 
 
 @pytest.mark.skipif(IS_PYPY, reason='PyPy3 uses get path to create and provision venv')
