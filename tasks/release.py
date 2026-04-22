@@ -66,6 +66,7 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     print('build changelog from fragments with towncrier')
     check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S603
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
+    call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     repo.git.add('src/build/__init__.py', 'CHANGELOG.rst', 'docs/changelog/*')
     check_call(['pre-commit', 'run', '--all-files', '--show-diff-on-failure'], cwd=str(ROOT_SRC_DIR))
     if repo.is_dirty(index=False, working_tree=True, untracked_files=False):
