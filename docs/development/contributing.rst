@@ -49,7 +49,7 @@ check. To run tests we use ``tox``.
 
     tox
 
-Integration tests take a long time to run and are not very helpful for tracking down issues, so they are disabled by
+Integration tests take a long time to run, so they are disabled by
 default. Passing either ``--run-integration`` or ``--only-integration`` arguments through ``tox`` to ``pytest`` will run
 them, where the latter will disable unit tests and only run integration tests. Even though these tests are disabled by
 default, they will be run in CI where test suite run durations are not a big issue. CI still runs both test suites.
@@ -70,7 +70,11 @@ and with the module being invoked directly from path, sdist install, or wheel in
 .. code-block:: console
 
     tox -e py39
+and with the module being invoked directly from path, sdist install, or wheel install. To run tests only for Python 3.14:
 
+.. code-block:: console
+
+    tox -e py314
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
 minimum versions of dependencies. For type checking,
 
