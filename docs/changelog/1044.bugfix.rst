@@ -1,1 +1,1 @@
-Partial revert of :pull:`973`, keeping log messages in one entry, multiple lines.
+Partial revert of :pr:`973`, keeping log messages in one entry, multiple lines.
