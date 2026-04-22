@@ -1,2 +1,0 @@
-Add ``--ignore-installed`` to pip install command to prevent issues with packages already present in the isolated build
-environment - by :user:`henryiii` (:issue:`1037`)
