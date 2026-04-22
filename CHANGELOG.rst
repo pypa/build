@@ -9,8 +9,8 @@
 - Fix release pipeline generating ``CHANGELOG.rst`` entries with inconsistent heading levels, which broke ``sphinx -W``
   and pinned Read the Docs ``stable`` at 1.4.0 - by :user:`gaborbernat`. (:issue:`1031`)
 - Revert :pr:`1039` from build 1.4.3, no longer check direct_url (for now) - by :user:`henryiii` (:issue:`1039`)
-- Add ``--ignore-installed`` to pip install command to prevent issues with packages already present in the isolated build
-  environment - by :user:`henryiii` (:issue:`1037`) (:issue:`1040`)
+- Add ``--ignore-installed`` to pip install command to prevent issues with packages already present in the isolated
+  build environment - by :user:`henryiii` (:issue:`1037`) (:issue:`1040`)
 - Partial revert of :pr:`973`, keeping log messages in one entry, multiple lines. (:issue:`1044`)
 
 ***************
