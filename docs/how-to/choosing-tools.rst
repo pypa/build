@@ -83,7 +83,7 @@ See `cibuildwheel documentation <https://cibuildwheel.readthedocs.io/>`_ for com
 
 Use `tox <https://tox.wiki/>`_ when you need to:
 
-- Test your package across multiple Python versions (e.g., 3.9, 3.10, 3.11)
+- Test your package across multiple Python versions (e.g., 3.10, 3.11, 3.12, 3.13, 3.14)
 - Run tests in `isolated environments <https://packaging.python.org/en/latest/glossary/#term-Virtual-Environment>`_
 - Automate testing workflows
 - Run linters (code checkers), formatters, type checkers
@@ -137,7 +137,7 @@ Example ``noxfile.py``:
     import nox
 
 
-    @nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12"])
+    @nox.session(python=["3.10", "3.11", "3.12", "3.13", "3.14"])
     def tests(session):
         session.install("pytest", "pytest-cov")
         session.run("pytest", "tests")
@@ -232,7 +232,7 @@ CI/CD workflow
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+            python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         steps:
           - uses: actions/checkout@v4
           - uses: actions/setup-python@v5

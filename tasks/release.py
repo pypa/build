@@ -39,12 +39,13 @@ def resolve_version(version_str: str, repo: Repo) -> Version:
     latest_tag = repo.git.describe('--tags', '--abbrev=0')
     latest_tag = latest_tag.lstrip('v')
     parts = [int(x) for x in latest_tag.split('.')]
-    if version_str == 'major':
-        parts = [parts[0] + 1, 0, 0]
-    elif version_str == 'minor':
-        parts = [parts[0], parts[1] + 1, 0]
-    elif version_str in {'patch', 'auto'}:
-        parts[2] += 1
+    match version_str:
+        case 'major':
+            parts = [parts[0] + 1, 0, 0]
+        case 'minor':
+            parts = [parts[0], parts[1] + 1, 0]
+        case 'patch' | 'auto':
+            parts[2] += 1
     return Version('.'.join(str(p) for p in parts))
 
 

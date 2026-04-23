@@ -14,10 +14,10 @@ import sysconfig
 import tempfile
 import typing
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from functools import partial, update_wrapper
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 

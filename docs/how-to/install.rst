@@ -87,13 +87,11 @@ should be used in this case.
 
 ``build`` is verified to be compatible with the following Python versions:
 
-- 3.9
 - 3.10
 - 3.11
 - 3.12
 - 3.13
 - 3.14
-- PyPy 3.9
 - PyPy 3.10
 - PyPy 3.11
 
