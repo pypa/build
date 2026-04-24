@@ -45,8 +45,6 @@ Due to its nature, ``build`` has a somewhat complex test suite with two sets of 
 Unit tests verify the actual code implementation, while integration tests run build on real world projects as a sanity
 check. To run tests we use ``tox``.
 
-.. code-block:: console
-
 Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
 against Python 3.10 with ``tox run -e 3.10``, running both unit and integration tests with ``tox run --
 --run-integration``, running only integration tests with ``tox run -- --only-integration``, or running only integration
