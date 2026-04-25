@@ -78,8 +78,7 @@ minimum versions of dependencies. For type checking,
 
     tox -e type
 
-You can also run unit tests against a specific Python version with wheel installation using ``tox -e wheel-3.14``. Code
-coverage is tracked to ensure all code paths are tested. Aim for complete coverage of any new code you add. The CI
+Code coverage is tracked to ensure all code paths are tested. Aim for complete coverage of any new code you add. The CI
 system will report coverage metrics on your pull request and runs the test suite across all supported operating systems.
 
 ************************

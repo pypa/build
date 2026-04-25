@@ -64,6 +64,16 @@ extra = [
   "uv >= 0.1.18",
   "virtualenv >= 20.0.35",
 ]
+lint = [
+  "prek",
+]
+coverage = [
+  "coverage[toml] >= 5.1",
+  "diff_cover >= 3",
+]
+bump = [
+  "bump-my-version >= 0.10",
+]
 docs = [
   "furo >= 2025.12.19",
   "pre-commit >= 3.0",

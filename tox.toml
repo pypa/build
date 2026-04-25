@@ -41,12 +41,12 @@ set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT 
 [env.fix]
 description = "run static analysis and style checks"
 skip_install = true
-deps = ["prek"]
 pass_env = ["HOMEPATH", "PROGRAMDATA"]
 commands = [
     ["prek", "run", "--all-files", "--show-diff-on-failure"],
     ["python", "-c", 'print("hint: run {envdir}/bin/prek install to add checks as pre-commit hook")'],
 ]
+dependency_groups = ["lint"]
 
 [env.type]
 description = "run type check on code base"
@@ -85,8 +85,8 @@ dependency_groups = ["docs", "test"]
 [env.coverage]
 description = "combine coverage from test environments"
 skip_install = true
-deps = ["coverage[toml]>=5.1", "diff_cover>=3"]
 parallel_show_output = true
+dependency_groups = ["coverage"]
 pass_env = ["DIFF_AGAINST"]
 set_env = {}
 commands = [
@@ -107,9 +107,9 @@ depends = [
 [env.bump]
 description = "bump versions, pass major/minor/patch"
 skip_install = true
-deps = ["bump-my-version>=0.10"]
 set_env = {}
 commands = [["bump-my-version", "bump", { replace = "posargs", extend = true }]]
+dependency_groups = ["bump"]
 
 [env.release]
 description = "create a release (commit, tag, and push)"
