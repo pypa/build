@@ -1,0 +1,1 @@
+Moved the tox configuration to tox.toml, and use standard tox naming (like 3.14 instead of py314) - by :user:`henryiii`
