@@ -68,6 +68,7 @@ lint = [
   "prek",
 ]
 coverage = [
+  "covdefaults >= 2.3",
   "coverage[toml] >= 5.1",
   "diff_cover >= 3",
 ]
