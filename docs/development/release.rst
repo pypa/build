@@ -105,4 +105,4 @@ publishing. For corrections, create a post-release like ``X.Y.Z.post1``.
 
 The automation consists of the pre-release workflow at ``.github/workflows/pre-release.yml`` for manual triggering, the
 CD workflow at ``.github/workflows/cd.yml`` that triggers on tag pushes, the release script at ``tasks/release.py`` for
-version bumping and tag creation, and the ``[testenv:release]`` environment in ``tox.toml`` providing dependencies.
+version bumping and tag creation, and the ``[env.release]`` environment in ``tox.toml`` providing dependencies.
