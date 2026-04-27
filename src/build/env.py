@@ -174,8 +174,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             return
 
         _ctx.log(
-            'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
-            kind='step'
+            'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)), kind='step'
         )
         self._env_backend.install_dependencies(requirements, constraints)
 
