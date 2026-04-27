@@ -833,7 +833,7 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
 def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch('build.__main__._cprint')
     log = build.__main__._make_logger()
-    log('message', kind=('unknown',))
+    log('message', kind='unknown')
 
 
 def test_build_no_isolation_skip_dependency_check(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
