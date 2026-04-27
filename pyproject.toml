@@ -64,6 +64,17 @@ extra = [
   "uv >= 0.1.18",
   "virtualenv >= 20.0.35",
 ]
+lint = [
+  "prek",
+]
+coverage = [
+  "covdefaults >= 2.3",
+  "coverage[toml] >= 5.1",
+  "diff_cover >= 3",
+]
+bump = [
+  "bump-my-version >= 0.10",
+]
 docs = [
   "furo >= 2025.12.19",
   "pre-commit >= 3.0",
@@ -119,7 +130,7 @@ dev = [
 ]
 
 [tool.flit.sdist]
-include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.ini"]
+include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.toml"]
 exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/build", "docs/changelog/template.jinja2"]
 
 [tool.uv]

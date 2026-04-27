@@ -1,0 +1,119 @@
+requires = ["tox-uv>=1.28"]
+env_list = [
+    "fix",
+    "type",
+    "docs",
+    "path",
+    { product = [{ prefix = "3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "pypy3.", start = 10, stop = 11 }]},
+    { product = [{ prefix = "min-3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "min-pypy3.", start = 10, stop = 11 }]},
+]
+skip_missing_interpreters = true
+
+[env_run_base]
+description = "run test suite with {basepython}"
+uv_seed = true
+pass_env = ["LC_ALL", "PIP_*", "PYTEST_*", "TERM"]
+commands = [
+    [
+        "pytest", "-ra", "--cov", "--cov-config", "pyproject.toml",
+        "--cov-report=html:{envdir}/htmlcov", "--cov-context=test",
+        "--cov-report=xml:{toxworkdir}/coverage.{envname}.xml",
+        "--cov-report", "term-missing",
+        { replace = "posargs", default = ["-n", "auto"], extend = true },
+    ],
+]
+dependency_groups = ["test"]
+
+[env_run_base.set_env]
+COVERAGE_CORE = "sysmon"
+COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}"
+PYPY3323BUG = "1"
+PYTHONWARNDEFAULTENCODING = "1"
+TEST_STATUS_DIR = "{envtmpdir}"
+
+[env_base.min]
+factors = [["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy3.10", "pypy3.11"]]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+
+[env.fix]
+description = "run static analysis and style checks"
+skip_install = true
+pass_env = ["HOMEPATH", "PROGRAMDATA"]
+commands = [
+    ["prek", "run", "--all-files", "--show-diff-on-failure"],
+    ["python", "-c", 'print("hint: run {envdir}/bin/prek install to add checks as pre-commit hook")'],
+]
+dependency_groups = ["lint"]
+
+[env.type]
+description = "run type check on code base"
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
+commands = [["mypy", { replace = "posargs", extend = true }]]
+dependency_groups = ["mypy"]
+
+[env.docs]
+description = "build documentations"
+base_python = "3.14"
+set_env = { PYTHONUTF8 = "1" }
+commands = [
+    ["proselint", "check", "docs"],
+    ["sphinx-build", "-W", "-n", "-b", "html", "docs", "{env:READTHEDOCS_OUTPUT:{envtmpdir}}/html"],
+    ["python", "-c", 'import os; print("Documentation available under file://" + os.environ.get("READTHEDOCS_OUTPUT", "{envtmpdir}") + "/html/index.html")'],
+]
+dependency_groups = ["docs"]
+
+[env.path]
+description = "verify build can run from source (bootstrap)"
+set_env = { COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}", PYTHONPATH = "{toxinidir}/src" }
+commands_pre = [
+    ["python", "-E", "-m", "pip", "uninstall", "-y", "build", "colorama"],
+]
+
+[env.dev]
+description = "generate a DEV environment"
+package = "editable"
+deps = ["virtualenv>=20.0.34"]
+commands = [
+    ["python", "-m", "pip", "list", "--format=columns"],
+    ["python", "-c", "import sys; print(sys.executable)"],
+]
+dependency_groups = ["docs", "test"]
+
+[env.coverage]
+description = "combine coverage from test environments"
+skip_install = true
+parallel_show_output = true
+dependency_groups = ["coverage"]
+pass_env = ["DIFF_AGAINST"]
+set_env = {}
+commands = [
+    ["-", "coverage", "combine", "{toxworkdir}"],
+    ["coverage", "report", "--skip-covered", "--show-missing", "-i"],
+    ["coverage", "xml", "-o", "{toxworkdir}/coverage.xml", "-i"],
+    ["coverage", "html", "-d", "{toxworkdir}/htmlcov", "-i"],
+    ["python", "-m", "diff_cover.diff_cover_tool", "--compare-branch", "{env:DIFF_AGAINST:origin/main}", "{toxworkdir}/coverage.xml"],
+]
+depends = [
+    "path",
+    { product = [{ prefix = "3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "pypy3.", start = 10, stop = 11 }]},
+    { product = [{ prefix = "min-3.", start = 10, stop = 15 }]},
+    { product = [{ prefix = "min-pypy3.", start = 10, stop = 11 }]},
+]
+
+[env.bump]
+description = "bump versions, pass major/minor/patch"
+skip_install = true
+set_env = {}
+commands = [["bump-my-version", "bump", { replace = "posargs", extend = true }]]
+dependency_groups = ["bump"]
+
+[env.release]
+description = "create a release (commit, tag, and push)"
+skip_install = true
+change_dir = "{toxinidir}/tasks"
+commands = [["python", "release.py", { replace = "posargs", extend = true }]]
+dependency_groups = ["release"]
