@@ -103,18 +103,19 @@ def _make_logger() -> _ctx.Logger:
 
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
 
-    def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
+    def log(message: str, *, kind: str | None = None) -> None:
         if _ctx.verbosity >= -1:
-            match kind:
-                case ('step', *_):
+            split = kind.split('-') if kind else None
+            match split:
+                case ['step']:
                     (first, *rest) = message.splitlines()
                     _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
                     for line in rest:
                         print(fill(line, initial_indent='  '), file=sys.stderr)  # noqa: T201
-                case ('subprocess', 'cmd'):
+                case ['subprocess', 'cmd']:
                     for line in message.splitlines():
                         _cprint('{dim}{}{reset}', fill(line, initial_indent='> '), file=sys.stderr)
-                case ('subprocess', 'stdout' | 'stderr'):
+                case ['subprocess', 'stdout' | 'stderr']:
                     for line in message.splitlines():
                         _cprint('{dim}{}{reset}', fill(line, initial_indent='< '), file=sys.stderr)
                 case _:
@@ -339,7 +340,7 @@ def build_package_via_sdist(
         with tarfile.TarFile.open(sdist) as t:
             t.extractall(sdist_out)
             try:
-                _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
+                _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind='step')
                 srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
                 for distribution in distributions:
                     out = _build(
