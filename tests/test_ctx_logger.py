@@ -49,7 +49,7 @@ def test_ctx_custom_logger_with_custom_verbosity(mocker: pytest_mock.MockerFixtu
     ('verbosity', 'kwarg_origins'),
     [
         (0, []),
-        (1, [('subprocess', 'cmd'), ('subprocess', 'stdout')]),
+        (1, ['subprocess-cmd', 'subprocess-stdout']),
     ],
 )
 def test_custom_subprocess_runner_ctx_logging(
