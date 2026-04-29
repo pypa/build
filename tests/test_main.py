@@ -310,7 +310,7 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
-    install.assert_any_call({'flit_core >=2,<4'})
+    install.assert_any_call({'flit_core >=2,<4'}, _fresh=True)
 
     required_cmd.assert_called_with('sdist', None)
     install.assert_any_call(['dep1', 'dep2'])
@@ -513,7 +513,7 @@ foo==wot
     with pytest.raises(build.BuildBackendException, match=re.escape("Backend 'flit_core.buildapi' is not available.")):
         build.__main__.build_package(package_test_flit, tmp_path, ['wheel'], dependency_constraints_txt=constraints_txt_path)
 
-    install.assert_called_with({'flit_core >=2,<4'}, constraints={'flit-core==12.34', 'foo==wot'})
+    install.assert_any_call({'flit_core >=2,<4'}, constraints={'flit-core==12.34', 'foo==wot'}, _fresh=True)
 
 
 @pytest.mark.pypy3323bug

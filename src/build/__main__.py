@@ -179,7 +179,7 @@ def _bootstrap_build_env(
                     install = partial(install, constraints=set(map(str.strip, dependency_constraints_file)))
 
             # first install the build dependencies
-            install(builder.build_system_requires)
+            install(builder.build_system_requires, _fresh=True)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
             install(builder.get_requires_for_build(distribution, config_settings))
 
