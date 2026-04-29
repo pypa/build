@@ -1,0 +1,1 @@
+Make ``--ignore-installed`` opt-in from the API via ``fresh=True`` - by :user:`henryiii`
