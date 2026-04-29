@@ -166,14 +166,12 @@ class DefaultIsolatedEnv(IsolatedEnv):
         requirements: Collection[str],
         constraints: Collection[str] = [],
         *,
-        fresh: bool = False,
+        _fresh: bool = False,  # Used internally by CLI to support preset PYTHONPATH
     ) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
 
         :param requirements: PEP 508 requirement specification to install
-        :param fresh: Whether to overwrite already installed packages while installing
-            these requirements
 
         :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
                merely an implementation detail, it may change any time without warning.
@@ -185,7 +183,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
             kind=('step',),
         )
-        self._env_backend.install_dependencies(requirements, constraints, fresh=fresh)
+        self._env_backend.install_dependencies(requirements, constraints, _fresh=_fresh)
 
 
 class _EnvBackend(typing.Protocol):  # pragma: no cover
@@ -199,7 +197,7 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
         requirements: Collection[str],
         constraints: Collection[str],
         *,
-        fresh: bool = False,
+        _fresh: bool = False,
     ) -> None: ...
 
     @property
@@ -343,7 +341,7 @@ class _PipBackend(_EnvBackend):
         requirements: Collection[str],
         constraints: Collection[str],
         *,
-        fresh: bool = False,
+        _fresh: bool = False,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             if self._has_valid_outer_pip:
@@ -355,7 +353,7 @@ class _PipBackend(_EnvBackend):
                 cmd += [f'-{"v" * (verbosity - 1)}']
 
             cmd += ['install']
-            if fresh:
+            if _fresh:
                 cmd += ['--ignore-installed']
             cmd += ['--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
 
@@ -412,7 +410,7 @@ class _UvBackend(_EnvBackend):
         requirements: Collection[str],
         constraints: Collection[str],
         *,
-        fresh: bool = False,
+        _fresh: bool = False,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             cmd = [self._uv_bin, 'pip']
@@ -420,10 +418,7 @@ class _UvBackend(_EnvBackend):
             if (verbosity := _ctx.verbosity) > 1:
                 cmd += [f'-{"v" * min(2, verbosity - 1)}']
 
-            cmd += ['install', *requirements]
-            if fresh:
-                cmd += ['--reinstall']
-            cmd += ['--python', self.python_executable]
+            cmd += ['install', *requirements, '--python', self.python_executable]
 
             if constraints:
                 with tempfile.NamedTemporaryFile(

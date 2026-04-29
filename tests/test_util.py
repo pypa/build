@@ -71,6 +71,6 @@ def test_project_wheel_metadata_installs_build_requires_fresh(mocker: pytest_moc
     assert build.util.project_wheel_metadata('/tmp/project') is metadata
 
     assert env.install.call_args_list == [
-        mocker.call({'dep1'}, fresh=True),
+        mocker.call({'dep1'}, _fresh=True),
         mocker.call({'dep2'}),
     ]

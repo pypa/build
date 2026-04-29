@@ -239,7 +239,7 @@ def test_default_impl_install_cmd_well_formed(
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints, fresh=fresh)
+        env.install(['some', 'requirements'], constraints, _fresh=fresh)
 
         run_subprocess.assert_called_once_with(
             [
@@ -277,7 +277,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints, fresh=fresh)
+        env.install(['some', 'requirements'], constraints, _fresh=fresh)
 
         run_subprocess.assert_called_once_with(
             [
@@ -287,7 +287,6 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
                 'install',
                 'some',
                 'requirements',
-                *(['--reinstall'] if fresh else []),
                 '--python',
                 mocker.ANY,
                 *(['-c', mocker.ANY] if constraints else []),
@@ -608,6 +607,6 @@ def test_pythonpath_does_not_interfere_with_outer_pip(
     monkeypatch.setenv('PYTHONPATH', str(tmp_path))
 
     with build.env.DefaultIsolatedEnv(installer='pip') as env:
-        env.install({'flit_core'}, fresh=True)
+        env.install({'flit_core'}, _fresh=True)
 
         assert subprocess.check_call([env.python_executable, '-c', 'import flit_core']) == 0
