@@ -199,7 +199,7 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
         requirements: Collection[str],
         constraints: Collection[str],
         *,
-        fresh: bool,
+        fresh: bool = False,
     ) -> None: ...
 
     @property
@@ -343,7 +343,7 @@ class _PipBackend(_EnvBackend):
         requirements: Collection[str],
         constraints: Collection[str],
         *,
-        fresh: bool,
+        fresh: bool = False,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             if self._has_valid_outer_pip:
@@ -412,7 +412,7 @@ class _UvBackend(_EnvBackend):
         requirements: Collection[str],
         constraints: Collection[str],
         *,
-        fresh: bool,
+        fresh: bool = False,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             cmd = [self._uv_bin, 'pip']
