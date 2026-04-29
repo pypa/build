@@ -161,11 +161,19 @@ class DefaultIsolatedEnv(IsolatedEnv):
             'PYTHONPATH': '',
         }
 
-    def install(self, requirements: Collection[str], constraints: Collection[str] = []) -> None:
+    def install(
+        self,
+        requirements: Collection[str],
+        constraints: Collection[str] = [],
+        *,
+        fresh: bool = False,
+    ) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
 
         :param requirements: PEP 508 requirement specification to install
+        :param fresh: Whether to overwrite already installed packages while installing
+            these requirements
 
         :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
                merely an implementation detail, it may change any time without warning.
@@ -177,7 +185,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
             kind=('step',),
         )
-        self._env_backend.install_dependencies(requirements, constraints)
+        self._env_backend.install_dependencies(requirements, constraints, fresh=fresh)
 
 
 class _EnvBackend(typing.Protocol):  # pragma: no cover
@@ -186,7 +194,13 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
 
     def create(self, path: str) -> None: ...
 
-    def install_dependencies(self, requirements: Collection[str], constraints: Collection[str]) -> None: ...
+    def install_dependencies(
+        self,
+        requirements: Collection[str],
+        constraints: Collection[str],
+        *,
+        fresh: bool,
+    ) -> None: ...
 
     @property
     def display_name(self) -> str: ...
@@ -324,7 +338,13 @@ class _PipBackend(_EnvBackend):
                         env=_pip_env(),
                     )
 
-    def install_dependencies(self, requirements: Collection[str], constraints: Collection[str]) -> None:
+    def install_dependencies(
+        self,
+        requirements: Collection[str],
+        constraints: Collection[str],
+        *,
+        fresh: bool,
+    ) -> None:
         with contextlib.ExitStack() as exit_stack:
             if self._has_valid_outer_pip:
                 cmd = [sys.executable, '-m', 'pip', '--python', self.python_executable]
@@ -334,7 +354,10 @@ class _PipBackend(_EnvBackend):
             if (verbosity := _ctx.verbosity) > 1:
                 cmd += [f'-{"v" * (verbosity - 1)}']
 
-            cmd += ['install', '--ignore-installed', '--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
+            cmd += ['install']
+            if fresh:
+                cmd += ['--ignore-installed']
+            cmd += ['--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
 
             # pip does not honour environment markers in command line arguments
             # but it does from requirement files.
@@ -385,7 +408,11 @@ class _UvBackend(_EnvBackend):
         self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
 
     def install_dependencies(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
-        self, requirements: Collection[str], constraints: Collection[str]
+        self,
+        requirements: Collection[str],
+        constraints: Collection[str],
+        *,
+        fresh: bool,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             cmd = [self._uv_bin, 'pip']
@@ -394,6 +421,8 @@ class _UvBackend(_EnvBackend):
                 cmd += [f'-{"v" * min(2, verbosity - 1)}']
 
             cmd += ['install', *requirements]
+            if fresh:
+                cmd += ['--reinstall']
             cmd += ['--python', self.python_executable]
 
             if constraints:

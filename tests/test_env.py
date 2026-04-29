@@ -226,18 +226,20 @@ def test_install_short_circuits(
 
 @pytest.mark.parametrize('verbosity', range(3))
 @pytest.mark.parametrize('constraints', [[], ['foo']])
+@pytest.mark.parametrize('fresh', [False, True])
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_cmd_well_formed(
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
     constraints: list[str],
+    fresh: bool,
 ) -> None:
     mocker.patch.object(build.env._ctx, 'verbosity', verbosity)  # type: ignore[attr-defined]
 
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints)
+        env.install(['some', 'requirements'], constraints, fresh=fresh)
 
         run_subprocess.assert_called_once_with(
             [
@@ -246,7 +248,7 @@ def test_default_impl_install_cmd_well_formed(
                 'pip',
                 *([f'-{"v" * (verbosity - 1)}'] if verbosity > 1 else []),
                 'install',
-                '--ignore-installed',
+                *(['--ignore-installed'] if fresh else []),
                 '--use-pep517',
                 '--no-warn-script-location',
                 '--no-compile',
@@ -261,19 +263,21 @@ def test_default_impl_install_cmd_well_formed(
 
 @pytest.mark.parametrize('verbosity', range(3))
 @pytest.mark.parametrize('constraints', [[], ['foo']])
+@pytest.mark.parametrize('fresh', [False, True])
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
     constraints: list[str],
+    fresh: bool,
 ) -> None:
     mocker.patch.object(build.env._ctx, 'verbosity', verbosity)  # type: ignore[attr-defined]
 
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints)
+        env.install(['some', 'requirements'], constraints, fresh=fresh)
 
         run_subprocess.assert_called_once_with(
             [
@@ -283,6 +287,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
                 'install',
                 'some',
                 'requirements',
+                *(['--reinstall'] if fresh else []),
                 '--python',
                 mocker.ANY,
                 *(['-c', mocker.ANY] if constraints else []),
@@ -603,6 +608,6 @@ def test_pythonpath_does_not_interfere_with_outer_pip(
     monkeypatch.setenv('PYTHONPATH', str(tmp_path))
 
     with build.env.DefaultIsolatedEnv(installer='pip') as env:
-        env.install({'flit_core'})
+        env.install({'flit_core'}, fresh=True)
 
         assert subprocess.check_call([env.python_executable, '-c', 'import flit_core']) == 0
