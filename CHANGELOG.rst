@@ -1,4 +1,26 @@
 ####################
+ 1.5.0 (2026-04-30)
+####################
+
+**********
+ Features
+**********
+
+- Drop Python 3.9 support - by :user:`henryiii` (:issue:`1036`)
+
+**********
+ Bugfixes
+**********
+
+- Make ``--ignore-installed`` opt-in from the API via ``fresh=True`` - by :user:`henryiii` (:issue:`1056`)
+
+***************
+ Miscellaneous
+***************
+
+- :issue:`1033`
+
+####################
  1.4.4 (2026-04-22)
 ####################
 
