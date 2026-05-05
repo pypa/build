@@ -1,0 +1,4 @@
+The positional ``srcdir`` argument now accepts a ``.tar.gz`` source distribution. ``python -m build pkg-1.0.tar.gz``
+checks the filename and ``PKG-INFO``, extracts the archive into a temporary directory, and runs a wheel build against
+the extracted source. ``--metadata`` works the same way. ``--sdist`` errors, since the archive already is an sdist - by
+:user:`gaborbernat`.

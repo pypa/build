@@ -76,6 +76,22 @@ Or explicitly:
 
     $ python -m build --srcdir path/to/project
 
+*************************************
+ Building from a source distribution
+*************************************
+
+The positional argument also accepts a ``.tar.gz`` `source distribution
+<https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_. Build checks the filename and the
+presence of ``PKG-INFO``, extracts the archive into a temporary directory, and runs the wheel build against the
+extracted source. The wheel lands next to the input archive.
+
+.. code-block:: console
+
+    $ python -m build dist/mypackage-1.0.0.tar.gz
+
+No flag means the same as ``--wheel``. ``--metadata`` works the same way. ``--sdist`` errors out, since the archive
+already is an sdist.
+
 *********************************
  Specifying the output directory
 *********************************
@@ -234,7 +250,7 @@ Build from the sdist to ensure it's complete:
 .. code-block:: console
 
     $ python -m build --sdist
-    $ python -m build --wheel dist/mypackage-1.0.0.tar.gz
+    $ python -m build dist/mypackage-1.0.0.tar.gz
 
 Or test installation:
 
