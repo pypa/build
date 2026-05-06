@@ -151,6 +151,20 @@ on your computer. It:
 3. Invoked the **build backend** to create the distribution files
 4. Cleaned up the temporary environment when done
 
+**********************************
+ Building a wheel from your sdist
+**********************************
+
+You can also point build at the source distribution you just produced. Build checks the archive and runs a wheel build
+against its contents, which catches missing files in the sdist:
+
+.. code-block:: console
+
+    $ python -m build dist/mypackage-0.1.0.tar.gz
+    Successfully built mypackage-0.1.0-py3-none-any.whl
+
+The wheel lands next to the sdist. Pass ``--outdir`` to write somewhere else.
+
 ************
  Next steps
 ************

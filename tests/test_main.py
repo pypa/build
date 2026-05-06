@@ -10,9 +10,11 @@ import pathlib
 import re
 import subprocess
 import sys
+import tarfile
 import unittest.mock
 import venv
 
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -881,3 +883,253 @@ def test_build_metadata_runner_without_extra_environ(
     assert captured_runners
     captured_runners[0](['echo', 'test'])
     ctx_run.assert_called_once_with(['echo', 'test'], None, mocker.ANY)
+
+
+WriteSdist = Callable[..., None]
+
+
+@pytest.fixture
+def write_sdist() -> WriteSdist:
+    def _write(
+        path: pathlib.Path,
+        top_level: str,
+        *,
+        with_pkg_info: bool = True,
+        extra: dict[str, str] | None = None,
+    ) -> None:
+        pkg_info = b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n'
+        with tarfile.open(path, 'w:gz') as tar:
+            if with_pkg_info:
+                info = tarfile.TarInfo(name=f'{top_level}/PKG-INFO')
+                info.size = len(pkg_info)
+                tar.addfile(info, io.BytesIO(pkg_info))
+            body = b'[build-system]\nrequires = []\nbuild-backend = "noop"\n'
+            info = tarfile.TarInfo(name=f'{top_level}/pyproject.toml')
+            info.size = len(body)
+            tar.addfile(info, io.BytesIO(body))
+            for member_name, member_body in (extra or {}).items():
+                data = member_body.encode()
+                info = tarfile.TarInfo(name=member_name)
+                info.size = len(data)
+                tar.addfile(info, io.BytesIO(data))
+
+    return _write
+
+
+@pytest.fixture
+def sdist(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> pathlib.Path:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0')
+    return archive
+
+
+def test_validate_sdist_archive_happy(sdist: pathlib.Path) -> None:
+    assert build.__main__._validate_sdist_archive(str(sdist)) == 'demo-1.0.0'
+
+
+def test_validate_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'something-else-1.0')
+    assert build.__main__._validate_sdist_archive(str(archive)) == 'something-else-1.0'
+
+
+def _invalid_filename(tmp_path: pathlib.Path, write: WriteSdist) -> str:
+    archive = tmp_path / 'noversion.tar.gz'
+    write(archive, 'noversion')
+    return str(archive)
+
+
+def _invalid_version(tmp_path: pathlib.Path, write: WriteSdist) -> str:
+    archive = tmp_path / 'demo-not_a_version.tar.gz'
+    write(archive, 'demo-not_a_version')
+    return str(archive)
+
+
+def _corrupt_tar(tmp_path: pathlib.Path, _write: WriteSdist) -> str:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    archive.write_bytes(b'not a real tar.gz')
+    return str(archive)
+
+
+def _multiple_top_level(tmp_path: pathlib.Path, write: WriteSdist) -> str:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write(archive, 'demo-1.0.0', extra={'other-1.0.0/PKG-INFO': 'x'})
+    return str(archive)
+
+
+def _missing_pkg_info(tmp_path: pathlib.Path, write: WriteSdist) -> str:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write(archive, 'demo-1.0.0', with_pkg_info=False)
+    return str(archive)
+
+
+_REJECT_CASES: dict[str, Callable[[pathlib.Path, WriteSdist], str]] = {
+    'invalid-filename': _invalid_filename,
+    'invalid-version': _invalid_version,
+    'corrupt-tar': _corrupt_tar,
+    'multiple-top-level': _multiple_top_level,
+    'missing-pkg-info': _missing_pkg_info,
+}
+
+
+@pytest.mark.parametrize(
+    ('case', 'match'),
+    [
+        pytest.param('invalid-filename', 'does not look like a source distribution', id='invalid-filename'),
+        pytest.param('invalid-version', 'does not look like a source distribution', id='invalid-version'),
+        pytest.param('corrupt-tar', 'failed to read source distribution', id='corrupt-tar'),
+        pytest.param('multiple-top-level', 'single top-level directory', id='multiple-top-level'),
+        pytest.param('missing-pkg-info', 'does not contain demo-1.0.0/PKG-INFO', id='missing-pkg-info'),
+    ],
+)
+def test_validate_sdist_archive_rejects(
+    tmp_path: pathlib.Path,
+    write_sdist: WriteSdist,
+    case: str,
+    match: str,
+) -> None:
+    archive = _REJECT_CASES[case](tmp_path, write_sdist)
+    with pytest.raises(build.BuildException, match=match):
+        build.__main__._validate_sdist_archive(archive)
+
+
+def test_extract_sdist_yields_top_level(sdist: pathlib.Path) -> None:
+    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0') as extracted:
+        assert os.path.isdir(extracted)
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+        extract_root = os.path.dirname(extracted)
+    assert not os.path.exists(extract_root)
+
+
+def _raise_inside_extract(sdist: pathlib.Path) -> None:
+    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0') as extracted:
+        msg = 'boom'
+        raise RuntimeError(msg, os.path.dirname(extracted))
+
+
+def test_extract_sdist_cleans_up_on_error(sdist: pathlib.Path) -> None:
+    with pytest.raises(RuntimeError, match='boom') as exc_info:
+        _raise_inside_extract(sdist)
+    _, extract_root = exc_info.value.args
+    assert not os.path.exists(extract_root)
+
+
+@pytest.mark.parametrize(
+    ('extra_args', 'expected_distributions', 'expected_outdir'),
+    [
+        pytest.param([], ['wheel'], None, id='no-flag'),
+        pytest.param(['--wheel'], ['wheel'], None, id='wheel-long'),
+        pytest.param(['-w'], ['wheel'], None, id='wheel-short'),
+        pytest.param(['--wheel', '-o', 'custom-out'], ['wheel'], 'custom-out', id='custom-outdir'),
+    ],
+)
+def test_main_sdist_input_wheel_dispatch(
+    sdist: pathlib.Path,
+    mocker: pytest_mock.MockerFixture,
+    extra_args: list[str],
+    expected_distributions: list[str],
+    expected_outdir: str | None,
+) -> None:
+    build_package = mocker.patch('build.__main__.build_package', return_value=['demo-1.0.0-py3-none-any.whl'])
+    via_sdist = mocker.patch('build.__main__.build_package_via_sdist')
+
+    build.__main__.main([str(sdist), *extra_args])
+
+    via_sdist.assert_not_called()
+    args, kwargs = build_package.call_args
+    extracted_srcdir, outdir = args
+    assert os.path.basename(extracted_srcdir) == 'demo-1.0.0'
+    assert kwargs['distributions'] == expected_distributions
+    expected = expected_outdir if expected_outdir is not None else os.path.dirname(os.path.abspath(sdist))
+    assert outdir == expected
+
+
+def test_main_sdist_input_metadata(sdist: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+    build_metadata = mocker.patch('build.__main__._build_metadata', return_value=[])
+
+    build.__main__.main([str(sdist), '--metadata'])
+
+    args, kwargs = build_metadata.call_args
+    extracted_srcdir, _outdir = args
+    assert os.path.basename(extracted_srcdir) == 'demo-1.0.0'
+    assert kwargs['distributions'] == ['wheel']
+
+
+@pytest.mark.parametrize(
+    'flags',
+    [
+        pytest.param(['--sdist'], id='sdist-only'),
+        pytest.param(['--sdist', '--wheel'], id='sdist-and-wheel'),
+    ],
+)
+def test_main_sdist_input_rejects_sdist_flag(
+    sdist: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+    flags: list[str],
+) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main([str(sdist), *flags])
+    assert 'cannot build a source distribution from a source distribution' in capsys.readouterr().err
+
+
+def test_main_sdist_input_validation_error_surfaced(
+    tmp_path: pathlib.Path,
+    write_sdist: WriteSdist,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0', with_pkg_info=False)
+
+    with pytest.raises(SystemExit):
+        build.__main__.main([str(archive), '--wheel'])
+
+    assert 'PKG-INFO' in capsys.readouterr().err
+
+
+def test_main_sdist_input_passes_kwargs(sdist: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+    build_package = mocker.patch('build.__main__.build_package', return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    build.__main__.main([str(sdist), '--wheel', '-n', '-x', '-Cflag=value'])
+
+    _args, kwargs = build_package.call_args
+    assert kwargs['isolation'] is False
+    assert kwargs['skip_dependency_check'] is True
+    assert kwargs['config_settings'] == {'flag': 'value'}
+    assert kwargs['installer'] is None
+
+
+def test_main_sdist_input_end_to_end(tmp_path: pathlib.Path, package_test_setuptools: str) -> None:
+    sdist_dir = tmp_path / 'dist'
+    sdist_dir.mkdir()
+    build.__main__.build_package(package_test_setuptools, str(sdist_dir), ['sdist'])
+    archive = next(sdist_dir.glob('*.tar.gz'))
+
+    out_dir = tmp_path / 'out'
+    build.__main__.main([str(archive), '--wheel', '-n', '-o', str(out_dir)])
+
+    wheels = list(out_dir.glob('*.whl'))
+    assert len(wheels) == 1
+    assert wheels[0].name.startswith('test_setuptools-1.0.0')
+
+
+def test_main_sdist_input_default_outdir_is_archive_parent(
+    tmp_path: pathlib.Path,
+    sdist: pathlib.Path,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    build_package = mocker.patch('build.__main__.build_package', return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    build.__main__.main([str(sdist)])
+
+    _, outdir = build_package.call_args.args
+    assert outdir == str(tmp_path)
+
+
+def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+    archive = tmp_path / 'demo-1.0.0.zip'
+    archive.write_bytes(b'')
+    via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
+
+    build.__main__.main([str(archive)])
+
+    via_sdist.assert_called_once()

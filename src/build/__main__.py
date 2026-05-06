@@ -10,10 +10,13 @@ __lazy_modules__ = [
     'functools',
     'json',
     'os',
+    'packaging.utils',
+    'packaging.version',
     'platform',
     'pyproject_hooks',
     'shutil',
     'subprocess',
+    'tarfile',
     'tempfile',
     'textwrap',
     'traceback',
@@ -36,14 +39,20 @@ import traceback
 import warnings
 
 from functools import partial
+from tarfile import TarError
+from tarfile import open as tar_open
 from typing import Any, NoReturn, TextIO
 
 import pyproject_hooks
+
+from packaging.utils import InvalidSdistFilename, parse_sdist_filename
+from packaging.version import InvalidVersion
 
 import build
 import build.env as _env
 
 from build import ProjectBuilder, _ctx
+from build._compat.tarfile import TarFile
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
 from build.env import DefaultIsolatedEnv
 
@@ -321,8 +330,6 @@ def build_package_via_sdist(
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
     """
-    from ._compat import tarfile
-
     if 'sdist' in distributions:
         msg = 'Only binary distributions are allowed but sdist was specified'
         raise ValueError(msg)
@@ -332,29 +339,22 @@ def build_package_via_sdist(
     )
 
     sdist_name = os.path.basename(sdist)
-    sdist_out = tempfile.mkdtemp(prefix='build-via-sdist-')
     built: list[str] = []
     if distributions:
-        # extract sdist
-        with tarfile.TarFile.open(sdist) as t:
-            t.extractall(sdist_out)
-            try:
-                _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
-                srcdir = os.path.join(sdist_out, sdist_name[: -len('.tar.gz')])
-                for distribution in distributions:
-                    out = _build(
-                        isolation,
-                        srcdir,
-                        outdir,
-                        distribution,
-                        config_settings,
-                        skip_dependency_check,
-                        dependency_constraints_txt,
-                        installer,
-                    )
-                    built.append(os.path.basename(out))
-            finally:
-                shutil.rmtree(sdist_out, ignore_errors=True)
+        with _extract_sdist(sdist, sdist_name[: -len('.tar.gz')]) as extracted_srcdir:
+            _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
+            for distribution in distributions:
+                out = _build(
+                    isolation,
+                    extracted_srcdir,
+                    outdir,
+                    distribution,
+                    config_settings,
+                    skip_dependency_check,
+                    dependency_constraints_txt,
+                    installer,
+                )
+                built.append(os.path.basename(out))
     return [sdist_name, *built]
 
 
@@ -455,7 +455,7 @@ def main_parser() -> argparse.ArgumentParser:
         type=str,
         nargs='?',
         default=os.getcwd(),
-        help='source directory (defaults to the current working directory)',
+        help='source directory or .tar.gz source distribution (defaults to the current working directory)',
     )
 
     global_group = parser.add_argument_group('global options')
@@ -596,48 +596,109 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     _setup_cli(verbosity=args.verbosity)
 
-    config_settings = dict[str, Any]()
+    sdist_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.tar.gz')
+    build = partial(
+        _select_build(parser, args, sdist_input=sdist_input),
+        config_settings=_resolve_config_settings(args),
+        isolation=not args.no_isolation,
+        skip_dependency_check=args.skip_dependency_check,
+        dependency_constraints_txt=args.dependency_constraints_txt,
+        installer=args.installer,
+    )
 
-    # Handle --config-json
-    if args.config_json:
-        try:
-            config_settings = json.loads(args.config_json)
-            if not isinstance(config_settings, dict):
-                _error('--config-json must contain a JSON object (dict), not a list or primitive value')
-        except json.JSONDecodeError as e:
-            _error(f'Invalid JSON in --config-json: {e}')
-
-    # Handle --config-setting (original logic)
-    elif args.config_settings:
-        config_settings = _parse_config_settings(args.config_settings)
-
-    # outdir is relative to srcdir only if omitted.
-    outdir = os.path.join(args.srcdir, 'dist') if args.outdir is None else args.outdir
-
-    if args.metadata and args.distributions:
-        parser.error('--metadata: not allowed with --sdist or --wheel')
-    elif args.metadata:
-        build = partial(_build_metadata, distributions=['wheel'])
-    elif args.distributions:
-        build = partial(build_package, distributions=args.distributions)
+    if args.outdir is not None:
+        outdir = args.outdir
+    elif sdist_input:
+        outdir = os.path.dirname(os.path.abspath(args.srcdir))
     else:
-        build = partial(build_package_via_sdist, distributions=['wheel'])
+        outdir = os.path.join(args.srcdir, 'dist')
 
     with _handle_build_error():
-        built = build(
-            args.srcdir,
-            outdir,
-            config_settings=config_settings,
-            isolation=not args.no_isolation,
-            skip_dependency_check=args.skip_dependency_check,
-            dependency_constraints_txt=args.dependency_constraints_txt,
-            installer=args.installer,
-        )
+        if sdist_input:
+            top_level = _validate_sdist_archive(args.srcdir)
+            with _extract_sdist(args.srcdir, top_level) as extracted_srcdir:
+                built = build(extracted_srcdir, outdir)
+        else:
+            built = build(args.srcdir, outdir)
         if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )
             _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
+
+
+def _resolve_config_settings(args: argparse.Namespace) -> dict[str, Any]:
+    if args.config_json:
+        try:
+            config_settings = json.loads(args.config_json)
+        except json.JSONDecodeError as e:
+            _error(f'Invalid JSON in --config-json: {e}')
+        if not isinstance(config_settings, dict):
+            _error('--config-json must contain a JSON object (dict), not a list or primitive value')
+        return config_settings
+    if args.config_settings:
+        return _parse_config_settings(args.config_settings)
+    return {}
+
+
+def _select_build(parser: argparse.ArgumentParser, args: argparse.Namespace, *, sdist_input: bool) -> partial[list[str]]:
+    if args.metadata and args.distributions:
+        parser.error('--metadata: not allowed with --sdist or --wheel')
+    if sdist_input and args.distributions and 'sdist' in args.distributions:
+        parser.error(
+            'cannot build a source distribution from a source distribution; '
+            'pass --wheel to build a wheel from the sdist (see https://github.com/pypa/build/issues/311)'
+        )
+    if args.metadata:
+        return partial(_build_metadata, distributions=['wheel'])
+    if sdist_input:
+        return partial(build_package, distributions=args.distributions or ['wheel'])
+    if args.distributions:
+        return partial(build_package, distributions=args.distributions)
+    return partial(build_package_via_sdist, distributions=['wheel'])
+
+
+def _validate_sdist_archive(archive: StrPath) -> str:
+    """Validate that ``archive`` is a PEP 625 source distribution and return its top-level directory name."""
+    name = os.path.basename(os.fspath(archive))
+    try:
+        parse_sdist_filename(name)
+    except (InvalidSdistFilename, InvalidVersion) as exc:
+        msg = f'{name!r} does not look like a source distribution: {exc}'
+        raise BuildException(msg) from exc
+
+    try:
+        with tar_open(archive) as tar:
+            members = tar.getmembers()
+    except (OSError, TarError) as exc:
+        msg = f'failed to read source distribution {archive}: {exc}'
+        raise BuildException(msg) from exc
+
+    top_levels = {m.name.split('/', 1)[0] for m in members if m.name}
+    top_levels.discard('')
+    if len(top_levels) != 1:
+        msg = f'source distribution {archive} must contain a single top-level directory, got: {sorted(top_levels)}'
+        raise BuildException(msg)
+
+    top = next(iter(top_levels))
+    if not any(m.name == f'{top}/PKG-INFO' and m.isfile() for m in members):
+        msg = (
+            f'source distribution {archive} does not contain {top}/PKG-INFO; '
+            'this does not appear to be a valid source distribution'
+        )
+        raise BuildException(msg)
+    return top
+
+
+@contextlib.contextmanager
+def _extract_sdist(archive: StrPath, top_level: str) -> Iterator[str]:
+    extract_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
+    try:
+        with TarFile.open(archive) as tar:
+            tar.extractall(extract_dir)  # noqa: S202  # compat TarFile sets the PEP 706 data filter as default
+        yield os.path.join(extract_dir, top_level)
+    finally:
+        shutil.rmtree(extract_dir, ignore_errors=True)
 
 
 def entrypoint() -> None:

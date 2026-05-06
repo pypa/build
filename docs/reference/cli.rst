@@ -10,6 +10,11 @@ a `binary distribution (wheel) <https://packaging.python.org/en/latest/specifica
 built from the sdist. If this is undesirable, you can pass ``--sdist`` and/or ``--wheel`` to build distributions
 independently of each other.
 
+The positional ``srcdir`` argument also accepts a ``.tar.gz`` source distribution. Build checks the filename and the
+presence of ``PKG-INFO``, extracts the archive into a temporary directory, and runs the wheel build against the
+extracted source. The default ``--outdir`` is the directory containing the archive. ``--sdist`` errors against an
+archive, since the archive already is an sdist.
+
 .. sphinx_argparse_cli::
     :module: build.__main__
     :func: main_parser
