@@ -341,7 +341,7 @@ def build_package_via_sdist(
     sdist_name = os.path.basename(sdist)
     built: list[str] = []
     if distributions:
-        with _extract_sdist(sdist, sdist_name[: -len('.tar.gz')]) as extracted_srcdir:
+        with _extract_sdist(sdist, sdist_name.removesuffix('.tar.gz')) as extracted_srcdir:
             _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
             for distribution in distributions:
                 out = _build(
