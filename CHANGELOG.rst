@@ -1,3 +1,13 @@
+**********
+ Unreleased
+**********
+
+***************
+ Miscellaneous
+***************
+
+- Add tests for ``config_settings`` forwarding in ``build_package`` and ``build_package_via_sdist`` (:pr:`1058`)
+
 ####################
  1.4.2 (2026-03-25)
 ####################
