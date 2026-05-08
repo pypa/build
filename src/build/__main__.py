@@ -52,7 +52,7 @@ import build
 import build.env as _env
 
 from build import ProjectBuilder, _ctx
-from build._compat.tarfile import TarFile
+from build._compat.tarfile import TarFile, safe_extractall
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
 from build.env import DefaultIsolatedEnv
 
@@ -695,7 +695,7 @@ def _extract_sdist(archive: StrPath, top_level: str) -> Iterator[str]:
     extract_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
     try:
         with TarFile.open(archive) as tar:
-            tar.extractall(extract_dir)  # noqa: S202  # compat TarFile sets the PEP 706 data filter as default
+            safe_extractall(tar, extract_dir)
         yield os.path.join(extract_dir, top_level)
     finally:
         shutil.rmtree(extract_dir, ignore_errors=True)

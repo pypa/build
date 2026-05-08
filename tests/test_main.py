@@ -390,7 +390,9 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     )
 
     assert built == ['demo-1.0.0.tar.gz', 'demo-1.0.0-py3-none-any.whl']
-    tar_open.return_value.__enter__.return_value.extractall.assert_called_once_with('temp-sdist-dir')
+    extractall = tar_open.return_value.__enter__.return_value.extractall
+    extractall.assert_called_once()
+    assert extractall.call_args.args[0] == 'temp-sdist-dir'
     build_cmd.assert_has_calls(
         [
             unittest.mock.call(False, 'src', 'dist', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv'),
@@ -1012,6 +1014,33 @@ def test_extract_sdist_cleans_up_on_error(sdist: pathlib.Path) -> None:
         _raise_inside_extract(sdist)
     _, extract_root = exc_info.value.args
     assert not os.path.exists(extract_root)
+
+
+def test_extract_sdist_rejects_path_traversal(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    body = b'evil\n'
+    with tarfile.open(archive, 'w:gz') as tar:
+        info = tarfile.TarInfo(name='../evil.txt')
+        info.size = len(body)
+        tar.addfile(info, io.BytesIO(body))
+
+    cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
+    with pytest.raises(tarfile.TarError):
+        cm.__enter__()
+    assert not (tmp_path / 'evil.txt').exists()
+
+
+def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    with tarfile.open(archive, 'w:gz') as tar:
+        info = tarfile.TarInfo(name='demo-1.0.0/evil')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '/etc/passwd'
+        tar.addfile(info)
+
+    cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
+    with pytest.raises(tarfile.TarError):
+        cm.__enter__()
 
 
 @pytest.mark.parametrize(
