@@ -99,6 +99,11 @@ By default, ``python -m build`` creates both sdist and wheel following this stra
 This "build wheel from sdist" strategy ensures your sdist is complete. If files are missing from the sdist, the wheel
 build will fail, alerting you to the problem.
 
+If the positional argument is a ``.tar.gz`` rather than a directory, the default is **wheel-only**: build checks the
+archive, extracts it into a temporary directory, and runs the wheel build against the extracted source. There is no
+sdist step. The archive already is an sdist, and PEP 517 has no hook for turning one sdist into another, so ``--sdist``
+against an sdist errors out.
+
 ***************************
  Build Isolation Explained
 ***************************
