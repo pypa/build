@@ -264,14 +264,25 @@ Or test installation:
  Cleaning before build
 ***********************
 
-There's no built-in clean command. To ensure a fresh build, manually remove the dist directory:
+Pass ``--clean-outdir-artifacts`` to delete ``.tar.gz`` and ``.whl`` files from the output directory before the build
+runs. This prevents artifacts from previous runs (for example, leftover wheels for an older version) from being mixed
+with the new build:
+
+.. code-block:: console
+
+    $ python -m build --clean-outdir-artifacts
+
+The flag is opt-in to avoid accidental data loss. It removes only build artifacts (``.tar.gz`` and ``.whl``) from
+whatever the resolved ``--outdir`` points at. If the output directory does not yet exist, the flag is a no-op.
+
+If you prefer to keep ``build`` from touching the filesystem itself, you can still clean manually:
 
 .. code-block:: console
 
     $ rm -rf dist/
     $ python -m build
 
-Or to avoid stale artifacts, use a unique output directory:
+Or avoid stale artifacts by routing each release to its own directory:
 
 .. code-block:: console
 

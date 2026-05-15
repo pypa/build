@@ -1,0 +1,3 @@
+Add ``--clean-outdir-artifacts`` to ``python -m build`` to delete ``.tar.gz`` and ``.whl`` files from the output
+directory before building, so previous-run artifacts do not leak into the new build. Also expose
+:func:`build.__main__.clean_outdir_artifacts` for programmatic use - by :user:`gaborbernat`.

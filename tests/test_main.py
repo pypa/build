@@ -18,7 +18,8 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-import pytest_mock
+
+from pytest_mock import MockerFixture
 
 import build
 import build.__main__
@@ -262,7 +263,7 @@ ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     ],
 )
 def test_parse_args(
-    mocker: pytest_mock.MockerFixture,
+    mocker: MockerFixture,
     cli_args: list[str],
     build_args: tuple[Any, Any],
     build_kwargs: dict[str, Any],
@@ -299,7 +300,7 @@ def test_version(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 @pytest.mark.isolated
-def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+def test_build_isolated(mocker: MockerFixture, package_test_flit: str) -> None:
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     required_cmd = mocker.patch(
         'build.ProjectBuilder.get_requires_for_build',
@@ -320,7 +321,7 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
     build_cmd.assert_called_with('sdist', '.', None)
 
 
-def test_build_no_isolation_check_deps_empty(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+def test_build_no_isolation_check_deps_empty(mocker: MockerFixture, package_test_flit: str) -> None:
     # check_dependencies = []
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
@@ -330,7 +331,7 @@ def test_build_no_isolation_check_deps_empty(mocker: pytest_mock.MockerFixture, 
     build_cmd.assert_called_with('sdist', '.', None)
 
 
-def test_build_package_passes_config_settings_to_build(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+def test_build_package_passes_config_settings_to_build(mocker: MockerFixture, package_test_flit: str) -> None:
     build_cmd = mocker.patch(
         'build.__main__._build',
         side_effect=[
@@ -364,7 +365,7 @@ def test_build_package_passes_config_settings_to_build(mocker: pytest_mock.Mocke
     )
 
 
-def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_mock.MockerFixture) -> None:
+def test_build_package_via_sdist_passes_config_settings_to_build(mocker: MockerFixture) -> None:
     build_cmd = mocker.patch(
         'build.__main__._build',
         side_effect=[
@@ -419,7 +420,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     ],
 )
 def test_build_no_isolation_with_check_deps(
-    mocker: pytest_mock.MockerFixture, package_test_flit: str, missing_deps: list[tuple[str, ...]], output: str
+    mocker: MockerFixture, package_test_flit: str, missing_deps: list[tuple[str, ...]], output: str
 ) -> None:
     error = mocker.patch('build.__main__._error')
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
@@ -448,7 +449,7 @@ def test_config_json_errors(cli_args: list[str], err_msg: str, capsys: pytest.Ca
 
 
 @pytest.mark.isolated
-def test_build_raises_build_exception(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+def test_build_raises_build_exception(mocker: MockerFixture, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
     mocker.patch('build.env.DefaultIsolatedEnv.install')
 
@@ -457,7 +458,7 @@ def test_build_raises_build_exception(mocker: pytest_mock.MockerFixture, package
 
 
 @pytest.mark.isolated
-def test_build_raises_build_backend_exception(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+def test_build_raises_build_backend_exception(mocker: MockerFixture, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildBackendException(Exception('a')))
     mocker.patch('build.env.DefaultIsolatedEnv.install')
 
@@ -500,9 +501,7 @@ def test_build_package_via_sdist_invalid_distribution(tmp_dir: str, package_test
 
 
 @pytest.mark.isolated
-def test_build_package_with_constraints(
-    mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, package_test_flit: str
-) -> None:
+def test_build_package_with_constraints(mocker: MockerFixture, tmp_path: pathlib.Path, package_test_flit: str) -> None:
     install = mocker.patch('build.env.DefaultIsolatedEnv.install')
 
     constraints_txt_path = tmp_path.joinpath('constraints.txt')
@@ -657,7 +656,7 @@ def test_logging_output(
 )
 @pytest.mark.usefixtures('local_pip')
 def test_logging_output_env_subprocess_error(
-    mocker: pytest_mock.MockerFixture,
+    mocker: MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
     package_test_invalid_requirements: str,
     tmp_dir: str,
@@ -697,7 +696,7 @@ def test_logging_output_env_subprocess_error(
     ],
 )
 def test_colors(
-    mocker: pytest_mock.MockerFixture,
+    mocker: MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
     tty: bool,
     env: dict[str, str],
@@ -791,7 +790,7 @@ def test_metadata_json_output(
     assert metadata['version'] == '1.0.0'
 
 
-def test_setup_cli_windows_colorama_available(mocker: pytest_mock.MockerFixture) -> None:
+def test_setup_cli_windows_colorama_available(mocker: MockerFixture) -> None:
     mocker.patch('platform.system', return_value='Windows')
     colorama = mocker.MagicMock()
     mocker.patch.dict('sys.modules', {'colorama': colorama})
@@ -799,13 +798,13 @@ def test_setup_cli_windows_colorama_available(mocker: pytest_mock.MockerFixture)
     colorama.init.assert_called_once()
 
 
-def test_setup_cli_windows_colorama_missing(mocker: pytest_mock.MockerFixture) -> None:
+def test_setup_cli_windows_colorama_missing(mocker: MockerFixture) -> None:
     mocker.patch('platform.system', return_value='Windows')
     mocker.patch.dict('sys.modules', {'colorama': None})
     build.__main__._setup_cli(verbosity=0)
 
 
-def test_setup_cli_non_windows(mocker: pytest_mock.MockerFixture) -> None:
+def test_setup_cli_non_windows(mocker: MockerFixture) -> None:
     mocker.patch('platform.system', return_value='Linux')
     build.__main__._setup_cli(verbosity=0)
 
@@ -815,13 +814,13 @@ def test_metadata_with_distributions_error() -> None:
         build.__main__.main(['--metadata', '--sdist'])
 
 
-def test_entrypoint(mocker: pytest_mock.MockerFixture) -> None:
+def test_entrypoint(mocker: MockerFixture) -> None:
     main = mocker.patch('build.__main__.main')
     build.__main__.entrypoint()
     main.assert_called_once_with(sys.argv[1:])
 
 
-def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFixture) -> None:
+def test_handle_build_error_build_backend_exception(mocker: MockerFixture) -> None:
     mocker.patch('build.__main__._error', side_effect=SystemExit(1))
 
     exc = ValueError('test error')
@@ -834,19 +833,19 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
         raise build.BuildBackendException(exc, exc_info=exc_info)
 
 
-def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
+def test_log_unknown_kind(mocker: MockerFixture) -> None:
     mocker.patch('build.__main__._cprint')
     log = build.__main__._make_logger()
     log('message', kind=('unknown',))
 
 
-def test_build_no_isolation_skip_dependency_check(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+def test_build_no_isolation_skip_dependency_check(mocker: MockerFixture, package_test_flit: str) -> None:
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False, skip_dependency_check=True)
     build_cmd.assert_called_with('sdist', '.', None)
 
 
-def test_build_package_via_sdist_empty_distributions(mocker: pytest_mock.MockerFixture) -> None:
+def test_build_package_via_sdist_empty_distributions(mocker: MockerFixture) -> None:
     mocker.patch(
         'build.__main__._build',
         return_value=os.path.join('dist', 'demo-1.0.0.tar.gz'),
@@ -861,7 +860,7 @@ def test_parse_config_settings_triple_duplicate() -> None:
 
 
 def test_build_metadata_runner_without_extra_environ(
-    mocker: pytest_mock.MockerFixture,
+    mocker: MockerFixture,
     tmp_path: pathlib.Path,
     package_test_setuptools: str,
 ) -> None:
@@ -1054,7 +1053,7 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
 )
 def test_main_sdist_input_wheel_dispatch(
     sdist: pathlib.Path,
-    mocker: pytest_mock.MockerFixture,
+    mocker: MockerFixture,
     extra_args: list[str],
     expected_distributions: list[str],
     expected_outdir: str | None,
@@ -1073,7 +1072,7 @@ def test_main_sdist_input_wheel_dispatch(
     assert outdir == expected
 
 
-def test_main_sdist_input_metadata(sdist: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+def test_main_sdist_input_metadata(sdist: pathlib.Path, mocker: MockerFixture) -> None:
     build_metadata = mocker.patch('build.__main__._build_metadata', return_value=[])
 
     build.__main__.main([str(sdist), '--metadata'])
@@ -1115,7 +1114,7 @@ def test_main_sdist_input_validation_error_surfaced(
     assert 'PKG-INFO' in capsys.readouterr().err
 
 
-def test_main_sdist_input_passes_kwargs(sdist: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+def test_main_sdist_input_passes_kwargs(sdist: pathlib.Path, mocker: MockerFixture) -> None:
     build_package = mocker.patch('build.__main__.build_package', return_value=['demo-1.0.0-py3-none-any.whl'])
 
     build.__main__.main([str(sdist), '--wheel', '-n', '-x', '-Cflag=value'])
@@ -1144,7 +1143,7 @@ def test_main_sdist_input_end_to_end(tmp_path: pathlib.Path, package_test_setupt
 def test_main_sdist_input_default_outdir_is_archive_parent(
     tmp_path: pathlib.Path,
     sdist: pathlib.Path,
-    mocker: pytest_mock.MockerFixture,
+    mocker: MockerFixture,
 ) -> None:
     build_package = mocker.patch('build.__main__.build_package', return_value=['demo-1.0.0-py3-none-any.whl'])
 
@@ -1154,7 +1153,7 @@ def test_main_sdist_input_default_outdir_is_archive_parent(
     assert outdir == str(tmp_path)
 
 
-def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mocker: MockerFixture) -> None:
     archive = tmp_path / 'demo-1.0.0.zip'
     archive.write_bytes(b'')
     via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
@@ -1162,3 +1161,61 @@ def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mock
     build.__main__.main([str(archive)])
 
     via_sdist.assert_called_once()
+
+
+@pytest.fixture
+def outdir_with_artifacts(tmp_path: pathlib.Path) -> pathlib.Path:
+    outdir = tmp_path / 'dist'
+    outdir.mkdir()
+    (outdir / 'old-1.0.0.tar.gz').write_text('stale', encoding='utf-8')
+    (outdir / 'old-1.0.0-py3-none-any.whl').write_text('stale', encoding='utf-8')
+    (outdir / 'keep-me.txt').write_text('important', encoding='utf-8')
+    return outdir
+
+
+def test_clean_outdir_artifacts_removes_tar_gz_and_whl(tmp_path: pathlib.Path) -> None:
+    outdir = tmp_path / 'dist'
+    outdir.mkdir()
+    (outdir / 'pkg-1.0.tar.gz').write_text('x', encoding='utf-8')
+    (outdir / 'pkg-1.0-py3-none-any.whl').write_text('x', encoding='utf-8')
+    (outdir / 'keep.txt').write_text('x', encoding='utf-8')
+
+    build.__main__.clean_outdir_artifacts(outdir)
+
+    assert not (outdir / 'pkg-1.0.tar.gz').exists()
+    assert not (outdir / 'pkg-1.0-py3-none-any.whl').exists()
+    assert (outdir / 'keep.txt').exists()
+    assert outdir.exists()
+
+
+def test_clean_outdir_artifacts_missing_dir(tmp_path: pathlib.Path) -> None:
+    build.__main__.clean_outdir_artifacts(tmp_path / 'missing')
+
+
+def test_clean_outdir_artifacts_empty_dir(tmp_path: pathlib.Path) -> None:
+    outdir = tmp_path / 'dist'
+    outdir.mkdir()
+
+    build.__main__.clean_outdir_artifacts(outdir)
+
+    assert outdir.exists()
+
+
+def test_main_clean_outdir_artifacts_end_to_end(outdir_with_artifacts: pathlib.Path, package_test_setuptools: str) -> None:
+    build.__main__.main(
+        [package_test_setuptools, '--wheel', '-n', '-o', str(outdir_with_artifacts), '--clean-outdir-artifacts'],
+    )
+
+    assert not (outdir_with_artifacts / 'old-1.0.0.tar.gz').exists()
+    assert not (outdir_with_artifacts / 'old-1.0.0-py3-none-any.whl').exists()
+    assert (outdir_with_artifacts / 'keep-me.txt').exists()
+    assert len(list(outdir_with_artifacts.glob('*.whl'))) == 1
+
+
+def test_main_without_clean_outdir_artifacts_keeps_old(
+    outdir_with_artifacts: pathlib.Path, package_test_setuptools: str
+) -> None:
+    build.__main__.main([package_test_setuptools, '--wheel', '-n', '-o', str(outdir_with_artifacts)])
+
+    assert (outdir_with_artifacts / 'old-1.0.0.tar.gz').exists()
+    assert (outdir_with_artifacts / 'old-1.0.0-py3-none-any.whl').exists()

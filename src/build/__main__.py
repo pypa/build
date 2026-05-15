@@ -358,6 +358,19 @@ def build_package_via_sdist(
     return [sdist_name, *built]
 
 
+def clean_outdir_artifacts(outdir: StrPath) -> None:
+    """Remove ``.tar.gz`` and ``.whl`` files from *outdir* so the build starts from a clean slate."""
+    outdir_path = os.fspath(outdir)
+    if os.path.isdir(outdir_path):
+        removed = False
+        for entry in os.listdir(outdir_path):
+            if entry.endswith(('.tar.gz', '.whl')):
+                os.remove(os.path.join(outdir_path, entry))
+                removed = True
+        if removed:
+            _ctx.log(f'Cleaned build artifacts from {outdir_path}', kind=('step',))
+
+
 def _build_metadata(
     srcdir: StrPath,
     outdir: StrPath,  # noqa: ARG001
@@ -518,6 +531,12 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with ``--sdist`` or ``--wheel``",
     )
+    build_group.add_argument(
+        '--clean-outdir-artifacts',
+        action='store_true',
+        help='delete .tar.gz and .whl files from the output directory before building. '
+        'Useful for ensuring previous build artifacts do not leak into the new build',
+    )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
     config_exclusive_group.add_argument(
         '--config-setting',
@@ -614,6 +633,8 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         outdir = os.path.join(args.srcdir, 'dist')
 
     with _handle_build_error():
+        if args.clean_outdir_artifacts:
+            clean_outdir_artifacts(outdir)
         if sdist_input:
             top_level = _validate_sdist_archive(args.srcdir)
             with _extract_sdist(args.srcdir, top_level) as extracted_srcdir:
