@@ -3,12 +3,12 @@ from __future__ import annotations
 import sys
 import tarfile
 
+from pathlib import Path
+
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     TarFile = tarfile.TarFile
 
 # Per https://peps.python.org/pep-0706/, the "data" filter will become
@@ -55,17 +55,17 @@ else:
 
 def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
     if member.ischr() or member.isblk() or member.isfifo():
-        msg = f"refusing to extract special device file {member.name!r}"
+        msg = f'refusing to extract special device file {member.name!r}'
         raise tarfile.TarError(msg)
     target = (base / member.name).resolve(strict=False)
     if not target.is_relative_to(base):
-        msg = f"refusing to extract {member.name!r}: path escapes destination"
+        msg = f'refusing to extract {member.name!r}: path escapes destination'
         raise tarfile.TarError(msg)
     if member.issym() or member.islnk():
         link_base = target.parent if member.issym() else base
         link_target = (link_base / member.linkname).resolve(strict=False)
         if not link_target.is_relative_to(base):
-            msg = f"refusing to extract {member.name!r}: link target escapes destination"
+            msg = f'refusing to extract {member.name!r}: link target escapes destination'
             raise tarfile.TarError(msg)
 
 
