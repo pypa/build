@@ -33,13 +33,13 @@ else:
 # manually before extraction.
 if (3, 10, 13) <= sys.version_info < (3, 11) or (3, 11, 5) <= sys.version_info < (3, 12) or sys.version_info >= (3, 12):
 
-    def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:  # pragma: no cover
+    def safe_extractall(tar: tarfile.TarFile, path: Path | str) -> None:  # pragma: no cover
         """Extract every member of ``tar`` into ``path`` via the PEP 706 ``data`` filter."""
         tar.extractall(path, filter='data')
 
 else:
 
-    def safe_extractall(tar: tarfile.TarFile, path: Path) -> None:  # pragma: no cover
+    def safe_extractall(tar: tarfile.TarFile, path: Path | str) -> None:  # pragma: no cover
         """Validate every member of ``tar``, then extract into ``path``.
 
         Reached on 3.10.0-3.10.12 / 3.11.0-3.11.4 where the stdlib ``data`` filter is missing. Device or special files,
@@ -47,7 +47,7 @@ else:
         any write hits the disk.
 
         """
-        base = path.resolve()
+        base = Path(path).resolve()
         for member in tar.getmembers():
             _validate_safe_member(member, base)
         tar.extractall(path)  # noqa: S202
