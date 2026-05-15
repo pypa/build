@@ -14,8 +14,7 @@ if TYPE_CHECKING:
 # the default in Python 3.14. The first series of releases with the filter
 # had a broken filter that could not process symlinks correctly.
 elif (
-    (3, 9, 18) <= sys.version_info < (3, 10)
-    or (3, 10, 13) <= sys.version_info < (3, 11)
+    (3, 10, 13) <= sys.version_info < (3, 11)
     or (3, 11, 5) <= sys.version_info < (3, 12)
     or (3, 12) <= sys.version_info < (3, 14)
 ):
@@ -32,8 +31,7 @@ else:
 # only reached on 3.10.0-3.10.12 / 3.11.0-3.11.4 and validates each member
 # manually before extraction.
 if (
-    (3, 9, 18) <= sys.version_info < (3, 10)
-    or (3, 10, 13) <= sys.version_info < (3, 11)
+    (3, 10, 13) <= sys.version_info < (3, 11)
     or (3, 11, 5) <= sys.version_info < (3, 12)
     or sys.version_info >= (3, 12)
 ):
