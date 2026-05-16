@@ -14,8 +14,7 @@ if TYPE_CHECKING:
 # the default in Python 3.14. The first series of releases with the filter
 # had a broken filter that could not process symlinks correctly.
 elif (
-    (3, 9, 18) <= sys.version_info < (3, 10)
-    or (3, 10, 13) <= sys.version_info < (3, 11)
+    (3, 10, 13) <= sys.version_info < (3, 11)
     or (3, 11, 5) <= sys.version_info < (3, 12)
     or (3, 12) <= sys.version_info < (3, 14)
 ):
@@ -31,12 +30,7 @@ else:
 # ship the stdlib ``data`` filter we delegate to it; the fallback branch is
 # only reached on 3.10.0-3.10.12 / 3.11.0-3.11.4 and validates each member
 # manually before extraction.
-if (
-    (3, 9, 18) <= sys.version_info < (3, 10)
-    or (3, 10, 13) <= sys.version_info < (3, 11)
-    or (3, 11, 5) <= sys.version_info < (3, 12)
-    or sys.version_info >= (3, 12)
-):
+if (3, 10, 13) <= sys.version_info < (3, 11) or (3, 11, 5) <= sys.version_info < (3, 12) or sys.version_info >= (3, 12):
 
     def safe_extractall(tar: tarfile.TarFile, path: str) -> None:  # pragma: no cover
         """Extract every member of ``tar`` into ``path`` via the PEP 706 ``data`` filter."""
