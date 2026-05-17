@@ -731,6 +731,9 @@ if __name__ == '__main__':  # pragma: no cover
 
 
 __all__ = [
+    'build_package',
+    'build_package_via_sdist',
+    'clean_outdir_artifacts',
     'main',
     'main_parser',
 ]
