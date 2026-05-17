@@ -1189,8 +1189,8 @@ def test_clean_outdir_artifacts_removes_tar_gz_and_whl(tmp_path: pathlib.Path, m
     assert outdir.exists()
     logged = sorted(call.args[0] for call in log.call_args_list)
     assert logged == [
-        'Removed stale artifact pkg-1.0-py3-none-any.whl',
-        'Removed stale artifact pkg-1.0.tar.gz',
+        f'Removed stale artifact {outdir / "pkg-1.0-py3-none-any.whl"}',
+        f'Removed stale artifact {outdir / "pkg-1.0.tar.gz"}',
     ]
     for call in log.call_args_list:
         assert call.kwargs == {'kind': ('step',)}
@@ -1202,6 +1202,20 @@ def test_clean_outdir_artifacts_missing_dir(tmp_path: pathlib.Path, mocker: Mock
     build.__main__.clean_outdir_artifacts(tmp_path / 'missing')
 
     log.assert_not_called()
+
+
+def test_clean_outdir_artifacts_relative_path(
+    tmp_path: pathlib.Path, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    outdir = pathlib.Path('dist')
+    outdir.mkdir()
+    (outdir / 'old-1.0.tar.gz').write_text('x', encoding='utf-8')
+    log = mocker.patch('build.__main__._ctx.log')
+
+    build.__main__.clean_outdir_artifacts(outdir)
+
+    log.assert_called_once_with('Removed stale artifact dist/old-1.0.tar.gz', kind=('step',))
 
 
 def test_clean_outdir_artifacts_empty_dir(tmp_path: pathlib.Path, mocker: MockerFixture) -> None:

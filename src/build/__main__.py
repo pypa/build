@@ -365,7 +365,7 @@ def clean_outdir_artifacts(outdir: StrPath) -> None:
         for entry in outdir_path.iterdir():
             if entry.name.endswith(('.tar.gz', '.whl')):
                 entry.unlink()
-                _ctx.log(f'Removed stale artifact {entry.name}', kind=('step',))
+                _ctx.log(f'Removed stale artifact {outdir_path / entry.name}', kind=('step',))
 
 
 def _build_metadata(
