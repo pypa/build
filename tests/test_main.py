@@ -1215,7 +1215,7 @@ def test_clean_outdir_artifacts_relative_path(
 
     build.__main__.clean_outdir_artifacts(outdir)
 
-    log.assert_called_once_with('Removed stale artifact dist/old-1.0.tar.gz', kind=('step',))
+    log.assert_called_once_with(f'Removed stale artifact {outdir / "old-1.0.tar.gz"}', kind=('step',))
 
 
 def test_clean_outdir_artifacts_empty_dir(tmp_path: pathlib.Path, mocker: MockerFixture) -> None:
