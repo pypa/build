@@ -1,0 +1,1 @@
+Skip ``test_uv_install_strips_pythonpath`` with missing ``uv`` - by :user:`mtelka`

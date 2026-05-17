@@ -37,6 +37,7 @@ def test_make_extra_environ_overrides_pythonpath() -> None:
         assert env._env_backend.scripts_dir in extra['PATH']
 
 
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_install_strips_pythonpath(
     mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
