@@ -29,6 +29,7 @@ import contextlib
 import contextvars
 import json
 import os
+import pathlib
 import platform
 import shutil
 import subprocess
@@ -360,15 +361,11 @@ def build_package_via_sdist(
 
 def clean_outdir_artifacts(outdir: StrPath) -> None:
     """Remove ``.tar.gz`` and ``.whl`` files from *outdir* so the build starts from a clean slate."""
-    outdir_path = os.fspath(outdir)
-    if os.path.isdir(outdir_path):
-        removed = False
-        for entry in os.listdir(outdir_path):
-            if entry.endswith(('.tar.gz', '.whl')):
-                os.remove(os.path.join(outdir_path, entry))
-                removed = True
-        if removed:
-            _ctx.log(f'Cleaned build artifacts from {outdir_path}', kind=('step',))
+    if (outdir_path := pathlib.Path(outdir)).is_dir():
+        for entry in outdir_path.iterdir():
+            if entry.name.endswith(('.tar.gz', '.whl')):
+                entry.unlink()
+                _ctx.log(f'Removed stale artifact {entry.name}', kind=('step',))
 
 
 def _build_metadata(

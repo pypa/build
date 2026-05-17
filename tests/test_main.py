@@ -1173,12 +1173,13 @@ def outdir_with_artifacts(tmp_path: pathlib.Path) -> pathlib.Path:
     return outdir
 
 
-def test_clean_outdir_artifacts_removes_tar_gz_and_whl(tmp_path: pathlib.Path) -> None:
+def test_clean_outdir_artifacts_removes_tar_gz_and_whl(tmp_path: pathlib.Path, mocker: MockerFixture) -> None:
     outdir = tmp_path / 'dist'
     outdir.mkdir()
     (outdir / 'pkg-1.0.tar.gz').write_text('x', encoding='utf-8')
     (outdir / 'pkg-1.0-py3-none-any.whl').write_text('x', encoding='utf-8')
     (outdir / 'keep.txt').write_text('x', encoding='utf-8')
+    log = mocker.patch('build.__main__._ctx.log')
 
     build.__main__.clean_outdir_artifacts(outdir)
 
@@ -1186,19 +1187,32 @@ def test_clean_outdir_artifacts_removes_tar_gz_and_whl(tmp_path: pathlib.Path) -
     assert not (outdir / 'pkg-1.0-py3-none-any.whl').exists()
     assert (outdir / 'keep.txt').exists()
     assert outdir.exists()
+    logged = sorted(call.args[0] for call in log.call_args_list)
+    assert logged == [
+        'Removed stale artifact pkg-1.0-py3-none-any.whl',
+        'Removed stale artifact pkg-1.0.tar.gz',
+    ]
+    for call in log.call_args_list:
+        assert call.kwargs == {'kind': ('step',)}
 
 
-def test_clean_outdir_artifacts_missing_dir(tmp_path: pathlib.Path) -> None:
+def test_clean_outdir_artifacts_missing_dir(tmp_path: pathlib.Path, mocker: MockerFixture) -> None:
+    log = mocker.patch('build.__main__._ctx.log')
+
     build.__main__.clean_outdir_artifacts(tmp_path / 'missing')
 
+    log.assert_not_called()
 
-def test_clean_outdir_artifacts_empty_dir(tmp_path: pathlib.Path) -> None:
+
+def test_clean_outdir_artifacts_empty_dir(tmp_path: pathlib.Path, mocker: MockerFixture) -> None:
     outdir = tmp_path / 'dist'
     outdir.mkdir()
+    log = mocker.patch('build.__main__._ctx.log')
 
     build.__main__.clean_outdir_artifacts(outdir)
 
     assert outdir.exists()
+    log.assert_not_called()
 
 
 def test_main_clean_outdir_artifacts_end_to_end(outdir_with_artifacts: pathlib.Path, package_test_setuptools: str) -> None:
