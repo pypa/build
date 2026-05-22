@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from io import BytesIO
-from os.path import join, realpath
 from pathlib import Path
 from tarfile import CHRTYPE, LNKTYPE, SYMTYPE, TarError, TarInfo
 from tarfile import open as tar_open
 
 import pytest
 
-from build._compat.tarfile import _validate_safe_member, _within_base, safe_extractall
+from build._compat.tarfile import _validate_safe_member, safe_extractall
 
 
 FileMember = Callable[[str, bytes], TarInfo]
@@ -38,51 +37,43 @@ def test_safe_extractall_extracts_clean_archive(
 
 
 def test_validate_safe_member_accepts_clean_file(tmp_path: Path, file_member: FileMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     _validate_safe_member(file_member('pkg/file.txt', b'x'), base)
 
 
 def test_validate_safe_member_rejects_path_traversal(tmp_path: Path, file_member: FileMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     with pytest.raises(TarError, match='escapes destination'):
         _validate_safe_member(file_member('../evil.txt', b'x'), base)
 
 
 def test_validate_safe_member_rejects_absolute_symlink(tmp_path: Path, link_member: LinkMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     with pytest.raises(TarError, match='link target escapes'):
         _validate_safe_member(link_member('pkg/evil', '/etc/passwd'), base)
 
 
 def test_validate_safe_member_rejects_relative_escape_symlink(tmp_path: Path, link_member: LinkMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     with pytest.raises(TarError, match='link target escapes'):
         _validate_safe_member(link_member('pkg/evil', '../../outside'), base)
 
 
 def test_validate_safe_member_accepts_safe_symlink(tmp_path: Path, link_member: LinkMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     _validate_safe_member(link_member('pkg/link', 'real.txt'), base)
 
 
 def test_validate_safe_member_rejects_escaping_hardlink(tmp_path: Path, link_member: LinkMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     with pytest.raises(TarError, match='link target escapes'):
         _validate_safe_member(link_member('pkg/evil', '../../outside', hard=True), base)
 
 
 def test_validate_safe_member_rejects_device_file(tmp_path: Path, device_member: DeviceMember) -> None:
-    base = realpath(str(tmp_path))
+    base = tmp_path.resolve()
     with pytest.raises(TarError, match='special device file'):
         _validate_safe_member(device_member('pkg/null'), base)
-
-
-def test_within_base_handles_value_error(tmp_path: Path) -> None:
-    base = str(tmp_path)
-    assert _within_base(base, base) is True
-    assert _within_base(join(base, 'inside'), base) is True
-    assert _within_base('/totally/elsewhere', base) is False
-    assert _within_base('relative', base) is False
 
 
 @pytest.fixture
