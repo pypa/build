@@ -2,8 +2,11 @@ name: check
 on:
   workflow_call:
 
+permissions: {}
+
 jobs:
   docs:
+    name: Build docs
     runs-on: ubuntu-latest
     env:
       PY_COLORS: 1

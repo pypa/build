@@ -3,10 +3,20 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-    cooldown:
-      default-days: 7
+      interval: "monthly"
     groups:
-      actions:
+      github-actions:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      pre-commit:
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 7
