@@ -10,13 +10,3 @@ updates:
           - "*"
     cooldown:
       default-days: 7
-  - package-ecosystem: "pre-commit"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    groups:
-      pre-commit:
-        patterns:
-          - "*"
-    cooldown:
-      default-days: 7
