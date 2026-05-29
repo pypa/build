@@ -9,6 +9,8 @@ on:
         description: Whether or not run the tests
         value: ${{ jobs.change-detection.outputs.run-tests || false }}
 
+permissions: {}
+
 jobs:
   change-detection:
     name: Identify source changes

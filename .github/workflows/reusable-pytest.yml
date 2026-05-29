@@ -2,8 +2,11 @@ name: pytest
 on:
   workflow_call:
 
+permissions: {}
+
 jobs:
   pytest:
+    name: Run tests
     runs-on: ${{ matrix.os }}-latest
     env:
       PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10 --reruns 5 --only-rerun subprocess.CalledProcessError"
@@ -59,18 +62,23 @@ jobs:
         if: matrix.tox-target == 'tox'
         shell: bash
         run: |
-          PYTHON_VERSION=${{ matrix.py }}
+          PYTHON_VERSION=$PYTHON_VERSION_RAW
           BASE=${PYTHON_VERSION%-*}
           tox -vv --notest -e $BASE
           tox -e $BASE --skip-pkg-install
+        env:
+          PYTHON_VERSION_RAW: ${{ matrix.py }}
 
       - name: Run minimum version test
         if: matrix.tox-target == 'min'
         shell: bash
         run: |
-          PYTHON_VERSION=${{ matrix.py }}
+          PYTHON_VERSION=$PYTHON_VERSION_RAW
           BASE=${PYTHON_VERSION%-*}
-          tox -e ${{ matrix.tox-target }}-$BASE
+          tox -e $TOX_TARGET-$BASE
+        env:
+          PYTHON_VERSION_RAW: ${{ matrix.py }}
+          TOX_TARGET: ${{ matrix.tox-target }}
 
       - name: Run path test
         if: matrix.tox-target == 'tox' && matrix.py == '3.10'

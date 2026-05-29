@@ -2,8 +2,11 @@ name: type
 on:
   workflow_call:
 
+permissions: {}
+
 jobs:
   type:
+    name: Type check
     runs-on: ubuntu-latest
     env:
       PY_COLORS: 1

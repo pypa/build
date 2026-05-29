@@ -13,14 +13,19 @@ on:
           - patch
         default: auto
 
+concurrency:
+  group: pre-release-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
   pre-release:
+    name: Pre-release
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: write
+      contents: write # to push release commit and tag
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -44,13 +49,16 @@ jobs:
           git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
           git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
       - name: Generate release commit and tag
-        run: uv tool run --with tox-uv tox r -e release -- --version "${{ inputs.bump }}" --no-push
+        run: uv tool run --with tox-uv tox r -e release -- --version "$BUMP" --no-push
+        env:
+          BUMP: ${{ inputs.bump }}
       - name: Verify docs build against the release commit
         run: uv tool run --with tox-uv tox r -e docs
       - name: Push release commit and tag
         run: |
-          git remote set-url origin "https://x-access-token:${GH_RELEASE_TOKEN}@github.com/${{ github.repository }}.git"
+          git remote set-url origin "https://x-access-token:${GH_RELEASE_TOKEN}@github.com/$GITHUB_REPOSITORY.git"
           git push origin HEAD:main
           git push origin "$(git describe --tags --abbrev=0)"
         env:
           GH_RELEASE_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}

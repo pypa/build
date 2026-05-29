@@ -37,6 +37,7 @@ jobs:
 
   # https://github.com/marketplace/actions/alls-green#why
   required-checks-pass: # This job does nothing and is only used for the branch protection
+    name: Required checks pass
     if: always()
 
     needs:
