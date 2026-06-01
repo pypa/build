@@ -394,8 +394,8 @@ def test_build_with_dep_on_console_script(
         backend-path = ["."]
 
         [project]
-        description = "Factory ⸻ A code generator 🏭"
-        authors = [{name = "Łukasz Langa"}]
+        description = "Factory ? A code generator ??"
+        authors = [{name = "Lukasz Langa"}]
         """
     )
     code = textwrap.dedent(
@@ -508,6 +508,18 @@ def test_metadata_path_no_prepare(tmp_dir: str, package_test_no_prepare: str) ->
     assert metadata is not None
 
     assert metadata['name'] == 'test-no-prepare'
+    assert metadata['Version'] == '1.0.0'
+
+
+def test_metadata_path_no_prepare_with_build_tag(tmp_dir: str, package_test_no_prepare_build_tag: str) -> None:
+    builder = build.ProjectBuilder(package_test_no_prepare_build_tag)
+
+    metadata = _importlib.metadata.PathDistribution(
+        pathlib.Path(builder.metadata_path(tmp_dir)),
+    ).metadata
+    assert metadata is not None
+
+    assert metadata['name'] == 'test-no-prepare-build-tag'
     assert metadata['Version'] == '1.0.0'
 
 
@@ -642,4 +654,43 @@ def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[
     )
     setup(tmp_path)
     with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
+        build.ProjectBuilder(tmp_path)
+
+
+def test_backend_path_must_be_inside_source_tree(tmp_path: pathlib.Path) -> None:
+    backend = tmp_path.parent / f'{tmp_path.name}-backend'
+    backend.mkdir()
+    (tmp_path / 'pyproject.toml').write_text(
+        textwrap.dedent("""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["../{backend}"]
+        """).format(backend=backend.name),
+        encoding='utf-8',
+    )
+
+    with pytest.raises(build.BuildSystemTableValidationError, match='inside the source tree'):
+        build.ProjectBuilder(tmp_path)
+
+
+def test_backend_path_symlink_must_stay_inside_source_tree(tmp_path: pathlib.Path) -> None:
+    backend = tmp_path.parent / f'{tmp_path.name}-backend'
+    backend.mkdir()
+    linked_backend = tmp_path / 'linked-backend'
+    try:
+        linked_backend.symlink_to(backend, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f'Cannot create symlinks: {exc}')
+    (tmp_path / 'pyproject.toml').write_text(
+        textwrap.dedent("""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["linked-backend"]
+        """),
+        encoding='utf-8',
+    )
+
+    with pytest.raises(build.BuildSystemTableValidationError, match='inside the source tree'):
         build.ProjectBuilder(tmp_path)

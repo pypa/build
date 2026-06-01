@@ -1,20 +1,11 @@
 from __future__ import annotations
 
-import re
-
 
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Set as AbstractSet
-
-
-_WHEEL_FILENAME_REGEX = re.compile(
-    r'(?P<distribution>.+)-(?P<version>.+)'
-    r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
-    r'-(?P<abi_tag>.+)-(?P<platform_tag>.+)\.whl'
-)
 
 
 def check_dependency(
@@ -64,5 +55,30 @@ def check_dependency(
                 yield from check_dependency(other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras)
 
 
-def parse_wheel_filename(filename: str) -> re.Match[str] | None:
-    return _WHEEL_FILENAME_REGEX.match(filename)
+def parse_wheel_filename(filename: str) -> dict[str, str] | None:
+    from packaging.utils import InvalidWheelFilename
+    from packaging.utils import parse_wheel_filename as validate_wheel_filename
+
+    try:
+        validate_wheel_filename(filename)
+    except InvalidWheelFilename:
+        return None
+
+    filename_without_extension = filename.removesuffix('.whl')
+    parts = filename_without_extension.split('-')
+    if len(parts) == 5:
+        distribution, version, python_tag, abi_tag, platform_tag = parts
+        build_tag = None
+    else:
+        distribution, version, build_tag, python_tag, abi_tag, platform_tag = parts
+
+    result = {
+        'distribution': distribution,
+        'version': version,
+        'python_tag': python_tag,
+        'abi_tag': abi_tag,
+        'platform_tag': platform_tag,
+    }
+    if build_tag:
+        result['build_tag'] = build_tag
+    return result
