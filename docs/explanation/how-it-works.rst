@@ -137,6 +137,16 @@ Use ``--no-isolation`` only when:
 - You're a Linux distribution packager providing dependencies externally
 - You understand the reproducibility implications
 
+Under ``--no-isolation`` build installs nothing; it instead validates that the declared dependencies are already present
+(use ``--skip-dependency-check`` to opt out), so a missing dependency is reported rather than silently producing a
+broken build. That check compares each declared requirement against the installed metadata of the *single interpreter
+running build*, discovered through ``importlib.metadata``. This explains two otherwise confusing outcomes, which the
+error message spells out per requirement (``wanted`` versus ``found``). A package can be present but reported missing
+because its installed version does not satisfy the specifier (``found`` shows that version). And a package you know is
+installed can read as ``not installed`` when it was installed for a *different* Python — a system or distribution
+package manager often targets an interpreter other than the one invoking build, and metadata is not shared across
+interpreters. The error names the interpreter checked so the mismatch is visible rather than left to guesswork.
+
 See :doc:`../how-to/basic-usage` for usage.
 
 ***********************************

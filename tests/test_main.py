@@ -23,6 +23,8 @@ import pytest_mock
 import build
 import build.__main__
 
+from build._compat import importlib as _importlib
+
 
 pytestmark = pytest.mark.contextvars
 
@@ -411,24 +413,47 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     build.__main__.shutil.rmtree.assert_called_once_with('temp-sdist-dir', ignore_errors=True)  # type: ignore[attr-defined]
 
 
-@pytest.mark.parametrize(
-    ('missing_deps', 'output'),
-    [
-        ([('foo',)], '\n\tfoo'),
-        ([('foo',), ('bar', 'baz', 'qux')], '\n\tfoo\n\tbar -> baz -> qux'),
-    ],
-)
-def test_build_no_isolation_with_check_deps(
-    mocker: pytest_mock.MockerFixture, package_test_flit: str, missing_deps: list[tuple[str, ...]], output: str
-) -> None:
+def test_build_no_isolation_check_deps_not_installed(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     error = mocker.patch('build.__main__._error')
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
-    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=missing_deps)
+    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[('foo>=1.0',)])
+    mocker.patch('build._compat.importlib.metadata.distribution', side_effect=_importlib.metadata.PackageNotFoundError)
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
     build_cmd.assert_called_with('sdist', '.', None)
-    error.assert_called_with('Missing dependencies:' + output)
+    error.assert_called_once_with(
+        f'Missing dependencies (checked against {sys.executable}):\n\tfoo>=1.0\n\t\twanted: >=1.0\n\t\tfound: not installed'
+    )
+
+
+def test_build_no_isolation_check_deps_version_mismatch(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+    error = mocker.patch('build.__main__._error')
+    mocker.patch('build.ProjectBuilder.build', return_value='something')
+    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[('bar>=2.0',)])
+    mocker.patch('build._compat.importlib.metadata.distribution', return_value=mocker.MagicMock(version='1.0.0'))
+
+    build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
+
+    error.assert_called_once_with(
+        f'Missing dependencies (checked against {sys.executable}):\n\tbar>=2.0\n\t\twanted: >=2.0\n\t\tfound: 1.0.0'
+    )
+
+
+def test_build_no_isolation_check_deps_chain_without_specifier(
+    mocker: pytest_mock.MockerFixture, package_test_flit: str
+) -> None:
+    error = mocker.patch('build.__main__._error')
+    mocker.patch('build.ProjectBuilder.build', return_value='something')
+    mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[('matplotlib>=2.2', 'kiwisolver')])
+    mocker.patch('build._compat.importlib.metadata.distribution', side_effect=_importlib.metadata.PackageNotFoundError)
+
+    build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
+
+    error.assert_called_once_with(
+        f'Missing dependencies (checked against {sys.executable}):'
+        '\n\tmatplotlib>=2.2 -> kiwisolver\n\t\twanted: any\n\t\tfound: not installed'
+    )
 
 
 @pytest.mark.parametrize(
