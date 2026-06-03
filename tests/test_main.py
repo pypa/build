@@ -97,7 +97,7 @@ def make_kwargs(
             ['--installer', 'uv'], (cwd, out), make_kwargs(installer='uv'), 'build_package_via_sdist', id='installer'
         ),
         pytest.param(
-            ['-C--flag1', '-C--flag2'],
+            ['-C--flag1=', '-C--flag2='],
             (cwd, out),
             make_kwargs(config_settings={'--flag1': '', '--flag2': ''}),
             'build_package_via_sdist',
@@ -763,6 +763,23 @@ def test_build_package_via_sdist_empty_distributions(mocker: pytest_mock.MockerF
 def test_parse_config_settings_triple_duplicate() -> None:
     result = build.__main__._parse_config_settings(['--flag=a', '--flag=b', '--flag=c'])
     assert result == {'--flag': ['a', 'b', 'c']}
+
+
+@pytest.mark.parametrize(
+    ('arg', 'value', 'warns'),
+    [
+        pytest.param('--flag', '', True, id='bare-key-warns'),
+        pytest.param('--flag=', '', False, id='empty-value'),
+        pytest.param('--flag=value', 'value', False, id='with-value'),
+    ],
+)
+def test_parse_config_settings_pip_compatibility(arg: str, value: str, warns: bool, recwarn: pytest.WarningsRecorder) -> None:
+    assert build.__main__._parse_config_settings([arg]) == {'--flag': value}
+
+    messages = [str(warning.message) for warning in recwarn]
+    config_warnings = [m for m in messages if "Config setting '--flag' was passed without a value" in m]
+    assert messages == config_warnings  # no unrelated warnings are emitted either way
+    assert bool(config_warnings) == warns
 
 
 def test_build_metadata_runner_without_extra_environ(
