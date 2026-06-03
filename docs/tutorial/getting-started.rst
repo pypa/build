@@ -165,6 +165,27 @@ against its contents, which catches missing files in the sdist:
 
 The wheel lands next to the sdist. Pass ``--outdir`` to write somewhere else.
 
+*******************************
+ Capturing the built filenames
+*******************************
+
+The filenames above change with every version and platform. When a script needs them, ask build to record them instead
+of guessing:
+
+.. code-block:: console
+
+    $ python -m build --json-output report.json
+    $ cat report.json
+    {
+      "version": 1,
+      "artifacts": [
+        {"distribution": "sdist", "name": "mypackage-0.1.0.tar.gz", "path": ".../dist/mypackage-0.1.0.tar.gz"},
+        {"distribution": "wheel", "name": "mypackage-0.1.0-py3-none-any.whl", "path": ".../dist/mypackage-0.1.0-py3-none-any.whl"}
+      ]
+    }
+
+Use ``-`` in place of a path to write the report to standard output. See :doc:`../reference/cli` for the full schema.
+
 ************
  Next steps
 ************

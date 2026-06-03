@@ -230,6 +230,23 @@ This:
 
 Useful for tools that need package metadata without building the full package.
 
+***************************
+ Reporting Built Artifacts
+***************************
+
+The backend settles a distribution's filename only when it produces the file: the name encodes the version, Python tag
+and platform, and the backend may emit a pure-Python wheel, a platform-specific wheel, or something in between.
+``--json-output`` reports the filenames once the build finishes rather than predicting them:
+
+.. code-block:: console
+
+    $ python -m build --json-output report.json
+
+build cannot hand the result back over stdout or stderr, because a PEP 517 backend may write to those streams and muddy
+any output a caller tries to parse. A caller-chosen file avoids that, and using stdout only on request with ``-`` keeps
+the report out of ``dist/``, where a ``dist/*`` glob like ``twine upload`` would pick it up. See :doc:`../reference/cli`
+for the report schema.
+
 ****************
  Error Handling
 ****************

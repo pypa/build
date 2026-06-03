@@ -1,0 +1,3 @@
+Add a ``--json-output PATH`` option that writes a JSON report of the built distributions, listing each filename and
+absolute path, to ``PATH`` or to standard output when ``PATH`` is ``-``. A script can read the artifact names from it
+instead of globbing ``dist/`` or parsing the build backend's output - by :user:`gaborbernat`.

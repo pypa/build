@@ -815,6 +815,51 @@ def test_metadata_with_distributions_error() -> None:
         build.__main__.main(['--metadata', '--sdist'])
 
 
+@pytest.fixture
+def mock_build(mocker: pytest_mock.MockerFixture) -> None:
+    built = ['test_pkg-1.0.0.tar.gz', 'test_pkg-1.0.0-py3-none-any.whl']
+    for hook in ('build_package', 'build_package_via_sdist'):
+        mocker.patch.object(
+            build.__main__,
+            hook,
+            new=mocker.create_autospec(getattr(build.__main__, hook), return_value=built),
+        )
+
+
+@pytest.mark.usefixtures('mock_build')
+def test_json_output_to_file(tmp_path: pathlib.Path) -> None:
+    report_path = tmp_path / 'report.json'
+    outdir = tmp_path / 'dist'
+    build.__main__.main([str(tmp_path), '-n', '-o', str(outdir), '--json-output', str(report_path)])
+
+    assert json.loads(report_path.read_text(encoding='utf-8')) == {
+        'version': 1,
+        'artifacts': [
+            {'distribution': 'sdist', 'name': 'test_pkg-1.0.0.tar.gz', 'path': str(outdir / 'test_pkg-1.0.0.tar.gz')},
+            {
+                'distribution': 'wheel',
+                'name': 'test_pkg-1.0.0-py3-none-any.whl',
+                'path': str(outdir / 'test_pkg-1.0.0-py3-none-any.whl'),
+            },
+        ],
+    }
+
+
+@pytest.mark.usefixtures('mock_build')
+def test_json_output_to_stdout(tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    build.__main__.main([str(tmp_path), '-n', '--json-output', '-'])
+
+    captured = capsys.readouterr()
+    assert [artifact['distribution'] for artifact in json.loads(captured.out)['artifacts']] == ['sdist', 'wheel']
+    assert 'Successfully built' not in captured.out
+    assert 'Successfully built' in ANSI_STRIP.sub('', captured.err)
+
+
+def test_json_output_with_metadata_error() -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--metadata', '--json-output', '-'])
+
+
 def test_entrypoint(mocker: pytest_mock.MockerFixture) -> None:
     main = mocker.patch('build.__main__.main')
     build.__main__.entrypoint()

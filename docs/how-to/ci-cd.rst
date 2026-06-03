@@ -226,6 +226,20 @@ Combine building and publishing in a release workflow using the `PyPA publish ac
 
           - uses: pypa/gh-action-pypi-publish@release/v1
 
+Capturing built filenames
+=========================
+
+When a later step needs the exact filenames (which encode the version, Python tag and platform), reach for
+``--json-output`` instead of a glob. It skips stale artifacts and does not depend on the build backend's output:
+
+.. code-block:: console
+
+    $ python -m build --json-output report.json
+    $ twine upload $(jq -r '.artifacts[].path' report.json)
+    $ pip install "$(jq -r '.artifacts[] | select(.distribution == "wheel") | .path' report.json)"
+
+Write the report outside ``dist/`` so tools that glob ``dist/*``, such as ``twine``, leave it alone.
+
 ***********
  GitLab CI
 ***********

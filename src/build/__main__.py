@@ -518,6 +518,12 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with ``--sdist`` or ``--wheel``",
     )
+    build_group.add_argument(
+        '--json-output',
+        help='write a machine-readable JSON report of the built distributions to the given path '
+        '(use ``-`` for standard output).  Cannot be used in conjunction with ``--metadata``',
+        metavar='PATH',
+    )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
     config_exclusive_group.add_argument(
         '--config-setting',
@@ -624,7 +630,34 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )
-            _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
+            # keep stdout clean when the JSON report is piped through it
+            summary_file = sys.stderr if args.json_output == '-' else None
+            _cprint('{bold}{green}Successfully built {}{reset}', artifact_list, file=summary_file)
+        if args.json_output is not None:
+            _write_json_output(args.json_output, built, outdir)
+
+
+def _write_json_output(path: str, built: Sequence[str], outdir: StrPath) -> None:
+    report = json.dumps(
+        {
+            'version': 1,
+            'artifacts': [
+                {
+                    'distribution': 'wheel' if name.endswith('.whl') else 'sdist',
+                    'name': name,
+                    'path': os.path.abspath(os.path.join(outdir, name)),
+                }
+                for name in built
+            ],
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+    if path == '-':
+        sys.stdout.write(report + '\n')
+    else:
+        with open(path, 'w', encoding='utf-8') as report_file:
+            report_file.write(report + '\n')
 
 
 def _resolve_config_settings(args: argparse.Namespace) -> dict[str, Any]:
@@ -644,6 +677,8 @@ def _resolve_config_settings(args: argparse.Namespace) -> dict[str, Any]:
 def _select_build(parser: argparse.ArgumentParser, args: argparse.Namespace, *, sdist_input: bool) -> partial[list[str]]:
     if args.metadata and args.distributions:
         parser.error('--metadata: not allowed with --sdist or --wheel')
+    if args.metadata and args.json_output is not None:
+        parser.error('--metadata: not allowed with --json-output')
     if sdist_input and args.distributions and 'sdist' in args.distributions:
         parser.error(
             'cannot build a source distribution from a source distribution; '
