@@ -56,6 +56,7 @@ class BuildKwargs(TypedDict):
     skip_dependency_check: bool
     dependency_constraints_txt: str | None
     installer: str | None
+    env_dir: str | None
 
 
 def make_kwargs(
@@ -66,6 +67,7 @@ def make_kwargs(
     skip_dependency_check: bool = False,
     dependency_constraints_txt: str | None = None,
     installer: str | None = None,
+    env_dir: str | None = None,
 ) -> BuildKwargs:
     return {
         'distributions': distributions if distributions is not None else ['wheel'],
@@ -74,6 +76,7 @@ def make_kwargs(
         'skip_dependency_check': skip_dependency_check,
         'dependency_constraints_txt': dependency_constraints_txt,
         'installer': installer,
+        'env_dir': env_dir,
     }
 
 
@@ -141,6 +144,13 @@ def make_kwargs(
             'build_package_via_sdist',
             id='dependency-constraints-txt',
         ),
+        pytest.param(
+            ['--env-dir', 'build-env'],
+            (cwd, out),
+            make_kwargs(env_dir='build-env'),
+            'build_package_via_sdist',
+            id='env-dir',
+        ),
     ],
 )
 def test_parse_args(
@@ -162,6 +172,21 @@ def test_parse_args(
     else:  # pragma: no cover
         msg = f'Unknown hook {hook}'
         raise ValueError(msg)
+
+
+def test_env_dir_flag_forwarded(mocker: pytest_mock.MockerFixture) -> None:
+    build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
+
+    build.__main__.main(['--env-dir', 'build-env'])
+
+    assert build_package_via_sdist.call_args.kwargs['env_dir'] == 'build-env'
+
+
+def test_env_dir_conflicts_with_no_isolation(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--env-dir', 'build-env', '--no-isolation'])
+
+    assert '--env-dir: not allowed with --no-isolation' in capsys.readouterr().err
 
 
 def test_prog() -> None:
@@ -238,10 +263,10 @@ def test_build_package_passes_config_settings_to_build(mocker: pytest_mock.Mocke
     build_cmd.assert_has_calls(
         [
             unittest.mock.call(
-                False, package_test_flit, '.', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv'
+                False, package_test_flit, '.', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv', None
             ),
             unittest.mock.call(
-                False, package_test_flit, '.', 'wheel', config_settings, True, pathlib.Path('constraints.txt'), 'uv'
+                False, package_test_flit, '.', 'wheel', config_settings, True, pathlib.Path('constraints.txt'), 'uv', None
             ),
         ]
     )
@@ -279,7 +304,9 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     assert extractall.call_args.args[0] == 'temp-sdist-dir'
     build_cmd.assert_has_calls(
         [
-            unittest.mock.call(False, 'src', 'dist', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv'),
+            unittest.mock.call(
+                False, 'src', 'dist', 'sdist', config_settings, True, pathlib.Path('constraints.txt'), 'uv', None
+            ),
             unittest.mock.call(
                 False,
                 os.path.join('temp-sdist-dir', 'demo-1.0.0'),
@@ -289,6 +316,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
                 True,
                 pathlib.Path('constraints.txt'),
                 'uv',
+                None,
             ),
         ]
     )

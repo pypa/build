@@ -43,7 +43,7 @@ from packaging.utils import canonicalize_name
 from . import _ctx
 from ._compat.importlib import metadata as importlib_metadata
 from ._ctx import run_subprocess
-from ._exceptions import FailedProcessError
+from ._exceptions import BuildException, FailedProcessError
 from ._util import check_dependency
 
 
@@ -111,12 +111,24 @@ class DefaultIsolatedEnv(IsolatedEnv):
         self,
         *,
         installer: Installer = 'pip',
+        path: str | None = None,
     ) -> None:
         self.installer: Installer = installer
+        self._requested_path = path
 
     def __enter__(self) -> Self:
-        try:
+        if self._requested_path is None:
             path = tempfile.mkdtemp(prefix='build-env-')
+        else:
+            path = self._requested_path
+            if os.path.isdir(path):
+                with os.scandir(path) as entries:
+                    if next(entries, None) is not None:
+                        msg = f'Build environment location is not empty: {path}'
+                        raise BuildException(msg)
+            os.makedirs(path, exist_ok=True)
+
+        try:
             # Call ``realpath`` to prevent spurious warning from being emitted
             # that the venv location has changed on Windows for the venv impl.
             # The username is DOS-encoded in the output of tempfile - the location is the same
@@ -143,7 +155,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
         return self
 
     def __exit__(self, *args: object) -> None:
-        shutil.rmtree(self._path, ignore_errors=True)
+        # A temporary location is always cleaned up. A caller-specified location is kept when the build fails so
+        # its environment can be inspected, but removed on success so the same location can be reused.
+        if self._requested_path is None or args[0] is None:
+            shutil.rmtree(self._path, ignore_errors=True)
 
     @property
     def path(self) -> str:

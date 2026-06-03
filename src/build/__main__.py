@@ -88,6 +88,7 @@ if TYPE_CHECKING:
         dependency_constraints_txt: str | None
         skip_dependency_check: bool
         sdist_extract_dir: str | None
+        env_dir: str | None
 
 
 _COLORS = {
@@ -197,10 +198,11 @@ def _bootstrap_build_env(
     skip_dependency_check: bool,
     dependency_constraints_txt: os.PathLike[str] | None,
     installer: _env.Installer,
+    env_dir: str | None = None,
     runner: SubprocessRunner | None = None,
 ) -> Iterator[ProjectBuilder]:
     if isolation:
-        with DefaultIsolatedEnv(installer=installer) as env:
+        with DefaultIsolatedEnv(installer=installer, path=env_dir) as env:
             make_builder = partial(ProjectBuilder.from_isolated_env, env, srcdir)
             if runner:
                 make_builder = partial(make_builder, runner=runner)
@@ -252,6 +254,7 @@ def _build(
     skip_dependency_check: bool,
     dependency_constraints_txt: os.PathLike[str] | None,
     installer: _env.Installer,
+    env_dir: str | None = None,
 ) -> str:
     with _bootstrap_build_env(
         isolation,
@@ -261,6 +264,7 @@ def _build(
         skip_dependency_check,
         dependency_constraints_txt,
         installer,
+        env_dir,
         pyproject_hooks.quiet_subprocess_runner if _ctx.verbosity < 0 else None,
     ) as builder:
         return builder.build(distribution, outdir, config_settings)
@@ -311,6 +315,7 @@ def build_package(
     skip_dependency_check: bool = False,
     dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
+    env_dir: str | None = None,
 ) -> list[str]:
     """
     Run the build process.
@@ -321,6 +326,7 @@ def build_package(
     :param config_settings: Configuration settings to be passed to the backend
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
+    :param env_dir: Location of the isolated build environment (a temporary directory is used when not set)
     """
     built: list[str] = []
     for distribution in distributions:
@@ -333,6 +339,7 @@ def build_package(
             skip_dependency_check,
             dependency_constraints_txt,
             installer,
+            env_dir,
         )
         built.append(os.path.basename(out))
     return built
@@ -348,6 +355,7 @@ def build_package_via_sdist(
     dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
     sdist_extract_dir: StrPath | None = None,
+    env_dir: str | None = None,
 ) -> list[str]:
     """
     Build a sdist and then the specified distributions from it.
@@ -360,13 +368,22 @@ def build_package_via_sdist(
     :param skip_dependency_check: Do not perform the dependency check
     :param sdist_extract_dir: Directory to extract the intermediate sdist into; a temporary directory is used and
         removed afterwards when ``None``
+    :param env_dir: Location of the isolated build environment (a temporary directory is used when not set)
     """
     if 'sdist' in distributions:
         msg = 'Only binary distributions are allowed but sdist was specified'
         raise ValueError(msg)
 
     sdist = _build(
-        isolation, srcdir, outdir, 'sdist', config_settings, skip_dependency_check, dependency_constraints_txt, installer
+        isolation,
+        srcdir,
+        outdir,
+        'sdist',
+        config_settings,
+        skip_dependency_check,
+        dependency_constraints_txt,
+        installer,
+        env_dir,
     )
 
     sdist_name = os.path.basename(sdist)
@@ -384,6 +401,7 @@ def build_package_via_sdist(
                     skip_dependency_check,
                     dependency_constraints_txt,
                     installer,
+                    env_dir,
                 )
                 built.append(os.path.basename(out))
     return [sdist_name, *built]
@@ -398,6 +416,7 @@ def _build_metadata(
     skip_dependency_check: bool = False,
     dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
+    env_dir: str | None = None,
 ) -> list[str]:
     import packaging.metadata
 
@@ -416,6 +435,7 @@ def _build_metadata(
             skip_dependency_check,
             dependency_constraints_txt,
             installer,
+            env_dir,
             runner=run_subprocess,
         ) as builder,
         tempfile.TemporaryDirectory() as tempdir,
@@ -592,6 +612,12 @@ def main_parser() -> argparse.ArgumentParser:
         'Build dependencies must be installed separately when this option is used',
     )
     install_group.add_argument(
+        '--env-dir',
+        help='create the isolated build environment at this location instead of a temporary directory. The location '
+        'must be empty; it is removed on success and kept on failure so it can be inspected',
+        metavar='PATH',
+    )
+    install_group.add_argument(
         '--dependency-constraints-txt',
         help='constrain build dependencies using a constraints.txt when installing dependencies',
         metavar='PATH',
@@ -640,6 +666,9 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         parser.prog = prog
     args = cast('_Args', parser.parse_args(cli_args))
 
+    if args.env_dir is not None and args.no_isolation:
+        parser.error('--env-dir: not allowed with --no-isolation')
+
     _setup_cli(verbosity=args.verbosity)
 
     sdist_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.tar.gz')
@@ -650,6 +679,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         skip_dependency_check=args.skip_dependency_check,
         dependency_constraints_txt=args.dependency_constraints_txt,
         installer=args.installer,
+        env_dir=args.env_dir,
     )
 
     if args.outdir is not None:

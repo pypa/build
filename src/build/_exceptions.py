@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class BuildException(Exception):
     """
-    Exception raised by :class:`build.ProjectBuilder`.
+    Exception raised by ``build`` when a build cannot proceed.
     """
 
 

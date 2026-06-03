@@ -239,15 +239,14 @@ On Windows, use ``TEMP``:
     $ set TEMP=C:\path\to\custom\tmp
     $ python -m build
 
-The temporary directory persists after build completes, allowing you to inspect build artifacts, logs, and the isolated
-environment for debugging. By default, build uses the system's default temporary directory and cleans it up after the
-build.
+These variables only change *where* build creates the temporary directory. build still removes its environment when the
+build ends. To pin the environment to a stable path, or to keep it for inspection, use the ``--env-dir`` option instead.
 
 **Common use cases**:
 
-- **Debugging**: Keep temp directory to inspect build logs
 - **Disk space**: Use a different filesystem with more available space
 - **Performance**: Use faster storage (e.g., tmpfs on Linux)
+- **Restricted filesystems**: Point at the writable part of a read-only container
 
 ``TMPDIR`` only relocates the base directory; build still appends a random suffix, so the extraction path differs on
 every run. For compiler caches such as ``ccache`` or ``sccache``, which key on the source path, that random suffix is a
