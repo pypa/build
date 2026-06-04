@@ -25,8 +25,8 @@ __lazy_modules__ = [
     'tempfile',
     'textwrap',
     'traceback',
-    'typing',
     'warnings',
+    'zipfile',
 ]
 
 import argparse
@@ -43,6 +43,7 @@ import tempfile
 import textwrap
 import traceback
 import warnings
+import zipfile
 
 from functools import partial
 from tarfile import TarError
@@ -422,7 +423,9 @@ def _build_metadata(
     installer: _env.Installer = 'pip',
     env_dir: str | None = None,
 ) -> list[str]:
-    import packaging.metadata
+    if os.path.isfile(srcdir) and os.fspath(srcdir).lower().endswith('.whl'):
+        _print_metadata(_wheel_metadata(srcdir))
+        return []
 
     def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None) -> None:
         env = os.environ.copy()
@@ -448,12 +451,27 @@ def _build_metadata(
             'rb',
         ) as metadata_file,
     ):
-        valid_metadata, _ = packaging.metadata.parse_email(metadata_file.read())
+        _print_metadata(metadata_file.read())
+
+    return []
+
+
+def _wheel_metadata(wheel: StrPath) -> bytes:
+    with zipfile.ZipFile(wheel) as archive:
+        names = [name for name in archive.namelist() if name.count('/') == 1 and name.endswith('.dist-info/METADATA')]
+        if len(names) != 1:
+            msg = f'{os.fspath(wheel)!r} is not a valid wheel: expected one .dist-info/METADATA, found {len(names)}'
+            raise BuildException(msg)
+        return archive.read(names[0])
+
+
+def _print_metadata(raw_metadata: bytes) -> None:
+    import packaging.metadata
+
+    valid_metadata, _ = packaging.metadata.parse_email(raw_metadata)
     print(  # noqa: T201
         json.dumps(valid_metadata, ensure_ascii=False, indent=2),
     )
-
-    return []
 
 
 def main_parser() -> argparse.ArgumentParser:
@@ -510,7 +528,8 @@ def main_parser() -> argparse.ArgumentParser:
         type=str,
         nargs='?',
         default=os.getcwd(),
-        help='source directory or .tar.gz source distribution (defaults to the current working directory)',
+        help='source directory, .tar.gz source distribution, or (with --metadata) a .whl to read metadata from '
+        '(defaults to the current working directory)',
     )
 
     global_group = parser.add_argument_group('global options')
@@ -578,7 +597,8 @@ def main_parser() -> argparse.ArgumentParser:
     build_group.add_argument(
         '--metadata',
         action='store_true',
-        help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with ``--sdist`` or ``--wheel``",
+        help="print out a wheel's metadata in JSON format, building it first unless the source argument is already a "
+        '.whl. Cannot be used in conjunction with ``--sdist`` or ``--wheel``',
     )
     build_group.add_argument(
         '--report',
@@ -687,8 +707,9 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     _setup_cli(verbosity=args.verbosity)
 
     sdist_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.tar.gz')
+    wheel_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.whl')
     build = partial(
-        _select_build(parser, args, sdist_input=sdist_input),
+        _select_build(parser, args, sdist_input=sdist_input, wheel_input=wheel_input),
         config_settings=_resolve_config_settings(args),
         isolation=not args.no_isolation,
         skip_dependency_check=args.skip_dependency_check,
@@ -699,7 +720,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     if args.outdir is not None:
         outdir = args.outdir
-    elif sdist_input:
+    elif sdist_input or wheel_input:
         outdir = os.path.dirname(os.path.abspath(args.srcdir))
     else:
         outdir = os.path.join(args.srcdir, 'dist')
@@ -781,11 +802,15 @@ def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
     return {}
 
 
-def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool) -> partial[list[str]]:
+def _select_build(
+    parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool, wheel_input: bool
+) -> partial[list[str]]:
     if args.report and args.metadata:
         parser.error('--report: not allowed with --metadata')
     if args.output_format is not None and args.report is None:
         parser.error('--output-format: only valid together with --report')
+    if wheel_input and not args.metadata:
+        parser.error('a wheel can only be used with --metadata, to read its metadata; it cannot be built from')
     if args.metadata and args.distributions:
         parser.error('--metadata: not allowed with --sdist or --wheel')
     if sdist_input and args.distributions and 'sdist' in args.distributions:

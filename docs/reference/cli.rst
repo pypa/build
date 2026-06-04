@@ -129,6 +129,14 @@ The schema is:
 directory, mirroring ``--outdir``), ``kind`` (``sdist`` or ``wheel``), ``size`` in bytes, and ``hashes`` keyed by
 algorithm. ``--report`` cannot be combined with ``--metadata``.
 
+To inspect a wheel listed in the report, pass its path straight to ``--metadata``: when the source argument is a
+``.whl`` file, build reads ``METADATA`` from the archive and prints it as JSON instead of building anything.
+
+.. code-block:: console
+
+    $ python -m build --report dist/report.json
+    $ python -m build --metadata "$(jq -r '.artifacts[] | select(.kind=="wheel") | .path' dist/report.json)"
+
 ************************
  Alternative CLI Script
 ************************

@@ -14,6 +14,7 @@ import sys
 import tarfile
 import unittest.mock
 import venv
+import zipfile
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, TypedDict
@@ -1316,3 +1317,37 @@ def test_report_arg_errors(cli_args: list[str], err_msg: str, capsys: pytest.Cap
         build.__main__.main(cli_args)
 
     assert err_msg in capsys.readouterr().err
+
+
+@pytest.fixture
+def wheel(tmp_path: pathlib.Path) -> pathlib.Path:
+    path = tmp_path / 'demo-1.0.0-py3-none-any.whl'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr('demo-1.0.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0.0\n\n')
+    return path
+
+
+def test_metadata_read_from_wheel(wheel: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    build.__main__.main([str(wheel), '--metadata'])
+
+    metadata = json.loads(capsys.readouterr().out)
+    assert metadata['name'] == 'demo'
+    assert metadata['version'] == '1.0.0'
+
+
+def test_wheel_input_requires_metadata(wheel: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main([str(wheel)])
+
+    assert 'a wheel can only be used with --metadata' in capsys.readouterr().err
+
+
+def test_metadata_from_wheel_without_dist_info(tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    path = tmp_path / 'broken-1.0.0-py3-none-any.whl'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr('demo/__init__.py', '')
+
+    with pytest.raises(SystemExit):
+        build.__main__.main([str(path), '--metadata'])
+
+    assert 'is not a valid wheel' in capsys.readouterr().err
