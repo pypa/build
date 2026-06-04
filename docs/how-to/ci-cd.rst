@@ -483,6 +483,29 @@ Run the build environment:
 
     $ tox -e build
 
+*****************************
+ Discovering Built Artifacts
+*****************************
+
+Artifact filenames are dynamic, so pipelines that need to act on the exact files build produced (upload, sign, compute
+digests) should not guess or glob them. Pass ``--report`` to capture a machine-readable list and read it back with a
+JSON tool such as ``jq``:
+
+.. code-block:: yaml
+
+    - name: Build and upload
+      run: |
+        python -m build --report dist/report.json
+        twine upload $(jq -r '.artifacts[].path' dist/report.json)
+
+The report also includes each artifact's size and SHA-256 hash, useful for emitting provenance or checksums:
+
+.. code-block:: console
+
+    $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' dist/report.json
+
+See :doc:`../reference/cli` for the full report schema.
+
 ******************
  Verifying Builds
 ******************

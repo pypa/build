@@ -191,10 +191,21 @@ earlier compilations; see :doc:`../how-to/basic-usage`.
 ****************************
 
 If you install the build dependencies yourself and build with ``--no-isolation``, build first checks that every declared
-dependency is present in the interpreter you are running. When something is missing it stops with a ``Missing
+dependency is present in the interpreter you are running. When something is missing it stops with an ``Unmet
 dependencies`` error that names the interpreter it checked and, for each requirement, the version it ``wanted`` against
 the version it ``found`` - so you can tell "not installed" apart from "installed, but the wrong version". See
 :doc:`../how-to/troubleshooting` for how to read it.
+
+*******************************
+ Recording what build produced
+*******************************
+
+If a script or CI job needs the exact filenames build produced, add ``--report`` to write them to a JSON file instead of
+parsing the output:
+
+.. code-block:: console
+
+    $ python -m build --report dist/report.json
 
 ************
  Next steps

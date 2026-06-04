@@ -86,6 +86,49 @@ so they reflect what was installed rather than the specifiers in ``pyproject.tom
 build reports this for isolated builds only; with ``--no-isolation`` build installs nothing, so inspect the active
 interpreter with your installer instead (for example ``pip list``).
 
+**************
+ Build Report
+**************
+
+``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
+names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
+refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
+standard output, because the build backend may write to ``stdout``/``stderr`` too. ``--output-format`` selects the
+serialization; ``json`` is the only value today.
+
+.. code-block:: console
+
+    $ python -m build --report dist/report.json
+    $ twine upload $(jq -r '.artifacts[].path' dist/report.json)
+
+The schema is:
+
+.. code-block:: json
+
+    {
+      "version": "1.0",
+      "artifacts": [
+        {
+          "name": "mypackage-0.1.0.tar.gz",
+          "path": "dist/mypackage-0.1.0.tar.gz",
+          "kind": "sdist",
+          "size": 4096,
+          "hashes": {"sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+        },
+        {
+          "name": "mypackage-0.1.0-py3-none-any.whl",
+          "path": "dist/mypackage-0.1.0-py3-none-any.whl",
+          "kind": "wheel",
+          "size": 2048,
+          "hashes": {"sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+        }
+      ]
+    }
+
+``version`` is the schema version. Each artifact lists its ``name`` (basename), ``path`` (relative to the current
+directory, mirroring ``--outdir``), ``kind`` (``sdist`` or ``wheel``), ``size`` in bytes, and ``hashes`` keyed by
+algorithm. ``--report`` cannot be combined with ``--metadata``.
+
 ************************
  Alternative CLI Script
 ************************

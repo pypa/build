@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -1239,3 +1240,79 @@ def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mock
     build.__main__.main([str(archive)])
 
     via_sdist.assert_called_once()
+
+
+@pytest.fixture
+def built_dist(tmp_path: pathlib.Path) -> tuple[pathlib.Path, list[str]]:
+    outdir = tmp_path / 'dist'
+    outdir.mkdir()
+    names = ['test_pkg-1.0.0.tar.gz', 'test_pkg-1.0.0-py3-none-any.whl']
+    for name in names:
+        (outdir / name).write_bytes(f'contents of {name}'.encode())
+    return outdir, names
+
+
+@pytest.mark.parametrize(
+    'extra_args',
+    [
+        pytest.param([], id='report'),
+        pytest.param(['--output-format', 'json'], id='report-with-output-format'),
+    ],
+)
+def test_report_written(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+    extra_args: list[str],
+) -> None:
+    outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+    report = tmp_path / 'report.json'
+
+    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report), *extra_args])
+
+    payload = json.loads(report.read_text(encoding='utf-8'))
+    assert payload['version'] == '1.0'
+    assert [artifact['name'] for artifact in payload['artifacts']] == names
+    for artifact, name in zip(payload['artifacts'], names, strict=True):
+        path = outdir / name
+        assert artifact['path'] == os.path.join(str(outdir), name)
+        assert artifact['kind'] == ('sdist' if name.endswith('.tar.gz') else 'wheel')
+        assert artifact['size'] == path.stat().st_size
+        assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def test_write_report_is_atomic(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'report.json'
+
+    build.__main__._write_report(report, str(outdir), names)
+
+    assert not list(tmp_path.glob('*.tmp'))
+    assert not list(outdir.glob('*.tmp'))
+
+
+def test_write_report_cleans_tmp_on_failure(
+    mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]
+) -> None:
+    outdir, names = built_dist
+    mocker.patch('build.__main__.os.replace', side_effect=OSError('boom'))
+
+    with pytest.raises(OSError, match='boom'):
+        build.__main__._write_report(tmp_path / 'report.json', str(outdir), names)
+
+    assert not list(tmp_path.glob('*.tmp'))
+
+
+@pytest.mark.parametrize(
+    ('cli_args', 'err_msg'),
+    [
+        pytest.param(['--report', 'r.json', '--metadata'], '--report: not allowed with --metadata', id='report-with-metadata'),
+        pytest.param(['--output-format', 'json'], '--output-format: only valid together with --report', id='format-no-report'),
+    ],
+)
+def test_report_arg_errors(cli_args: list[str], err_msg: str, capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(cli_args)
+
+    assert err_msg in capsys.readouterr().err

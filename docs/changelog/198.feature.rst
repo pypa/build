@@ -1,0 +1,3 @@
+Add ``--report PATH`` to write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256
+hash), so scripts and CI can refer to the produced files without globbing. The format is selected with
+``--output-format`` (currently only ``json``) - by :user:`gaborbernat`

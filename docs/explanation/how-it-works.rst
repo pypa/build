@@ -389,6 +389,20 @@ However, full reproducibility also requires pinned backend versions in ``require
 (some backends support ``SOURCE_DATE_EPOCH``), consistent Python version, and consistent platform for platform-specific
 wheels.
 
+***************
+ Build Reports
+***************
+
+The names of the distribution files build produces are not known ahead of time. They encode the version and, for wheels,
+the Python, ABI and platform tags. Downstream steps such as uploading, signing, or recording checksums need a way to
+learn what was built.
+
+``--report`` writes this information to a JSON file. It uses a file rather than ``stdout`` because the build backend
+runs as a subprocess that inherits build's streams and may print to them, so a consumer could not separate the report
+from backend chatter on ``stdout``. A file build controls keeps the machine-readable output apart from the human- and
+backend-facing log. Build writes the report only after the build succeeds and replaces it atomically, so a consumer
+never reads a half-written file. See :doc:`../reference/cli` for the schema.
+
 ****************************
  Performance Considerations
 ****************************

@@ -11,6 +11,7 @@ __lazy_modules__ = [
     'build._util',
     'build.env',
     'functools',
+    'hashlib',
     'json',
     'os',
     'packaging',
@@ -31,6 +32,7 @@ __lazy_modules__ = [
 import argparse
 import contextlib
 import contextvars
+import hashlib
 import json
 import os
 import platform
@@ -45,7 +47,7 @@ import warnings
 from functools import partial
 from tarfile import TarError
 from tarfile import open as tar_open
-from typing import NoReturn, TextIO, cast
+from typing import NoReturn, TextIO, TypedDict, cast
 
 import pyproject_hooks
 
@@ -89,6 +91,8 @@ if TYPE_CHECKING:
         skip_dependency_check: bool
         sdist_extract_dir: str | None
         env_dir: str | None
+        report: str | None
+        output_format: str | None
 
 
 _COLORS = {
@@ -576,6 +580,17 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with ``--sdist`` or ``--wheel``",
     )
+    build_group.add_argument(
+        '--report',
+        help='write a machine-readable report of the built artifacts (name, path, kind, size and SHA-256 hash) to PATH. '
+        'Cannot be used together with ``--metadata``',
+        metavar='PATH',
+    )
+    build_group.add_argument(
+        '--output-format',
+        choices=['json'],
+        help='format of the ``--report`` file (defaults to json); only valid together with ``--report``',
+    )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
     config_exclusive_group.add_argument(
         '--config-setting',
@@ -696,11 +711,60 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
                 built = build(extracted_srcdir, outdir)
         else:
             built = build(args.srcdir, outdir)
+        if args.report is not None:
+            _write_report(args.report, outdir, built)
         if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )
             _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
+
+
+class _ArtifactReport(TypedDict):
+    name: str
+    path: str
+    kind: str
+    size: int
+    hashes: dict[str, str]
+
+
+class _BuildReport(TypedDict):
+    version: str
+    artifacts: list[_ArtifactReport]
+
+
+def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> None:
+    report: _BuildReport = {
+        'version': '1.0',
+        'artifacts': [_describe_artifact(os.path.join(outdir, name), name) for name in artifacts],
+    }
+    data = json.dumps(report, indent=2) + '\n'
+
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), suffix='.tmp')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
+            report_file.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+        raise
+
+
+def _describe_artifact(path: str, name: str) -> _ArtifactReport:
+    digest = hashlib.sha256()
+    size = 0
+    with open(path, 'rb') as artifact:
+        while chunk := artifact.read(65536):
+            size += len(chunk)
+            digest.update(chunk)
+    return {
+        'name': name,
+        'path': path,
+        'kind': 'sdist' if name.endswith('.tar.gz') else 'wheel',
+        'size': size,
+        'hashes': {'sha256': digest.hexdigest()},
+    }
 
 
 def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
@@ -718,6 +782,10 @@ def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
 
 
 def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool) -> partial[list[str]]:
+    if args.report and args.metadata:
+        parser.error('--report: not allowed with --metadata')
+    if args.output_format is not None and args.report is None:
+        parser.error('--output-format: only valid together with --report')
     if args.metadata and args.distributions:
         parser.error('--metadata: not allowed with --sdist or --wheel')
     if sdist_input and args.distributions and 'sdist' in args.distributions:
