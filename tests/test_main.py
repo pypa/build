@@ -156,7 +156,7 @@ def test_parse_args(
     if hook == 'build_package':
         build_package.assert_called_with(*build_args, **build_kwargs)
     elif hook == 'build_package_via_sdist':
-        build_package_via_sdist.assert_called_with(*build_args, **build_kwargs)
+        build_package_via_sdist.assert_called_with(*build_args, **build_kwargs, sdist_extract_dir=None)
     else:  # pragma: no cover
         msg = f'Unknown hook {hook}'
         raise ValueError(msg)
@@ -949,6 +949,60 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
     cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
     with pytest.raises(tarfile.TarError):
         cm.__enter__()
+
+
+def test_extract_sdist_fixed_dir_is_deterministic_and_kept(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    extract_dir = tmp_path / 'extract'
+    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0', extract_dir=str(extract_dir)) as extracted:
+        assert extracted == str(extract_dir / 'demo-1.0.0')
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+    assert (extract_dir / 'demo-1.0.0' / 'PKG-INFO').is_file()
+
+
+def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    extract_dir = tmp_path / 'extract'
+    stale = extract_dir / 'demo-1.0.0' / 'stale.txt'
+    stale.parent.mkdir(parents=True)
+    stale.write_text('old', encoding='utf-8')
+
+    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0', extract_dir=str(extract_dir)) as extracted:
+        assert extracted == str(extract_dir / 'demo-1.0.0')
+        assert not stale.exists()
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+
+
+@pytest.mark.parametrize(
+    ('extra_args', 'expected'),
+    [
+        pytest.param([], None, id='default-temp-dir'),
+        pytest.param(['--sdist-extract-dir', 'extract-here'], 'extract-here', id='fixed-dir'),
+    ],
+)
+def test_main_via_sdist_forwards_extract_dir(
+    tmp_path: pathlib.Path,
+    mocker: pytest_mock.MockerFixture,
+    extra_args: list[str],
+    expected: str | None,
+) -> None:
+    via_sdist = mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=['something'])
+
+    build.__main__.main([str(tmp_path), *extra_args])
+
+    assert via_sdist.call_args.kwargs['sdist_extract_dir'] == expected
+
+
+def test_main_sdist_input_forwards_extract_dir(
+    sdist: pathlib.Path,
+    tmp_path: pathlib.Path,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    extract = mocker.patch('build.__main__._extract_sdist', autospec=True)
+    extract.return_value.__enter__.return_value = str(tmp_path / 'demo-1.0.0')
+    mocker.patch('build.__main__.build_package', return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', 'extract-here'])
+
+    assert extract.call_args.kwargs['extract_dir'] == 'extract-here'
 
 
 @pytest.mark.parametrize(
