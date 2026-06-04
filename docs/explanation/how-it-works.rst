@@ -71,6 +71,11 @@ The process in detail:
 
    These hooks are defined in :PEP:`517` (the build system interface standard).
 
+   build runs each hook in a subprocess and forwards its standard output and error straight through, so a failing
+   backend's messages reach your terminal (use ``-vv`` to keep the full stream). build cannot collect log *files* the
+   backend writes inside its own working directory: :PEP:`517` exposes no way for a frontend to learn where those live,
+   so retrieving them depends on backend-specific settings. See :ref:`debug-a-failed-build` for how to keep them.
+
 4. **Build artifacts**
 
    The backend creates `distribution files

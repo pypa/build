@@ -786,8 +786,40 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
     except ValueError:
         exc_info = sys.exc_info()
 
-    with pytest.raises(SystemExit), build.__main__._handle_build_error():
+    with pytest.raises(SystemExit), build.__main__._handle_build_error(env_dir=None, sdist_extract_dir=None):
         raise build.BuildBackendException(exc, exc_info=exc_info)
+
+
+def test_handle_build_error_prints_debug_tip_on_subprocess_failure(
+    mocker: pytest_mock.MockerFixture,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    mocker.patch('build.__main__._error', side_effect=SystemExit(1))
+
+    exc = subprocess.CalledProcessError(1, ['backend'])
+    with pytest.raises(SystemExit), build.__main__._handle_build_error(env_dir=None, sdist_extract_dir=None):
+        raise build.BuildBackendException(exc, 'Backend subprocess exited')
+
+    err = ANSI_STRIP.sub('', capsys.readouterr().err)
+    assert 'TIP' in err
+    assert 'pass --env-dir and --sdist-extract-dir' in err
+    assert 'troubleshooting.html#debug-a-failed-build' in err
+
+
+@pytest.mark.parametrize(
+    ('env_dir', 'sdist_extract_dir', 'expected'),
+    [
+        pytest.param(None, None, 'pass --env-dir and --sdist-extract-dir to keep', id='none-pinned'),
+        pytest.param('env', None, 'inspect the build environment at env', id='env-only'),
+        pytest.param(None, 'src', 'inspect the extracted sources at src', id='sdist-only'),
+        pytest.param('env', 'src', 'inspect the build environment at env and the extracted sources at src', id='both'),
+    ],
+)
+def test_build_failure_hint(env_dir: str | None, sdist_extract_dir: str | None, expected: str) -> None:
+    hint = build.__main__._build_failure_hint(env_dir, sdist_extract_dir)
+
+    assert expected in hint
+    assert hint.endswith('troubleshooting.html#debug-a-failed-build for help debugging a failed build')
 
 
 def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:

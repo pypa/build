@@ -471,6 +471,52 @@ To see backend logs in real-time, use verbose output:
 
 This shows all output from the build backend, including compilation logs for C extensions and detailed error messages.
 
+.. _debug-a-failed-build:
+
+**********************
+ Debug a failed build
+**********************
+
+When a backend fails, build prints a ``TIP`` line that links back here. Work through these steps to gather what you
+need.
+
+Stream the backend output
+=========================
+
+build forwards everything the backend writes to its standard output and error. Raise the verbosity to keep the full
+stream, including compiler invocations and backend tracebacks:
+
+.. code-block:: console
+
+    $ python -m build -vv
+
+Keep the build environment and sources
+======================================
+
+A failed build deletes its temporary working directories before you can look at them. Pin both so they survive the run:
+
+.. code-block:: console
+
+    $ python -m build --env-dir .build-env --sdist-extract-dir .build-src
+
+``--env-dir`` keeps the isolated environment (the installed backend and its dependencies) on failure; see `Inspect the
+build environment`_. ``--sdist-extract-dir`` keeps the extracted sdist, which is the directory the backend actually runs
+in, so any files the backend leaves next to your sources stay put.
+
+Find the backend's own logs
+===========================
+
+build cannot capture log *files* the backend writes inside its own working directory, because PEP 517 gives the frontend
+no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python``, point its build
+directory at a path you control:
+
+.. code-block:: console
+
+    $ python -m build -C builddir=.meson-build
+
+The meson log then survives at ``.meson-build/meson-logs/meson-log.txt``. Check your backend's documentation for the
+equivalent setting.
+
 **********************
  Still having issues?
 **********************
