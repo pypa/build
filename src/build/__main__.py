@@ -5,11 +5,14 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     'argparse',
+    'build._compat',
+    'build._compat.tarfile',
     'build._exceptions',
     'build.env',
     'functools',
     'json',
     'os',
+    'packaging',
     'packaging.utils',
     'packaging.version',
     'platform',

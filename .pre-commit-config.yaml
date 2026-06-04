@@ -42,6 +42,11 @@ repos:
       - id: ruff-check
         args: [--fix, --show-fixes]
       - id: ruff-format
+  - repo: https://github.com/henryiii/flake8-lazy
+    rev: 1e661c3087909adc5c1603b304848b02641facdc # frozen: v0.8.1
+    hooks:
+      - id: flake8-lazy
+        files: ^src/
   - repo: https://github.com/codespell-project/codespell
     rev: "2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a" # frozen: v2.4.2
     hooks:
