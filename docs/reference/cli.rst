@@ -93,8 +93,7 @@ interpreter with your installer instead (for example ``pip list``).
 ``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
 names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
 refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
-standard output, because the build backend may write to ``stdout``/``stderr`` too. ``--output-format`` selects the
-serialization; ``json`` is the only value today.
+standard output, because the build backend may write to ``stdout``/``stderr`` too. The report is JSON.
 
 .. code-block:: console
 

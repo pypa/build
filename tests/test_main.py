@@ -1253,24 +1253,16 @@ def built_dist(tmp_path: pathlib.Path) -> tuple[pathlib.Path, list[str]]:
     return outdir, names
 
 
-@pytest.mark.parametrize(
-    'extra_args',
-    [
-        pytest.param([], id='report'),
-        pytest.param(['--output-format', 'json'], id='report-with-output-format'),
-    ],
-)
 def test_report_written(
     mocker: pytest_mock.MockerFixture,
     tmp_path: pathlib.Path,
     built_dist: tuple[pathlib.Path, list[str]],
-    extra_args: list[str],
 ) -> None:
     outdir, names = built_dist
     mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
     report = tmp_path / 'report.json'
 
-    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report), *extra_args])
+    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report)])
 
     payload = json.loads(report.read_text(encoding='utf-8'))
     assert payload['version'] == '1.0'
@@ -1305,18 +1297,11 @@ def test_write_report_cleans_tmp_on_failure(
     assert not list(tmp_path.glob('*.tmp'))
 
 
-@pytest.mark.parametrize(
-    ('cli_args', 'err_msg'),
-    [
-        pytest.param(['--report', 'r.json', '--metadata'], '--report: not allowed with --metadata', id='report-with-metadata'),
-        pytest.param(['--output-format', 'json'], '--output-format: only valid together with --report', id='format-no-report'),
-    ],
-)
-def test_report_arg_errors(cli_args: list[str], err_msg: str, capsys: pytest.CaptureFixture[str]) -> None:
+def test_report_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
-        build.__main__.main(cli_args)
+        build.__main__.main(['--report', 'r.json', '--metadata'])
 
-    assert err_msg in capsys.readouterr().err
+    assert '--report: not allowed with --metadata' in capsys.readouterr().err
 
 
 @pytest.fixture

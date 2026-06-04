@@ -602,14 +602,9 @@ def main_parser() -> argparse.ArgumentParser:
     )
     build_group.add_argument(
         '--report',
-        help='write a machine-readable report of the built artifacts (name, path, kind, size and SHA-256 hash) to PATH. '
-        'Cannot be used together with ``--metadata``',
+        help='write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256 hash) to '
+        'PATH. Cannot be used together with ``--metadata``',
         metavar='PATH',
-    )
-    build_group.add_argument(
-        '--output-format',
-        choices=['json'],
-        help='format of the ``--report`` file (defaults to json); only valid together with ``--report``',
     )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
     config_exclusive_group.add_argument(
@@ -807,8 +802,6 @@ def _select_build(
 ) -> partial[list[str]]:
     if args.report and args.metadata:
         parser.error('--report: not allowed with --metadata')
-    if args.output_format is not None and args.report is None:
-        parser.error('--output-format: only valid together with --report')
     if wheel_input and not args.metadata:
         parser.error('a wheel can only be used with --metadata, to read its metadata; it cannot be built from')
     if args.metadata and args.distributions:
