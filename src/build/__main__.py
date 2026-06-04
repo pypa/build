@@ -8,6 +8,7 @@ __lazy_modules__ = [
     'build._compat',
     'build._compat.tarfile',
     'build._exceptions',
+    'build._util',
     'build.env',
     'functools',
     'json',

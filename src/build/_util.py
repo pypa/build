@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    f'{__spec__.parent}._compat',
+    'packaging',
+    'packaging.requirements',
+]
+
 import re
 import sys
 
