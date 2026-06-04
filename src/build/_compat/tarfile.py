@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    'pathlib',
+]
+
 import sys
 import tarfile
 
