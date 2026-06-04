@@ -151,6 +151,23 @@ on your computer. It:
 3. Invoked the **build backend** to create the distribution files
 4. Cleaned up the temporary environment when done
 
+*****************************************
+ Seeing which backend versions were used
+*****************************************
+
+build deletes the isolated environment after each build, so it does not leave the installed versions behind. To see
+them, build with ``-vv``:
+
+.. code-block:: console
+
+    $ python -m build --wheel -vv
+    ...
+    * Building wheel...
+      hatchling==1.27.0
+
+build prints each installed build dependency as ``name==version``. Keep this handy when reporting a problem to a
+backend's issue tracker, which usually asks for the exact version you built with. See :doc:`../how-to/troubleshooting`.
+
 **********************************
  Building a wheel from your sdist
 **********************************

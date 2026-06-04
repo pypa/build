@@ -65,7 +65,7 @@ from build.env import DefaultIsolatedEnv
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Mapping, Sequence
+    from collections.abc import Callable, Iterator, Mapping, Sequence
 
     from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
@@ -135,25 +135,32 @@ def _make_logger() -> _ctx.Logger:
         max_terminal_width = 78
 
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
+    return partial(_log, fill=fill)
 
-    def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
-        if _ctx.verbosity >= -1:
-            match kind:
-                case ('step', *_):
-                    (first, *rest) = message.splitlines()
-                    _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-                    for line in rest:
-                        print(fill(line, initial_indent='  '), file=sys.stderr)  # noqa: T201
-                case ('subprocess', 'cmd'):
-                    for line in message.splitlines():
-                        _cprint('{dim}{}{reset}', fill(line, initial_indent='> '), file=sys.stderr)
-                case ('subprocess', 'stdout' | 'stderr'):
-                    for line in message.splitlines():
-                        _cprint('{dim}{}{reset}', fill(line, initial_indent='< '), file=sys.stderr)
-                case _:
-                    print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201
 
-    return log
+def _log(message: str, *, fill: Callable[..., str], kind: tuple[str, ...] | None = None) -> None:
+    if _ctx.verbosity < -1:
+        return
+    match kind:
+        case ('step', *_):
+            first, _, rest = message.partition('\n')
+            _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+            _emit(rest, fill, indent='  ')
+        case ('subprocess', 'cmd'):
+            _emit(message, fill, indent='> ', style='{dim}{}{reset}')
+        case ('subprocess', 'stdout' | 'stderr'):
+            _emit(message, fill, indent='< ', style='{dim}{}{reset}')
+        case ('debug', *_) if _ctx.verbosity >= 2:
+            _emit(message, fill, indent='  ', style='{dim}{}{reset}')
+        case ('debug', *_):
+            pass
+        case _:
+            _emit(message, fill, indent='  ')
+
+
+def _emit(message: str, fill: Callable[..., str], *, indent: str, style: str = '{}') -> None:
+    for line in message.splitlines():
+        _cprint(style, fill(line, initial_indent=indent), file=sys.stderr)
 
 
 def _setup_cli(*, verbosity: int) -> None:
@@ -210,7 +217,10 @@ def _bootstrap_build_env(
             # first install the build dependencies
             install(builder.build_system_requires, _fresh=True)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
-            install(builder.get_requires_for_build(distribution, config_settings))
+            extra_requires = builder.get_requires_for_build(distribution, config_settings)
+            install(extra_requires)
+
+            _log_dependency_versions(env, builder.build_system_requires | extra_requires)
 
             yield builder
 
@@ -225,6 +235,14 @@ def _bootstrap_build_env(
             _error(format_unmet_dependencies(missing))
 
         yield builder
+
+
+def _log_dependency_versions(env: DefaultIsolatedEnv, requirements: set[str]) -> None:
+    if versions := env.installed_versions(requirements):
+        _ctx.log(
+            '\n'.join(f'{name}=={version}' for name, version in sorted(versions.items())),
+            kind=('debug',),
+        )
 
 
 def _build(

@@ -40,6 +40,24 @@ def test_make_extra_environ_overrides_pythonpath() -> None:
         assert env._env_backend.scripts_dir in extra['PATH']
 
 
+def test_installed_versions(mocker: pytest_mock.MockerFixture) -> None:
+    env = build.env.DefaultIsolatedEnv()
+    env._env_backend = SimpleNamespace(purelib='/purelib')
+    distributions = mocker.patch(
+        'build._compat.importlib.metadata.distributions',
+        return_value=[
+            SimpleNamespace(name='Setuptools', version='80.9.0'),
+            SimpleNamespace(name='wheel', version='0.45.1'),
+            SimpleNamespace(name='pip', version='25.0'),
+        ],
+    )
+
+    versions = env.installed_versions(['setuptools >= 40.8.0', 'Wheel', '/local/path/pkg.whl'])
+
+    assert versions == {'setuptools': '80.9.0', 'wheel': '0.45.1'}
+    distributions.assert_called_once_with(path=['/purelib'])
+
+
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_install_strips_pythonpath(
     mocker: pytest_mock.MockerFixture,
@@ -417,7 +435,9 @@ def test_virtualenv_no_wheel_flag(
 
     mocker.patch('build._compat.importlib.metadata.version', return_value=version)
     cli_run = mocker.patch('virtualenv.cli_run')
-    cli_run.return_value = SimpleNamespace(creator=SimpleNamespace(exe=Path('/fake/python'), script_dir=Path('/fake/scripts')))
+    cli_run.return_value = SimpleNamespace(
+        creator=SimpleNamespace(exe=Path('/fake/python'), script_dir=Path('/fake/scripts'), purelib=Path('/fake/purelib'))
+    )
 
     backend = build.env._PipBackend()
     backend.create('/some/path')

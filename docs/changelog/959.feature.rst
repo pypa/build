@@ -1,0 +1,2 @@
+At ``-vv`` verbosity, print the resolved version of each installed build dependency as ``name==version`` so the exact
+backend version is available for bug reports (:issue:`959`) - by :user:`gaborbernat`.
