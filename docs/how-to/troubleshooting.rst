@@ -27,15 +27,15 @@ Build will read your ``pyproject.toml`` and install all required dependencies.
     $ pip install setuptools your-build-backend
     $ python -m build --no-isolation
 
-************************************************
- "Missing dependencies" with ``--no-isolation``
-************************************************
+**********************************************
+ "Unmet dependencies" with ``--no-isolation``
+**********************************************
 
 **Symptom**: A ``--no-isolation`` build stops with:
 
 ::
 
-    ERROR Missing dependencies (checked against /usr/local/bin/python3.9):
+    ERROR Unmet dependencies (checked against /usr/local/bin/python3.9):
         anndata>=0.7.4
             wanted: >=0.7.4
             found: not installed

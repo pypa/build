@@ -74,7 +74,7 @@ def check_dependency(
 
 def format_unmet_dependencies(unmet: AbstractSet[tuple[str, ...]]) -> str:
     body = ''.join(_format_missing_dependency(chain) for chain in sorted(unmet))
-    return f'Missing dependencies (checked against {sys.executable}):{body}'
+    return f'Unmet dependencies (checked against {sys.executable}):{body}'
 
 
 def _format_missing_dependency(dep_chain: tuple[str, ...]) -> str:

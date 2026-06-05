@@ -423,7 +423,7 @@ def test_build_no_isolation_check_deps_not_installed(mocker: pytest_mock.MockerF
 
     build_cmd.assert_called_with('sdist', '.', None)
     error.assert_called_once_with(
-        f'Missing dependencies (checked against {sys.executable}):\n\tfoo>=1.0\n\t\twanted: >=1.0\n\t\tfound: not installed'
+        f'Unmet dependencies (checked against {sys.executable}):\n\tfoo>=1.0\n\t\twanted: >=1.0\n\t\tfound: not installed'
     )
 
 
@@ -436,7 +436,7 @@ def test_build_no_isolation_check_deps_version_mismatch(mocker: pytest_mock.Mock
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
     error.assert_called_once_with(
-        f'Missing dependencies (checked against {sys.executable}):\n\tbar>=2.0\n\t\twanted: >=2.0\n\t\tfound: 1.0.0'
+        f'Unmet dependencies (checked against {sys.executable}):\n\tbar>=2.0\n\t\twanted: >=2.0\n\t\tfound: 1.0.0'
     )
 
 
@@ -451,7 +451,7 @@ def test_build_no_isolation_check_deps_chain_without_specifier(
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
     error.assert_called_once_with(
-        f'Missing dependencies (checked against {sys.executable}):'
+        f'Unmet dependencies (checked against {sys.executable}):'
         '\n\tmatplotlib>=2.2 -> kiwisolver\n\t\twanted: any\n\t\tfound: not installed'
     )
 

@@ -36,13 +36,13 @@ builds regardless of what packages are installed in your development environment
 ******************
 
 With ``--no-isolation``, build does not install anything; it checks that the build dependencies are already present in
-the interpreter running build. When a requirement is unmet it exits with a ``Missing dependencies`` error that names the
+the interpreter running build. When a requirement is unmet it exits with an ``Unmet dependencies`` error that names the
 interpreter checked and, for each requirement, the version specifier that was ``wanted`` and the version that was
 ``found`` (``not installed`` when absent):
 
 .. code-block:: text
 
-    ERROR Missing dependencies (checked against /usr/local/bin/python3.9):
+    ERROR Unmet dependencies (checked against /usr/local/bin/python3.9):
         anndata>=0.7.4
             wanted: >=0.7.4
             found: not installed
