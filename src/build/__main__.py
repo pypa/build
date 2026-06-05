@@ -65,7 +65,7 @@ from build.env import DefaultIsolatedEnv
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Mapping, Sequence
+    from collections.abc import Iterator, Mapping, Sequence
 
     from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
@@ -135,28 +135,28 @@ def _make_logger() -> _ctx.Logger:
         max_terminal_width = 78
 
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
-    return partial(_log, fill=fill)
 
+    def emit(message: str, *, indent: str, style: str = '{}') -> None:
+        for line in message.splitlines():
+            _cprint(style, fill(line, initial_indent=indent), file=sys.stderr)
 
-def _log(message: str, *, fill: Callable[..., str], kind: tuple[str, ...] | None = None) -> None:
-    if _ctx.verbosity < -1:
-        return
-    match kind:
-        case ('step', *_):
-            first, _, rest = message.partition('\n')
-            _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-            _emit(rest, fill, indent='  ')
-        case ('subprocess', 'cmd'):
-            _emit(message, fill, indent='> ', style='{dim}{}{reset}')
-        case ('subprocess', 'stdout' | 'stderr'):
-            _emit(message, fill, indent='< ', style='{dim}{}{reset}')
-        case _:
-            _emit(message, fill, indent='  ')
+    # Nested so it cannot be called directly, bypassing the logger setup above.
+    def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
+        if _ctx.verbosity < -1:
+            return
+        match kind:
+            case ('step', *_):
+                first, _, rest = message.partition('\n')
+                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+                emit(rest, indent='  ')
+            case ('subprocess', 'cmd'):
+                emit(message, indent='> ', style='{dim}{}{reset}')
+            case ('subprocess', 'stdout' | 'stderr'):
+                emit(message, indent='< ', style='{dim}{}{reset}')
+            case _:
+                emit(message, indent='  ')
 
-
-def _emit(message: str, fill: Callable[..., str], *, indent: str, style: str = '{}') -> None:
-    for line in message.splitlines():
-        _cprint(style, fill(line, initial_indent=indent), file=sys.stderr)
+    return log
 
 
 def _setup_cli(*, verbosity: int) -> None:
