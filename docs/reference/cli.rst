@@ -90,15 +90,25 @@ interpreter with your installer instead (for example ``pip list``).
  Build Report
 **************
 
-``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
-names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
-refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
-standard output, because the build backend may write to ``stdout``/``stderr`` too. The report is JSON.
+``--report`` writes a JSON description of the built artifacts after a successful build. The artifact names are dynamic
+(they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to refer to the produced
+files instead of globbing ``dist/``. With no argument the report lands next to the distributions as
+``build-report.json`` in the output directory; pass ``--report PATH`` to choose a different location. Build writes the
+report to a file it controls, not to standard output, because the build backend may write to ``stdout``/``stderr`` too.
+The report is JSON.
 
 .. code-block:: console
 
-    $ python -m build --report dist/report.json
-    $ twine upload $(jq -r '.artifacts[].path' dist/report.json)
+    $ python -m build --report
+    $ twine upload $(jq -r '.artifacts[].path' dist/build-report.json)
+
+.. note::
+
+    The default name is fixed, so concurrent builds that share an output directory overwrite each other's
+    ``build-report.json``. The write is atomic (readers never see a partial file), but the surviving report describes
+    whichever build finished last. Give each concurrent build its own ``--report PATH`` or its own ``--outdir`` to keep
+    the reports separate — sharing an output directory also clobbers the distributions themselves, so a per-build
+    ``--outdir`` is the safer pattern regardless.
 
 The schema is:
 
@@ -108,18 +118,22 @@ The schema is:
       "version": "1.0",
       "artifacts": [
         {
-          "name": "mypackage-0.1.0.tar.gz",
-          "path": "dist/mypackage-0.1.0.tar.gz",
+          "name": "mypackage-1.0.0.tar.gz",
+          "path": "dist/mypackage-1.0.0.tar.gz",
           "kind": "sdist",
-          "size": 4096,
-          "hashes": {"sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+          "size": 852,
+          "hashes": {
+            "sha256": "dbd5486e6e893663263caf84a4b87d67cc28f6963b6650f69eaa54b78e42ece4"
+          }
         },
         {
-          "name": "mypackage-0.1.0-py3-none-any.whl",
-          "path": "dist/mypackage-0.1.0-py3-none-any.whl",
+          "name": "mypackage-1.0.0-py3-none-any.whl",
+          "path": "dist/mypackage-1.0.0-py3-none-any.whl",
           "kind": "wheel",
-          "size": 2048,
-          "hashes": {"sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+          "size": 1121,
+          "hashes": {
+            "sha256": "ef460897fdce998634efc3385aa4261b4280a2fe2ab0e08ddcacc8496658465d"
+          }
         }
       ]
     }
@@ -133,8 +147,8 @@ To inspect a wheel listed in the report, pass its path straight to ``--metadata`
 
 .. code-block:: console
 
-    $ python -m build --report dist/report.json
-    $ python -m build --metadata "$(jq -r '.artifacts[] | select(.kind=="wheel") | .path' dist/report.json)"
+    $ python -m build --report
+    $ python -m build --metadata "$(jq -r '.artifacts[] | select(.kind=="wheel") | .path' dist/build-report.json)"
 
 ************************
  Alternative CLI Script

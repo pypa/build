@@ -495,14 +495,14 @@ JSON tool such as ``jq``:
 
     - name: Build and upload
       run: |
-        python -m build --report dist/report.json
-        twine upload $(jq -r '.artifacts[].path' dist/report.json)
+        python -m build --report
+        twine upload $(jq -r '.artifacts[].path' dist/build-report.json)
 
 The report also includes each artifact's size and SHA-256 hash, useful for emitting provenance or checksums:
 
 .. code-block:: console
 
-    $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' dist/report.json
+    $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' dist/build-report.json
 
 See :doc:`../reference/cli` for the full report schema.
 

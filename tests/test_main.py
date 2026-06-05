@@ -1275,6 +1275,20 @@ def test_report_written(
         assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def test_report_written_to_default_path(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+) -> None:
+    outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+
+    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report'])
+
+    payload = json.loads((outdir / 'build-report.json').read_text(encoding='utf-8'))
+    assert [artifact['name'] for artifact in payload['artifacts']] == names
+
+
 def test_write_report_is_atomic(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
     outdir, names = built_dist
     report = tmp_path / 'report.json'

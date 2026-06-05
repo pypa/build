@@ -93,7 +93,6 @@ if TYPE_CHECKING:
         sdist_extract_dir: str | None
         env_dir: str | None
         report: str | None
-        output_format: str | None
 
 
 _COLORS = {
@@ -602,8 +601,12 @@ def main_parser() -> argparse.ArgumentParser:
     )
     build_group.add_argument(
         '--report',
-        help='write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256 hash) to '
-        'PATH. Cannot be used together with ``--metadata``',
+        nargs='?',
+        const='',
+        default=None,
+        help='write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256 hash); '
+        'with no PATH it is written next to the distributions as ``build-report.json`` in the output directory. '
+        'Cannot be used together with ``--metadata``',
         metavar='PATH',
     )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
@@ -728,7 +731,8 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         else:
             built = build(args.srcdir, outdir)
         if args.report is not None:
-            _write_report(args.report, outdir, built)
+            report_path = args.report or os.path.join(outdir, 'build-report.json')
+            _write_report(report_path, outdir, built)
         if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
@@ -797,10 +801,8 @@ def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
     return {}
 
 
-def _select_build(
-    parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool, wheel_input: bool
-) -> partial[list[str]]:
-    if args.report and args.metadata:
+def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool, wheel_input: bool) -> partial[list[str]]:
+    if args.report is not None and args.metadata:
         parser.error('--report: not allowed with --metadata')
     if wheel_input and not args.metadata:
         parser.error('a wheel can only be used with --metadata, to read its metadata; it cannot be built from')
