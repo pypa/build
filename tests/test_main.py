@@ -532,18 +532,26 @@ def test_logging_output(
 ) -> None:
     build.__main__.main([package_test_setuptools, '-o', tmp_dir, *args])
     _, stderr = capsys.readouterr()
-    assert set(stderr.splitlines()) <= set(output)
+    # the installed-version step lists dynamic versions, exercised in its own test below
+    version_pin = re.compile(r' {2}- \S+==\S+')
+    lines = [
+        line
+        for line in stderr.splitlines()
+        if line != '* Installed build dependency versions:' and not version_pin.fullmatch(line)
+    ]
+    assert set(lines) <= set(output)
 
 
 @pytest.mark.network
 @pytest.mark.isolated
 @pytest.mark.flaky(reruns=5)
-def test_logging_output_double_verbose_backend_versions(
+def test_logging_output_backend_versions(
     package_test_setuptools: str, tmp_dir: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    build.__main__.main([package_test_setuptools, '-o', tmp_dir, '--wheel', '-vv'])
+    build.__main__.main([package_test_setuptools, '-o', tmp_dir, '--wheel'])
     _, stderr = capsys.readouterr()
-    assert any(re.fullmatch(r' {2}setuptools==\d[\w.]*', line) for line in stderr.splitlines())
+    assert '* Installed build dependency versions:' in stderr.splitlines()
+    assert any(re.fullmatch(r' {2}- setuptools==\d[\w.]*', line) for line in stderr.splitlines())
 
 
 @pytest.mark.pypy3323bug
@@ -758,22 +766,6 @@ def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
     log('message', kind=('unknown',))
 
 
-@pytest.mark.parametrize(
-    ('verbosity', 'expected'),
-    [
-        pytest.param(2, ['  setuptools==80.9.0'], id='double-verbose-shows-debug'),
-        pytest.param(1, [], id='single-verbose-hides-debug'),
-    ],
-)
-def test_log_debug_kind(verbosity: int, expected: list[str], capsys: pytest.CaptureFixture[str]) -> None:
-    build._ctx.VERBOSITY.set(verbosity)
-    build.__main__._styles.set(build.__main__._NO_COLORS)
-
-    build.__main__._make_logger()('setuptools==80.9.0', kind=('debug',))
-
-    assert capsys.readouterr().err.splitlines() == expected
-
-
 def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
     env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
     env.installed_versions.return_value = {'wheel': '0.45.1', 'setuptools': '80.9.0'}
@@ -781,7 +773,10 @@ def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
 
     build.__main__._log_dependency_versions(env, {'setuptools', 'wheel'})
 
-    log.assert_called_once_with('setuptools==80.9.0\nwheel==0.45.1', kind=('debug',))
+    log.assert_called_once_with(
+        'Installed build dependency versions:\n- setuptools==80.9.0\n- wheel==0.45.1',
+        kind=('step',),
+    )
 
 
 def test_log_dependency_versions_none(mocker: pytest_mock.MockerFixture) -> None:

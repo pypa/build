@@ -150,10 +150,6 @@ def _log(message: str, *, fill: Callable[..., str], kind: tuple[str, ...] | None
             _emit(message, fill, indent='> ', style='{dim}{}{reset}')
         case ('subprocess', 'stdout' | 'stderr'):
             _emit(message, fill, indent='< ', style='{dim}{}{reset}')
-        case ('debug', *_) if _ctx.verbosity >= 2:
-            _emit(message, fill, indent='  ', style='{dim}{}{reset}')
-        case ('debug', *_):
-            pass
         case _:
             _emit(message, fill, indent='  ')
 
@@ -240,8 +236,9 @@ def _bootstrap_build_env(
 def _log_dependency_versions(env: DefaultIsolatedEnv, requirements: set[str]) -> None:
     if versions := env.installed_versions(requirements):
         _ctx.log(
-            '\n'.join(f'{name}=={version}' for name, version in sorted(versions.items())),
-            kind=('debug',),
+            'Installed build dependency versions:\n'
+            + '\n'.join(f'- {name}=={version}' for name, version in sorted(versions.items())),
+            kind=('step',),
         )
 
 

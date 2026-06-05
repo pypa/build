@@ -60,19 +60,23 @@ leaf. Pass ``--skip-dependency-check`` to skip this check (see :doc:`../how-to/b
 Repeating ``-v`` raises the verbosity level. Each level adds to the previous one:
 
 - ``-v`` streams the output of the environment-creation and dependency-installation subprocesses.
-- ``-vv`` additionally prints the resolved version of every installed build dependency, one ``name==version`` per line,
-  and passes ``-v`` through to the installer.
+- ``-vv`` additionally passes ``-v`` through to the installer.
 
-build reads the resolved versions from the isolated environment's installed metadata, so they reflect what was installed
-rather than the specifiers in ``pyproject.toml``:
+Regardless of verbosity, after installing the build dependencies of an isolated build, build prints a summary of the
+resolved versions, one ``name==version`` per line. build reads these from the isolated environment's installed metadata,
+so they reflect what was installed rather than the specifiers in ``pyproject.toml``:
 
 .. code-block:: console
 
-    $ python -m build --wheel -vv
-    ...
+    $ python -m build --wheel
+    * Creating isolated environment: venv+pip...
+    * Installing packages in isolated environment:
+      - setuptools >= 42.0.0
+    * Getting build dependencies for wheel...
+    * Installed build dependency versions:
+      - setuptools==82.0.1
     * Building wheel...
-      setuptools==80.9.0
-      wheel==0.45.1
+    Successfully built mypackage-1.0.0-py3-none-any.whl
 
 build reports this for isolated builds only; with ``--no-isolation`` build installs nothing, so inspect the active
 interpreter with your installer instead (for example ``pip list``).

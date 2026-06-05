@@ -155,15 +155,17 @@ on your computer. It:
  Seeing which backend versions were used
 *****************************************
 
-build deletes the isolated environment after each build, so it does not leave the installed versions behind. To see
-them, build with ``-vv``:
+build deletes the isolated environment after each build, so it does not leave the installed versions behind. Instead it
+prints them as it goes:
 
 .. code-block:: console
 
-    $ python -m build --wheel -vv
+    $ python -m build --wheel
     ...
+    * Getting build dependencies for wheel...
+    * Installed build dependency versions:
+      - hatchling==1.30.1
     * Building wheel...
-      hatchling==1.27.0
 
 build prints each installed build dependency as ``name==version``. Keep this handy when reporting a problem to a
 backend's issue tracker, which usually asks for the exact version you built with. See :doc:`../how-to/troubleshooting`.

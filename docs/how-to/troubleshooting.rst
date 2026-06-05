@@ -63,20 +63,21 @@ See :doc:`basic-usage` for more on ``--skip-dependency-check``.
  Find the backend version for a bug report
 *******************************************
 
-**Symptom**: A backend's issue tracker asks for the exact version of the backend you used, but the default output only
-shows the requirement specifiers (``setuptools >= 40.8.0``), not the version that was installed. On an isolated build,
-build deletes the environment afterwards, so you cannot inspect it once the build finishes.
+**Symptom**: A backend's issue tracker asks for the exact version of the backend you used. ``pyproject.toml`` lists only
+the requirement specifiers (``setuptools >= 40.8.0``), and on an isolated build the resolved version lives in the
+temporary environment that build deletes afterwards.
 
-**Solution**: Build with ``-vv``. build prints the resolved version of every installed build dependency before it runs
-the backend:
+**Solution**: Read it from build's output. After installing the build dependencies, build prints the resolved version of
+each one:
 
 .. code-block:: console
 
-    $ python -m build --wheel -vv
+    $ python -m build --wheel
     ...
+    * Getting build dependencies for wheel...
+    * Installed build dependency versions:
+      - setuptools==82.0.1
     * Building wheel...
-      setuptools==80.9.0
-      wheel==0.45.1
 
 Copy the ``name==version`` line for the backend into your report. With ``--no-isolation`` build installs nothing, so
 read the version from the active interpreter instead (for example ``pip show setuptools``).

@@ -246,14 +246,15 @@ Useful for tools that need package metadata without building the full package.
 
 ``pyproject.toml`` declares build dependencies as *specifiers* (``setuptools >= 40.8.0``), not exact versions. The
 installer resolves each specifier to a concrete version at build time, and on an isolated build that version lives only
-in the temporary environment, which build deletes once it finishes. So the most useful piece of information for a
-backend bug report, the exact backend version, is gone by the time you need it.
+in the temporary environment, which build deletes once it finishes. The installer's own output reports the versions, but
+only at ``-vv``, interleaved with the rest of its log.
 
-Building with ``-vv`` records it. Once build has installed the dependencies, it reports the resolved version of each one
-as ``name==version``. build obtains these by reading the installed distribution metadata from the environment's
-``site-packages`` through ``importlib.metadata`` rather than by spawning a process inside the environment, so the report
-is cheap and works the same for the ``venv``/``virtualenv`` and ``uv`` backends. Because it reads installed metadata, it
-reflects what build used, including any transitive resolution the specifier allowed.
+So once build has installed the dependencies it prints a concise summary of the resolved version of each, as
+``name==version``, the single piece a backend bug report usually asks for. build obtains these by reading the installed
+distribution metadata from the environment's ``site-packages`` through ``importlib.metadata`` rather than by spawning a
+process inside the environment, so the summary is cheap and works the same for the ``venv``/``virtualenv`` and ``uv``
+backends. Because it reads installed metadata, it reflects what build used, including any transitive resolution the
+specifier allowed.
 
 This is an isolated-build concern. Under ``--no-isolation`` build installs nothing - it builds against the interpreter
 that is already running it - so the versions are whatever that interpreter has, discoverable with your installer.
