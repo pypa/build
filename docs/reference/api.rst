@@ -37,10 +37,10 @@ Using isolated environments (default):
 .. code-block:: python
 
     from build import ProjectBuilder
-    from build.env import IsolatedEnvBuilder
+    from build.env import DefaultIsolatedEnv
 
-    with IsolatedEnvBuilder() as env:
-        builder = ProjectBuilder(".", runner=env.runner)
+    with DefaultIsolatedEnv() as env:
+        builder = ProjectBuilder.from_isolated_env(env, ".")
         builder.build("wheel", "dist/")
 
 Disabling isolation:
