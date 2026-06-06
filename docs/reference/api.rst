@@ -6,10 +6,10 @@ build provides a Python API for programmatic use in build tools, CI systems, and
 
 .. note::
 
-    When not using an isolated environment, the build backend must be installed in the current environment.
-    When using :class:`DefaultIsolatedEnv <build.env.DefaultIsolatedEnv>`, you must explicitly install
-    build dependencies into the isolated environment via :meth:`~build.env.DefaultIsolatedEnv.install` before
-    calling :meth:`~build.ProjectBuilder.build` — the environment is created empty.
+    When not using an isolated environment, the build backend must be installed in the current environment. When using
+    :class:`DefaultIsolatedEnv <build.env.DefaultIsolatedEnv>`, you must explicitly install build dependencies into the
+    isolated environment via :meth:`~build.env.DefaultIsolatedEnv.install` before calling
+    :meth:`~build.ProjectBuilder.build` — the environment is created empty.
 
 *************
  Basic Usage
@@ -36,8 +36,8 @@ Building both sdist and wheel:
 
 Using isolated environments (default):
 
-``DefaultIsolatedEnv`` creates a clean virtual environment, but it is initially empty.
-You must install the project's build dependencies before invoking the backend:
+``DefaultIsolatedEnv`` creates a clean virtual environment, but it is initially empty. You must install the project's
+build dependencies before invoking the backend:
 
 .. code-block:: python
 
