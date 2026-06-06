@@ -1,6 +1,18 @@
 from __future__ import annotations
 
+
+__lazy_modules__ = [
+    f'{__spec__.parent}._compat',
+    'packaging',
+    'packaging.requirements',
+]
+
 import re
+import sys
+
+import packaging.requirements
+
+from ._compat import importlib
 
 
 TYPE_CHECKING = False
@@ -27,10 +39,6 @@ def check_dependency(
     :param parent_extras: Extras (eg. "test" in myproject[test])
     :yields: Unmet dependencies
     """
-    import packaging.requirements
-
-    from ._compat import importlib
-
     req = packaging.requirements.Requirement(req_string)
     normalised_req_string = str(req)
 
@@ -62,6 +70,25 @@ def check_dependency(
             for other_req_string in dist.requires:
                 # yields transitive dependencies that are not satisfied.
                 yield from check_dependency(other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras)
+
+
+def format_unmet_dependencies(unmet: AbstractSet[tuple[str, ...]]) -> str:
+    body = ''.join(_format_missing_dependency(chain) for chain in sorted(unmet))
+    return f'Unmet dependencies (checked against {sys.executable}):{body}'
+
+
+def _format_missing_dependency(dep_chain: tuple[str, ...]) -> str:
+    requirement = packaging.requirements.Requirement(dep_chain[-1])
+    try:
+        found = importlib.metadata.distribution(requirement.name).version
+    except importlib.metadata.PackageNotFoundError:
+        found = 'not installed'
+    wanted = str(requirement.specifier) if requirement.specifier else 'any'
+    return f'\n\t{_format_dep_chain(dep_chain)}\n\t\twanted: {wanted}\n\t\tfound: {found}'
+
+
+def _format_dep_chain(dep_chain: tuple[str, ...]) -> str:
+    return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
 
 
 def parse_wheel_filename(filename: str) -> re.Match[str] | None:

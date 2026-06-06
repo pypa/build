@@ -27,6 +27,38 @@ Build will read your ``pyproject.toml`` and install all required dependencies.
     $ pip install setuptools your-build-backend
     $ python -m build --no-isolation
 
+**********************************************
+ "Unmet dependencies" with ``--no-isolation``
+**********************************************
+
+**Symptom**: A ``--no-isolation`` build stops with:
+
+::
+
+    ERROR Unmet dependencies (checked against /usr/local/bin/python3.9):
+        anndata>=0.7.4
+            wanted: >=0.7.4
+            found: not installed
+
+**Cause**: build checks the declared requirements against the interpreter named in the header (the one running build),
+not against a virtual environment or your system package manager. Read each entry as:
+
+- ``found: not installed`` - the package is invisible to *that* interpreter's metadata. If you believe it is installed
+  (for example via a Linux distribution or FreeBSD port), it was installed for a different Python, so build cannot see
+  it. Install it for the interpreter in the header, or run that interpreter's ``python -m build``.
+- ``found: <version>`` - the package is installed but its version does not satisfy ``wanted``. Upgrade or downgrade it
+  to match.
+
+**Solution 1**: Install or fix the offending dependency for the interpreter shown in the header.
+
+**Solution 2**: If you manage build dependencies externally (distribution packaging), skip the check entirely:
+
+.. code-block:: console
+
+    $ python -m build --no-isolation --skip-dependency-check
+
+See :doc:`basic-usage` for more on ``--skip-dependency-check``.
+
 *******************************
  Build hangs or appears frozen
 *******************************

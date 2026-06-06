@@ -8,6 +8,7 @@ __lazy_modules__ = [
     'build._compat',
     'build._compat.tarfile',
     'build._exceptions',
+    'build._util',
     'build.env',
     'functools',
     'json',
@@ -57,6 +58,7 @@ import build.env as _env
 from build import ProjectBuilder, _ctx
 from build._compat.tarfile import TarFile, safe_extractall
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
+from build._util import format_unmet_dependencies
 from build.env import DefaultIsolatedEnv
 
 
@@ -163,10 +165,6 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     raise SystemExit(code)
 
 
-def _format_dep_chain(dep_chain: tuple[str, ...]) -> str:
-    return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
-
-
 @contextlib.contextmanager
 def _bootstrap_build_env(
     isolation: bool,
@@ -203,12 +201,9 @@ def _bootstrap_build_env(
             make_builder = partial(make_builder, runner=runner)
         builder = make_builder()
 
-        if not skip_dependency_check:
-            missing = builder.check_dependencies(distribution, config_settings)
-            if missing:
-                dependencies = ''.join('\n\t' + _format_dep_chain(deps) for deps in missing)
-                _cprint()
-                _error(f'Missing dependencies:{dependencies}')
+        if not skip_dependency_check and (missing := builder.check_dependencies(distribution, config_settings)):
+            _cprint()
+            _error(format_unmet_dependencies(missing))
 
         yield builder
 
