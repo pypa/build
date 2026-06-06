@@ -11,7 +11,7 @@ import textwrap
 import typing
 
 from collections.abc import Callable
-from typing import Any, NoReturn
+from typing import TYPE_CHECKING, NoReturn
 
 import pyproject_hooks
 import pytest
@@ -21,6 +21,12 @@ import build
 import build._builder
 
 from build._compat import importlib as _importlib
+
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from build._builder import BuildSystemTable, TOMLValue
 
 
 build_open_owner = 'builtins'
@@ -35,8 +41,8 @@ DEFAULT_BACKEND = {
 class MockDistribution(_importlib.metadata.Distribution):
     _metadata: str = ''
 
-    def locate_file(self, path: Any) -> Any:  # pragma: no cover  # noqa: ARG002
-        return ''
+    def locate_file(self, path: str | os.PathLike[str]) -> _importlib.metadata.SimplePath:  # pragma: no cover
+        raise NotImplementedError
 
     def read_text(self, filename: str) -> str:
         if filename == 'METADATA':
@@ -249,8 +255,8 @@ def _nothing_installed(name: str) -> NoReturn:
 def test_check_dependencies(
     mocker: pytest_mock.MockerFixture, package_test_flit: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_sdist')
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_wheel')
+    get_requires_sdist = mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_sdist')
+    get_requires_wheel = mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_wheel')
 
     monkeypatch.setattr(_importlib.metadata, 'distribution', _nothing_installed)
 
@@ -262,8 +268,8 @@ def test_check_dependencies(
         pyproject_hooks.BackendUnavailable,
     ]
 
-    builder._hook.get_requires_for_build_sdist.side_effect = copy.copy(side_effects)  # type: ignore[attr-defined]
-    builder._hook.get_requires_for_build_wheel.side_effect = copy.copy(side_effects)  # type: ignore[attr-defined]
+    get_requires_sdist.side_effect = copy.copy(side_effects)
+    get_requires_wheel.side_effect = copy.copy(side_effects)
 
     # requires = []
     assert builder.check_dependencies('sdist') == {('flit_core<4,>=2',)}
@@ -281,18 +287,18 @@ def test_check_dependencies(
 
 
 def test_build(mocker: pytest_mock.MockerFixture, package_test_flit: str, tmp_dir: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
 
-    builder._hook.build_sdist.side_effect = ['dist.tar.gz', Exception]  # type: ignore[attr-defined]
-    builder._hook.build_wheel.side_effect = ['dist.whl', Exception]  # type: ignore[attr-defined]
+    hook.build_sdist.side_effect = ['dist.tar.gz', Exception]
+    hook.build_wheel.side_effect = ['dist.whl', Exception]
 
     assert builder.build('sdist', tmp_dir) == os.path.join(tmp_dir, 'dist.tar.gz')
-    builder._hook.build_sdist.assert_called_with(tmp_dir, None)  # type: ignore[attr-defined]
+    hook.build_sdist.assert_called_with(tmp_dir, None)
 
     assert builder.build('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist.whl')
-    builder._hook.build_wheel.assert_called_with(tmp_dir, None)  # type: ignore[attr-defined]
+    hook.build_wheel.assert_called_with(tmp_dir, None)
 
     with pytest.raises(build.BuildBackendException):
         builder.build('sdist', tmp_dir)
@@ -332,10 +338,10 @@ def test_build_system_typo(mocker: pytest_mock.MockerFixture, package_test_typo:
 
 
 def test_missing_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
-    builder._hook.build_sdist.return_value = 'dist.tar.gz'  # type: ignore[attr-defined]
+    hook.build_sdist.return_value = 'dist.tar.gz'
     out = os.path.join(tmp_dir, 'out')
 
     builder.build('sdist', out)
@@ -344,21 +350,21 @@ def test_missing_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package
 
 
 def test_relative_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:  # noqa: ARG001
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
-    builder._hook.build_sdist.return_value = 'dist.tar.gz'  # type: ignore[attr-defined]
+    hook.build_sdist.return_value = 'dist.tar.gz'
 
     builder.build('sdist', '.')
 
-    builder._hook.build_sdist.assert_called_with(os.path.abspath('.'), None)  # type: ignore[attr-defined]
+    hook.build_sdist.assert_called_with(os.path.abspath('.'), None)
 
 
 def test_build_not_dir_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
-    builder._hook.build_sdist.return_value = 'dist.tar.gz'  # type: ignore[attr-defined]
+    hook.build_sdist.return_value = 'dist.tar.gz'
     out = os.path.join(tmp_dir, 'out')
 
     open(out, 'a', encoding='utf-8').close()  # create empty file
@@ -426,30 +432,30 @@ def test_build_with_dep_on_console_script(
 
 
 def test_prepare(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
-    builder._hook.prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'  # type: ignore[attr-defined]
+    hook.prepare_metadata_for_build_wheel.return_value = 'dist-1.0.dist-info'
 
     assert builder.prepare('wheel', tmp_dir) == os.path.join(tmp_dir, 'dist-1.0.dist-info')
-    builder._hook.prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)  # type: ignore[attr-defined]
+    hook.prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)
 
 
 def test_prepare_no_hook(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
     failure = pyproject_hooks.HookMissing('prepare_metadata_for_build_wheel')
-    builder._hook.prepare_metadata_for_build_wheel.side_effect = failure  # type: ignore[attr-defined]
+    hook.prepare_metadata_for_build_wheel.side_effect = failure
 
     assert builder.prepare('wheel', tmp_dir) is None
 
 
 def test_prepare_error(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
     builder = build.ProjectBuilder(package_test_flit)
-    builder._hook.prepare_metadata_for_build_wheel.side_effect = Exception  # type: ignore[attr-defined]
+    hook.prepare_metadata_for_build_wheel.side_effect = Exception
 
     with pytest.raises(build.BuildBackendException, match='Backend operation failed: Exception'):
         builder.prepare('wheel', tmp_dir)
@@ -490,11 +496,15 @@ def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, pac
 
 
 def test_runner_user_specified(tmp_dir: str, package_test_flit: str) -> None:
-    def dummy_runner(cmd: typing.Sequence[str], cwd: str | None = None, extra_environ: dict[str, str] | None = None) -> None:  # noqa: ARG001
+    def dummy_runner(
+        cmd: typing.Sequence[str],  # noqa: ARG001
+        cwd: str | None = None,  # noqa: ARG001
+        extra_environ: typing.Mapping[str, str] | None = None,  # noqa: ARG001
+    ) -> None:
         msg = 'Runner was called'
         raise RuntimeError(msg)
 
-    builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)  # type: ignore[arg-type]
+    builder = build.ProjectBuilder(package_test_flit, runner=dummy_runner)
     with pytest.raises(build.BuildBackendException, match='Runner was called'):
         builder.build('wheel', tmp_dir)
 
@@ -581,13 +591,17 @@ def test_log(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
         ),
     ],
 )
-def test_parse_valid_build_system_table_type(pyproject_toml: dict[str, Any], parse_output: dict[str, Any]) -> None:
+def test_parse_valid_build_system_table_type(pyproject_toml: Mapping[str, TOMLValue], parse_output: BuildSystemTable) -> None:
     assert build._builder._parse_build_system_table(pyproject_toml) == parse_output
 
 
 @pytest.mark.parametrize(
     ('pyproject_toml', 'error_message'),
     [
+        (
+            {'build-system': 'not a table'},
+            '`build-system` must be a table',
+        ),
         (
             {'build-system': {}},
             '`requires` is a required property',
@@ -618,7 +632,7 @@ def test_parse_valid_build_system_table_type(pyproject_toml: dict[str, Any], par
         ),
     ],
 )
-def test_parse_invalid_build_system_table_type(pyproject_toml: dict[str, Any], error_message: str) -> None:
+def test_parse_invalid_build_system_table_type(pyproject_toml: Mapping[str, TOMLValue], error_message: str) -> None:
     with pytest.raises(build.BuildSystemTableValidationError, match=error_message):
         build._builder._parse_build_system_table(pyproject_toml)
 

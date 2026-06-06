@@ -45,7 +45,7 @@ import warnings
 from functools import partial
 from tarfile import TarError
 from tarfile import open as tar_open
-from typing import Any, NoReturn, TextIO
+from typing import NoReturn, TextIO, cast
 
 import pyproject_hooks
 
@@ -68,6 +68,25 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sequence
 
     from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
+
+    # A decoded JSON value, as produced by ``--config-json``. Uses the covariant ``Sequence``/``Mapping``
+    # so the ``str | list[str]`` settings from ``--config-setting`` are also assignable to it.
+    JSONValue = str | int | float | bool | None | Sequence['JSONValue'] | Mapping[str, 'JSONValue']
+
+    class _Args(argparse.Namespace):
+        """The arguments :func:`main_parser` produces, typed for the rest of the module."""
+
+        srcdir: str
+        verbosity: int
+        outdir: str | None
+        distributions: list[Distribution] | None
+        metadata: bool
+        config_settings: list[str] | None
+        config_json: str | None
+        installer: _env.Installer | None
+        no_isolation: bool
+        dependency_constraints_txt: str | None
+        skip_dependency_check: bool
 
 
 _COLORS = {
@@ -242,16 +261,11 @@ def _handle_build_error() -> Iterator[None]:
             _cprint()
             _error(str(e))
 
-        if e.exc_info:
-            tb_lines = traceback.format_exception(
-                e.exc_info[0],
-                e.exc_info[1],
-                e.exc_info[2],
-                limit=-1,
-            )
+        if e.exc_info[0] is not None:
+            tb_lines = traceback.format_exception(e.exc_info[0], e.exc_info[1], e.exc_info[2], limit=-1)
             tb = ''.join(tb_lines)
         else:  # pragma: no cover
-            tb = traceback.format_exc(-1)  # type: ignore[unreachable]
+            tb = traceback.format_exc(limit=-1)
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _error(str(e))
     except Exception as e:  # pragma: no cover
@@ -409,7 +423,7 @@ def main_parser() -> argparse.ArgumentParser:
             self,
             option_strings: Sequence[str],
             dest: str,
-            default: Any = None,
+            default: int | None = None,
             help: str | None = None,
         ) -> None:
             super().__init__(
@@ -423,8 +437,8 @@ def main_parser() -> argparse.ArgumentParser:
         def __call__(
             self,
             parser: argparse.ArgumentParser,  # noqa: ARG002
-            namespace: object,
-            values: str | Sequence[Any] | None,  # noqa: ARG002
+            namespace: argparse.Namespace,
+            values: str | Sequence[str] | None,  # noqa: ARG002
             option_string: str | None = None,  # noqa: ARG002
         ) -> None:
             setattr(namespace, self.dest, getattr(namespace, self.dest, 0) - 1)
@@ -564,18 +578,19 @@ def main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _parse_config_settings(raw_config_settings: list[str]) -> dict[str, Any]:
-    config_settings = dict[str, Any]()
+def _parse_config_settings(raw_config_settings: list[str]) -> dict[str, str | list[str]]:
+    config_settings = dict[str, str | list[str]]()
 
     for arg in raw_config_settings:
         setting, _, value = arg.partition('=')
         if setting not in config_settings:
             config_settings[setting] = value
         else:
-            if not isinstance(config_settings[setting], list):
-                config_settings[setting] = [config_settings[setting]]
-
-            config_settings[setting].append(value)
+            existing = config_settings[setting]
+            if isinstance(existing, list):
+                existing.append(value)
+            else:
+                config_settings[setting] = [existing, value]
 
     return config_settings
 
@@ -590,7 +605,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     parser = main_parser()
     if prog:
         parser.prog = prog
-    args = parser.parse_args(cli_args)
+    args = cast('_Args', parser.parse_args(cli_args))
 
     _setup_cli(verbosity=args.verbosity)
 
@@ -625,7 +640,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
 
 
-def _resolve_config_settings(args: argparse.Namespace) -> dict[str, Any]:
+def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
     if args.config_json:
         try:
             config_settings = json.loads(args.config_json)
@@ -639,7 +654,7 @@ def _resolve_config_settings(args: argparse.Namespace) -> dict[str, Any]:
     return {}
 
 
-def _select_build(parser: argparse.ArgumentParser, args: argparse.Namespace, *, sdist_input: bool) -> partial[list[str]]:
+def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool) -> partial[list[str]]:
     if args.metadata and args.distributions:
         parser.error('--metadata: not allowed with --sdist or --wheel')
     if sdist_input and args.distributions and 'sdist' in args.distributions:
@@ -650,7 +665,8 @@ def _select_build(parser: argparse.ArgumentParser, args: argparse.Namespace, *, 
     if args.metadata:
         return partial(_build_metadata, distributions=['wheel'])
     if sdist_input:
-        return partial(build_package, distributions=args.distributions or ['wheel'])
+        distributions: list[Distribution] = args.distributions or ['wheel']
+        return partial(build_package, distributions=distributions)
     if args.distributions:
         return partial(build_package, distributions=args.distributions)
     return partial(build_package_via_sdist, distributions=['wheel'])

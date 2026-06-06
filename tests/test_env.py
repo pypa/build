@@ -22,6 +22,9 @@ from packaging.version import Version
 import build
 import build.env
 
+from build import _ctx
+from build._compat.importlib import metadata as importlib_metadata
+
 
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_WINDOWS = sys.platform.startswith('win')
@@ -235,7 +238,7 @@ def test_default_impl_install_cmd_well_formed(
     constraints: list[str],
     fresh: bool,
 ) -> None:
-    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)  # type: ignore[attr-defined]
+    mocker.patch.object(_ctx, 'verbosity', verbosity)
 
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
@@ -273,7 +276,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
     constraints: list[str],
     fresh: bool,
 ) -> None:
-    mocker.patch.object(build.env._ctx, 'verbosity', verbosity)  # type: ignore[attr-defined]
+    mocker.patch.object(_ctx, 'verbosity', verbosity)
 
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
@@ -504,7 +507,7 @@ def test_venv_creation_no_setuptools(
 ) -> None:
     original = build.env._has_dependency
 
-    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: object) -> object:
+    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: list[str]) -> importlib_metadata.Distribution | None:
         if name == 'setuptools':
             return None
         return original(name, min_ver, **kwargs)

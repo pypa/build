@@ -154,7 +154,7 @@ def test_isolation(tmp_dir: str, package_test_flit: str, mocker: pytest_mock.Moc
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
-    mocker.patch('build.__main__._error')
+    error = mocker.patch('build.__main__._error')
 
     build.__main__.main([package_test_flit, '-o', tmp_dir, '--no-isolation'])
-    build.__main__._error.assert_called_with("Backend 'flit_core.buildapi' is not available.")  # type: ignore[attr-defined]
+    error.assert_called_with("Backend 'flit_core.buildapi' is not available.")

@@ -83,11 +83,11 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
 
 if TYPE_CHECKING:
     log: Logger
-    verbosity: bool
+    verbosity: int
 
 else:
 
-    def __getattr__(name: str) -> object:
+    def __getattr__(name: str) -> Logger | int:
         if name == 'log':
             return LOGGER.get()
         if name == 'verbosity':

@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from tarfile import CHRTYPE, LNKTYPE, SYMTYPE, TarError, TarInfo
 from tarfile import open as tar_open
+from typing import Protocol
 
 import pytest
 
@@ -14,9 +15,12 @@ from build._compat.tarfile import _validate_safe_member, safe_extractall
 
 
 FileMember = Callable[[str, bytes], TarInfo]
-LinkMember = Callable[..., TarInfo]
 DeviceMember = Callable[[str], TarInfo]
 ArchiveBuilder = Callable[[Path, 'list[tuple[TarInfo, bytes | None]]'], None]
+
+
+class LinkMember(Protocol):
+    def __call__(self, name: str, linkname: str, *, hard: bool = ...) -> TarInfo: ...
 
 
 def test_safe_extractall_extracts_clean_archive(
