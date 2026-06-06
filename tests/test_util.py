@@ -12,6 +12,9 @@ import pytest_mock
 import build.util
 
 
+pytestmark = pytest.mark.filterwarnings('ignore:project_wheel_metadata is deprecated:DeprecationWarning')
+
+
 @pytest.mark.pypy3323bug
 @pytest.mark.parametrize('isolated', [False, pytest.param(True, marks=[pytest.mark.network, pytest.mark.isolated])])
 def test_wheel_metadata(package_test_setuptools: str, isolated: bool) -> None:
@@ -74,3 +77,11 @@ def test_project_wheel_metadata_installs_build_requires_fresh(mocker: pytest_moc
         mocker.call({'dep1'}, _fresh=True),
         mocker.call({'dep2'}),
     ]
+
+
+def test_project_wheel_metadata_is_deprecated(mocker: pytest_mock.MockerFixture) -> None:
+    result = mocker.patch('build.util._project_wheel_metadata')
+    mocker.patch('build.util.ProjectBuilder')
+
+    with pytest.warns(DeprecationWarning, match=r'python -m build --metadata'):
+        assert build.util.project_wheel_metadata('/tmp/project', isolated=False) is result.return_value
