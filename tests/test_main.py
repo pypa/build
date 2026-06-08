@@ -15,7 +15,7 @@ import unittest.mock
 import venv
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypedDict
 
 import pytest
 import pytest_mock
@@ -36,242 +36,112 @@ out = os.path.join(cwd, 'dist')
 
 ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
+JSONValue = str | int | list['JSONValue'] | dict[str, 'JSONValue']
+
+
+class BuildKwargs(TypedDict):
+    distributions: list[str]
+    config_settings: dict[str, JSONValue]
+    isolation: bool
+    skip_dependency_check: bool
+    dependency_constraints_txt: str | None
+    installer: str | None
+
+
+def make_kwargs(
+    *,
+    distributions: list[str] | None = None,
+    config_settings: dict[str, JSONValue] | None = None,
+    isolation: bool = True,
+    skip_dependency_check: bool = False,
+    dependency_constraints_txt: str | None = None,
+    installer: str | None = None,
+) -> BuildKwargs:
+    return {
+        'distributions': distributions if distributions is not None else ['wheel'],
+        'config_settings': config_settings if config_settings is not None else {},
+        'isolation': isolation,
+        'skip_dependency_check': skip_dependency_check,
+        'dependency_constraints_txt': dependency_constraints_txt,
+        'installer': installer,
+    }
+
 
 @pytest.mark.parametrize(
     ('cli_args', 'build_args', 'build_kwargs', 'hook'),
     [
-        (
-            [],
-            (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
+        pytest.param([], (cwd, out), make_kwargs(), 'build_package_via_sdist', id='defaults'),
+        pytest.param(['-n'], (cwd, out), make_kwargs(isolation=False), 'build_package_via_sdist', id='no-isolation'),
+        pytest.param(['-s'], (cwd, out), make_kwargs(distributions=['sdist']), 'build_package', id='sdist'),
+        pytest.param(['-w'], (cwd, out), make_kwargs(), 'build_package', id='wheel'),
+        pytest.param(
+            ['-s', '-w'], (cwd, out), make_kwargs(distributions=['sdist', 'wheel']), 'build_package', id='sdist-and-wheel'
         ),
-        (
-            ['-n'],
-            (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': False,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
+        pytest.param(
+            ['source'], ('source', os.path.join('source', 'dist')), make_kwargs(), 'build_package_via_sdist', id='srcdir'
         ),
-        (
-            ['-s'],
-            (cwd, out),
-            {
-                'distributions': ['sdist'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package',
+        pytest.param(['-o', 'out'], (cwd, 'out'), make_kwargs(), 'build_package_via_sdist', id='outdir'),
+        pytest.param(['source', '-o', 'out'], ('source', 'out'), make_kwargs(), 'build_package_via_sdist', id='srcdir-outdir'),
+        pytest.param(
+            ['-x'], (cwd, out), make_kwargs(skip_dependency_check=True), 'build_package_via_sdist', id='skip-dependency-check'
         ),
-        (
-            ['-w'],
-            (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package',
+        pytest.param(
+            ['--installer', 'uv'], (cwd, out), make_kwargs(installer='uv'), 'build_package_via_sdist', id='installer'
         ),
-        (
-            ['-s', '-w'],
-            (cwd, out),
-            {
-                'distributions': ['sdist', 'wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package',
-        ),
-        (
-            ['source'],
-            ('source', os.path.join('source', 'dist')),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
-        ),
-        (
-            ['-o', 'out'],
-            (cwd, 'out'),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
-        ),
-        (
-            ['source', '-o', 'out'],
-            ('source', 'out'),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
-        ),
-        (
-            ['-x'],
-            (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': True,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
-        ),
-        (
-            ['--installer', 'uv'],
-            (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': 'uv',
-            },
-            'build_package_via_sdist',
-        ),
-        (
+        pytest.param(
             ['-C--flag1', '-C--flag2'],
             (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {'--flag1': '', '--flag2': ''},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
+            make_kwargs(config_settings={'--flag1': '', '--flag2': ''}),
             'build_package_via_sdist',
+            id='config-empty-values',
         ),
-        (
+        pytest.param(
             ['-C--flag=value'],
             (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {'--flag': 'value'},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
+            make_kwargs(config_settings={'--flag': 'value'}),
             'build_package_via_sdist',
+            id='config-single',
         ),
-        (
+        pytest.param(
             ['-C--flag1=value', '-C--flag2=other_value', '-C--flag2=extra_value'],
             (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {'--flag1': 'value', '--flag2': ['other_value', 'extra_value']},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
+            make_kwargs(config_settings={'--flag1': 'value', '--flag2': ['other_value', 'extra_value']}),
             'build_package_via_sdist',
+            id='config-repeated',
         ),
-        (
+        pytest.param(
             ['--config-json={"one": 1, "two": [2, 3], "three": {"in": "out"}}'],
             (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {'one': 1, 'two': [2, 3], 'three': {'in': 'out'}},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
+            make_kwargs(config_settings={'one': 1, 'two': [2, 3], 'three': {'in': 'out'}}),
             'build_package_via_sdist',
+            id='config-json',
         ),
-        (
+        pytest.param(
             ['--config-json', '{"outer": {"inner": {"deeper": 2}}}'],
             (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {'outer': {'inner': {'deeper': 2}}},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
+            make_kwargs(config_settings={'outer': {'inner': {'deeper': 2}}}),
             'build_package_via_sdist',
+            id='config-json-nested',
         ),
-        (
-            ['--config-json', '{}'],
-            (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': None,
-                'installer': None,
-            },
-            'build_package_via_sdist',
-        ),
-        (
+        pytest.param(['--config-json', '{}'], (cwd, out), make_kwargs(), 'build_package_via_sdist', id='config-json-empty'),
+        pytest.param(
             ['--dependency-constraints-txt', 'contraints.txt'],
             (cwd, out),
-            {
-                'distributions': ['wheel'],
-                'config_settings': {},
-                'isolation': True,
-                'skip_dependency_check': False,
-                'dependency_constraints_txt': 'contraints.txt',
-                'installer': None,
-            },
+            make_kwargs(dependency_constraints_txt='contraints.txt'),
             'build_package_via_sdist',
+            id='dependency-constraints-txt',
         ),
     ],
 )
 def test_parse_args(
     mocker: pytest_mock.MockerFixture,
     cli_args: list[str],
-    build_args: tuple[Any, Any],
-    build_kwargs: dict[str, Any],
+    build_args: tuple[str, str],
+    build_kwargs: BuildKwargs,
     hook: str,
 ) -> None:
-    build_package = mocker.patch('build.__main__.build_package', return_value=['something'])
-    build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', return_value=['something'])
+    build_package = mocker.patch('build.__main__.build_package', autospec=True, return_value=['something'])
+    build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=['something'])
 
     build.__main__.main(cli_args)
 
@@ -335,6 +205,7 @@ def test_build_no_isolation_check_deps_empty(mocker: pytest_mock.MockerFixture, 
 def test_build_package_passes_config_settings_to_build(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     build_cmd = mocker.patch(
         'build.__main__._build',
+        autospec=True,
         side_effect=[
             os.path.join('dist', 'test_flit-1.0.0.tar.gz'),
             os.path.join('dist', 'test_flit-1.0.0-py3-none-any.whl'),
@@ -369,13 +240,14 @@ def test_build_package_passes_config_settings_to_build(mocker: pytest_mock.Mocke
 def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_mock.MockerFixture) -> None:
     build_cmd = mocker.patch(
         'build.__main__._build',
+        autospec=True,
         side_effect=[
             os.path.join('dist', 'demo-1.0.0.tar.gz'),
             os.path.join('dist', 'demo-1.0.0-py3-none-any.whl'),
         ],
     )
     mocker.patch('build.__main__.tempfile.mkdtemp', return_value='temp-sdist-dir')
-    mocker.patch('build.__main__.shutil.rmtree')
+    rmtree = mocker.patch('build.__main__.shutil.rmtree')
     tar_open = mocker.patch('build._compat.tarfile.TarFile.open')
     mocker.patch('build.__main__._ctx.log')
     config_settings = {'--flag': 'value'}
@@ -410,7 +282,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
             ),
         ]
     )
-    build.__main__.shutil.rmtree.assert_called_once_with('temp-sdist-dir', ignore_errors=True)  # type: ignore[attr-defined]
+    rmtree.assert_called_once_with('temp-sdist-dir', ignore_errors=True)
 
 
 def test_build_no_isolation_check_deps_not_installed(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
