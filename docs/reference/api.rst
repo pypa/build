@@ -6,8 +6,10 @@ build provides a Python API for programmatic use in build tools, CI systems, and
 
 .. note::
 
-    Most API examples below require the build backend to be installed in the current environment. Either install the
-    backend manually (for ``--no-isolation`` workflows) or use isolated environments as shown in the examples.
+    When not using an isolated environment, the build backend must be installed in the current environment. When using
+    :class:`DefaultIsolatedEnv <build.env.DefaultIsolatedEnv>`, you must explicitly install build dependencies into the
+    isolated environment via :meth:`~build.env.DefaultIsolatedEnv.install` before calling
+    :meth:`~build.ProjectBuilder.build` — the environment is created empty.
 
 *************
  Basic Usage
@@ -34,13 +36,20 @@ Building both sdist and wheel:
 
 Using isolated environments (default):
 
+``DefaultIsolatedEnv`` creates a clean virtual environment, but it is initially empty. You must install the project's
+build dependencies before invoking the backend:
+
 .. code-block:: python
 
     from build import ProjectBuilder
-    from build.env import IsolatedEnvBuilder
+    from build.env import DefaultIsolatedEnv
 
-    with IsolatedEnvBuilder() as env:
-        builder = ProjectBuilder(".", runner=env.runner)
+    with DefaultIsolatedEnv() as env:
+        builder = ProjectBuilder.from_isolated_env(env, ".")
+        # Install build-system.requires (e.g., flit-core, setuptools, ...)
+        env.install(builder.build_system_requires)
+        # Install additional backend dependencies for the target distribution
+        env.install(builder.get_requires_for_build("wheel"))
         builder.build("wheel", "dist/")
 
 Disabling isolation:
