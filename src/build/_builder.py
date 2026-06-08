@@ -25,8 +25,6 @@ import sys
 import warnings
 import zipfile
 
-from typing import Any
-
 import pyproject_hooks
 
 from . import _ctx, env
@@ -43,23 +41,46 @@ from ._util import check_dependency, parse_wheel_filename
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Mapping, Sequence
+    import datetime
+
+    from collections.abc import Iterable, Iterator, Mapping, Sequence
+    from typing import TypedDict
 
     if sys.version_info < (3, 11):
-        from typing_extensions import Self
+        from typing_extensions import NotRequired, Self
     else:
-        from typing import Self
+        from typing import NotRequired, Self
 
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
+    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Uses the covariant
+    # ``Sequence``/``Mapping`` so concrete literals (e.g. ``dict[str, list[str]]``) are assignable.
+    TOMLValue = (
+        str
+        | int
+        | float
+        | bool
+        | datetime.datetime
+        | datetime.date
+        | datetime.time
+        | Sequence['TOMLValue']
+        | Mapping[str, 'TOMLValue']
+    )
 
-_DEFAULT_BACKEND = {
+    # The validated ``[build-system]`` table.
+    BuildSystemTable = TypedDict(
+        'BuildSystemTable',
+        {'requires': list[str], 'build-backend': str, 'backend-path': NotRequired[list[str]]},
+    )
+
+
+_DEFAULT_BACKEND: BuildSystemTable = {
     'build-backend': 'setuptools.build_meta:__legacy__',
     'requires': ['setuptools >= 40.8.0'],
 }
 
 
-def _find_typo(dictionary: Mapping[str, str], expected: str) -> None:
+def _find_typo(dictionary: Iterable[str], expected: str) -> None:
     for obj in dictionary:
         if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
             warnings.warn(
@@ -80,7 +101,7 @@ def _validate_source_directory(source_dir: StrPath) -> None:
         raise BuildException(msg)
 
 
-def _read_pyproject_toml(path: StrPath) -> Mapping[str, Any]:
+def _read_pyproject_toml(path: StrPath) -> Mapping[str, TOMLValue]:
     try:
         with open(path, 'rb') as f:
             return tomllib.loads(f.read().decode())
@@ -94,51 +115,57 @@ def _read_pyproject_toml(path: StrPath) -> Mapping[str, Any]:
         raise BuildException(msg) from None
 
 
-def _parse_build_system_table(pyproject_toml: Mapping[str, Any]) -> Mapping[str, Any]:
+def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildSystemTable:
     # If pyproject.toml is missing (per PEP 517) or [build-system] is missing
     # (per PEP 518), use default values
     if 'build-system' not in pyproject_toml:
         _find_typo(pyproject_toml, 'build-system')
         return _DEFAULT_BACKEND
 
-    build_system_table = dict(pyproject_toml['build-system'])
+    build_system = pyproject_toml['build-system']
+    if not isinstance(build_system, dict):
+        msg = '`build-system` must be a table'
+        raise BuildSystemTableValidationError(msg)
 
     # If [build-system] is present, it must have a ``requires`` field (per PEP 518)
-    if 'requires' not in build_system_table:
-        _find_typo(build_system_table, 'requires')
+    if 'requires' not in build_system:
+        _find_typo(build_system, 'requires')
         msg = '`requires` is a required property'
         raise BuildSystemTableValidationError(msg)
-    if not isinstance(build_system_table['requires'], list) or not all(
-        isinstance(i, str) for i in build_system_table['requires']
-    ):
+    requires = build_system['requires']
+    if not isinstance(requires, list) or not all(isinstance(i, str) for i in requires):
         msg = '`requires` must be an array of strings'
         raise BuildSystemTableValidationError(msg)
 
-    match build_system_table:
-        case {'build-backend': str()}:
-            pass
+    table: BuildSystemTable = {
+        'requires': [requirement for requirement in requires if isinstance(requirement, str)],
+        'build-backend': _DEFAULT_BACKEND['build-backend'],
+    }
+
+    match build_system:
+        case {'build-backend': str() as backend}:
+            table['build-backend'] = backend
         case {'build-backend': _}:
             msg = '`build-backend` must be a string'
             raise BuildSystemTableValidationError(msg)
         case _:
-            _find_typo(build_system_table, 'build-backend')
             # If ``build-backend`` is missing, inject the legacy setuptools backend
             # but leave ``requires`` intact to emulate pip
-            build_system_table['build-backend'] = _DEFAULT_BACKEND['build-backend']
+            _find_typo(build_system, 'build-backend')
 
-    match build_system_table:
+    match build_system:
         case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
-            pass
+            table['backend-path'] = [path for path in backend_path if isinstance(path, str)]
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
             raise BuildSystemTableValidationError(msg)
 
-    unknown_props = build_system_table.keys() - {'requires', 'build-backend', 'backend-path'}
+    unknown_props = build_system.keys() - {'requires', 'build-backend', 'backend-path'}
     if unknown_props:
         msg = f'Unknown properties: {", ".join(unknown_props)}'
         raise BuildSystemTableValidationError(msg)
 
-    return build_system_table
+    return table
 
 
 def _validate_backend_path(source_dir: str, backend_paths: Sequence[str]) -> None:
@@ -359,7 +386,7 @@ class ProjectBuilder:
         return os.path.join(output_directory, distinfo)
 
     def _call_backend(
-        self, hook_name: str, outdir: StrPath, config_settings: ConfigSettings | None = None, **kwargs: Any
+        self, hook_name: str, outdir: StrPath, config_settings: ConfigSettings | None = None, **kwargs: str | bool
     ) -> str:
         outdir = os.path.abspath(outdir)
 

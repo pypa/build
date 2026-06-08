@@ -71,7 +71,7 @@ class IsolatedEnv(typing.Protocol):
 
 
 def _has_dependency(
-    name: str, minimum_version_str: str | None = None, /, **distargs: object
+    name: str, minimum_version_str: str | None = None, /, **distargs: list[str]
 ) -> importlib_metadata.Distribution | None:
     """
     Given a distribution name, see if it is present and return the distribution

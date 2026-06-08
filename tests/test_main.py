@@ -14,8 +14,8 @@ import tarfile
 import unittest.mock
 import venv
 
-from collections.abc import Callable
-from typing import Any, TypedDict
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import TYPE_CHECKING, Protocol, TypedDict
 
 import pytest
 import pytest_mock
@@ -24,6 +24,14 @@ import build
 import build.__main__
 
 from build._compat import importlib as _importlib
+
+
+if TYPE_CHECKING:
+    from conftest import SubTests
+
+
+class CapturedRunner(Protocol):
+    def __call__(self, cmd: Sequence[str], cwd: str | None = ..., extra_environ: Mapping[str, str] | None = ...) -> None: ...
 
 
 pytestmark = pytest.mark.contextvars
@@ -652,7 +660,7 @@ ERROR Failed to create venv. Maybe try installing virtualenv.
 @pytest.mark.contextvars
 @pytest.mark.network
 def test_verbose_logging_output(
-    subtests: Any,
+    subtests: SubTests,
     capfd: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
     tmp_dir: str,
@@ -762,11 +770,11 @@ def test_build_metadata_runner_without_extra_environ(
     tmp_path: pathlib.Path,
     package_test_setuptools: str,
 ) -> None:
-    captured_runners: list[Any] = []
+    captured_runners: list[CapturedRunner] = []
 
     @contextlib.contextmanager
-    def fake_bootstrap(*_args: object, **kwargs: object) -> Any:
-        captured_runners.append(kwargs['runner'])
+    def fake_bootstrap(*_args: object, runner: CapturedRunner, **_kwargs: object) -> Iterator[unittest.mock.MagicMock]:
+        captured_runners.append(runner)
         builder = mocker.MagicMock()
         metadata_dir = tmp_path / 'metadata'
         metadata_dir.mkdir()
@@ -784,7 +792,10 @@ def test_build_metadata_runner_without_extra_environ(
     ctx_run.assert_called_once_with(['echo', 'test'], None, mocker.ANY)
 
 
-WriteSdist = Callable[..., None]
+class WriteSdist(Protocol):
+    def __call__(
+        self, path: pathlib.Path, top_level: str, *, with_pkg_info: bool = ..., extra: dict[str, str] | None = ...
+    ) -> None: ...
 
 
 @pytest.fixture
