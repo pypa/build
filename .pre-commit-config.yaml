@@ -30,14 +30,14 @@ repos:
     hooks:
       - id: prettier
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: 7653faa707cb660bc80cef0e8433932363b43504 # frozen: v2.0.2
+    rev: 06455715c8a81e176748e036c1c945f3e80d5b8d  # frozen: v2.1.0
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 0671d8ab202c4ac093b78433ae5baf74f3fc7246 # frozen: v0.15.15
+    rev: 22f0422809455ec89ffdcf5a00170ba816e42ddb  # frozen: v0.15.16
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
