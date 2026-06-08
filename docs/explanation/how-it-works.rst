@@ -46,18 +46,18 @@ The process in detail:
    build reads your project's `pyproject.toml <https://packaging.python.org/en/latest/specifications/pyproject-toml/>`_
    to determine:
 
-   - Which **build backend** to use (from ``[build-system]`` section)
-   - What dependencies the backend needs (``requires`` list)
-   - Build backend configuration (``backend-path`` if specified)
+   2. Which **build backend** to use (from ``[build-system]`` section)
+   3. What dependencies the backend needs (``requires`` list)
+   4. Build backend configuration (``backend-path`` if specified)
 
 2. **Create isolated environment** (default behavior)
 
    build creates a temporary `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ to ensure
    reproducible builds:
 
-   - Creates a fresh virtualenv in a temporary directory
-   - Sets ``VIRTUAL_ENV`` `environment variable <https://docs.python.org/3/library/venv.html#how-venvs-work>`_
-   - Installs the build backend and its dependencies via `pip <https://pip.pypa.io/>`_
+   3. Creates a fresh virtualenv in a temporary directory
+   4. Sets ``VIRTUAL_ENV`` `environment variable <https://docs.python.org/3/library/venv.html#how-venvs-work>`_
+   5. Installs the build backend and its dependencies via `pip <https://pip.pypa.io/>`_
 
    This isolation ensures your build doesn't depend on what's installed in your development environment, making builds
    reproducible across different machines.
@@ -66,8 +66,8 @@ The process in detail:
 
    build calls standardized hooks (functions) in your **build backend**:
 
-   - For source distributions: calls ``build_sdist(sdist_directory, config_settings=None)``
-   - For wheels: calls ``build_wheel(wheel_directory, config_settings=None, metadata_directory=None)``
+   4. For source distributions: calls ``build_sdist(sdist_directory, config_settings=None)``
+   5. For wheels: calls ``build_wheel(wheel_directory, config_settings=None, metadata_directory=None)``
 
    These hooks are defined in :PEP:`517` (the build system interface standard).
 
@@ -76,11 +76,11 @@ The process in detail:
    The backend creates `distribution files
    <https://packaging.python.org/en/latest/glossary/#term-Distribution-Package>`_:
 
-   - **Source distribution (sdist)**: A `tarball
-     <https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ (``package-version.tar.gz``)
-     containing your source code
-   - **Wheel**: A `zip file <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_
-     (``package-version-py3-none-any.whl``) that can be installed directly
+   5. **Source distribution (sdist)**: A `tarball
+      <https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ (``package-version.tar.gz``)
+      containing your source code
+   6. **Wheel**: A `zip file <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_
+      (``package-version-py3-none-any.whl``) that can be installed directly
 
 5. **Cleanup**
 
