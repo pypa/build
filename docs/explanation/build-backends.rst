@@ -285,6 +285,10 @@ With scikit-build-core, you can configure CMake:
 
 Each backend interprets these settings differently. See :doc:`../how-to/config-settings` for backend-specific examples.
 
+Config settings map keys to values, so every key needs a value. Drop the ``=VALUE`` and the key gets an empty value,
+which suits backends that act on a flag's presence alone. build accepts this shorthand but warns about it, because pip
+only takes the explicit ``KEY=VALUE`` form. Write ``KEY=`` for an empty value and your command runs under both tools.
+
 ******************
  Dynamic Metadata
 ******************

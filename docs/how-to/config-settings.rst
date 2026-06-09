@@ -22,16 +22,16 @@ The basic syntax is:
 
     $ python -m build -C KEY=VALUE
 
-Or for options without values (equivalent to ``-C KEY=""``):
+Or for options without values:
 
 .. code-block:: console
 
-    $ python -m build -C KEY
+    $ python -m build -C KEY=
 
 .. note::
 
-    The ``-C KEY`` syntax (without ``=``) is supported by build but not by pip. For maximum compatibility, use ``-C
-    KEY=""`` explicitly when you need an empty value.
+    build also accepts the bare ``-C KEY`` form (without ``=``) and reads it as ``-C KEY=``, but warns you because pip
+    rejects it. Write ``-C KEY=`` to keep the command working in both tools.
 
 Multiple settings can be provided:
 

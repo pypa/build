@@ -538,8 +538,10 @@ def main_parser() -> argparse.ArgumentParser:
         action='append',
         help='settings to pass to the backend.  Multiple settings can be provided. '
         'Settings beginning with a hyphen will erroneously be interpreted as options to build if separated '
-        'by a space; use ``--config-setting=--my-setting -C--my-other-setting`` instead',
-        metavar='KEY[=VALUE]',
+        'by a space; use ``--config-setting=--my-setting -C--my-other-setting`` instead. '
+        'A setting passed without ``=VALUE`` is given an empty value, but this form is not supported by pip; '
+        'write ``KEY=`` instead for compatibility',
+        metavar='KEY=[VALUE]',
     )
     config_exclusive_group.add_argument(
         '--config-json',
@@ -582,15 +584,20 @@ def _parse_config_settings(raw_config_settings: list[str]) -> dict[str, str | li
     config_settings = dict[str, str | list[str]]()
 
     for arg in raw_config_settings:
-        setting, _, value = arg.partition('=')
-        if setting not in config_settings:
+        setting, sep, value = arg.partition('=')
+        if not sep:
+            warnings.warn(
+                f'Config setting {setting!r} was passed without a value; this form is not supported by pip. '
+                f'Write {setting}= instead to be compatible with both tools',
+                stacklevel=2,
+            )
+        existing = config_settings.get(setting)
+        if existing is None:
             config_settings[setting] = value
+        elif isinstance(existing, list):
+            existing.append(value)
         else:
-            existing = config_settings[setting]
-            if isinstance(existing, list):
-                existing.append(value)
-            else:
-                config_settings[setting] = [existing, value]
+            config_settings[setting] = [existing, value]
 
     return config_settings
 
