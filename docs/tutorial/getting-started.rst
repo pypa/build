@@ -163,7 +163,9 @@ against its contents, which catches missing files in the sdist:
     $ python -m build dist/mypackage-0.1.0.tar.gz
     Successfully built mypackage-0.1.0-py3-none-any.whl
 
-The wheel lands next to the sdist. Pass ``--outdir`` to write somewhere else.
+The wheel lands next to the sdist. Pass ``--outdir`` to write somewhere else. If your package compiles C/C++ and you
+rebuild often, ``--sdist-extract-dir`` keeps the extracted sources at a fixed path so ``ccache``/``sccache`` can reuse
+earlier compilations; see :doc:`../how-to/basic-usage`.
 
 ****************************
  Building without isolation

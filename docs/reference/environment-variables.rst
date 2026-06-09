@@ -246,9 +246,12 @@ build.
 **Common use cases**:
 
 - **Debugging**: Keep temp directory to inspect build logs
-- **ccache**: Place builds on a filesystem where ccache can cache compilation
 - **Disk space**: Use a different filesystem with more available space
 - **Performance**: Use faster storage (e.g., tmpfs on Linux)
+
+``TMPDIR`` only relocates the base directory; build still appends a random suffix, so the extraction path differs on
+every run. For compiler caches such as ``ccache`` or ``sccache``, which key on the source path, that random suffix is a
+guaranteed cache miss - use ``--sdist-extract-dir`` to pin the path instead.
 
 See :doc:`../how-to/troubleshooting` for debugging examples.
 

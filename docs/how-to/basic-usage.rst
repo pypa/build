@@ -108,6 +108,28 @@ Or the short form:
 
     $ python -m build -o /path/to/output
 
+*******************************************
+ Speeding up rebuilds of compiled packages
+*******************************************
+
+When the default build extracts the intermediate sdist, it uses a random temporary directory. Compiler caches such as
+`ccache <https://ccache.dev/>`_ and `sccache <https://github.com/mozilla/sccache>`_ fold the absolute source path into
+their cache key, so a fresh path on every run means every C/C++ file is recompiled from scratch.
+
+Pin the extraction path with ``--sdist-extract-dir`` so the cache can recognise unchanged files across rebuilds:
+
+.. code-block:: console
+
+    $ python -m build --sdist-extract-dir build/sdist
+
+Build creates the directory if missing, clears and repopulates it each run so the contents stay fresh, and keeps it
+after the build. The path stays stable while the project version is unchanged, as it is during iteration on the
+extension sources. The same flag applies when building a wheel from a ``.tar.gz``.
+
+Build still runs in a fresh isolated environment whose path is *not* pinned, so include directories from that
+environment (Python headers, dependency headers) keep changing. Caching those compile units needs toolchain-side path
+remapping on top of this flag (e.g. ``-fdebug-prefix-map``, or sccache's ``base_dir``).
+
 ***********************
  Controlling verbosity
 ***********************

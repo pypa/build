@@ -87,6 +87,7 @@ if TYPE_CHECKING:
         no_isolation: bool
         dependency_constraints_txt: str | None
         skip_dependency_check: bool
+        sdist_extract_dir: str | None
 
 
 _COLORS = {
@@ -331,6 +332,7 @@ def build_package_via_sdist(
     skip_dependency_check: bool = False,
     dependency_constraints_txt: os.PathLike[str] | None = None,
     installer: _env.Installer = 'pip',
+    sdist_extract_dir: StrPath | None = None,
 ) -> list[str]:
     """
     Build a sdist and then the specified distributions from it.
@@ -341,6 +343,8 @@ def build_package_via_sdist(
     :param config_settings: Configuration settings to be passed to the backend
     :param isolation: Isolate the build in a separate environment
     :param skip_dependency_check: Do not perform the dependency check
+    :param sdist_extract_dir: Directory to extract the intermediate sdist into; a temporary directory is used and
+        removed afterwards when ``None``
     """
     if 'sdist' in distributions:
         msg = 'Only binary distributions are allowed but sdist was specified'
@@ -353,7 +357,7 @@ def build_package_via_sdist(
     sdist_name = os.path.basename(sdist)
     built: list[str] = []
     if distributions:
-        with _extract_sdist(sdist, sdist_name.removesuffix('.tar.gz')) as extracted_srcdir:
+        with _extract_sdist(sdist, sdist_name.removesuffix('.tar.gz'), extract_dir=sdist_extract_dir) as extracted_srcdir:
             _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
             for distribution in distributions:
                 out = _build(
@@ -510,6 +514,13 @@ def main_parser() -> argparse.ArgumentParser:
         metavar='PATH',
     )
     build_group.add_argument(
+        '--sdist-extract-dir',
+        help='extract the intermediate sdist to PATH (created if missing and kept afterwards) instead of a random '
+        'temporary directory; reusing it across rebuilds gives compiler caches such as ccache/sccache a stable '
+        'source path. Only affects the default (via-sdist) build and building a wheel from an sdist',
+        metavar='PATH',
+    )
+    build_group.add_argument(
         '--sdist',
         '-s',
         dest='distributions',
@@ -636,7 +647,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     with _handle_build_error():
         if sdist_input:
             top_level = _validate_sdist_archive(args.srcdir)
-            with _extract_sdist(args.srcdir, top_level) as extracted_srcdir:
+            with _extract_sdist(args.srcdir, top_level, extract_dir=args.sdist_extract_dir) as extracted_srcdir:
                 built = build(extracted_srcdir, outdir)
         else:
             built = build(args.srcdir, outdir)
@@ -676,7 +687,7 @@ def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: 
         return partial(build_package, distributions=distributions)
     if args.distributions:
         return partial(build_package, distributions=args.distributions)
-    return partial(build_package_via_sdist, distributions=['wheel'])
+    return partial(build_package_via_sdist, distributions=['wheel'], sdist_extract_dir=args.sdist_extract_dir)
 
 
 def _validate_sdist_archive(archive: StrPath) -> str:
@@ -712,14 +723,23 @@ def _validate_sdist_archive(archive: StrPath) -> str:
 
 
 @contextlib.contextmanager
-def _extract_sdist(archive: StrPath, top_level: str) -> Iterator[str]:
-    extract_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
-    try:
+def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | None = None) -> Iterator[str]:
+    if extract_dir is None:
+        tmp_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
+        try:
+            with TarFile.open(archive) as tar:
+                safe_extractall(tar, tmp_dir)
+            yield os.path.join(tmp_dir, top_level)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+    else:
+        root = os.fspath(extract_dir)
+        os.makedirs(root, exist_ok=True)
+        target = os.path.join(root, top_level)
+        shutil.rmtree(target, ignore_errors=True)
         with TarFile.open(archive) as tar:
-            safe_extractall(tar, extract_dir)
-        yield os.path.join(extract_dir, top_level)
-    finally:
-        shutil.rmtree(extract_dir, ignore_errors=True)
+            safe_extractall(tar, root)
+        yield target
 
 
 def entrypoint() -> None:
