@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: dda8db18cfc68df532abf33b185ecd12d5b7b326 # frozen: 1.20.0
+    rev: fda77690955e9b63c6687d8806bafd56a526e45f # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
@@ -43,7 +43,7 @@ repos:
         args: [--fix, --show-fixes]
       - id: ruff-format
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: 1e661c3087909adc5c1603b304848b02641facdc # frozen: v0.8.1
+    rev: 65b94e97b1091634368592d98072160842265fe4 # frozen: v0.8.2
     hooks:
       - id: flake8-lazy
         files: ^src/
