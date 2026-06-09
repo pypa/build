@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile']
+__lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile', 'warnings']
 
 import pathlib
 import tempfile
+import warnings
 
 import pyproject_hooks
 
@@ -40,13 +41,20 @@ def project_wheel_metadata(
     Uses the ``prepare_metadata_for_build_wheel`` hook if available,
     otherwise ``build_wheel``.
 
+    .. deprecated:: 1.5.0
+       Generate metadata with the ``python -m build --metadata`` command instead.
+
     :param source_dir: Project source directory
     :param isolated: Whether or not to run invoke the backend in the current
                      environment or to create an isolated one and invoke it
                      there.
     :param runner: An alternative runner for backend subprocesses
     """
-
+    warnings.warn(
+        'project_wheel_metadata is deprecated; generate metadata with the `python -m build --metadata` command instead',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if isolated:
         with DefaultIsolatedEnv() as env:
             builder = ProjectBuilder.from_isolated_env(
