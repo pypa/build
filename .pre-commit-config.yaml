@@ -30,7 +30,7 @@ repos:
     hooks:
       - id: prettier
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: 06455715c8a81e176748e036c1c945f3e80d5b8d # frozen: v2.1.0
+    rev: 7653faa707cb660bc80cef0e8433932363b43504 # frozen: v2.0.2
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
