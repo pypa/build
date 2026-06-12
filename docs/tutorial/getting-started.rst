@@ -200,12 +200,12 @@ the version it ``found`` - so you can tell "not installed" apart from "installed
  Recording what build produced
 *******************************
 
-If a script or CI job needs the exact filenames build produced, add ``--report`` to write them to a JSON file (next to
-the distributions as ``build-report.json``) instead of parsing the output:
+If a script or CI job needs the exact filenames build produced, add ``--report PATH`` to write them to a JSON file
+instead of parsing the output:
 
 .. code-block:: console
 
-    $ python -m build --report
+    $ python -m build --report build-report.json
 
 ************
  Next steps

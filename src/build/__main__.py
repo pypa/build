@@ -601,12 +601,8 @@ def main_parser() -> argparse.ArgumentParser:
     )
     build_group.add_argument(
         '--report',
-        nargs='?',
-        const='',
-        default=None,
-        help='write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256 hash); '
-        'with no PATH it is written next to the distributions as ``build-report.json`` in the output directory. '
-        'Cannot be used together with ``--metadata``',
+        help='write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256 hash) '
+        'to this path. Cannot be used together with ``--metadata``',
         metavar='PATH',
     )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
@@ -731,8 +727,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         else:
             built = build(args.srcdir, outdir)
         if args.report is not None:
-            report_path = args.report or os.path.join(outdir, 'build-report.json')
-            _write_report(report_path, outdir, built)
+            _write_report(args.report, outdir, built)
         if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]

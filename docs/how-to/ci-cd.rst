@@ -488,21 +488,22 @@ Run the build environment:
 *****************************
 
 Artifact filenames are dynamic, so pipelines that need to act on the exact files build produced (upload, sign, compute
-digests) should not guess or glob them. Pass ``--report`` to capture a machine-readable list and read it back with a
-JSON tool such as ``jq``:
+digests) should not guess or glob them. Pass ``--report PATH`` to capture a machine-readable list and read it back with
+a JSON tool such as ``jq``. Pick a ``PATH`` outside the output directory so tools that upload ``dist/*`` wholesale do
+not trip over it:
 
 .. code-block:: yaml
 
     - name: Build and upload
       run: |
-        python -m build --report
-        twine upload $(jq -r '.artifacts[].path' dist/build-report.json)
+        python -m build --report build-report.json
+        twine upload $(jq -r '.artifacts[].path' build-report.json)
 
 The report also includes each artifact's size and SHA-256 hash, useful for emitting provenance or checksums:
 
 .. code-block:: console
 
-    $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' dist/build-report.json
+    $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' build-report.json
 
 See :doc:`../reference/cli` for the full report schema.
 
