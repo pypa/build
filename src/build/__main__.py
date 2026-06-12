@@ -11,6 +11,7 @@ __lazy_modules__ = [
     'build._util',
     'build.env',
     'functools',
+    'hashlib',
     'json',
     'os',
     'packaging',
@@ -24,13 +25,14 @@ __lazy_modules__ = [
     'tempfile',
     'textwrap',
     'traceback',
-    'typing',
     'warnings',
+    'zipfile',
 ]
 
 import argparse
 import contextlib
 import contextvars
+import hashlib
 import json
 import os
 import platform
@@ -41,11 +43,12 @@ import tempfile
 import textwrap
 import traceback
 import warnings
+import zipfile
 
 from functools import partial
 from tarfile import TarError
 from tarfile import open as tar_open
-from typing import NoReturn, TextIO, cast
+from typing import NoReturn, TextIO, TypedDict, cast
 
 import pyproject_hooks
 
@@ -89,6 +92,7 @@ if TYPE_CHECKING:
         skip_dependency_check: bool
         sdist_extract_dir: str | None
         env_dir: str | None
+        report: str | None
 
 
 _COLORS = {
@@ -418,7 +422,9 @@ def _build_metadata(
     installer: _env.Installer = 'pip',
     env_dir: str | None = None,
 ) -> list[str]:
-    import packaging.metadata
+    if os.path.isfile(srcdir) and os.fspath(srcdir).lower().endswith('.whl'):
+        _print_metadata(_wheel_metadata(srcdir))
+        return []
 
     def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None) -> None:
         env = os.environ.copy()
@@ -444,12 +450,27 @@ def _build_metadata(
             'rb',
         ) as metadata_file,
     ):
-        valid_metadata, _ = packaging.metadata.parse_email(metadata_file.read())
+        _print_metadata(metadata_file.read())
+
+    return []
+
+
+def _wheel_metadata(wheel: StrPath) -> bytes:
+    with zipfile.ZipFile(wheel) as archive:
+        names = [name for name in archive.namelist() if name.count('/') == 1 and name.endswith('.dist-info/METADATA')]
+        if len(names) != 1:
+            msg = f'{os.fspath(wheel)!r} is not a valid wheel: expected one .dist-info/METADATA, found {len(names)}'
+            raise BuildException(msg)
+        return archive.read(names[0])
+
+
+def _print_metadata(raw_metadata: bytes) -> None:
+    import packaging.metadata
+
+    valid_metadata, _ = packaging.metadata.parse_email(raw_metadata)
     print(  # noqa: T201
         json.dumps(valid_metadata, ensure_ascii=False, indent=2),
     )
-
-    return []
 
 
 def main_parser() -> argparse.ArgumentParser:
@@ -506,7 +527,8 @@ def main_parser() -> argparse.ArgumentParser:
         type=str,
         nargs='?',
         default=os.getcwd(),
-        help='source directory or .tar.gz source distribution (defaults to the current working directory)',
+        help='source directory, .tar.gz source distribution, or (with --metadata) a .whl to read metadata from '
+        '(defaults to the current working directory)',
     )
 
     global_group = parser.add_argument_group('global options')
@@ -574,7 +596,14 @@ def main_parser() -> argparse.ArgumentParser:
     build_group.add_argument(
         '--metadata',
         action='store_true',
-        help="print out a wheel's metadata in JSON format. Cannot be used in conjunction with ``--sdist`` or ``--wheel``",
+        help="print out a wheel's metadata in JSON format, building it first unless the source argument is already a "
+        '.whl. Cannot be used in conjunction with ``--sdist`` or ``--wheel``',
+    )
+    build_group.add_argument(
+        '--report',
+        help='write a machine-readable JSON report of the built artifacts (name, path, kind, size and SHA-256 hash) '
+        'to this path. Cannot be used together with ``--metadata``',
+        metavar='PATH',
     )
     config_exclusive_group = build_group.add_mutually_exclusive_group()
     config_exclusive_group.add_argument(
@@ -672,8 +701,9 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     _setup_cli(verbosity=args.verbosity)
 
     sdist_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.tar.gz')
+    wheel_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.whl')
     build = partial(
-        _select_build(parser, args, sdist_input=sdist_input),
+        _select_build(parser, args, sdist_input=sdist_input, wheel_input=wheel_input),
         config_settings=_resolve_config_settings(args),
         isolation=not args.no_isolation,
         skip_dependency_check=args.skip_dependency_check,
@@ -684,7 +714,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     if args.outdir is not None:
         outdir = args.outdir
-    elif sdist_input:
+    elif sdist_input or wheel_input:
         outdir = os.path.dirname(os.path.abspath(args.srcdir))
     else:
         outdir = os.path.join(args.srcdir, 'dist')
@@ -696,11 +726,60 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
                 built = build(extracted_srcdir, outdir)
         else:
             built = build(args.srcdir, outdir)
+        if args.report is not None:
+            _write_report(args.report, outdir, built)
         if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
             )
             _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
+
+
+class _ArtifactReport(TypedDict):
+    name: str
+    path: str
+    kind: str
+    size: int
+    hashes: dict[str, str]
+
+
+class _BuildReport(TypedDict):
+    version: str
+    artifacts: list[_ArtifactReport]
+
+
+def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> None:
+    report: _BuildReport = {
+        'version': '1.0',
+        'artifacts': [_describe_artifact(os.path.join(outdir, name), name) for name in artifacts],
+    }
+    data = json.dumps(report, indent=2) + '\n'
+
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), suffix='.tmp')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
+            report_file.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+        raise
+
+
+def _describe_artifact(path: str, name: str) -> _ArtifactReport:
+    digest = hashlib.sha256()
+    size = 0
+    with open(path, 'rb') as artifact:
+        while chunk := artifact.read(65536):
+            size += len(chunk)
+            digest.update(chunk)
+    return {
+        'name': name,
+        'path': path,
+        'kind': 'sdist' if name.endswith('.tar.gz') else 'wheel',
+        'size': size,
+        'hashes': {'sha256': digest.hexdigest()},
+    }
 
 
 def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
@@ -717,7 +796,11 @@ def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
     return {}
 
 
-def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool) -> partial[list[str]]:
+def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool, wheel_input: bool) -> partial[list[str]]:
+    if args.report is not None and args.metadata:
+        parser.error('--report: not allowed with --metadata')
+    if wheel_input and not args.metadata:
+        parser.error('a wheel can only be used with --metadata, to read its metadata; it cannot be built from')
     if args.metadata and args.distributions:
         parser.error('--metadata: not allowed with --sdist or --wheel')
     if sdist_input and args.distributions and 'sdist' in args.distributions:

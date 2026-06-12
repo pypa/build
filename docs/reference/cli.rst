@@ -86,6 +86,66 @@ so they reflect what was installed rather than the specifiers in ``pyproject.tom
 build reports this for isolated builds only; with ``--no-isolation`` build installs nothing, so inspect the active
 interpreter with your installer instead (for example ``pip list``).
 
+**************
+ Build Report
+**************
+
+``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
+names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
+refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
+standard output, because the build backend may write to ``stdout``/``stderr`` too.
+
+.. code-block:: console
+
+    $ python -m build --report build-report.json
+    $ twine upload $(jq -r '.artifacts[].path' build-report.json)
+
+.. note::
+
+    Keep the report out of the output directory: tools commonly upload ``dist/*`` wholesale (``twine upload dist/*``),
+    and a stray non-distribution file there can break that. The write is atomic, so a reader never sees a partial file;
+    builds running in parallel still need a distinct ``PATH`` each to avoid overwriting one another's report.
+
+The schema is:
+
+.. code-block:: json
+
+    {
+      "version": "1.0",
+      "artifacts": [
+        {
+          "name": "mypackage-1.0.0.tar.gz",
+          "path": "dist/mypackage-1.0.0.tar.gz",
+          "kind": "sdist",
+          "size": 852,
+          "hashes": {
+            "sha256": "dbd5486e6e893663263caf84a4b87d67cc28f6963b6650f69eaa54b78e42ece4"
+          }
+        },
+        {
+          "name": "mypackage-1.0.0-py3-none-any.whl",
+          "path": "dist/mypackage-1.0.0-py3-none-any.whl",
+          "kind": "wheel",
+          "size": 1121,
+          "hashes": {
+            "sha256": "ef460897fdce998634efc3385aa4261b4280a2fe2ab0e08ddcacc8496658465d"
+          }
+        }
+      ]
+    }
+
+``version`` is the schema version. Each artifact lists its ``name`` (basename), ``path`` (relative to the current
+directory, mirroring ``--outdir``), ``kind`` (``sdist`` or ``wheel``), ``size`` in bytes, and ``hashes`` keyed by
+algorithm. ``--report`` cannot be combined with ``--metadata``.
+
+To inspect a wheel listed in the report, pass its path straight to ``--metadata``: when the source argument is a
+``.whl`` file, build reads ``METADATA`` from the archive and prints it as JSON instead of building anything.
+
+.. code-block:: console
+
+    $ python -m build --report build-report.json
+    $ python -m build --metadata "$(jq -r '.artifacts[] | select(.kind=="wheel") | .path' build-report.json)"
+
 ************************
  Alternative CLI Script
 ************************

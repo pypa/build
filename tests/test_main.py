@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -13,6 +14,7 @@ import sys
 import tarfile
 import unittest.mock
 import venv
+import zipfile
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, TypedDict
@@ -1239,3 +1241,105 @@ def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mock
     build.__main__.main([str(archive)])
 
     via_sdist.assert_called_once()
+
+
+@pytest.fixture
+def built_dist(tmp_path: pathlib.Path) -> tuple[pathlib.Path, list[str]]:
+    outdir = tmp_path / 'dist'
+    outdir.mkdir()
+    names = ['test_pkg-1.0.0.tar.gz', 'test_pkg-1.0.0-py3-none-any.whl']
+    for name in names:
+        (outdir / name).write_bytes(f'contents of {name}'.encode())
+    return outdir, names
+
+
+def test_report_written(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+) -> None:
+    outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+    report = tmp_path / 'report.json'
+
+    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report)])
+
+    payload = json.loads(report.read_text(encoding='utf-8'))
+    assert payload['version'] == '1.0'
+    assert [artifact['name'] for artifact in payload['artifacts']] == names
+    for artifact, name in zip(payload['artifacts'], names, strict=True):
+        path = outdir / name
+        assert artifact['path'] == os.path.join(str(outdir), name)
+        assert artifact['kind'] == ('sdist' if name.endswith('.tar.gz') else 'wheel')
+        assert artifact['size'] == path.stat().st_size
+        assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def test_report_requires_path(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--report'])
+
+    assert '--report: expected one argument' in capsys.readouterr().err
+
+
+def test_write_report_is_atomic(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'report.json'
+
+    build.__main__._write_report(report, str(outdir), names)
+
+    assert not list(tmp_path.glob('*.tmp'))
+    assert not list(outdir.glob('*.tmp'))
+
+
+def test_write_report_cleans_tmp_on_failure(
+    mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]
+) -> None:
+    outdir, names = built_dist
+    mocker.patch('build.__main__.os.replace', side_effect=OSError('boom'))
+
+    with pytest.raises(OSError, match='boom'):
+        build.__main__._write_report(tmp_path / 'report.json', str(outdir), names)
+
+    assert not list(tmp_path.glob('*.tmp'))
+
+
+def test_report_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--report', 'r.json', '--metadata'])
+
+    assert '--report: not allowed with --metadata' in capsys.readouterr().err
+
+
+@pytest.fixture
+def wheel(tmp_path: pathlib.Path) -> pathlib.Path:
+    path = tmp_path / 'demo-1.0.0-py3-none-any.whl'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr('demo-1.0.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0.0\n\n')
+    return path
+
+
+def test_metadata_read_from_wheel(wheel: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    build.__main__.main([str(wheel), '--metadata'])
+
+    metadata = json.loads(capsys.readouterr().out)
+    assert metadata['name'] == 'demo'
+    assert metadata['version'] == '1.0.0'
+
+
+def test_wheel_input_requires_metadata(wheel: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main([str(wheel)])
+
+    assert 'a wheel can only be used with --metadata' in capsys.readouterr().err
+
+
+def test_metadata_from_wheel_without_dist_info(tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    path = tmp_path / 'broken-1.0.0-py3-none-any.whl'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr('demo/__init__.py', '')
+
+    with pytest.raises(SystemExit):
+        build.__main__.main([str(path), '--metadata'])
+
+    assert 'is not a valid wheel' in capsys.readouterr().err
