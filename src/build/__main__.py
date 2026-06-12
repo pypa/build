@@ -239,7 +239,6 @@ def _log_dependency_versions(env: DefaultIsolatedEnv, requirements: set[str]) ->
         _ctx.log(
             'Installed build dependency versions:\n'
             + '\n'.join(f'- {name}=={version}' for name, version in sorted(versions.items())),
-            kind=('step',),
         )
 
 

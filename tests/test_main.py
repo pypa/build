@@ -537,7 +537,7 @@ def test_logging_output(
     lines = [
         line
         for line in stderr.splitlines()
-        if line != '* Installed build dependency versions:' and not version_pin.fullmatch(line)
+        if line != '  Installed build dependency versions:' and not version_pin.fullmatch(line)
     ]
     assert set(lines) <= set(output)
 
@@ -550,7 +550,7 @@ def test_logging_output_backend_versions(
 ) -> None:
     build.__main__.main([package_test_setuptools, '-o', tmp_dir, '--wheel'])
     _, stderr = capsys.readouterr()
-    assert '* Installed build dependency versions:' in stderr.splitlines()
+    assert '  Installed build dependency versions:' in stderr.splitlines()
     assert any(re.fullmatch(r' {2}- setuptools==\d[\w.]*', line) for line in stderr.splitlines())
 
 
@@ -775,7 +775,6 @@ def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
 
     log.assert_called_once_with(
         'Installed build dependency versions:\n- setuptools==80.9.0\n- wheel==0.45.1',
-        kind=('step',),
     )
 
 

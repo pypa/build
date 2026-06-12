@@ -73,7 +73,7 @@ so they reflect what was installed rather than the specifiers in ``pyproject.tom
     * Installing packages in isolated environment:
       - setuptools >= 42.0.0
     * Getting build dependencies for wheel...
-    * Installed build dependency versions:
+      Installed build dependency versions:
       - setuptools==82.0.1
     * Building wheel...
     Successfully built mypackage-1.0.0-py3-none-any.whl
