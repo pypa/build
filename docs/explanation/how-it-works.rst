@@ -132,6 +132,12 @@ How isolation works
 The isolated environment has access to the Python standard library, the build backend and its dependencies, and nothing
 from your development environment except environment variables.
 
+build picks a temporary directory for this environment by default and deletes it after the build. Pass ``--env-dir`` to
+choose the location yourself. You might do this to keep a failed environment for inspection, to place the environment on
+a writable path inside a read-only container, or to give a fixed path to a compilation cache such as ccache or sccache.
+Those caches treat a changed build-environment path as a new file, so a path that changes every run never hits the
+cache.
+
 When to disable isolation
 =========================
 

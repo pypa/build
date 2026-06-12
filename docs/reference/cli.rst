@@ -31,6 +31,11 @@ By default build will build the package in an isolated environment, but this beh
 specified in your ``pyproject.toml``, runs the build, and then cleans up the environment. This ensures reproducible
 builds regardless of what packages are installed in your development environment.
 
+Pass ``--env-dir PATH`` to put the environment at a fixed location instead of a temporary directory. The location must
+be empty. build removes it after a successful build and keeps it after a failure so you can inspect it. A fixed path
+helps compilation caches like ccache and sccache, which treat a changed build-environment path as a new file and miss
+the cache. You cannot combine ``--env-dir`` with ``--no-isolation``.
+
 ******************
  Dependency Check
 ******************

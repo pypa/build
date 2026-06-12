@@ -52,6 +52,16 @@ build dependencies before invoking the backend:
         env.install(builder.get_requires_for_build("wheel"))
         builder.build("wheel", "dist/")
 
+Pass ``path`` to create the environment at a fixed location instead of a temporary directory. The location must be
+empty; ``DefaultIsolatedEnv`` removes it on a clean exit and keeps it when the block raises:
+
+.. code-block:: python
+
+    with DefaultIsolatedEnv(path=".build-env") as env:
+        builder = ProjectBuilder.from_isolated_env(env, ".")
+        env.install(builder.build_system_requires)
+        builder.build("wheel", "dist/")
+
 Disabling isolation:
 
 .. code-block:: python

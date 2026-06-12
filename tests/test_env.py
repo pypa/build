@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import logging
 import os
@@ -10,6 +11,7 @@ import subprocess
 import sys
 import sysconfig
 import typing
+import unittest.mock
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -634,3 +636,67 @@ def test_pythonpath_does_not_interfere_with_outer_pip(
         env.install({'flit_core'}, _fresh=True)
 
         assert subprocess.check_call([env.python_executable, '-c', 'import flit_core']) == 0
+
+
+@pytest.fixture
+def mock_env_create(mocker: pytest_mock.MockerFixture) -> unittest.mock.MagicMock:
+    return mocker.patch('build.env._PipBackend.create', autospec=True)
+
+
+def test_env_dir_created_at_requested_location(
+    mock_env_create: unittest.mock.MagicMock,
+    tmp_path: pathlib.Path,
+) -> None:
+    target = tmp_path / 'nested' / 'build-env'
+
+    with build.env.DefaultIsolatedEnv(path=str(target)) as env:
+        assert env.path == os.path.realpath(target)
+        assert os.path.isdir(env.path)
+
+    mock_env_create.assert_called_once()
+
+
+@pytest.mark.usefixtures('mock_env_create')
+@pytest.mark.parametrize(
+    ('use_path', 'fail', 'kept_after'),
+    [
+        pytest.param(False, False, False, id='temporary-success-removed'),
+        pytest.param(False, True, False, id='temporary-failure-removed'),
+        pytest.param(True, False, False, id='requested-success-removed'),
+        pytest.param(True, True, True, id='requested-failure-kept'),
+    ],
+)
+def test_env_cleanup(
+    tmp_path: pathlib.Path,
+    use_path: bool,
+    fail: bool,
+    kept_after: bool,
+) -> None:
+    target = str(tmp_path / 'build-env') if use_path else None
+
+    created_path = ''
+    with contextlib.suppress(RuntimeError), build.env.DefaultIsolatedEnv(path=target) as env:
+        created_path = env.path
+        if fail:
+            msg = 'boom'
+            raise RuntimeError(msg)
+
+    assert os.path.exists(created_path) is kept_after
+
+
+def test_env_dir_rejects_non_empty_location(tmp_path: pathlib.Path) -> None:
+    tmp_path.joinpath('sentinel').touch()
+
+    with (
+        pytest.raises(build.BuildException, match='Build environment location is not empty'),
+        build.env.DefaultIsolatedEnv(path=str(tmp_path)),
+    ):
+        raise AssertionError
+
+    assert tmp_path.joinpath('sentinel').exists()
+
+
+@pytest.mark.usefixtures('mock_env_create')
+def test_env_dir_accepts_existing_empty_location(tmp_path: pathlib.Path) -> None:
+    with build.env.DefaultIsolatedEnv(path=str(tmp_path)) as env:
+        assert env.path == os.path.realpath(tmp_path)
