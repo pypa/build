@@ -137,22 +137,25 @@ def _make_logger() -> _ctx.Logger:
 
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
 
+    def emit(message: str, *, indent: str, style: str = '{}') -> None:
+        for line in message.splitlines():
+            _cprint(style, fill(line, initial_indent=indent), file=sys.stderr)
+
+    # Nested so it cannot be called directly, bypassing the logger setup above.
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
-        if _ctx.verbosity >= -1:
-            match kind:
-                case ('step', *_):
-                    (first, *rest) = message.splitlines()
-                    _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
-                    for line in rest:
-                        print(fill(line, initial_indent='  '), file=sys.stderr)  # noqa: T201
-                case ('subprocess', 'cmd'):
-                    for line in message.splitlines():
-                        _cprint('{dim}{}{reset}', fill(line, initial_indent='> '), file=sys.stderr)
-                case ('subprocess', 'stdout' | 'stderr'):
-                    for line in message.splitlines():
-                        _cprint('{dim}{}{reset}', fill(line, initial_indent='< '), file=sys.stderr)
-                case _:
-                    print(fill(message, initial_indent='  '), file=sys.stderr)  # noqa: T201
+        if _ctx.verbosity < -1:
+            return
+        match kind:
+            case ('step', *_):
+                first, _, rest = message.partition('\n')
+                _cprint('{bold}{}{reset}', fill(first, initial_indent='* '), file=sys.stderr)
+                emit(rest, indent='  ')
+            case ('subprocess', 'cmd'):
+                emit(message, indent='> ', style='{dim}{}{reset}')
+            case ('subprocess', 'stdout' | 'stderr'):
+                emit(message, indent='< ', style='{dim}{}{reset}')
+            case _:
+                emit(message, indent='  ')
 
     return log
 
@@ -211,7 +214,10 @@ def _bootstrap_build_env(
             # first install the build dependencies
             install(builder.build_system_requires, _fresh=True)
             # then get the extra required dependencies from the backend (which was installed in the call above :P)
-            install(builder.get_requires_for_build(distribution, config_settings))
+            extra_requires = builder.get_requires_for_build(distribution, config_settings)
+            install(extra_requires)
+
+            _log_dependency_versions(env, builder.build_system_requires | extra_requires)
 
             yield builder
 
@@ -226,6 +232,15 @@ def _bootstrap_build_env(
             _error(format_unmet_dependencies(missing))
 
         yield builder
+
+
+def _log_dependency_versions(env: DefaultIsolatedEnv, requirements: set[str]) -> None:
+    if versions := env.installed_versions(requirements):
+        _ctx.log(
+            'Installed build dependency versions:\n'
+            + '\n'.join(f'- {name}=={version}' for name, version in sorted(versions.items())),
+            kind=('step',),
+        )
 
 
 def _build(

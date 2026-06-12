@@ -22,6 +22,8 @@ import pytest_mock
 
 import build
 import build.__main__
+import build._ctx
+import build.env
 
 from build._compat import importlib as _importlib
 
@@ -184,7 +186,7 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
     required_cmd = mocker.patch(
         'build.ProjectBuilder.get_requires_for_build',
         side_effect=[
-            ['dep1', 'dep2'],
+            {'dep1', 'dep2'},
         ],
     )
     mocker.patch('build.__main__._error')
@@ -195,7 +197,7 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
     install.assert_any_call({'flit_core >=2,<4'}, _fresh=True)
 
     required_cmd.assert_called_with('sdist', None)
-    install.assert_any_call(['dep1', 'dep2'])
+    install.assert_any_call({'dep1', 'dep2'})
 
     build_cmd.assert_called_with('sdist', '.', None)
 
@@ -530,7 +532,26 @@ def test_logging_output(
 ) -> None:
     build.__main__.main([package_test_setuptools, '-o', tmp_dir, *args])
     _, stderr = capsys.readouterr()
-    assert set(stderr.splitlines()) <= set(output)
+    # the installed-version step lists dynamic versions, exercised in its own test below
+    version_pin = re.compile(r' {2}- \S+==\S+')
+    lines = [
+        line
+        for line in stderr.splitlines()
+        if line != '* Installed build dependency versions:' and not version_pin.fullmatch(line)
+    ]
+    assert set(lines) <= set(output)
+
+
+@pytest.mark.network
+@pytest.mark.isolated
+@pytest.mark.flaky(reruns=5)
+def test_logging_output_backend_versions(
+    package_test_setuptools: str, tmp_dir: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    build.__main__.main([package_test_setuptools, '-o', tmp_dir, '--wheel'])
+    _, stderr = capsys.readouterr()
+    assert '* Installed build dependency versions:' in stderr.splitlines()
+    assert any(re.fullmatch(r' {2}- setuptools==\d[\w.]*', line) for line in stderr.splitlines())
 
 
 @pytest.mark.pypy3323bug
@@ -743,6 +764,55 @@ def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch('build.__main__._cprint')
     log = build.__main__._make_logger()
     log('message', kind=('unknown',))
+
+
+def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
+    env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
+    env.installed_versions.return_value = {'wheel': '0.45.1', 'setuptools': '80.9.0'}
+    log = mocker.patch('build.__main__._ctx.log')
+
+    build.__main__._log_dependency_versions(env, {'setuptools', 'wheel'})
+
+    log.assert_called_once_with(
+        'Installed build dependency versions:\n- setuptools==80.9.0\n- wheel==0.45.1',
+        kind=('step',),
+    )
+
+
+def test_log_dependency_versions_none(mocker: pytest_mock.MockerFixture) -> None:
+    env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
+    env.installed_versions.return_value = {}
+    log = mocker.patch('build.__main__._ctx.log')
+
+    build.__main__._log_dependency_versions(env, set())
+
+    log.assert_not_called()
+
+
+def test_bootstrap_build_env_logs_versions(mocker: pytest_mock.MockerFixture) -> None:
+    env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
+    env.__enter__.return_value = env
+    mocker.patch('build.__main__.DefaultIsolatedEnv', return_value=env)
+    builder = mocker.create_autospec(build.ProjectBuilder, instance=True)
+    builder.build_system_requires = {'setuptools'}
+    builder.get_requires_for_build.return_value = {'wheel'}
+    mocker.patch('build.ProjectBuilder.from_isolated_env', return_value=builder)
+    log_versions = mocker.patch('build.__main__._log_dependency_versions')
+
+    with build.__main__._bootstrap_build_env(
+        isolation=True,
+        srcdir='src',
+        distribution='wheel',
+        config_settings=None,
+        skip_dependency_check=False,
+        dependency_constraints_txt=None,
+        installer='pip',
+    ) as result:
+        assert result is builder
+
+    env.install.assert_any_call({'setuptools'}, _fresh=True)
+    env.install.assert_any_call({'wheel'})
+    log_versions.assert_called_once_with(env, {'setuptools', 'wheel'})
 
 
 def test_build_no_isolation_skip_dependency_check(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:

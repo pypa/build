@@ -4,12 +4,16 @@ from __future__ import annotations
 __lazy_modules__ = [
     'abc',
     'contextlib',
+    f'{__spec__.parent}._compat',
     f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
     'importlib',
     'importlib.util',
     'os',
+    'packaging',
+    'packaging.requirements',
+    'packaging.utils',
     'platform',
     'shutil',
     'subprocess',
@@ -33,7 +37,11 @@ import tempfile
 import typing
 import warnings
 
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
+
 from . import _ctx
+from ._compat.importlib import metadata as importlib_metadata
 from ._ctx import run_subprocess
 from ._exceptions import FailedProcessError
 from ._util import check_dependency
@@ -43,8 +51,6 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Mapping
-
-    from ._compat.importlib import metadata as importlib_metadata
 
     if sys.version_info < (3, 11):
         from typing_extensions import Self
@@ -161,6 +167,24 @@ class DefaultIsolatedEnv(IsolatedEnv):
             'PYTHONPATH': '',
         }
 
+    def installed_versions(self, requirements: Collection[str]) -> dict[str, str]:
+        """
+        Map the canonical name of each requirement to the version installed in the environment.
+
+        Requirements that resolved to nothing installed are omitted. Reads the distribution metadata
+        directly from the environment's ``purelib`` so no subprocess is spawned in the isolated environment.
+
+        :param requirements: PEP 508 requirement specifications to look up; non-PEP 508 entries (such as local
+            paths or URLs accepted by :meth:`install`) are skipped since their installed name cannot be derived
+        """
+        wanted = {name for requirement in requirements if (name := _canonical_requirement_name(requirement)) is not None}
+        distributions = importlib_metadata.distributions(path=[self._env_backend.purelib])
+        return {
+            name: distribution.version
+            for distribution in distributions
+            if (name := canonicalize_name(distribution.name)) in wanted
+        }
+
     def install(
         self,
         requirements: Collection[str],
@@ -186,9 +210,17 @@ class DefaultIsolatedEnv(IsolatedEnv):
         self._env_backend.install_dependencies(requirements, constraints, _fresh=_fresh)
 
 
+def _canonical_requirement_name(requirement: str) -> str | None:
+    try:
+        return canonicalize_name(Requirement(requirement).name)
+    except InvalidRequirement:
+        return None
+
+
 class _EnvBackend(typing.Protocol):  # pragma: no cover
     python_executable: str
     scripts_dir: str
+    purelib: str
 
     def create(self, path: str) -> None: ...
 
@@ -299,6 +331,7 @@ class _PipBackend(_EnvBackend):
             # The creator attributes are `pathlib.Path`s.
             self.python_executable = str(result.creator.exe)
             self.scripts_dir = str(result.creator.script_dir)
+            self.purelib = str(result.creator.purelib)
 
         else:
             import venv
@@ -312,6 +345,7 @@ class _PipBackend(_EnvBackend):
                 raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
             self.python_executable, self.scripts_dir, purelib = _find_executable_and_scripts(path)
+            self.purelib = purelib
 
             if with_pip:
                 minimum_pip_version_str = self._get_minimum_pip_version_str()
@@ -403,7 +437,7 @@ class _UvBackend(_EnvBackend):
             self._uv_bin = uv_bin
 
         venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
-        self.python_executable, self.scripts_dir, _ = _find_executable_and_scripts(self._env_path)
+        self.python_executable, self.scripts_dir, self.purelib = _find_executable_and_scripts(self._env_path)
 
     def install_dependencies(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
         self,
