@@ -23,3 +23,7 @@ Dockerfile
 
 # Restore src/build in case user ignores 'build'
 !src/build
+
+# Lockfiles
+uv.lock
+*pylock*
