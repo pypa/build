@@ -463,13 +463,12 @@ build removes that location after a successful build and keeps it after a failur
 environment in ``.build-env`` for you to examine. Setting ``TMPDIR`` (or ``TEMP`` on Windows) only moves the temporary
 directory; it does not keep the environment around.
 
-To see backend logs in real-time, use verbose output:
+build forwards the backend's output to your terminal as it happens, so compilation logs and error messages are already
+visible. Raise the verbosity to add build's own diagnostics and stream the environment setup live:
 
 .. code-block:: console
 
     $ python -m build -vv
-
-This shows all output from the build backend, including compilation logs for C extensions and detailed error messages.
 
 .. _debug-a-failed-build:
 
@@ -483,8 +482,10 @@ need.
 Stream the backend output
 =========================
 
-build forwards everything the backend writes to its standard output and error. Raise the verbosity to keep the full
-stream, including compiler invocations and backend tracebacks:
+build forwards everything the backend writes to standard output and error straight to your terminal, so compiler
+invocations and backend tracebacks already appear without any extra flag. Raise the verbosity to add build's own
+diagnostics and to stream the environment setup (installing the backend and its dependencies) live instead of only on
+failure:
 
 .. code-block:: console
 
@@ -507,15 +508,15 @@ Find the backend's own logs
 ===========================
 
 build cannot capture log *files* the backend writes inside its own working directory, because PEP 517 gives the frontend
-no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python``, point its build
-directory at a path you control:
+no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python`` and
+``scikit-build``, point its build directory at a path you control:
 
 .. code-block:: console
 
-    $ python -m build -C builddir=.meson-build
+    $ python -m build -C build-dir=.meson-build
 
-The meson log then survives at ``.meson-build/meson-logs/meson-log.txt``. Check your backend's documentation for the
-equivalent setting.
+The backend then writes its build tree and logs under ``.meson-build`` (meson-python leaves its log at
+``.meson-build/meson-logs/meson-log.txt``). Check your backend's documentation for the equivalent setting.
 
 **********************
  Still having issues?
