@@ -1,0 +1,1 @@
+Minor internal cleanups: use ``tomllib.load`` directly, remove a redundant ``_styles.set`` call, deduplicate an ``os.path.isfile`` call, and rename a local variable to avoid shadowing the ``build`` module.
