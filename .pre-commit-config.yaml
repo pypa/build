@@ -76,4 +76,4 @@ repos:
     hooks:
       - id: check-sdist
         args: [--inject-junk]
-        additional_dependencies: [] # list your build deps here
+        additional_dependencies: [flit-core]
