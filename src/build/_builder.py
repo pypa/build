@@ -104,7 +104,7 @@ def _validate_source_directory(source_dir: StrPath) -> None:
 def _read_pyproject_toml(path: StrPath) -> Mapping[str, TOMLValue]:
     try:
         with open(path, 'rb') as f:
-            return tomllib.loads(f.read().decode())
+            return tomllib.load(f)
     except FileNotFoundError:
         return {}
     except PermissionError as e:  # pragma: win32 no cover
