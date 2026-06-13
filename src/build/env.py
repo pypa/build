@@ -121,6 +121,9 @@ class DefaultIsolatedEnv(IsolatedEnv):
             path = tempfile.mkdtemp(prefix='build-env-')
         else:
             path = self._requested_path
+            if os.path.exists(path) and not os.path.isdir(path):
+                msg = f'Build environment location is not a directory: {path}'
+                raise BuildException(msg)
             if os.path.isdir(path):
                 with os.scandir(path) as entries:
                     if next(entries, None) is not None:
@@ -203,7 +206,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
     def install(
         self,
         requirements: Collection[str],
-        constraints: Collection[str] = [],
+        constraints: Collection[str] = (),
         *,
         _fresh: bool = False,  # Used internally by CLI to support preset PYTHONPATH
     ) -> None:
