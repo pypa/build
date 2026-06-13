@@ -515,7 +515,8 @@ no way to discover them. Each backend exposes its own setting for keeping them. 
 
     $ python -m build -C build-dir=_build
 
-The backend then usually writes its build tree and logs under ``_build``. Check your backend's documentation for the equivalent setting.
+The backend then usually writes its build tree and logs under ``_build``. Check your backend's documentation for the
+equivalent setting.
 
 **********************
  Still having issues?
