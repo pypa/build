@@ -696,6 +696,19 @@ def test_env_dir_rejects_non_empty_location(tmp_path: pathlib.Path) -> None:
     assert tmp_path.joinpath('sentinel').exists()
 
 
+def test_env_dir_rejects_file_at_location(tmp_path: pathlib.Path) -> None:
+    file_path = tmp_path / 'env-file'
+    file_path.touch()
+
+    with (
+        pytest.raises(build.BuildException, match='Build environment location is not a directory'),
+        build.env.DefaultIsolatedEnv(path=str(file_path)),
+    ):
+        raise AssertionError
+
+    assert file_path.is_file()
+
+
 @pytest.mark.usefixtures('mock_env_create')
 def test_env_dir_accepts_existing_empty_location(tmp_path: pathlib.Path) -> None:
     with build.env.DefaultIsolatedEnv(path=str(tmp_path)) as env:
