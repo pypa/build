@@ -132,7 +132,14 @@ dev = [
 
 [tool.flit.sdist]
 include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.toml"]
-exclude = ["**/__pycache__", "docs/_build", "**/*.egg-info", "tests/packages/*/build", "docs/changelog/template.jinja2"]
+exclude = [
+  "**/__pycache__",
+  "docs/_build",
+  "**/*.egg-info",
+  "tests/packages/*/build",
+  "docs/changelog/template.jinja2",
+  "tasks/*",
+]
 
 [tool.uv]
 exclude-newer = "7 days"
