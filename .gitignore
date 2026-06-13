@@ -27,10 +27,3 @@ Dockerfile
 # Lockfiles
 uv.lock
 *pylock*
-
-# System stuff
-.DS_Store
-
-# Symlink to AGENTS.md
-CLAUDE.md
-.claude/
