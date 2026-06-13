@@ -114,7 +114,6 @@ def _init_colors() -> None:
     if 'NO_COLOR' in os.environ:
         if 'FORCE_COLOR' in os.environ:
             warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
-        _styles.set(_NO_COLORS)
     elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
         return
     _styles.set(_NO_COLORS)
@@ -700,9 +699,10 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     _setup_cli(verbosity=args.verbosity)
 
-    sdist_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.tar.gz')
-    wheel_input = os.path.isfile(args.srcdir) and os.fspath(args.srcdir).lower().endswith('.whl')
-    build = partial(
+    is_file = os.path.isfile(args.srcdir)
+    sdist_input = is_file and os.fspath(args.srcdir).lower().endswith('.tar.gz')
+    wheel_input = is_file and os.fspath(args.srcdir).lower().endswith('.whl')
+    run_build = partial(
         _select_build(parser, args, sdist_input=sdist_input, wheel_input=wheel_input),
         config_settings=_resolve_config_settings(args),
         isolation=not args.no_isolation,
@@ -723,9 +723,9 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         if sdist_input:
             top_level = _validate_sdist_archive(args.srcdir)
             with _extract_sdist(args.srcdir, top_level, extract_dir=args.sdist_extract_dir) as extracted_srcdir:
-                built = build(extracted_srcdir, outdir)
+                built = run_build(extracted_srcdir, outdir)
         else:
-            built = build(args.srcdir, outdir)
+            built = run_build(args.srcdir, outdir)
         if args.report is not None:
             _write_report(args.report, outdir, built)
         if _ctx.verbosity >= -1 and built:
