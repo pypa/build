@@ -513,10 +513,9 @@ no way to discover them. Each backend exposes its own setting for keeping them. 
 
 .. code-block:: console
 
-    $ python -m build -C build-dir=.meson-build
+    $ python -m build -C build-dir=_build
 
-The backend then writes its build tree and logs under ``.meson-build`` (meson-python leaves its log at
-``.meson-build/meson-logs/meson-log.txt``). Check your backend's documentation for the equivalent setting.
+The backend then usually writes its build tree and logs under ``_build``. Check your backend's documentation for the equivalent setting.
 
 **********************
  Still having issues?
