@@ -49,25 +49,16 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
     verbosity = VERBOSITY.get()
 
     if verbosity > 0:
-        import concurrent.futures
-
         log = LOGGER.get()
 
-        with (
-            concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor,
-            subprocess.Popen(  # noqa: S603
-                cmd, cwd=cwd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-            ) as process,
-        ):
+        with subprocess.Popen(  # noqa: S603
+            cmd, cwd=cwd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        ) as process:
             log(subprocess.list2cmdline(cmd), kind=('subprocess', 'cmd'))
 
-            @executor.submit
-            def log_stream() -> None:
-                assert process.stdout
-                for line in process.stdout:
-                    log(line, kind=('subprocess', 'stdout'))
-
-            concurrent.futures.wait([log_stream])
+            assert process.stdout
+            for line in process.stdout:
+                log(line, kind=('subprocess', 'stdout'))
 
             code = process.wait()
             if code:  # pragma: no cover

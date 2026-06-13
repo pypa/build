@@ -1,0 +1,2 @@
+Verbose subprocess logging no longer relies on a worker thread, and errors raised while logging are no longer silently
+discarded.
