@@ -90,7 +90,7 @@ docs = [
   "towncrier >= 24.8",
 ]
 test-core = [
-  "pytest >= 6.2.5, !=9.1.0",
+  "pytest >= 6.2.5, != 9.1.0",
   "pytest-cov >= 3.0.0",
   "pytest-mock >= 3.7.0",
   "pytest-rerunfailures >= 10.2",
