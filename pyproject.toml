@@ -143,8 +143,7 @@ exclude = [
 
 [tool.uv]
 exclude-newer = "7 days"
-# Our docs dependencies do not support 3.9, so remove it from the uv solve
-environments = ["python_version >= '3.10'"]
+exclude-newer-package = { pytest = "2026-06-13" }
 
 
 [tool.coverage]
