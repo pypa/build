@@ -117,7 +117,7 @@ typing = [
   { include-group = "extra" },
 ]
 mypy = [
-  "mypy ~= 1.18.2",
+  "mypy ~= 2.1.0",
   { include-group = "typing" },
 ]
 release = [
