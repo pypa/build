@@ -115,10 +115,14 @@ def _clear_keyring_cache() -> Generator[None, None, None]:
     build.env._has_keyring_cli.cache_clear()
 
 
-@pytest.fixture(autouse=True, params=[False])
+@pytest.fixture(autouse=True)
 def has_virtualenv(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
-    if request.param is not None:
-        monkeypatch.setattr(build.env._PipBackend, '_has_virtualenv', request.param)
+    # In pytest 9.1+, a fixture cannot be both autouse with params and parametrized
+    # indirectly by a test. Default to False, and allow tests to override via
+    # ``@pytest.mark.parametrize('has_virtualenv', ..., indirect=True)``.
+    param = getattr(request, 'param', False)
+    if param is not None:
+        monkeypatch.setattr(build.env._PipBackend, '_has_virtualenv', param)
 
 
 @pytest.fixture(scope='session', autouse=True)
