@@ -1,2 +1,1 @@
-Raise dependency-group minimums to the first releases that support Python 3.10 (the project's floor), and drop the
-``pytest`` upper cap from the ``typing`` group so it no longer constrains the shared lockfile.
+Raise dependency minimums to the first releases that support Python 3.10.

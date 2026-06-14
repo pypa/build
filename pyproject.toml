@@ -89,29 +89,31 @@ docs = [
   "sphinxcontrib-mermaid >= 2.0",
   "towncrier >= 24.8",
 ]
-test = [
-  "filelock >= 3.4.0",
+test-core = [
   "pytest >= 6.2.5",
   "pytest-cov >= 3.0.0",
   "pytest-mock >= 3.7.0",
-  "covdefaults >= 2.3",
   "pytest-rerunfailures >= 10.2",
   "pytest-xdist >= 2.4.0",
+]
+test = [
+  "filelock >= 3.4.0",
+  "covdefaults >= 2.3",
   "wheel >= 0.37.0",
   'setuptools >= 56.0.0; python_version == "3.10"',
   'setuptools >= 56.0.0; python_version == "3.11"',
   'setuptools >= 67.8.0; python_version >= "3.12"',
   "setuptools_scm >= 6.4.2",
   "pip >= 22.3",
+  { include-group = "test-core" },
   { include-group = "extra" },
 ]
 typing = [
   "importlib-metadata >= 5.1",
-  "pytest >= 6.2.5",
-  "pytest-mock >= 3.7.0",
   "tomli",
   "typing-extensions >= 4.0.0",
   "types-colorama",
+  { include-group = "test-core" },
   { include-group = "extra" },
 ]
 mypy = [
@@ -143,8 +145,6 @@ exclude = [
 
 [tool.uv]
 exclude-newer = "7 days"
-# Our docs dependencies do not support 3.9, so remove it from the uv solve
-environments = ["python_version >= '3.10'"]
 
 
 [tool.coverage]
