@@ -1,1 +1,0 @@
-Drop Python 3.9 branches from ``version_info`` checks - by :user:`henryiii`

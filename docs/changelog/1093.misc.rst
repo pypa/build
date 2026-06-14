@@ -1,1 +1,2 @@
-Tighten type annotations across ``src`` and ``tests``, removing ``Any``/``object``/``# type: ignore`` and enabling ``disallow_any_explicit`` - by :user:`gaborbernat`
+Tighten type annotations across ``src`` and ``tests``, removing ``Any``/``object``/``# type: ignore`` and enabling
+``disallow_any_explicit`` - by :user:`gaborbernat`

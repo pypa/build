@@ -1,1 +1,2 @@
-The ``srcdir`` argument now accepts ``.tar.gz`` source distributions, extracting and building from them - by :user:`gaborbernat`
+The ``srcdir`` argument now accepts ``.tar.gz`` source distributions, extracting and building from them - by
+:user:`gaborbernat`

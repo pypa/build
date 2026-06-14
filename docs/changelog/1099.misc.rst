@@ -1,1 +1,2 @@
-Minor cleanups in builder and CLI: simplify TOML reading, deduplicate color init, and avoid shadowing the ``build`` module - by :user:`henryiii`
+Minor cleanups in builder and CLI: simplify TOML reading, deduplicate color init, and avoid shadowing the ``build``
+module - by :user:`henryiii`

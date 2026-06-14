@@ -1,1 +1,2 @@
-Add ``--sdist-extract-dir`` to extract the intermediate sdist into a persistent directory, enabling compiler cache reuse across rebuilds - by :user:`gaborbernat`
+Add ``--sdist-extract-dir`` to extract the intermediate sdist into a persistent directory, enabling compiler cache reuse
+across rebuilds - by :user:`gaborbernat`

@@ -1,1 +1,2 @@
-Print a summary of resolved dependency versions (``name==version``) after installing them in isolated builds - by :user:`gaborbernat`
+Print a summary of resolved dependency versions (``name==version``) after installing them in isolated builds - by
+:user:`gaborbernat`

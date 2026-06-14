@@ -1,1 +1,1 @@
-Refactor ``safe_extractall`` to use ``pathlib.Path`` - by :user:`henryiii`
+Accept ``pathlib.Path`` in ``safe_extractall`` - by :user:`henryiii`
