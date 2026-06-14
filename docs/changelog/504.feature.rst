@@ -1,4 +1,1 @@
-The ``Unmet dependencies`` error reported by ``--no-isolation`` builds now lists, for each unmet requirement, the
-version specifier that was ``wanted`` and the version that was ``found`` (or that the package is not installed), and
-names the interpreter the check ran against. This makes it clear whether a dependency is absent or merely the wrong
-version, and which environment was inspected - by :user:`gaborbernat`.
+The "Unmet dependencies" error from ``--no-isolation`` builds now shows the wanted version, found version, and interpreter - by :user:`gaborbernat`

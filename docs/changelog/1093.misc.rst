@@ -1,2 +1,1 @@
-Tighten type annotations across ``src`` and ``tests`` to remove ``Any``, ``object``, and ``# type: ignore``, and enable
-``disallow_any_explicit`` so the type gate covers both - by :user:`gaborbernat`
+Tighten type annotations across ``src`` and ``tests``, removing ``Any``/``object``/``# type: ignore`` and enabling ``disallow_any_explicit`` - by :user:`gaborbernat`
