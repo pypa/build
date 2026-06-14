@@ -1,3 +1,1 @@
-Raise a friendly :class:`build.BuildException` when ``--env-dir`` points at an existing regular file instead of letting
-:func:`os.makedirs` surface a raw :exc:`FileExistsError`; also replace the mutable default ``[]`` in
-:meth:`DefaultIsolatedEnv.install`'s ``constraints`` parameter with an immutable tuple ``()``.
+Reject a file passed as ``--env-dir`` with a clear error instead of a raw ``FileExistsError`` - by :user:`henryiii`

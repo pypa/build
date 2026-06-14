@@ -1,2 +1,2 @@
-Verbose subprocess logging no longer relies on a worker thread, and errors raised while logging are no longer silently
-discarded.
+Drain verbose subprocess output inline instead of using a ``ThreadPoolExecutor``, which silently swallowed logging
+errors - by :user:`henryiii`

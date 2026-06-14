@@ -1,5 +1,2 @@
-Add ``--sdist-extract-dir PATH`` to extract the intermediate sdist into a chosen, persistent directory instead of a
-random temporary one. Reuse the same path across rebuilds and compiler caches such as ``ccache`` and ``sccache`` see a
-stable source path, so unchanged C/C++ files hit the cache. Build creates the directory if missing, clears its stale
-contents before each extraction, and keeps it after the build. The flag covers the default via-sdist build and building
-a wheel from a ``.tar.gz`` - by :user:`gaborbernat`.
+Add ``--sdist-extract-dir`` to extract the intermediate sdist into a persistent directory, enabling compiler cache reuse
+across rebuilds - by :user:`gaborbernat`

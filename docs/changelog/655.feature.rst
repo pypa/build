@@ -1,4 +1,2 @@
-Add ``--env-dir PATH`` to put the isolated build environment at a fixed location instead of a temporary directory.
-``DefaultIsolatedEnv`` takes the same ``path`` argument. build creates the location if it is missing, refuses a
-non-empty location, removes it after a successful build, and keeps it after a failure so you can inspect it. A fixed
-path lets compilation caches such as ccache and sccache reuse results across builds - by :user:`gaborbernat`.
+Add ``--env-dir`` to place the isolated build environment at a fixed path, enabling compiler cache reuse across builds -
+by :user:`gaborbernat`

@@ -1,2 +1,2 @@
-build now warns when you pass a config setting without a value (e.g. ``-C--my-flag``), since pip rejects that form.
-Write ``-C--my-flag=`` instead; it means the same thing and works in both tools - by :user:`gaborbernat`.
+Warn on config settings without a value (e.g. ``-C--my-flag``); use ``-C--my-flag=`` instead for compatibility with pip
+- by :user:`gaborbernat`

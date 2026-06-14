@@ -1,2 +1,1 @@
-Deprecate :func:`build.util.project_wheel_metadata`; it returns an ``email.message.Message``-style object and has fallen
-behind the CLI. Generate metadata with the ``python -m build --metadata`` command instead - by :user:`gaborbernat`.
+Deprecate :func:`build.util.project_wheel_metadata`; use ``python -m build --metadata`` instead - by :user:`gaborbernat`

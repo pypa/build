@@ -1,2 +1,2 @@
-Add test coverage for ``config_settings``, ``dependency_constraints_txt``, and ``installer`` arguments in
-:func:`build_package` and :func:`build_package_via_sdist` - by :user:`terminalchai`
+Add test coverage for ``config_settings``, ``dependency_constraints_txt``, and ``installer`` arguments - by
+:user:`terminalchai`

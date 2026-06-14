@@ -1,3 +1,2 @@
-After installing the build dependencies in an isolated build, print a concise summary of each resolved version as
-``name==version`` so the exact backend version is on hand for bug reports without scraping the installer's ``-vv``
-output (:issue:`959`) - by :user:`gaborbernat`.
+Print a summary of resolved dependency versions (``name==version``) after installing them in isolated builds - by
+:user:`gaborbernat`
