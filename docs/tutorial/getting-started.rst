@@ -214,3 +214,4 @@ instead of parsing the output:
 - Learn about :doc:`../how-to/basic-usage` for common build workflows
 - Understand :doc:`../explanation/how-it-works` for details on the build process
 - See :doc:`../how-to/config-settings` to customize your build
+- When a build fails, follow :ref:`debug-a-failed-build` to capture backend logs and keep the working directories

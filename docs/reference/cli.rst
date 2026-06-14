@@ -36,6 +36,9 @@ be empty. build removes it after a successful build and keeps it after a failure
 helps compilation caches like ccache and sccache, which treat a changed build-environment path as a new file and miss
 the cache. You cannot combine ``--env-dir`` with ``--no-isolation``.
 
+When a build fails, ``--env-dir`` and ``--sdist-extract-dir`` keep the environment and the extracted sources for
+inspection; see :ref:`debug-a-failed-build`.
+
 ******************
  Dependency Check
 ******************

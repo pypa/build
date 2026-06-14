@@ -274,14 +274,16 @@ def _build(
 
 
 @contextlib.contextmanager
-def _handle_build_error() -> Iterator[None]:
+def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | None) -> Iterator[None]:
     try:
         yield
     except (BuildException, FailedProcessError) as e:
         _error(str(e))
     except BuildBackendException as e:
+        hint = _build_failure_hint(env_dir, sdist_extract_dir)
         if isinstance(e.exception, subprocess.CalledProcessError):
             _cprint()
+            _cprint('{yellow}TIP{reset} {}', hint, file=sys.stderr)
             _error(str(e))
 
         if e.exc_info[0] is not None:
@@ -290,11 +292,26 @@ def _handle_build_error() -> Iterator[None]:
         else:  # pragma: no cover
             tb = traceback.format_exc(limit=-1)
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
+        _cprint('{yellow}TIP{reset} {}', hint, file=sys.stderr)
         _error(str(e))
     except Exception as e:  # pragma: no cover
         tb = traceback.format_exc().strip('\n')
         _cprint('\n{dim}{}{reset}\n', tb)
         _error(str(e))
+
+
+def _build_failure_hint(env_dir: str | None, sdist_extract_dir: StrPath | None) -> str:
+    kept = [
+        f'{label} at {os.fspath(path)}'
+        for path, label in ((env_dir, 'the build environment'), (sdist_extract_dir, 'the extracted sources'))
+        if path is not None
+    ]
+    if kept:
+        action = f'inspect {" and ".join(kept)}'
+    else:
+        action = 'pass --env-dir and --sdist-extract-dir to keep the build environment and sources'
+    docs = 'https://build.pypa.io/en/stable/how-to/troubleshooting.html#debug-a-failed-build'
+    return f'{action}, then see {docs} for help debugging a failed build'
 
 
 def _natural_language_list(elements: Sequence[str]) -> str:
@@ -719,7 +736,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     else:
         outdir = os.path.join(args.srcdir, 'dist')
 
-    with _handle_build_error():
+    with _handle_build_error(env_dir=args.env_dir, sdist_extract_dir=args.sdist_extract_dir):
         if sdist_input:
             top_level = _validate_sdist_archive(args.srcdir)
             with _extract_sdist(args.srcdir, top_level, extract_dir=args.sdist_extract_dir) as extracted_srcdir:

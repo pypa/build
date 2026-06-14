@@ -1,0 +1,4 @@
+When a build backend fails, build now prints a tip pointing at ``--env-dir`` and ``--sdist-extract-dir`` (to keep the
+build environment and extracted sources for inspection) and links to a new "Debug a failed build" how-to that explains
+how to stream backend output and where backends such as meson-python write their own logs. When those locations are
+already pinned, the tip reports where they were kept - reported by :user:`dimpase`, implemented by :user:`gaborbernat`.
