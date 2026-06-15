@@ -21,23 +21,23 @@ repos:
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: dda8db18cfc68df532abf33b185ecd12d5b7b326  # frozen: 1.20.0
+    rev: dda8db18cfc68df532abf33b185ecd12d5b7b326 # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "06507ab9500d4a9919b5ebd76d9d5b7074f15c1f"  # frozen: v3.8.4
+    rev: "06507ab9500d4a9919b5ebd76d9d5b7074f15c1f" # frozen: v3.8.4
     hooks:
       - id: prettier
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: 8688ba6420d7b5ca95a8ba0edf8a9953babdc3da  # frozen: v2.1.1
+    rev: 8688ba6420d7b5ca95a8ba0edf8a9953babdc3da # frozen: v2.1.1
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 3b3f7c3f57fe9925356faf5fe6230835138be230  # frozen: v0.15.17
+    rev: 3b3f7c3f57fe9925356faf5fe6230835138be230 # frozen: v0.15.17
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
