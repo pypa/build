@@ -26,7 +26,8 @@ from build._compat import importlib as _importlib
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from build._builder import BuildSystemTable, TOMLValue
+    from build._builder import BuildSystemTable
+    from build._types import TOMLValue
 
 
 build_open_owner = 'builtins'

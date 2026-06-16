@@ -52,10 +52,7 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Collection, Mapping
 
-    if sys.version_info < (3, 11):
-        from typing_extensions import Self
-    else:
-        from typing import Self
+    from typing_extensions import Self
 
 
 Installer = typing.Literal['pip', 'uv']
@@ -77,7 +74,7 @@ class IsolatedEnv(typing.Protocol):
 
 
 def _has_dependency(
-    name: str, minimum_version_str: str | None = None, /, **distargs: list[str]
+    name: str, minimum_version_str: str | None = None, /, *, path: list[str] | None = None
 ) -> importlib_metadata.Distribution | None:
     """
     Given a distribution name, see if it is present and return the distribution
@@ -88,8 +85,13 @@ def _has_dependency(
 
     from ._compat import importlib
 
+    # Pass ``path`` only when provided: ``distributions(path=None)`` suppresses the ``sys.path``
+    # default instead of falling back to it.
+    distributions = (
+        importlib.metadata.distributions(name=name) if path is None else importlib.metadata.distributions(name=name, path=path)
+    )
     try:
-        distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
+        distribution = next(iter(distributions))
     except StopIteration:
         return None
 

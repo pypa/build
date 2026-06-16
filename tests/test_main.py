@@ -16,7 +16,7 @@ import unittest.mock
 import venv
 import zipfile
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Protocol, TypedDict
 
 import pytest
@@ -33,9 +33,8 @@ from build._compat import importlib as _importlib
 if TYPE_CHECKING:
     from conftest import SubTests
 
-
-class CapturedRunner(Protocol):
-    def __call__(self, cmd: Sequence[str], cwd: str | None = ..., extra_environ: Mapping[str, str] | None = ...) -> None: ...
+    from build import RunnerType
+    from build._types import JSONValue
 
 
 pytestmark = pytest.mark.contextvars
@@ -47,8 +46,6 @@ cwd = os.getcwd()
 out = os.path.join(cwd, 'dist')
 
 ANSI_STRIP = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-
-JSONValue = str | int | list['JSONValue'] | dict[str, 'JSONValue']
 
 
 class BuildKwargs(TypedDict):
@@ -919,10 +916,10 @@ def test_build_metadata_runner_without_extra_environ(
     tmp_path: pathlib.Path,
     package_test_setuptools: str,
 ) -> None:
-    captured_runners: list[CapturedRunner] = []
+    captured_runners: list[RunnerType] = []
 
     @contextlib.contextmanager
-    def fake_bootstrap(*_args: object, runner: CapturedRunner, **_kwargs: object) -> Iterator[unittest.mock.MagicMock]:
+    def fake_bootstrap(*_args: object, runner: RunnerType, **_kwargs: object) -> Iterator[unittest.mock.MagicMock]:
         captured_runners.append(runner)
         builder = mocker.MagicMock()
         metadata_dir = tmp_path / 'metadata'

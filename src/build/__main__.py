@@ -70,13 +70,9 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sequence
 
-    from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
+    from build._types import ConfigSettings, Distribution, JSONValue, StrPath, SubprocessRunner
 
-    # A decoded JSON value, as produced by ``--config-json``. Uses the covariant ``Sequence``/``Mapping``
-    # so the ``str | list[str]`` settings from ``--config-setting`` are also assignable to it.
-    JSONValue = str | int | float | bool | None | Sequence['JSONValue'] | Mapping[str, 'JSONValue']
-
-    class _Args(argparse.Namespace):
+    class _CliArgs(argparse.Namespace):
         """The arguments :func:`main_parser` produces, typed for the rest of the module."""
 
         srcdir: str
@@ -709,7 +705,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     parser = main_parser()
     if prog:
         parser.prog = prog
-    args = cast('_Args', parser.parse_args(cli_args))
+    args = cast('_CliArgs', parser.parse_args(cli_args))
 
     if args.env_dir is not None and args.no_isolation:
         parser.error('--env-dir: not allowed with --no-isolation')
@@ -799,7 +795,7 @@ def _describe_artifact(path: str, name: str) -> _ArtifactReport:
     }
 
 
-def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
+def _resolve_config_settings(args: _CliArgs) -> Mapping[str, JSONValue]:
     if args.config_json:
         try:
             config_settings = json.loads(args.config_json)
@@ -813,7 +809,9 @@ def _resolve_config_settings(args: _Args) -> Mapping[str, JSONValue]:
     return {}
 
 
-def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: bool, wheel_input: bool) -> partial[list[str]]:
+def _select_build(
+    parser: argparse.ArgumentParser, args: _CliArgs, *, sdist_input: bool, wheel_input: bool
+) -> partial[list[str]]:
     if args.report is not None and args.metadata:
         parser.error('--report: not allowed with --metadata')
     if wheel_input and not args.metadata:

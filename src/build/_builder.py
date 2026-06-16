@@ -25,6 +25,8 @@ import sys
 import warnings
 import zipfile
 
+from typing import cast
+
 import pyproject_hooks
 
 from . import _ctx, env
@@ -41,31 +43,12 @@ from ._util import check_dependency, parse_wheel_filename
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    import datetime
-
     from collections.abc import Iterable, Iterator, Mapping, Sequence
     from typing import TypedDict
 
-    if sys.version_info < (3, 11):
-        from typing_extensions import NotRequired, Self
-    else:
-        from typing import NotRequired, Self
+    from typing_extensions import NotRequired, Self
 
-    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
-
-    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Uses the covariant
-    # ``Sequence``/``Mapping`` so concrete literals (e.g. ``dict[str, list[str]]``) are assignable.
-    TOMLValue = (
-        str
-        | int
-        | float
-        | bool
-        | datetime.datetime
-        | datetime.date
-        | datetime.time
-        | Sequence['TOMLValue']
-        | Mapping[str, 'TOMLValue']
-    )
+    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner, TOMLValue
 
     # The validated ``[build-system]`` table.
     BuildSystemTable = TypedDict(
@@ -138,7 +121,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         raise BuildSystemTableValidationError(msg)
 
     table: BuildSystemTable = {
-        'requires': [requirement for requirement in requires if isinstance(requirement, str)],
+        'requires': cast('list[str]', requires),
         'build-backend': _DEFAULT_BACKEND['build-backend'],
     }
 
@@ -155,7 +138,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
 
     match build_system:
         case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
-            table['backend-path'] = [path for path in backend_path if isinstance(path, str)]
+            table['backend-path'] = cast('list[str]', backend_path)
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
             raise BuildSystemTableValidationError(msg)
