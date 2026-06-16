@@ -1,0 +1,2 @@
+Consolidate the ``JSONValue``/``TOMLValue`` aliases in ``build._types`` and simplify the type annotations added in
+:issue:`1093` following review - by :user:`gaborbernat`
