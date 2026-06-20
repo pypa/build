@@ -682,6 +682,16 @@ def test_colors_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
         assert build.__main__._styles.get() == build.__main__._NO_COLORS
 
 
+def test_warning_goes_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
+    build.__main__._showwarning('a warning', UserWarning, 'f.py', 1)
+
+    out, err = capsys.readouterr()
+
+    assert out == ''
+    assert 'WARNING' in err
+    assert 'a warning' in err
+
+
 def test_logging_output_venv_failure(
     monkeypatch: pytest.MonkeyPatch, package_test_flit: str, tmp_dir: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
