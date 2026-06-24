@@ -50,8 +50,7 @@ keyring = [
   "keyring",
 ]
 virtualenv = [
-  "virtualenv >= 20.17; python_version >= '3.10' and python_version < '3.14'",
-  "virtualenv >= 20.31; python_version >= '3.14'",
+  "virtualenv >= 20.36.1",
 ]
 
 [project.scripts]
@@ -63,7 +62,7 @@ build = "build.__main__:entrypoint"
 [dependency-groups]
 extra = [
   "uv >= 0.1.18",
-  "virtualenv >= 20.17",
+  "virtualenv >= 20.36.1",
 ]
 lint = [
   "prek",
@@ -99,12 +98,12 @@ test-core = [
 test = [
   "filelock >= 3.4.0",
   "covdefaults >= 2.3",
-  "wheel >= 0.37.0",
+  "wheel >= 0.38.1",
   'setuptools >= 56.0.0; python_version == "3.10"',
   'setuptools >= 56.0.0; python_version == "3.11"',
   'setuptools >= 67.8.0; python_version >= "3.12"',
   "setuptools_scm >= 6.4.2",
-  "pip >= 22.3",
+  "pip >= 26.1",
   { include-group = "test-core" },
   { include-group = "extra" },
 ]
