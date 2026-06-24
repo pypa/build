@@ -54,18 +54,18 @@ jobs:
         with:
           allowed-skips: >-
             ${{
-              fromJSON(needs.change-detection.outputs.run-docs)
-              && ''
-              || '
+              !fromJSON(needs.change-detection.outputs.run-docs)
+              && '
               check-docs,
               '
+              || ''
             }}
             ${{
-              fromJSON(needs.change-detection.outputs.run-tests)
-              && ''
-              || '
+              !fromJSON(needs.change-detection.outputs.run-tests)
+              && '
               pytest,
               type,
               '
+              || ''
             }}
           jobs: ${{ toJSON(needs) }}

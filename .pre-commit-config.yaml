@@ -30,20 +30,20 @@ repos:
     hooks:
       - id: prettier
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: 8688ba6420d7b5ca95a8ba0edf8a9953babdc3da # frozen: v2.1.1
+    rev: a05381030e526dc863e2006d34824271d7681d08 # frozen: v2.2.0
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 3b3f7c3f57fe9925356faf5fe6230835138be230 # frozen: v0.15.17
+    rev: 77039ccbba72c8aede339c5f8ae29b42aced0a2e # frozen: v0.15.18
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
       - id: ruff-format
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: 65b94e97b1091634368592d98072160842265fe4 # frozen: v0.8.2
+    rev: 49dc7dae7344de80e88a65586120a1f536ac446b # frozen: v0.8.3
     hooks:
       - id: flake8-lazy
         files: ^src/
@@ -59,7 +59,7 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: 9257c6050c0261b8c57e712f632dc4a8010109a9 # frozen: v1.25.2
+    rev: e3eebf65325ccc992422292cb7a4baee967cf815 # frozen: v1.26.1
     hooks:
       - id: zizmor
         files: "^\\.github"
@@ -72,7 +72,7 @@ repos:
         entry: files in changelog must be valid (N.type.rst)
         language: fail
   - repo: https://github.com/henryiii/check-sdist
-    rev: 8d786ae74939ac1d9b12681bc43f72a0980283dd # frozen: v1.4.0
+    rev: 377c4f639d3c5fd025ee882a22ae243e12bef469 # frozen: v1.5.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
