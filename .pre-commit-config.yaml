@@ -26,7 +26,7 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "06507ab9500d4a9919b5ebd76d9d5b7074f15c1f" # frozen: v3.8.4
+    rev: "4923370d55631aa5b66f612f52d67b2e0ca2a38c" # frozen: v3.9.1
     hooks:
       - id: prettier
   - repo: https://github.com/LilSpazJoekp/docstrfmt
@@ -37,7 +37,7 @@ repos:
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 77039ccbba72c8aede339c5f8ae29b42aced0a2e # frozen: v0.15.18
+    rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56 # frozen: v0.15.20
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
