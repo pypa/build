@@ -103,7 +103,7 @@ test = [
   'setuptools >= 56.0.0; python_version == "3.11"',
   'setuptools >= 67.8.0; python_version >= "3.12"',
   "setuptools_scm >= 6.4.2",
-  "pip >= 26.1",
+  "pip >= 22.3",
   { include-group = "test-core" },
   { include-group = "extra" },
 ]

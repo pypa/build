@@ -1,1 +1,1 @@
-Raise vulnerable dependency floors (pip, virtualenv, wheel) to releases that fix their advisories.
+Raise vulnerable dependency floors (virtualenv, wheel) to releases that fix their advisories.
