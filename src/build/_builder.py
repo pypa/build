@@ -108,10 +108,10 @@ def _read_pyproject_toml(path: StrPath) -> Mapping[str, TOMLValue]:
     except FileNotFoundError:
         return {}
     except PermissionError as e:  # pragma: win32 no cover
-        msg = f"{e.strerror}: '{e.filename}' "
+        msg = f"{e.strerror}: '{e.filename}'"
         raise BuildException(msg) from None
     except tomllib.TOMLDecodeError as e:
-        msg = f'Failed to parse {path}: {e} '
+        msg = f'Failed to parse {path}: {e}'
         raise BuildException(msg) from None
 
 
@@ -120,7 +120,9 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
     # (per PEP 518), use default values
     if 'build-system' not in pyproject_toml:
         _find_typo(pyproject_toml, 'build-system')
-        return _DEFAULT_BACKEND
+        # Return a fresh copy so callers mutating the result (e.g. the ``requires``
+        # list) cannot corrupt the shared default for later builders.
+        return {**_DEFAULT_BACKEND, 'requires': list(_DEFAULT_BACKEND['requires'])}
 
     build_system = pyproject_toml['build-system']
     if not isinstance(build_system, dict):
@@ -375,7 +377,7 @@ class ProjectBuilder:
         match = parse_wheel_filename(os.path.basename(wheel))
         if not match:
             msg = 'Invalid wheel'
-            raise ValueError(msg)
+            raise BuildException(msg)
         distinfo = f'{match["distribution"]}-{match["version"]}.dist-info'
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
