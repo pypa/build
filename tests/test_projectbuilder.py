@@ -554,6 +554,31 @@ def test_metadata_invalid_wheel(tmp_dir: str, package_test_bad_wheel: str) -> No
         builder.metadata_path(tmp_dir)
 
 
+@pytest.mark.parametrize('distinfo_dirs', [[], ['foo-1.0.dist-info', 'bar-2.0.dist-info']], ids=['zero', 'two'])
+def test_metadata_path_ambiguous_dist_info(
+    mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str, distinfo_dirs: list[str]
+) -> None:
+    # A wheel must contain exactly one dist-info directory; anything else is rejected.
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
+
+    builder = build.ProjectBuilder(package_test_flit)
+    hook.prepare_metadata_for_build_wheel.side_effect = pyproject_hooks.HookMissing('prepare_metadata_for_build_wheel')
+
+    wheel_name = 'foo-1.0-py3-none-any.whl'
+
+    def fake_build_wheel(outdir: str, config_settings: Mapping[str, str] | None = None) -> str:  # noqa: ARG001
+        with zipfile.ZipFile(os.path.join(outdir, wheel_name), 'w') as zf:
+            zf.writestr('foo/__init__.py', '')
+            for distinfo_dir in distinfo_dirs:
+                zf.writestr(f'{distinfo_dir}/METADATA', 'Metadata-Version: 2.1\n')
+        return wheel_name
+
+    hook.build_wheel.side_effect = fake_build_wheel
+
+    with pytest.raises(ValueError, match='Invalid wheel'):
+        builder.metadata_path(tmp_dir)
+
+
 def test_metadata_path_no_prepare_build_tag(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     # Regression test for a wheel filename with a build tag (e.g. ``foo-1.0-1-py3-none-any.whl``):
     # the dist-info directory name must be read from the wheel's contents, not guessed from the
