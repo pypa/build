@@ -86,7 +86,7 @@ if TYPE_CHECKING:
         metadata: bool
         config_settings: list[str] | None
         config_json: str | None
-        installer: _env.Installer | None
+        installer: _env.Installer
         no_isolation: bool
         dependency_constraints_txt: str | None
         skip_dependency_check: bool
@@ -647,6 +647,7 @@ def main_parser() -> argparse.ArgumentParser:
     env_exclusive_group.add_argument(
         '--installer',
         choices=_env.INSTALLERS,
+        default='pip',
         help='Python package installer to use (defaults to pip)',
     )
     env_exclusive_group.add_argument(
