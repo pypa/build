@@ -9,6 +9,7 @@ import pathlib
 import sys
 import textwrap
 import typing
+import zipfile
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING, NoReturn
@@ -551,6 +552,32 @@ def test_metadata_invalid_wheel(tmp_dir: str, package_test_bad_wheel: str) -> No
 
     with pytest.raises(ValueError, match='Invalid wheel'):
         builder.metadata_path(tmp_dir)
+
+
+def test_metadata_path_no_prepare_build_tag(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
+    # Regression test for a wheel filename with a build tag (e.g. ``foo-1.0-1-py3-none-any.whl``):
+    # the dist-info directory name must be read from the wheel's contents, not guessed from the
+    # (ambiguous) filename, since ``-1`` could be parsed as either the build tag or part of the version.
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
+
+    builder = build.ProjectBuilder(package_test_flit)
+    hook.prepare_metadata_for_build_wheel.side_effect = pyproject_hooks.HookMissing('prepare_metadata_for_build_wheel')
+
+    wheel_name = 'foo-1.0-1-py3-none-any.whl'
+
+    def fake_build_wheel(outdir: str, config_settings: Mapping[str, str] | None = None) -> str:  # noqa: ARG001
+        with zipfile.ZipFile(os.path.join(outdir, wheel_name), 'w') as zf:
+            zf.writestr('foo-1.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: foo\nVersion: 1.0\n')
+            zf.writestr('foo/__init__.py', '')
+        return wheel_name
+
+    hook.build_wheel.side_effect = fake_build_wheel
+
+    metadata_dir = builder.metadata_path(tmp_dir)
+
+    assert os.path.basename(metadata_dir) == 'foo-1.0.dist-info'
+    assert os.path.isdir(metadata_dir)
+    assert os.path.isfile(os.path.join(metadata_dir, 'METADATA'))
 
 
 def test_log(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture, package_test_flit: str) -> None:
