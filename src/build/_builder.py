@@ -35,7 +35,7 @@ from ._exceptions import (
     BuildSystemTableValidationError,
     TypoWarning,
 )
-from ._util import check_dependency, parse_wheel_filename
+from ._util import check_dependency
 
 
 TYPE_CHECKING = False
@@ -372,16 +372,25 @@ class ProjectBuilder:
 
         # fallback to build_wheel hook
         wheel = self.build('wheel', output_directory)
-        match = parse_wheel_filename(os.path.basename(wheel))
-        if not match:
+        try:
+            with zipfile.ZipFile(wheel) as w:
+                names = w.namelist()
+        except (OSError, zipfile.BadZipFile) as exception:
+            msg = 'Invalid wheel'
+            raise ValueError(msg) from exception
+
+        # The dist-info directory name cannot be reliably derived from the wheel filename (e.g. a build
+        # tag makes the filename ambiguous), so find it by inspecting the wheel's contents instead.
+        metadata_names = [name for name in names if name.count('/') == 1 and name.endswith('.dist-info/METADATA')]
+        if len(metadata_names) != 1:
             msg = 'Invalid wheel'
             raise ValueError(msg)
-        distinfo = f'{match["distribution"]}-{match["version"]}.dist-info'
+        distinfo = metadata_names[0].rsplit('/', 1)[0]
         member_prefix = f'{distinfo}/'
         with zipfile.ZipFile(wheel) as w:
             w.extractall(
                 output_directory,
-                (member for member in w.namelist() if member.startswith(member_prefix)),
+                (member for member in names if member.startswith(member_prefix)),
             )
         return os.path.join(output_directory, distinfo)
 

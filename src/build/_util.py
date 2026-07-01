@@ -7,7 +7,6 @@ __lazy_modules__ = [
     'packaging.requirements',
 ]
 
-import re
 import sys
 
 import packaging.requirements
@@ -20,13 +19,6 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Set as AbstractSet
-
-
-_WHEEL_FILENAME_REGEX = re.compile(
-    r'(?P<distribution>.+)-(?P<version>.+)'
-    r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
-    r'-(?P<abi_tag>.+)-(?P<platform_tag>.+)\.whl'
-)
 
 
 def check_dependency(
@@ -89,7 +81,3 @@ def _format_missing_dependency(dep_chain: tuple[str, ...]) -> str:
 
 def _format_dep_chain(dep_chain: tuple[str, ...]) -> str:
     return ' -> '.join(dep.partition(';')[0].strip() for dep in dep_chain)
-
-
-def parse_wheel_filename(filename: str) -> re.Match[str] | None:
-    return _WHEEL_FILENAME_REGEX.match(filename)
