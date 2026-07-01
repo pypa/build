@@ -322,6 +322,50 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
 
 
 @pytest.mark.usefixtures('local_pip')
+def test_default_impl_install_files_have_lf_line_endings(mocker: pytest_mock.MockerFixture) -> None:
+    # The requirements/constraints files are opened in text mode, which translates every
+    # '\n' written to os.linesep. Joining with os.linesep first (instead of '\n') would
+    # double-translate on Windows, turning '\r\n' into '\r\r\n'. Read back as bytes, before
+    # the files are deleted by the install_dependencies() ExitStack, to catch that.
+    written: dict[str, bytes] = {}
+
+    def fake_run_subprocess(cmd: list[str], **_kwargs: object) -> None:
+        args = iter(cmd)
+        for arg in args:
+            if arg == '-r':
+                written['requirements'] = Path(next(args)).read_bytes()
+            elif arg == '-c':
+                written['constraints'] = Path(next(args)).read_bytes()
+
+    with build.env.DefaultIsolatedEnv() as env:
+        mocker.patch('build.env.run_subprocess', side_effect=fake_run_subprocess)
+        env.install(['some', 'requirements'], ['a-constraint'])
+
+    assert written['requirements'] == b'some\nrequirements'
+    assert written['constraints'] == b'a-constraint'
+
+
+@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
+@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
+def test_uv_impl_install_files_have_lf_line_endings(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    written: dict[str, bytes] = {}
+
+    def fake_run_subprocess(cmd: list[str], **_kwargs: object) -> None:
+        args = iter(cmd)
+        for arg in args:
+            if arg == '-c':
+                written['constraints'] = Path(next(args)).read_bytes()
+
+    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+        mocker.patch('build.env.run_subprocess', side_effect=fake_run_subprocess)
+        env.install(['some', 'requirements'], ['a-constraint'])
+
+    assert written['constraints'] == b'a-constraint'
+
+
+@pytest.mark.usefixtures('local_pip')
 @pytest.mark.parametrize(
     ('installer', 'env_backend_display_name', 'has_virtualenv'),
     [
