@@ -1,1 +1,1 @@
-Simplify several internal code paths (redundant filtering, ``_call_backend`` output-dir handling, the ``_compat.tarfile`` helper, and sdist extraction) found in review - by :user:`henryiii`
+Simplify several internal code paths found in review - by :user:`henryiii`
