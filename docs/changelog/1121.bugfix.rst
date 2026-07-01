@@ -1,0 +1,3 @@
+Batch of small robustness fixes: correct macOS release parsing for the minimum pip version, avoid sharing the mutable
+default build-system table between builders, keep the original error when isolated-environment setup fails early, and
+raise ``BuildException`` for an invalid wheel - by :user:`henryiii`
