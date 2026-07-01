@@ -3,6 +3,7 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     'pathlib',
+    'tarfile',
 ]
 
 import sys
@@ -11,32 +12,18 @@ import tarfile
 from pathlib import Path
 
 
-TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    TarFile = tarfile.TarFile
-
-# Per https://peps.python.org/pep-0706/, the "data" filter will become
-# the default in Python 3.14. The first series of releases with the filter
-# had a broken filter that could not process symlinks correctly.
-elif (
-    (3, 10, 13) <= sys.version_info < (3, 11)
-    or (3, 11, 5) <= sys.version_info < (3, 12)
-    or (3, 12) <= sys.version_info < (3, 14)
-):
-
-    class TarFile(tarfile.TarFile):  # pragma: no cover
-        extraction_filter = staticmethod(tarfile.data_filter)
-
-else:
-    TarFile = tarfile.TarFile  # pragma: no cover
+# Per https://peps.python.org/pep-0706/, the "data" filter became the default
+# in Python 3.14. The first series of releases with the filter had a broken
+# filter that could not process symlinks correctly, so the patch releases that
+# fixed it are the lower bounds here.
+_HAS_DATA_FILTER = (
+    (3, 10, 13) <= sys.version_info < (3, 11) or (3, 11, 5) <= sys.version_info < (3, 12) or sys.version_info >= (3, 12)
+)
 
 
-# Same availability matrix as the TarFile subclass above. On runtimes that
-# ship the stdlib ``data`` filter we delegate to it; the fallback branch is
-# only reached on 3.10.0-3.10.12 / 3.11.0-3.11.4 and validates each member
-# manually before extraction.
-if (3, 10, 13) <= sys.version_info < (3, 11) or (3, 11, 5) <= sys.version_info < (3, 12) or sys.version_info >= (3, 12):
+# On runtimes that ship the stdlib ``data`` filter we delegate to it; the fallback branch is
+# only reached on 3.10.0-3.10.12 / 3.11.0-3.11.4 and validates each member manually before extraction.
+if _HAS_DATA_FILTER:
 
     def safe_extractall(tar: tarfile.TarFile, path: Path | str) -> None:  # pragma: no cover
         """Extract every member of ``tar`` into ``path`` via the PEP 706 ``data`` filter."""
@@ -75,6 +62,5 @@ def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
 
 
 __all__ = [
-    'TarFile',
     'safe_extractall',
 ]

@@ -86,10 +86,8 @@ def _has_dependency(
     """
     from packaging.version import Version
 
-    from ._compat import importlib
-
     try:
-        distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
+        distribution = next(iter(importlib_metadata.distributions(name=name, **distargs)))
     except StopIteration:
         return None
 
@@ -302,8 +300,6 @@ class _PipBackend(_EnvBackend):
         from build. This verifies that virtualenv and all of its
         dependencies are installed as required by build.
         """
-        from packaging.requirements import Requirement
-
         name = 'virtualenv'
 
         return importlib.util.find_spec(name) is not None and not any(
