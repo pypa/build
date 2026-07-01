@@ -1,0 +1,2 @@
+Fix the Windows symlink support probe always returning ``False`` due to a stale object interpolated into the destination
+path - by :user:`henryiii`
