@@ -59,7 +59,7 @@ import build
 import build.env as _env
 
 from build import ProjectBuilder, _ctx
-from build._compat.tarfile import TarFile, safe_extractall
+from build._compat.tarfile import safe_extractall
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
 from build._util import format_unmet_dependencies
 from build.env import DefaultIsolatedEnv
@@ -75,6 +75,11 @@ if TYPE_CHECKING:
     # A decoded JSON value, as produced by ``--config-json``. Uses the covariant ``Sequence``/``Mapping``
     # so the ``str | list[str]`` settings from ``--config-setting`` are also assignable to it.
     JSONValue = str | int | float | bool | None | Sequence['JSONValue'] | Mapping[str, 'JSONValue']
+
+    class _BuilderKwargs(TypedDict, total=False):
+        """Optional keyword arguments shared by both ``ProjectBuilder`` constructors."""
+
+        runner: SubprocessRunner
 
     class _Args(argparse.Namespace):
         """The arguments :func:`main_parser` produces, typed for the rest of the module."""
@@ -204,12 +209,10 @@ def _bootstrap_build_env(
     env_dir: str | None = None,
     runner: SubprocessRunner | None = None,
 ) -> Iterator[ProjectBuilder]:
+    builder_kwargs: _BuilderKwargs = {'runner': runner} if runner else {}
     if isolation:
         with DefaultIsolatedEnv(installer=installer, path=env_dir) as env:
-            make_builder = partial(ProjectBuilder.from_isolated_env, env, srcdir)
-            if runner:
-                make_builder = partial(make_builder, runner=runner)
-            builder = make_builder()
+            builder = ProjectBuilder.from_isolated_env(env, srcdir, **builder_kwargs)
 
             install = env.install
             if dependency_constraints_txt:
@@ -227,10 +230,7 @@ def _bootstrap_build_env(
             yield builder
 
     else:
-        make_builder = partial(ProjectBuilder, srcdir)
-        if runner:
-            make_builder = partial(make_builder, runner=runner)
-        builder = make_builder()
+        builder = ProjectBuilder(srcdir, **builder_kwargs)
 
         if not skip_dependency_check and (missing := builder.check_dependencies(distribution, config_settings)):
             _cprint()
@@ -409,7 +409,8 @@ def build_package_via_sdist(
     sdist_name = os.path.basename(sdist)
     built: list[str] = []
     if distributions:
-        with _extract_sdist(sdist, sdist_name.removesuffix('.tar.gz'), extract_dir=sdist_extract_dir) as extracted_srcdir:
+        top_level = _validate_sdist_archive(sdist)
+        with _extract_sdist(sdist, top_level, extract_dir=sdist_extract_dir) as extracted_srcdir:
             _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
             for distribution in distributions:
                 out = _build(
@@ -872,7 +873,7 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
     if extract_dir is None:
         tmp_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
         try:
-            with TarFile.open(archive) as tar:
+            with tar_open(archive) as tar:
                 safe_extractall(tar, tmp_dir)
             yield os.path.join(tmp_dir, top_level)
         finally:
@@ -882,7 +883,7 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
         os.makedirs(root, exist_ok=True)
         target = os.path.join(root, top_level)
         shutil.rmtree(target, ignore_errors=True)
-        with TarFile.open(archive) as tar:
+        with tar_open(archive) as tar:
             safe_extractall(tar, root)
         yield target
 

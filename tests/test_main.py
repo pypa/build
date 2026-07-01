@@ -285,7 +285,8 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     )
     mocker.patch('build.__main__.tempfile.mkdtemp', return_value='temp-sdist-dir')
     rmtree = mocker.patch('build.__main__.shutil.rmtree')
-    tar_open = mocker.patch('build._compat.tarfile.TarFile.open')
+    tar_open = mocker.patch('build.__main__.tar_open')
+    mocker.patch('build.__main__._validate_sdist_archive', return_value='demo-1.0.0')
     mocker.patch('build.__main__._ctx.log')
     config_settings = {'--flag': 'value'}
 
@@ -427,7 +428,9 @@ def test_build_package_via_sdist(tmp_dir: str, package_test_setuptools: str) -> 
 
 @pytest.mark.pypy3323bug
 def test_build_package_via_sdist_incomplete_sdist(tmp_dir: str, package_test_cant_build_via_sdist: str) -> None:
-    with pytest.raises(build.BuildBackendException):
+    # The backend produces an sdist without a PKG-INFO, so it is rejected up front rather than
+    # failing later when the wheel build cannot find its missing source file.
+    with pytest.raises(build.BuildException, match='PKG-INFO'):
         build.__main__.build_package_via_sdist(package_test_cant_build_via_sdist, tmp_dir, ['wheel'])
 
 
