@@ -757,6 +757,34 @@ def test_metadata_json_output(
     assert metadata['version'] == '1.0.0'
 
 
+def test_showwarning_writes_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
+    build.__main__._showwarning('some warning message', UserWarning, 'somefile.py', 1)
+
+    out, err = capsys.readouterr()
+
+    assert out == ''
+    assert 'WARNING' in err
+    assert 'some warning message' in err
+
+
+@pytest.mark.filterwarnings('always::UserWarning')
+def test_metadata_json_output_not_corrupted_by_warning(
+    capsys: pytest.CaptureFixture[str],
+    package_test_setuptools: str,
+) -> None:
+    # A warning emitted during the build (here, pip-incompatible bare --config-setting)
+    # must not land on stdout, or it would corrupt the --metadata JSON output.
+    build.__main__.main([package_test_setuptools, '--metadata', '-n', '-C--flag'])
+
+    stdout, stderr = capsys.readouterr()
+
+    metadata = json.loads(stdout)
+    assert metadata['name'] in {'test_setuptools', 'test-setuptools'}
+
+    assert 'WARNING' in stderr
+    assert "Config setting '--flag' was passed without a value" in stderr
+
+
 def test_setup_cli_windows_colorama_available(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch('platform.system', return_value='Windows')
     colorama = mocker.MagicMock()

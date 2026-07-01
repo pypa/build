@@ -1,0 +1,2 @@
+Send CLI warnings to stderr instead of stdout, so they no longer corrupt ``--metadata``'s JSON output - by
+:user:`henryiii`
