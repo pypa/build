@@ -1,0 +1,1 @@
+Simplify several internal code paths found in review - by :user:`henryiii`
