@@ -1,1 +1,1 @@
-Memoize ``check_dependency`` and stream sdist validation to avoid redundant work on large dependency graphs and archives.
+Memoize ``check_dependency`` and stream sdist validation to avoid redundant work.
