@@ -130,8 +130,8 @@ def _showwarning(
     lineno: int,  # noqa: ARG001
     file: TextIO | None = None,
     line: str | None = None,  # noqa: ARG001
-) -> None:  # pragma: no cover
-    _cprint('{yellow}WARNING{reset} {}', str(message), file)
+) -> None:
+    _cprint('{yellow}WARNING{reset} {}', str(message), file if file is not None else sys.stderr)
 
 
 def _make_logger() -> _ctx.Logger:
