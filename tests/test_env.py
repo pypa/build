@@ -506,6 +506,49 @@ def test_get_minimum_pip_version_old_darwin(
 
 
 @pytest.mark.parametrize(
+    ('release', 'machine', 'expected'),
+    [
+        # A dot-less release must not have its last digit truncated.
+        ('15', 'arm64', '21.0.1'),
+        ('15', 'x86_64', '20.3.0'),
+        # The 10.16 backwards-compatibility report maps to the pre-11 minimum.
+        ('10.16', 'x86_64', '19.1.0'),
+        # An empty release must not raise, and falls back to the generic minimum.
+        ('', 'x86_64', '19.1.0'),
+    ],
+)
+def test_get_minimum_pip_version_darwin_release_parsing(
+    mocker: pytest_mock.MockerFixture,
+    release: str,
+    machine: str,
+    expected: str,
+) -> None:
+    mocker.patch('platform.system', return_value='Darwin')
+    mocker.patch('platform.mac_ver', return_value=(release, ('', '', ''), machine))
+    assert build.env._PipBackend._get_minimum_pip_version_str() == expected
+
+
+def test_isolated_env_enter_failure_before_path_set(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+) -> None:
+    # If setup fails before ``self._path`` is assigned, the original exception must
+    # propagate (not an AttributeError from ``__exit__``), and the temp dir cleaned up.
+    class _DistinctError(Exception):
+        pass
+
+    env_dir = tmp_path / 'build-env'
+    env_dir.mkdir()
+    mocker.patch('build.env.tempfile.mkdtemp', return_value=str(env_dir))
+    mocker.patch('build.env.os.path.realpath', side_effect=_DistinctError('boom'))
+
+    with pytest.raises(_DistinctError, match='boom'), build.env.DefaultIsolatedEnv():
+        pass
+
+    assert not env_dir.exists()
+
+
+@pytest.mark.parametrize(
     ('version', 'has_no_wheel'),
     [
         pytest.param('20.30.0', True, id='old'),

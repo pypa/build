@@ -131,6 +131,8 @@ class DefaultIsolatedEnv(IsolatedEnv):
                         raise BuildException(msg)
             os.makedirs(path, exist_ok=True)
 
+        # Set early so ``__exit__`` can clean up even if the calls below fail.
+        self._path = path
         try:
             # Call ``realpath`` to prevent spurious warning from being emitted
             # that the venv location has changed on Windows for the venv impl.
@@ -314,7 +316,8 @@ class _PipBackend(_EnvBackend):
     def _get_minimum_pip_version_str() -> str:
         if platform.system() == 'Darwin':
             release, _, machine = platform.mac_ver()
-            if int(release[: release.find('.')]) >= 11:
+            major = release.split('.', 1)[0]
+            if major and int(major) >= 11:
                 # macOS 11+ name scheme change requires 20.3. Intel macOS 11.0 can be
                 # told to report 10.16 for backwards compatibility; but that also fixes
                 # earlier versions of pip so this is only needed for 11+.

@@ -550,7 +550,7 @@ def test_metadata_path_legacy(tmp_dir: str, package_legacy: str) -> None:
 def test_metadata_invalid_wheel(tmp_dir: str, package_test_bad_wheel: str) -> None:
     builder = build.ProjectBuilder(package_test_bad_wheel)
 
-    with pytest.raises(ValueError, match='Invalid wheel'):
+    with pytest.raises(build.BuildException, match='Invalid wheel'):
         builder.metadata_path(tmp_dir)
 
 
@@ -575,7 +575,7 @@ def test_metadata_path_ambiguous_dist_info(
 
     hook.build_wheel.side_effect = fake_build_wheel
 
-    with pytest.raises(ValueError, match='Invalid wheel'):
+    with pytest.raises(build.BuildException, match='Invalid wheel'):
         builder.metadata_path(tmp_dir)
 
 
@@ -645,6 +645,15 @@ def test_log(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
 )
 def test_parse_valid_build_system_table_type(pyproject_toml: Mapping[str, TOMLValue], parse_output: BuildSystemTable) -> None:
     assert build._builder._parse_build_system_table(pyproject_toml) == parse_output
+
+
+def test_parse_default_build_system_table_not_shared() -> None:
+    # A caller mutating the returned default table must not affect later callers.
+    first = build._builder._parse_build_system_table({})
+    first['requires'].append('mutated')
+
+    second = build._builder._parse_build_system_table({})
+    assert second['requires'] == ['setuptools >= 40.8.0']
 
 
 @pytest.mark.parametrize(
