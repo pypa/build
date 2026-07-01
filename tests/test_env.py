@@ -542,8 +542,8 @@ def test_isolated_env_enter_failure_before_path_set(
     mocker.patch('build.env.tempfile.mkdtemp', return_value=str(env_dir))
     mocker.patch('build.env.os.path.realpath', side_effect=_DistinctError('boom'))
 
-    with pytest.raises(_DistinctError, match='boom'), build.env.DefaultIsolatedEnv():
-        pass
+    with pytest.raises(_DistinctError, match='boom'):
+        build.env.DefaultIsolatedEnv().__enter__()
 
     assert not env_dir.exists()
 
