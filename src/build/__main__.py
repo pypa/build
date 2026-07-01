@@ -844,21 +844,31 @@ def _validate_sdist_archive(archive: StrPath) -> str:
         msg = f'{name!r} does not look like a source distribution: {exc}'
         raise BuildException(msg) from exc
 
+    top_levels: set[str] = set()
+    with_pkg_info: set[str] = set()
     try:
         with tar_open(archive) as tar:
-            members = tar.getmembers()
+            # Stream the archive once instead of materialising the full member
+            # list; track top-level segments and which of them have a
+            # ``<top>/PKG-INFO`` regular file child.
+            for member in tar:
+                if not member.name:
+                    continue
+                first, sep, rest = member.name.partition('/')
+                top_levels.add(first)
+                if sep and rest == 'PKG-INFO' and member.isfile():
+                    with_pkg_info.add(first)
     except (OSError, TarError) as exc:
         msg = f'failed to read source distribution {archive}: {exc}'
         raise BuildException(msg) from exc
 
-    top_levels = {m.name.split('/', 1)[0] for m in members if m.name}
     top_levels.discard('')
     if len(top_levels) != 1:
         msg = f'source distribution {archive} must contain a single top-level directory, got: {sorted(top_levels)}'
         raise BuildException(msg)
 
     top = next(iter(top_levels))
-    if not any(m.name == f'{top}/PKG-INFO' and m.isfile() for m in members):
+    if top not in with_pkg_info:
         msg = (
             f'source distribution {archive} does not contain {top}/PKG-INFO; '
             'this does not appear to be a valid source distribution'

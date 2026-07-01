@@ -154,6 +154,40 @@ def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: s
     assert next(build.check_dependency(requirement_string), None) == expected
 
 
+def test_check_dependency_diamond_visits_each_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A→B,C; B→D; C→D. The shared subtree (D) must be verified at most once,
+    # not once per path, otherwise dense graphs blow up exponentially.
+    graph = {
+        'diamond_a': 'Requires-Dist: diamond_b\nRequires-Dist: diamond_c',
+        'diamond_b': 'Requires-Dist: diamond_d',
+        'diamond_c': 'Requires-Dist: diamond_d',
+        'diamond_d': '',
+    }
+    lookups: dict[str, int] = {}
+
+    class DiamondDistribution(MockDistribution):
+        _name = ''
+
+        def read_text(self, filename: str) -> str:
+            if filename == 'METADATA':
+                return f'Metadata-Version: 2.2\nName: {self._name}\nVersion: 1.0.0\n{graph[self._name]}'
+            return ''
+
+        @classmethod
+        def from_name(cls, name: str) -> DiamondDistribution:
+            lookups[name] = lookups.get(name, 0) + 1
+            if name not in graph:
+                raise _importlib.metadata.PackageNotFoundError
+            dist = cls()
+            dist._name = name
+            return dist
+
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', DiamondDistribution)
+
+    assert list(build.check_dependency('diamond_a')) == []
+    assert lookups == {'diamond_a': 1, 'diamond_b': 1, 'diamond_c': 1, 'diamond_d': 1}
+
+
 def test_bad_project(package_test_no_project: str) -> None:
     # Passing a nonexistent project directory
     with pytest.raises(build.BuildException):

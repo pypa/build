@@ -992,6 +992,14 @@ def test_validate_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, 
     assert build.__main__._validate_sdist_archive(str(archive)) == 'something-else-1.0'
 
 
+def test_validate_sdist_archive_ignores_empty_top_level(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    # A member whose name yields an empty first segment (e.g. a leading slash)
+    # must not count as a second top-level directory.
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0', extra={'/stray': 'x'})
+    assert build.__main__._validate_sdist_archive(str(archive)) == 'demo-1.0.0'
+
+
 def _invalid_filename(tmp_path: pathlib.Path, write: WriteSdist) -> str:
     archive = tmp_path / 'noversion.tar.gz'
     write(archive, 'noversion')
