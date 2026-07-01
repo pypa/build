@@ -1,0 +1,1 @@
+Memoize ``check_dependency`` and stream sdist validation to avoid redundant work.
