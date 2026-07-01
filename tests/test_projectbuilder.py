@@ -175,9 +175,8 @@ def test_check_dependency_diamond_visits_each_once(monkeypatch: pytest.MonkeyPat
 
         @classmethod
         def from_name(cls, name: str) -> DiamondDistribution:
+            # everything looked up is in the graph, so no not-found branch needed
             lookups[name] = lookups.get(name, 0) + 1
-            if name not in graph:
-                raise _importlib.metadata.PackageNotFoundError
             dist = cls()
             dist._name = name
             return dist
@@ -186,6 +185,22 @@ def test_check_dependency_diamond_visits_each_once(monkeypatch: pytest.MonkeyPat
 
     assert list(build.check_dependency('diamond_a')) == []
     assert lookups == {'diamond_a': 1, 'diamond_b': 1, 'diamond_c': 1, 'diamond_d': 1}
+
+
+@pytest.mark.parametrize(
+    ('requirement_string', 'expected'),
+    [
+        ('extras_dep == 2.0.0', [('extras_dep==2.0.0',)]),
+        ('recursive_dep', [('recursive_dep', 'recursive_unmet_dep')]),
+    ],
+)
+def test_check_dependency_exhausted(
+    monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: list[tuple[str, ...]]
+) -> None:
+    # Unlike ``next``-based checks, exhausting the generator runs the code past
+    # each yield, including the unsatisfied-subtree exit.
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    assert list(build.check_dependency(requirement_string)) == expected
 
 
 def test_bad_project(package_test_no_project: str) -> None:
