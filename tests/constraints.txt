@@ -9,6 +9,5 @@ setuptools==56.0.0; python_version == "3.11"
 setuptools==67.8.0; python_version >= "3.12"
 setuptools_scm==6.4.2; python_version < "3.12"
 tomli==1.1.0
-virtualenv==20.17; python_version < "3.14"
-virtualenv==20.31; python_version >= "3.14"
-wheel==0.37.0
+virtualenv==20.36.1
+wheel==0.38.1
