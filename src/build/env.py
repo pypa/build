@@ -501,7 +501,7 @@ def _fs_supports_symlink() -> bool:
 
     # Windows may support symlinks (setting in Windows 10)
     with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:  # pragma: win32 cover
-        dest = f'{tmp_file}-b'
+        dest = f'{tmp_file.name}-b'
         try:
             os.symlink(tmp_file.name, dest)
             os.unlink(dest)
