@@ -642,30 +642,38 @@ def test_logging_output_env_subprocess_error(
 
 
 @pytest.mark.parametrize(
-    ('tty', 'env', 'colors'),
+    ('stdout_tty', 'stderr_tty', 'env', 'stdout_colors', 'stderr_colors'),
     [
-        (False, {}, build.__main__._NO_COLORS),
-        (True, {}, build.__main__._COLORS),
-        (False, {'NO_COLOR': ''}, build.__main__._NO_COLORS),
-        (True, {'NO_COLOR': ''}, build.__main__._NO_COLORS),
-        (False, {'FORCE_COLOR': ''}, build.__main__._COLORS),
-        (True, {'FORCE_COLOR': ''}, build.__main__._COLORS),
+        (False, False, {}, build.__main__._NO_COLORS, build.__main__._NO_COLORS),
+        (True, True, {}, build.__main__._COLORS, build.__main__._COLORS),
+        # regression: color support must be decided per-stream, not solely from stdout.
+        (False, True, {}, build.__main__._NO_COLORS, build.__main__._COLORS),
+        (True, False, {}, build.__main__._COLORS, build.__main__._NO_COLORS),
+        (False, False, {'NO_COLOR': ''}, build.__main__._NO_COLORS, build.__main__._NO_COLORS),
+        (True, True, {'NO_COLOR': ''}, build.__main__._NO_COLORS, build.__main__._NO_COLORS),
+        (False, False, {'FORCE_COLOR': ''}, build.__main__._COLORS, build.__main__._COLORS),
+        (True, True, {'FORCE_COLOR': ''}, build.__main__._COLORS, build.__main__._COLORS),
     ],
 )
 def test_colors(
     mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
-    tty: bool,
+    stdout_tty: bool,
+    stderr_tty: bool,
     env: dict[str, str],
-    colors: dict[str, object],
+    stdout_colors: dict[str, object],
+    stderr_colors: dict[str, object],
 ) -> None:
-    mocker.patch('sys.stdout.isatty', return_value=tty)
+    mocker.patch('sys.stdout.isatty', return_value=stdout_tty)
+    mocker.patch('sys.stderr.isatty', return_value=stderr_tty)
     for key, value in env.items():
         monkeypatch.setenv(key, value)
 
     build.__main__._init_colors()
 
-    assert build.__main__._styles.get() == colors
+    styles = build.__main__._styles.get()
+    assert styles['stdout'] == stdout_colors
+    assert styles['stderr'] == stderr_colors
 
 
 def test_colors_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -679,7 +687,31 @@ def test_colors_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
         ):
             build.__main__._init_colors()
 
-        assert build.__main__._styles.get() == build.__main__._NO_COLORS
+        styles = build.__main__._styles.get()
+        assert styles['stdout'] == build.__main__._NO_COLORS
+        assert styles['stderr'] == build.__main__._NO_COLORS
+
+
+def test_cprint_selects_style_per_stream(mocker: pytest_mock.MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    """stderr output is colored independently of stdout, based on its own tty-ness."""
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    monkeypatch.delenv('FORCE_COLOR', raising=False)
+
+    # stdout is not a tty (e.g. redirected to a log file), stderr is a tty.
+    mocker.patch('sys.stdout.isatty', return_value=False)
+    mocker.patch('sys.stderr.isatty', return_value=True)
+    build.__main__._init_colors()
+
+    assert build.__main__._styles.get()['stdout'] == build.__main__._NO_COLORS
+    assert build.__main__._styles.get()['stderr'] == build.__main__._COLORS
+
+    # the inverse: stdout is a tty, stderr is redirected.
+    mocker.patch('sys.stdout.isatty', return_value=True)
+    mocker.patch('sys.stderr.isatty', return_value=False)
+    build.__main__._init_colors()
+
+    assert build.__main__._styles.get()['stdout'] == build.__main__._COLORS
+    assert build.__main__._styles.get()['stderr'] == build.__main__._NO_COLORS
 
 
 def test_logging_output_venv_failure(
