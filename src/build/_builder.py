@@ -373,22 +373,22 @@ class ProjectBuilder:
         # fallback to build_wheel hook
         wheel = self.build('wheel', output_directory)
         try:
-            with zipfile.ZipFile(wheel) as w:
-                names = w.namelist()
+            whl = zipfile.ZipFile(wheel)
         except (OSError, zipfile.BadZipFile) as exception:
             msg = 'Invalid wheel'
             raise ValueError(msg) from exception
 
-        # The dist-info directory name cannot be reliably derived from the wheel filename (e.g. a build
-        # tag makes the filename ambiguous), so find it by inspecting the wheel's contents instead.
-        metadata_names = [name for name in names if name.count('/') == 1 and name.endswith('.dist-info/METADATA')]
-        if len(metadata_names) != 1:
-            msg = 'Invalid wheel'
-            raise ValueError(msg)
-        distinfo = metadata_names[0].rsplit('/', 1)[0]
-        member_prefix = f'{distinfo}/'
-        with zipfile.ZipFile(wheel) as w:
-            w.extractall(
+        with whl:
+            names = whl.namelist()
+            # The dist-info directory name cannot be reliably derived from the wheel filename (e.g. a build
+            # tag makes the filename ambiguous), so find it by inspecting the wheel's contents instead.
+            metadata_names = [name for name in names if name.count('/') == 1 and name.endswith('.dist-info/METADATA')]
+            if len(metadata_names) != 1:
+                msg = 'Invalid wheel'
+                raise ValueError(msg)
+            distinfo = metadata_names[0].rsplit('/', 1)[0]
+            member_prefix = f'{distinfo}/'
+            whl.extractall(
                 output_directory,
                 (member for member in names if member.startswith(member_prefix)),
             )
