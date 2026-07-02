@@ -394,8 +394,11 @@ class ProjectBuilder:
 
         try:
             os.makedirs(outdir, exist_ok=True)
-        except (FileExistsError, NotADirectoryError):
+        except FileExistsError:
             msg = f"Build path '{outdir}' exists and is not a directory"
+            raise BuildException(msg) from None
+        except (NotADirectoryError, FileNotFoundError):
+            msg = f"Build path '{outdir}' does not exist and cannot be a directory"
             raise BuildException(msg) from None
 
         with self._handle_backend(hook_name):

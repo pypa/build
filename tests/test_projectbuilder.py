@@ -481,7 +481,7 @@ def test_prepare_not_dir_parent_outdir(mocker: pytest_mock.MockerFixture, tmp_di
     parent = os.path.join(tmp_dir, 'parent')
     with open(parent, 'w', encoding='utf-8') as f:
         f.write('Not a directory')
-    with pytest.raises(build.BuildException, match=r'Build path .* exists and is not a directory'):
+    with pytest.raises(build.BuildException, match=r'Build path .* does not exist and cannot be a directory'):
         builder.prepare('wheel', os.path.join(parent, 'out'))
 
 
