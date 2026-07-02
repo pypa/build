@@ -155,7 +155,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
 
     match build_system:
         case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
-            table['backend-path'] = list(backend_path)
+            table['backend-path'] = backend_path
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
             raise BuildSystemTableValidationError(msg)
