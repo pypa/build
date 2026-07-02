@@ -107,20 +107,32 @@ _COLORS = {
 _NO_COLORS = dict.fromkeys(_COLORS, '')
 
 
-_styles = contextvars.ContextVar('_styles', default=_COLORS)
+_DEFAULT_STYLES = {'stdout': _COLORS, 'stderr': _COLORS}
+_styles = contextvars.ContextVar('_styles', default=_DEFAULT_STYLES)
 
 
 def _init_colors() -> None:
-    if 'NO_COLOR' in os.environ:
-        if 'FORCE_COLOR' in os.environ:
+    match os.environ:
+        case {'NO_COLOR': _, 'FORCE_COLOR': _}:
             warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
-    elif 'FORCE_COLOR' in os.environ or sys.stdout.isatty():
-        return
-    _styles.set(_NO_COLORS)
+            _styles.set({'stdout': _NO_COLORS, 'stderr': _NO_COLORS})
+        case {'NO_COLOR': _}:
+            _styles.set({'stdout': _NO_COLORS, 'stderr': _NO_COLORS})
+        case {'FORCE_COLOR': _}:
+            _styles.set({'stdout': _COLORS, 'stderr': _COLORS})
+        case _:
+            _styles.set(
+                {
+                    'stdout': _COLORS if sys.stdout.isatty() else _NO_COLORS,
+                    'stderr': _COLORS if sys.stderr.isatty() else _NO_COLORS,
+                }
+            )
 
 
 def _cprint(fmt: str = '', msg: str = '', file: TextIO | None = None) -> None:
-    print(fmt.format(msg, **_styles.get()), file=file, flush=True)
+    stream = file or sys.stdout
+    key = 'stderr' if stream is sys.stderr else 'stdout'
+    print(fmt.format(msg, **_styles.get()[key]), file=file, flush=True)
 
 
 def _showwarning(
@@ -748,7 +760,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             _write_report(args.report, outdir, built)
         if _ctx.verbosity >= -1 and built:
             artifact_list = _natural_language_list(
-                ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()) for artifact in built]
+                ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()['stdout']) for artifact in built]
             )
             _cprint('{bold}{green}Successfully built {}{reset}', artifact_list)
 
