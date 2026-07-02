@@ -414,7 +414,7 @@ class _PipBackend(_EnvBackend):
             with tempfile.NamedTemporaryFile(
                 'w', prefix='build-requirements-', suffix='.txt', delete=False, encoding='utf-8'
             ) as requirement_file:
-                requirement_file.write(os.linesep.join(requirements))
+                requirement_file.write('\n'.join(requirements))
             exit_stack.callback(functools.partial(os.unlink, requirement_file.name))
 
             cmd += ['-r', os.path.abspath(requirement_file.name)]
@@ -423,7 +423,7 @@ class _PipBackend(_EnvBackend):
                 with tempfile.NamedTemporaryFile(
                     'w', prefix='build-constraints-', suffix='.txt', delete=False, encoding='utf-8'
                 ) as constraint_file:
-                    constraint_file.write(os.linesep.join(constraints))
+                    constraint_file.write('\n'.join(constraints))
                 exit_stack.callback(functools.partial(os.unlink, constraint_file.name))
 
                 cmd += ['-c', os.path.abspath(constraint_file.name)]
@@ -476,7 +476,7 @@ class _UvBackend(_EnvBackend):
                 with tempfile.NamedTemporaryFile(
                     'w', prefix='build-constraints-', suffix='.txt', delete=False, encoding='utf-8'
                 ) as constraint_file:
-                    constraint_file.write(os.linesep.join(constraints))
+                    constraint_file.write('\n'.join(constraints))
                 exit_stack.callback(functools.partial(os.unlink, constraint_file.name))
 
                 cmd += ['-c', os.path.abspath(constraint_file.name)]
