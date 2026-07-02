@@ -76,11 +76,6 @@ if TYPE_CHECKING:
     # so the ``str | list[str]`` settings from ``--config-setting`` are also assignable to it.
     JSONValue = str | int | float | bool | None | Sequence['JSONValue'] | Mapping[str, 'JSONValue']
 
-    class _BuilderKwargs(TypedDict, total=False):
-        """Optional keyword arguments shared by both ``ProjectBuilder`` constructors."""
-
-        runner: SubprocessRunner
-
     class _Args(argparse.Namespace):
         """The arguments :func:`main_parser` produces, typed for the rest of the module."""
 
@@ -209,10 +204,10 @@ def _bootstrap_build_env(
     env_dir: str | None = None,
     runner: SubprocessRunner | None = None,
 ) -> Iterator[ProjectBuilder]:
-    builder_kwargs: _BuilderKwargs = {'runner': runner} if runner else {}
+    runner = runner or pyproject_hooks.default_subprocess_runner
     if isolation:
         with DefaultIsolatedEnv(installer=installer, path=env_dir) as env:
-            builder = ProjectBuilder.from_isolated_env(env, srcdir, **builder_kwargs)
+            builder = ProjectBuilder.from_isolated_env(env, srcdir, runner=runner)
 
             install = env.install
             if dependency_constraints_txt:
@@ -230,7 +225,7 @@ def _bootstrap_build_env(
             yield builder
 
     else:
-        builder = ProjectBuilder(srcdir, **builder_kwargs)
+        builder = ProjectBuilder(srcdir, runner=runner)
 
         if not skip_dependency_check and (missing := builder.check_dependencies(distribution, config_settings)):
             _cprint()

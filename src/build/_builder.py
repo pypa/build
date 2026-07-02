@@ -138,7 +138,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         raise BuildSystemTableValidationError(msg)
 
     table: BuildSystemTable = {
-        'requires': list(requires),
+        'requires': requires,
         'build-backend': _DEFAULT_BACKEND['build-backend'],
     }
 
