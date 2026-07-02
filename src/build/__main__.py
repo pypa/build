@@ -108,23 +108,25 @@ _NO_COLORS = dict.fromkeys(_COLORS, '')
 
 
 _DEFAULT_STYLES = {'stdout': _COLORS, 'stderr': _COLORS}
-_styles: contextvars.ContextVar[dict[str, dict[str, str]]] = contextvars.ContextVar('_styles', default=_DEFAULT_STYLES)
+_styles = contextvars.ContextVar('_styles', default=_DEFAULT_STYLES)
 
 
 def _init_colors() -> None:
-    if 'NO_COLOR' in os.environ:
-        if 'FORCE_COLOR' in os.environ:
+    match os.environ:
+        case {'NO_COLOR': _, 'FORCE_COLOR': _}:
             warnings.warn('Both NO_COLOR and FORCE_COLOR environment variables are set, disabling color', stacklevel=2)
-        _styles.set({'stdout': _NO_COLORS, 'stderr': _NO_COLORS})
-    elif 'FORCE_COLOR' in os.environ:
-        _styles.set({'stdout': _COLORS, 'stderr': _COLORS})
-    else:
-        _styles.set(
-            {
-                'stdout': _COLORS if sys.stdout.isatty() else _NO_COLORS,
-                'stderr': _COLORS if sys.stderr.isatty() else _NO_COLORS,
-            }
-        )
+            _styles.set({'stdout': _NO_COLORS, 'stderr': _NO_COLORS})
+        case {'NO_COLOR': _}:
+            _styles.set({'stdout': _NO_COLORS, 'stderr': _NO_COLORS})
+        case {'FORCE_COLOR': _}:
+            _styles.set({'stdout': _COLORS, 'stderr': _COLORS})
+        case _:
+            _styles.set(
+                {
+                    'stdout': _COLORS if sys.stdout.isatty() else _NO_COLORS,
+                    'stderr': _COLORS if sys.stderr.isatty() else _NO_COLORS,
+                }
+            )
 
 
 def _cprint(fmt: str = '', msg: str = '', file: TextIO | None = None) -> None:
