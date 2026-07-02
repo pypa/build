@@ -57,7 +57,7 @@ class BuildKwargs(TypedDict):
     isolation: bool
     skip_dependency_check: bool
     dependency_constraints_txt: str | None
-    installer: str | None
+    installer: str
     env_dir: str | None
 
 
@@ -68,7 +68,7 @@ def make_kwargs(
     isolation: bool = True,
     skip_dependency_check: bool = False,
     dependency_constraints_txt: str | None = None,
-    installer: str | None = None,
+    installer: str = 'pip',
     env_dir: str | None = None,
 ) -> BuildKwargs:
     return {
@@ -1245,7 +1245,7 @@ def test_main_sdist_input_passes_kwargs(sdist: pathlib.Path, mocker: pytest_mock
     assert kwargs['isolation'] is False
     assert kwargs['skip_dependency_check'] is True
     assert kwargs['config_settings'] == {'flag': 'value'}
-    assert kwargs['installer'] is None
+    assert kwargs['installer'] == 'pip'
 
 
 def test_main_sdist_input_end_to_end(tmp_path: pathlib.Path, package_test_setuptools: str) -> None:
