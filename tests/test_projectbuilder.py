@@ -474,6 +474,18 @@ def test_prepare_not_dir_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str,
         builder.prepare('wheel', out)
 
 
+def test_prepare_not_dir_parent_outdir(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(package_test_flit)
+
+    parent = os.path.join(tmp_dir, 'parent')
+    with open(parent, 'w', encoding='utf-8') as f:
+        f.write('Not a directory')
+    with pytest.raises(build.BuildException, match=r'Build path .* does not exist and cannot be a directory'):
+        builder.prepare('wheel', os.path.join(parent, 'out'))
+
+
 def test_no_outdir_single(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
 

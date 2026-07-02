@@ -140,7 +140,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         raise BuildSystemTableValidationError(msg)
 
     table: BuildSystemTable = {
-        'requires': [requirement for requirement in requires if isinstance(requirement, str)],
+        'requires': requires,
         'build-backend': _DEFAULT_BACKEND['build-backend'],
     }
 
@@ -157,7 +157,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
 
     match build_system:
         case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
-            table['backend-path'] = [path for path in backend_path if isinstance(path, str)]
+            table['backend-path'] = backend_path
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
             raise BuildSystemTableValidationError(msg)
@@ -403,12 +403,14 @@ class ProjectBuilder:
 
         callback = getattr(self._hook, hook_name)
 
-        if os.path.exists(outdir):
-            if not os.path.isdir(outdir):
-                msg = f"Build path '{outdir}' exists and is not a directory"
-                raise BuildException(msg)
-        else:
+        try:
             os.makedirs(outdir, exist_ok=True)
+        except FileExistsError:
+            msg = f"Build path '{outdir}' exists and is not a directory"
+            raise BuildException(msg) from None
+        except (NotADirectoryError, FileNotFoundError):
+            msg = f"Build path '{outdir}' does not exist and cannot be a directory"
+            raise BuildException(msg) from None
 
         with self._handle_backend(hook_name):
             basename: str = callback(outdir, config_settings, **kwargs)
