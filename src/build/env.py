@@ -4,7 +4,7 @@ from __future__ import annotations
 __lazy_modules__ = [
     'abc',
     'contextlib',
-    f'{__spec__.parent}._compat',
+    f'{__spec__.parent}._compat.importlib',
     f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',

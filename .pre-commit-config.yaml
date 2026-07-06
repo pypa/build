@@ -26,7 +26,7 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "4923370d55631aa5b66f612f52d67b2e0ca2a38c" # frozen: v3.9.1
+    rev: "39e2973981e6d2f9b6c543b0086a2d2393abdc89" # frozen: v3.9.4
     hooks:
       - id: prettier
   - repo: https://github.com/LilSpazJoekp/docstrfmt
@@ -43,7 +43,7 @@ repos:
         args: [--fix, --show-fixes]
       - id: ruff-format
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: 49dc7dae7344de80e88a65586120a1f536ac446b # frozen: v0.8.3
+    rev: 5fed9a818f2583f0403aed779bf2b6c9aa8d25f4 # frozen: v0.8.5
     hooks:
       - id: flake8-lazy
         files: ^src/
