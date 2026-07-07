@@ -1,0 +1,1 @@
+Memoize satisfied requirements in ``check_dependency`` so shared subtrees of the dependency graph are only walked once.

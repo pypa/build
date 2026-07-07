@@ -31,8 +31,19 @@ def check_dependency(
     :param parent_extras: Extras (eg. "test" in myproject[test])
     :yields: Unmet dependencies
     """
+    yield from _check_dependency(req_string, ancestral_req_strings, parent_extras, set())
+
+
+def _check_dependency(
+    req_string: str, ancestral_req_strings: tuple[str, ...], parent_extras: AbstractSet[str], seen: set[str]
+) -> Iterator[tuple[str, ...]]:
     req = packaging.requirements.Requirement(req_string)
     normalised_req_string = str(req)
+
+    # ``seen`` holds requirements already verified as fully satisfied (nothing
+    # yielded), so shared subtrees of a diamond dependency graph are walked once.
+    if normalised_req_string in seen:
+        return
 
     # ``Requirement`` doesn't implement ``__eq__`` so we cannot compare reqs for
     # equality directly but the string representation is stable.
@@ -54,14 +65,24 @@ def check_dependency(
     except importlib.metadata.PackageNotFoundError:
         # dependency is not installed in the environment.
         yield (*ancestral_req_strings, normalised_req_string)
-    else:
-        if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
-            # the installed version is incompatible.
-            yield (*ancestral_req_strings, normalised_req_string)
-        elif dist.requires:
-            for other_req_string in dist.requires:
-                # yields transitive dependencies that are not satisfied.
-                yield from check_dependency(other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras)
+        return
+
+    if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
+        # the installed version is incompatible.
+        yield (*ancestral_req_strings, normalised_req_string)
+        return
+
+    satisfied = True
+    for other_req_string in dist.requires or ():
+        # yields transitive dependencies that are not satisfied.
+        for unmet in _check_dependency(other_req_string, (*ancestral_req_strings, normalised_req_string), req.extras, seen):
+            satisfied = False
+            yield unmet
+
+    # unmet requirements are not memoised: they must be reported once per
+    # dependency chain that reaches them.
+    if satisfied:
+        seen.add(normalised_req_string)
 
 
 def format_unmet_dependencies(unmet: AbstractSet[tuple[str, ...]]) -> str:
