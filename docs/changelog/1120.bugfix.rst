@@ -1,2 +1,0 @@
-Write pip/uv requirements and constraints files with ``\n`` instead of ``os.linesep``, avoiding doubled ``\r\r\n`` line
-endings on Windows - by :user:`henryiii`

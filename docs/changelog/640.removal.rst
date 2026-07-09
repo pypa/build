@@ -1,2 +1,0 @@
-Warn on config settings without a value (e.g. ``-C--my-flag``); use ``-C--my-flag=`` instead for compatibility with pip
-- by :user:`gaborbernat`

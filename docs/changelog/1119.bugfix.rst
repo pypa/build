@@ -1,2 +1,0 @@
-Fix ``metadata_path``'s build-backend fallback returning a nonexistent dist-info path for wheels with a build tag - by
-:user:`henryiii`
