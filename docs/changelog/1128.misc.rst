@@ -1,0 +1,1 @@
+Isolate color tests from externally set ``NO_COLOR`` and ``FORCE_COLOR`` environment variables - by :user:`Yearnzq`

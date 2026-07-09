@@ -669,6 +669,8 @@ def test_colors(
 ) -> None:
     mocker.patch('sys.stdout.isatty', return_value=stdout_tty)
     mocker.patch('sys.stderr.isatty', return_value=stderr_tty)
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    monkeypatch.delenv('FORCE_COLOR', raising=False)
     for key, value in env.items():
         monkeypatch.setenv(key, value)
 
