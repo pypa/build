@@ -12,14 +12,14 @@
   :user:`gaborbernat` (:issue:`311`)
 - The "Unmet dependencies" error from ``--no-isolation`` builds now shows the wanted version, found version, and
   interpreter - by :user:`gaborbernat` (:issue:`504`)
-- Add ``--sdist-extract-dir`` to extract the intermediate sdist into a persistent directory, enabling compiler cache reuse
-  across rebuilds - by :user:`gaborbernat` (:issue:`614`)
-- Add ``--env-dir`` to place the isolated build environment at a fixed path, enabling compiler cache reuse across builds -
-  by :user:`gaborbernat` (:issue:`655`)
+- Add ``--sdist-extract-dir`` to extract the intermediate sdist into a persistent directory, enabling compiler cache
+  reuse across rebuilds - by :user:`gaborbernat` (:issue:`614`)
+- Add ``--env-dir`` to place the isolated build environment at a fixed path, enabling compiler cache reuse across builds
+  - by :user:`gaborbernat` (:issue:`655`)
 - Print a summary of resolved dependency versions (``name==version``) after installing them in isolated builds - by
   :user:`gaborbernat` (:issue:`959`)
-- On build failure, print a tip pointing to ``--env-dir`` and ``--sdist-extract-dir`` for debugging and link to the "Debug
-  a failed build" how-to - reported by :user:`dimpase`, implemented by :user:`gaborbernat` (:issue:`966`)
+- On build failure, print a tip pointing to ``--env-dir`` and ``--sdist-extract-dir`` for debugging and link to the
+  "Debug a failed build" how-to - reported by :user:`dimpase`, implemented by :user:`gaborbernat` (:issue:`966`)
 
 **********
  Bugfixes
@@ -27,15 +27,16 @@
 
 - Drain verbose subprocess output inline instead of using a ``ThreadPoolExecutor``, which silently swallowed logging
   errors - by :user:`henryiii` (:issue:`1098`)
-- Reject a file passed as ``--env-dir`` with a clear error instead of a raw ``FileExistsError`` - by :user:`henryiii` (:issue:`1100`)
+- Reject a file passed as ``--env-dir`` with a clear error instead of a raw ``FileExistsError`` - by :user:`henryiii`
+  (:issue:`1100`)
 - Emit CLI warnings to stderr instead of stdout, so they no longer corrupt ``--metadata`` JSON output on stdout - by
   :user:`ymyzk` (:issue:`1111`)
-- Fix the Windows symlink support probe always returning ``False`` due to a stale object interpolated into the destination
-  path - by :user:`henryiii` (:issue:`1118`)
+- Fix the Windows symlink support probe always returning ``False`` due to a stale object interpolated into the
+  destination path - by :user:`henryiii` (:issue:`1118`)
 - Fix ``metadata_path``'s build-backend fallback returning a nonexistent dist-info path for wheels with a build tag - by
   :user:`henryiii` (:issue:`1119`)
-- Write pip/uv requirements and constraints files with ``\n`` instead of ``os.linesep``, avoiding doubled ``\r\r\n`` line
-  endings on Windows - by :user:`henryiii` (:issue:`1120`)
+- Write pip/uv requirements and constraints files with ``\n`` instead of ``os.linesep``, avoiding doubled ``\r\r\n``
+  line endings on Windows - by :user:`henryiii` (:issue:`1120`)
 - Batch of small robustness fixes: correct macOS release parsing for the minimum pip version, avoid sharing the mutable
   default build-system table between builders, keep the original error when isolated-environment setup fails early, and
   raise ``BuildException`` for an invalid wheel - by :user:`henryiii` (:issue:`1121`)
@@ -46,15 +47,17 @@
  Deprecations and Removals
 ***************************
 
-- Deprecate :func:`build.util.project_wheel_metadata`; use ``python -m build --metadata`` instead - by :user:`gaborbernat` (:issue:`557`)
-- Warn on config settings without a value (e.g. ``-C--my-flag``); use ``-C--my-flag=`` instead for compatibility with pip
-  - by :user:`gaborbernat` (:issue:`640`)
+- Deprecate :func:`build.util.project_wheel_metadata`; use ``python -m build --metadata`` instead - by
+  :user:`gaborbernat` (:issue:`557`)
+- Warn on config settings without a value (e.g. ``-C--my-flag``); use ``-C--my-flag=`` instead for compatibility with
+  pip - by :user:`gaborbernat` (:issue:`640`)
 
 ***************
  Miscellaneous
 ***************
 
-- :issue:`1058`, :issue:`1060`, :issue:`1062`, :issue:`1093`, :issue:`1099`, :issue:`1107`, :issue:`1113`, :issue:`1117`, :issue:`1122`, :issue:`1124`, :issue:`1128`
+- :issue:`1058`, :issue:`1060`, :issue:`1062`, :issue:`1093`, :issue:`1099`, :issue:`1107`, :issue:`1113`,
+  :issue:`1117`, :issue:`1122`, :issue:`1124`, :issue:`1128`
 
 ####################
  1.5.0 (2026-04-30)
