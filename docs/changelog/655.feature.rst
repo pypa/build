@@ -1,0 +1,2 @@
+Add ``--env-dir`` to place the isolated build environment at a fixed path, enabling compiler cache reuse across builds -
+by :user:`gaborbernat`

@@ -1,0 +1,2 @@
+Drain verbose subprocess output inline instead of using a ``ThreadPoolExecutor``, which silently swallowed logging
+errors - by :user:`henryiii`

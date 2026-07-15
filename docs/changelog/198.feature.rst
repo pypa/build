@@ -1,0 +1,2 @@
+Add ``--report=PATH`` to write a machine-readable JSON report of built artifacts; ``--metadata`` now also accepts
+``.whl`` files - by :user:`gaborbernat`

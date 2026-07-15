@@ -1,0 +1,1 @@
+Reject a file passed as ``--env-dir`` with a clear error instead of a raw ``FileExistsError`` - by :user:`henryiii`
