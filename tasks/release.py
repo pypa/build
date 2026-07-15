@@ -12,6 +12,9 @@ from packaging.version import Version
 ROOT_SRC_DIR = Path(__file__).resolve().parents[1]
 VERSION_FILE = ROOT_SRC_DIR / 'src' / 'build' / '__init__.py'
 CHANGELOG_FILE = ROOT_SRC_DIR / 'CHANGELOG.rst'
+CHANGELOG_FRAGMENTS_DIR = ROOT_SRC_DIR / 'docs' / 'changelog'
+MAJOR_FRAGMENT_TYPES = frozenset({'removal'})
+MINOR_FRAGMENT_TYPES = frozenset({'feature', 'deprecation'})
 
 
 def main(version_str: str, *, push: bool) -> None:
@@ -36,17 +39,25 @@ def main(version_str: str, *, push: bool) -> None:
 def resolve_version(version_str: str, repo: Repo) -> Version:
     if version_str not in {'auto', 'major', 'minor', 'patch'}:
         return Version(version_str)
-    latest_tag = repo.git.describe('--tags', '--abbrev=0')
-    latest_tag = latest_tag.lstrip('v')
-    parts = [int(x) for x in latest_tag.split('.')]
-    match version_str:
+    parts = [int(x) for x in repo.git.describe('--tags', '--abbrev=0').lstrip('v').split('.')[:3]]
+    match detect_bump() if version_str == 'auto' else version_str:
         case 'major':
             parts = [parts[0] + 1, 0, 0]
         case 'minor':
             parts = [parts[0], parts[1] + 1, 0]
-        case 'patch' | 'auto':
+        case 'patch':
             parts[2] += 1
     return Version('.'.join(str(p) for p in parts))
+
+
+def detect_bump() -> str:
+    # Semver: a removal breaks callers (major), a feature or deprecation is additive (minor), the rest is a patch.
+    fragment_types = {path.suffixes[-2].lstrip('.') for path in CHANGELOG_FRAGMENTS_DIR.glob('*.*.rst')}
+    if fragment_types & MAJOR_FRAGMENT_TYPES:
+        return 'major'
+    if fragment_types & MINOR_FRAGMENT_TYPES:
+        return 'minor'
+    return 'patch'
 
 
 def get_remote(repo: Repo) -> Remote:
@@ -66,6 +77,10 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     update_version_file(version)
     print('build changelog from fragments with towncrier')
     check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S603
+    # towncrier appends the issue reference past docstrfmt's width budget, so its raw output can run over the
+    # limit; reflow it here with a pinned docstrfmt instead of trusting the release job's isolated hook env,
+    # which passed over-long lines into 1.5.1 and left a changelog that failed pre-commit everywhere else.
+    check_call(['docstrfmt', '--line-length', '120', 'CHANGELOG.rst'], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     repo.git.add('src/build/__init__.py', 'CHANGELOG.rst', 'docs/changelog/*')
