@@ -1,7 +1,6 @@
 ci:
   autofix_prs: false
   autoupdate_commit_msg: "pre-commit: bump repositories"
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
@@ -25,10 +24,21 @@ repos:
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
-  - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "9337a74165b178ae2c766f60bee7252a0f06f3e8" # frozen: v3.9.5
+  - repo: https://github.com/google/yamlfmt
+    rev: "v0.21.0"
     hooks:
-      - id: prettier
+      - id: yamlfmt
+        exclude: ^\.github/workflows/ # folded ${{ }} expressions break yamlfmt
+  - repo: local
+    hooks:
+      - id: mdformat
+        name: mdformat
+        entry: mdformat --wrap 120
+        language: python
+        types: [markdown]
+        additional_dependencies:
+          - mdformat-gfm>=1
+          - mdformat-ruff>=0.1.3
   - repo: https://github.com/LilSpazJoekp/docstrfmt
     rev: a05381030e526dc863e2006d34824271d7681d08 # frozen: v2.2.0
     hooks:
