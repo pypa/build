@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [
     'abc',
     'contextlib',

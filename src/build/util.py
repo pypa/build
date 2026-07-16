@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile', 'warnings']
 
 import pathlib
@@ -24,7 +27,7 @@ if TYPE_CHECKING:
 def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        metadata = importlib.metadata.PathDistribution(path).metadata
+        metadata = importlib.metadata.PathDistribution(path).metadata  # ty: ignore[invalid-argument-type]  # ty SimplePath bug
         assert metadata is not None
         return metadata
 

@@ -5,6 +5,9 @@ build - A simple, correct Python build frontend
 from __future__ import annotations
 
 
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [
     f'{__spec__.parent}._builder',
     f'{__spec__.parent}._exceptions',

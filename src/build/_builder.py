@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [
     'contextlib',
     'difflib',
@@ -53,8 +56,9 @@ if TYPE_CHECKING:
 
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
-    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Uses the covariant
-    # ``Sequence``/``Mapping`` so concrete literals (e.g. ``dict[str, list[str]]``) are assignable.
+    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Arrays are ``list`` and
+    # tables are ``dict`` (as ``tomllib`` produces them) so ``isinstance`` narrowing yields a
+    # concrete, indexable type.
     TOMLValue = (
         str
         | int
@@ -63,8 +67,8 @@ if TYPE_CHECKING:
         | datetime.datetime
         | datetime.date
         | datetime.time
-        | Sequence['TOMLValue']
-        | Mapping[str, 'TOMLValue']
+        | list['TOMLValue']
+        | dict[str, 'TOMLValue']
     )
 
     # The validated ``[build-system]`` table.
