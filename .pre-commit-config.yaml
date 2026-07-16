@@ -28,7 +28,6 @@ repos:
     rev: "v0.21.0"
     hooks:
       - id: yamlfmt
-        exclude: ^\.github/workflows/ # folded ${{ }} expressions break yamlfmt
   - repo: local
     hooks:
       - id: mdformat

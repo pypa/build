@@ -1,5 +1,4 @@
 name: CD
-
 on:
   workflow_dispatch:
   pull_request:
@@ -12,13 +11,10 @@ on:
   release:
     types:
       - published
-
 concurrency:
   group: cd-${{ github.ref }}
   cancel-in-progress: true
-
 permissions: {}
-
 jobs:
   dist:
     name: Build distribution
@@ -29,9 +25,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-
       - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2.18.0
-
   create-release:
     name: Create GitHub Release
     needs: [dist]
@@ -44,13 +38,11 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
       - name: Create GitHub Release
         run: gh release create "$RELEASE_TAG" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-
   publish:
     name: Publish to PyPI
     needs: [dist]
@@ -62,16 +54,13 @@ jobs:
     permissions:
       id-token: write # to sign attestation
       attestations: write # to create attestation
-
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: Packages
           path: dist
-
       - name: Generate artifact attestation for sdist and wheel
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: "dist/build-*"
-
       - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
