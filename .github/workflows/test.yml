@@ -9,63 +9,39 @@ on:
   schedule:
     - cron: "0 8 * * 1"
   workflow_dispatch:
-
 concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
-
 permissions: {}
-
 jobs:
   change-detection:
     uses: ./.github/workflows/reusable-change-detection.yml
-
   check-docs:
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-docs)
     uses: ./.github/workflows/reusable-docs.yml
-
   pytest:
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-tests)
     uses: ./.github/workflows/reusable-pytest.yml
-
   type:
     needs: change-detection
     if: fromJSON(needs.change-detection.outputs.run-tests)
     uses: ./.github/workflows/reusable-type.yml
-
   # https://github.com/marketplace/actions/alls-green#why
   required-checks-pass: # This job does nothing and is only used for the branch protection
     name: Required checks pass
     if: always()
-
     needs:
       - change-detection # transitive
       - check-docs
       - pytest
       - type
-
     runs-on: ubuntu-latest
-
     steps:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
         with:
           allowed-skips: >-
-            ${{
-              !fromJSON(needs.change-detection.outputs.run-docs)
-              && '
-              check-docs,
-              '
-              || ''
-            }}
-            ${{
-              !fromJSON(needs.change-detection.outputs.run-tests)
-              && '
-              pytest,
-              type,
-              '
-              || ''
-            }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-docs) && 'check-docs,' || '' }} ${{ !fromJSON(needs.change-detection.outputs.run-tests) && 'pytest,type,' || '' }}
           jobs: ${{ toJSON(needs) }}

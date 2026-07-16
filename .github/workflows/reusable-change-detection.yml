@@ -8,9 +8,7 @@ on:
       run-tests:
         description: Whether or not run the tests
         value: ${{ jobs.change-detection.outputs.run-tests || false }}
-
 permissions: {}
-
 jobs:
   change-detection:
     name: Identify source changes
@@ -38,8 +36,7 @@ jobs:
             .github/workflows/reusable-pytest.yml
       - name: Set a flag for running the tests
         if: >-
-          github.event_name != 'pull_request'
-          || steps.changed-testable-files.outputs.added_modified_renamed != ''
+          github.event_name != 'pull_request' || steps.changed-testable-files.outputs.added_modified_renamed != ''
         id: tests-changes
         run: >-
           echo "run-tests=true" >> "${GITHUB_OUTPUT}"
@@ -56,8 +53,7 @@ jobs:
             .github/workflows/reusable-docs.yml
       - name: Set a flag for building the docs
         if: >-
-          github.event_name != 'pull_request'
-          || steps.changed-docs-files.outputs.added_modified_renamed != ''
+          github.event_name != 'pull_request' || steps.changed-docs-files.outputs.added_modified_renamed != ''
         id: docs-changes
         run: >-
           echo "run-docs=true" >> "${GITHUB_OUTPUT}"
