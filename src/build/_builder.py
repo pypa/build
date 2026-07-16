@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 
+# ty types module-scope `__spec__` as `ModuleSpec | None`; narrow it so `__spec__.parent`
+# resolves. https://github.com/astral-sh/ty/issues/4017
 if __spec__ is None:  # pragma: no cover
     raise RuntimeError
 
@@ -57,8 +59,10 @@ if TYPE_CHECKING:
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
     # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Arrays are ``list`` and
-    # tables are ``dict`` (as ``tomllib`` produces them) so ``isinstance`` narrowing yields a
-    # concrete, indexable type.
+    # tables are ``dict`` (as ``tomllib`` produces them) rather than the covariant
+    # ``Sequence``/``Mapping``: ``isinstance`` narrowing synthesizes ``Top[Mapping[...]]``, which
+    # degrades a recursive alias to ``Divergent`` and leaves the table unindexable
+    # (https://github.com/astral-sh/ty/issues/3699).
     TOMLValue = (
         str
         | int

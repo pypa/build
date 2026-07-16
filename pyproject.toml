@@ -117,7 +117,7 @@ typing = [
 ]
 type = [
   "ty>=0.0.59",
-  "gitpython >= 3.1.44",
+  "gitpython >= 3.1.44",  # ty checks the whole tree, including tasks/release.py
   { include-group = "typing" },
 ]
 release = [
@@ -194,7 +194,15 @@ filterwarnings = [
 ]
 
 [tool.ty]
-environment.python-version = "3.14"
+environment.python-version = "3.10"
+
+[tool.ty.src]
+exclude = ["tests/packages"]
+
+[tool.ty.rules]
+all = "error"
+# `@override` needs typing_extensions before 3.12; build ships no runtime deps for typing
+missing-override-decorator = "ignore"
 
 [tool.ruff]
 exclude = [
@@ -251,7 +259,7 @@ ignore = [
 ]
 
 [tool.repo-review]
-ignore = ["PC140"]  # mypy in tox
+ignore = ["PC140"]  # type checker in tox
 
 
 [tool.towncrier]

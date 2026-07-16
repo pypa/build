@@ -575,7 +575,7 @@ def test_metadata_path_no_prepare(tmp_dir: str, package_test_no_prepare: str) ->
     builder = build.ProjectBuilder(package_test_no_prepare)
 
     metadata = _importlib.metadata.PathDistribution(
-        pathlib.Path(builder.metadata_path(tmp_dir)),  # ty: ignore[invalid-argument-type]  # ty SimplePath bug
+        pathlib.Path(builder.metadata_path(tmp_dir)),  # ty: ignore[invalid-argument-type]  # https://github.com/python/importlib_metadata/issues/542
     ).metadata
     assert metadata is not None
 
@@ -587,7 +587,7 @@ def test_metadata_path_with_prepare(tmp_dir: str, package_test_setuptools: str) 
     builder = build.ProjectBuilder(package_test_setuptools)
 
     metadata = _importlib.metadata.PathDistribution(
-        pathlib.Path(builder.metadata_path(tmp_dir)),  # ty: ignore[invalid-argument-type]  # ty SimplePath bug
+        pathlib.Path(builder.metadata_path(tmp_dir)),  # ty: ignore[invalid-argument-type]  # https://github.com/python/importlib_metadata/issues/542
     ).metadata
     assert metadata is not None
 
@@ -600,7 +600,7 @@ def test_metadata_path_legacy(tmp_dir: str, package_legacy: str) -> None:
     builder = build.ProjectBuilder(package_legacy)
 
     metadata = _importlib.metadata.PathDistribution(
-        pathlib.Path(builder.metadata_path(tmp_dir)),  # ty: ignore[invalid-argument-type]  # ty SimplePath bug
+        pathlib.Path(builder.metadata_path(tmp_dir)),  # ty: ignore[invalid-argument-type]  # https://github.com/python/importlib_metadata/issues/542
     ).metadata
     assert metadata is not None
 

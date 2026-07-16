@@ -177,7 +177,7 @@ def _make_logger() -> _ctx.Logger:
 
 
 def _setup_cli(*, verbosity: int) -> None:
-    warnings.showwarning = _showwarning  # ty: ignore[invalid-assignment]  # ty bug: identical signature rejected
+    warnings.showwarning = _showwarning  # ty: ignore[invalid-assignment]  # https://github.com/astral-sh/ty/issues/3962
 
     if platform.system() == 'Windows':
         try:

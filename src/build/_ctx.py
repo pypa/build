@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 
+# ty types module-scope `__spec__` as `ModuleSpec | None`; narrow it so `__spec__.parent`
+# resolves. https://github.com/astral-sh/ty/issues/4017
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = ['subprocess']
 
 import contextvars
@@ -21,7 +26,7 @@ class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, kind: tuple[str, ...] | None = None) -> None: ...
 
 
-_package_name = __package__
+_package_name = __spec__.parent
 _default_logger = logging.getLogger(_package_name)
 
 
