@@ -43,7 +43,7 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     import datetime
 
-    from collections.abc import Iterable, Iterator, Mapping, Sequence
+    from collections.abc import Generator, Iterable, Mapping, Sequence
     from typing import TypedDict, TypeGuard
 
     if sys.version_info < (3, 11):
@@ -422,7 +422,7 @@ class ProjectBuilder:
         return os.path.join(outdir, basename)
 
     @contextlib.contextmanager
-    def _handle_backend(self, hook: str) -> Iterator[None]:
+    def _handle_backend(self, hook: str) -> Generator[None]:
         try:
             yield
         except pyproject_hooks.BackendUnavailable as exception:

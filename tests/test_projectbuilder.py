@@ -295,7 +295,7 @@ def test_build_missing_backend(
     builder = build.ProjectBuilder(bad_backend_path)
 
     with pytest.raises(build.BuildBackendException):
-        builder.build(distribution, str(tmpdir))
+        builder.build(distribution, tmpdir)
 
 
 def _nothing_installed(name: str) -> NoReturn:
@@ -312,7 +312,7 @@ def test_check_dependencies(
 
     builder = build.ProjectBuilder(package_test_flit)
 
-    side_effects: list[object] = [
+    side_effects: list[list[str] | type[pyproject_hooks.BackendUnavailable]] = [
         [],
         ['something'],
         pyproject_hooks.BackendUnavailable,

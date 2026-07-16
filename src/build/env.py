@@ -105,6 +105,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
     Isolated environment which supports several different underlying implementations.
     """
 
+    # both are set in ``__enter__`` and only valid inside the context
+    _path: str
+    _env_backend: _EnvBackend
+
     def __init__(
         self,
         *,
@@ -139,8 +143,6 @@ class DefaultIsolatedEnv(IsolatedEnv):
             # Ref: https://bugs.python.org/issue46171
             path = os.path.realpath(path)
             self._path = path
-
-            self._env_backend: _EnvBackend
 
             # uv is opt-in only.
             if self.installer == 'uv':
@@ -435,6 +437,10 @@ class _PipBackend(_EnvBackend):
 
 
 class _UvBackend(_EnvBackend):
+    # both are set in ``create``
+    _env_path: str
+    _uv_bin: str
+
     def create(self, path: str) -> None:
         import venv
 

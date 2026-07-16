@@ -133,6 +133,7 @@ def test_venv_executable_missing_post_creation(
 
 
 @typing.no_type_check
+# pyrefly: ignore[unannotated-return]  # https://github.com/facebook/pyrefly/issues/3561
 def test_isolated_env_abstract() -> None:
     with pytest.raises(TypeError):
         build.env.IsolatedEnv()

@@ -117,6 +117,7 @@ typing = [
 ]
 type = [
   "pyrefly >= 1.1.1",
+  "colorama",  # win32-only runtime dep; installed so its stubs resolve to source
   "gitpython >= 3.1.44",  # pyrefly checks the whole tree, including tasks/release.py
   { include-group = "typing" },
 ]
@@ -196,7 +197,7 @@ project-includes = ["src", "tests", "tasks"]
 project-excludes = ["**/tests/packages*"]
 search-path = ["src", "tests"]
 python-version = "3.10"
-preset = "strict"
+preset = "all"
 ignore-missing-imports = ["virtualenv"]  # optional dependency
 
 [tool.pyrefly.errors]
