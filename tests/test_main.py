@@ -890,7 +890,7 @@ def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
 
 def test_log_dependency_versions_none(mocker: pytest_mock.MockerFixture) -> None:
     env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
-    env.installed_versions.return_value = {}
+    env.installed_versions.return_value = {}  # pyrefly: ignore[implicit-any-empty-container]
     log = mocker.patch('build.__main__._ctx.log')
 
     build.__main__._log_dependency_versions(env, set())

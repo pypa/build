@@ -115,8 +115,9 @@ typing = [
   { include-group = "test-core" },
   { include-group = "extra" },
 ]
-mypy = [
-  "mypy ~= 2.1.0",
+type = [
+  "pyrefly >= 1.1.1",
+  "gitpython >= 3.1.44",  # pyrefly checks the whole tree, including tasks/release.py
   { include-group = "typing" },
 ]
 release = [
@@ -128,7 +129,7 @@ release = [
 dev = [
   "flit-core",
   { include-group = "test" },
-  { include-group = "mypy" },
+  { include-group = "type" },
 ]
 
 [tool.flit.sdist]
@@ -190,20 +191,17 @@ filterwarnings = [
   "ignore:os.path.commonprefix:DeprecationWarning" # https://github.com/pypa/pyproject-hooks/pull/222
 ]
 
-[tool.mypy]
-files = ["src", "tests"]
-exclude = ["tests/packages"]
-python_version = "3.10"
-strict = true
-disallow_any_explicit = true
-enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
-warn_unreachable = true
+[tool.pyrefly]
+project-includes = ["src", "tests", "tasks"]
+project-excludes = ["**/tests/packages*"]
+search-path = ["src", "tests"]
+python-version = "3.10"
+preset = "strict"
+ignore-missing-imports = ["virtualenv"]  # optional dependency
 
-[[tool.mypy.overrides]]
-module = [
-  "virtualenv", # Optional dependency
-]
-ignore_missing_imports = true
+[tool.pyrefly.errors]
+# `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
+missing-override-decorator = false
 
 [tool.ruff]
 exclude = [
@@ -231,7 +229,7 @@ ignore = [
   "PLR2004", # Magic values
   "PTH",     # Too many change for now
   "Q",       # Using formatter for quotes
-  "S101",    # Assert is used by mypy and pytest
+  "S101",    # Assert is used by the type checker and pytest
   "SLF001",  # Private members are okay to access
 ]
 
@@ -260,7 +258,7 @@ ignore = [
 ]
 
 [tool.repo-review]
-ignore = ["PC140"]  # mypy in tox
+ignore = ["PC140"]  # type checker in tox
 
 
 [tool.towncrier]

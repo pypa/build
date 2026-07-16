@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     import datetime
 
     from collections.abc import Iterable, Iterator, Mapping, Sequence
-    from typing import TypedDict
+    from typing import TypedDict, TypeGuard
 
     if sys.version_info < (3, 11):
         from typing_extensions import NotRequired, Self
@@ -88,6 +88,10 @@ def _find_typo(dictionary: Iterable[str], expected: str) -> None:
                 TypoWarning,
                 stacklevel=2,
             )
+
+
+def _is_str_list(value: TOMLValue) -> TypeGuard[list[str]]:
+    return isinstance(value, list) and all(isinstance(i, str) for i in value)
 
 
 def _validate_source_directory(source_dir: StrPath) -> None:
@@ -135,7 +139,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         msg = '`requires` is a required property'
         raise BuildSystemTableValidationError(msg)
     requires = build_system['requires']
-    if not isinstance(requires, list) or not all(isinstance(i, str) for i in requires):
+    if not _is_str_list(requires):
         msg = '`requires` must be an array of strings'
         raise BuildSystemTableValidationError(msg)
 
@@ -156,7 +160,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
             _find_typo(build_system, 'build-backend')
 
     match build_system:
-        case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
+        case {'backend-path': backend_path} if _is_str_list(backend_path):
             table['backend-path'] = backend_path
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
