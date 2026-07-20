@@ -46,7 +46,7 @@ repos:
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 2700fd5671c633760d912769c041bfcde2b9a01b  # frozen: v0.15.22
+    rev: 2700fd5671c633760d912769c041bfcde2b9a01b # frozen: v0.15.22
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
@@ -57,7 +57,7 @@ repos:
       - id: flake8-lazy
         files: ^src/
   - repo: https://github.com/codespell-project/codespell
-    rev: "57b21406f092110c18776e39b0bda50d37c945c8"  # frozen: v2.4.3
+    rev: "57b21406f092110c18776e39b0bda50d37c945c8" # frozen: v2.4.3
     hooks:
       - id: codespell
         args: ["-L", "sur"]
@@ -68,7 +68,7 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: 64a97fb7fa63188393d3215c6e312f5f9c6d0f78  # frozen: v1.27.0
+    rev: 64a97fb7fa63188393d3215c6e312f5f9c6d0f78 # frozen: v1.27.0
     hooks:
       - id: zizmor
         files: "^\\.github"
