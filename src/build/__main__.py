@@ -177,7 +177,7 @@ def _make_logger() -> _ctx.Logger:
 
 
 def _setup_cli(*, verbosity: int) -> None:
-    warnings.showwarning = _showwarning
+    warnings.showwarning = _showwarning  # ty: ignore[invalid-assignment]  # https://github.com/astral-sh/ty/issues/3962
 
     if platform.system() == 'Windows':
         try:
@@ -834,14 +834,15 @@ def _select_build(parser: argparse.ArgumentParser, args: _Args, *, sdist_input: 
             'cannot build a source distribution from a source distribution; '
             'pass --wheel to build a wheel from the sdist (see https://github.com/pypa/build/issues/311)'
         )
+    wheel_only: list[Distribution] = ['wheel']
     if args.metadata:
-        return partial(_build_metadata, distributions=['wheel'])
+        return partial(_build_metadata, distributions=wheel_only)
     if sdist_input:
         distributions: list[Distribution] = args.distributions or ['wheel']
         return partial(build_package, distributions=distributions)
     if args.distributions:
         return partial(build_package, distributions=args.distributions)
-    return partial(build_package_via_sdist, distributions=['wheel'], sdist_extract_dir=args.sdist_extract_dir)
+    return partial(build_package_via_sdist, distributions=wheel_only, sdist_extract_dir=args.sdist_extract_dir)
 
 
 def _validate_sdist_archive(archive: StrPath) -> str:

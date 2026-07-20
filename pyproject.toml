@@ -115,8 +115,9 @@ typing = [
   { include-group = "test-core" },
   { include-group = "extra" },
 ]
-mypy = [
-  "mypy ~= 2.1.0",
+type = [
+  "ty>=0.0.59",
+  "gitpython >= 3.1.44",  # ty checks the whole tree, including tasks/release.py
   { include-group = "typing" },
 ]
 release = [
@@ -128,7 +129,7 @@ release = [
 dev = [
   "flit-core",
   { include-group = "test" },
-  { include-group = "mypy" },
+  { include-group = "type" },
 ]
 
 [tool.flit.sdist]
@@ -144,6 +145,8 @@ exclude = [
 
 [tool.uv]
 exclude-newer = "7 days"
+# ty releases lag the 7-day global cutoff; allow the pinned version through
+exclude-newer-package = { ty = "2026-07-13T00:00:00Z" }
 
 
 [tool.coverage]
@@ -190,20 +193,16 @@ filterwarnings = [
   "ignore:os.path.commonprefix:DeprecationWarning" # https://github.com/pypa/pyproject-hooks/pull/222
 ]
 
-[tool.mypy]
-files = ["src", "tests"]
-exclude = ["tests/packages"]
-python_version = "3.10"
-strict = true
-disallow_any_explicit = true
-enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
-warn_unreachable = true
+[tool.ty]
+environment.python-version = "3.10"
 
-[[tool.mypy.overrides]]
-module = [
-  "virtualenv", # Optional dependency
-]
-ignore_missing_imports = true
+[tool.ty.src]
+exclude = ["tests/packages"]
+
+[tool.ty.rules]
+all = "error"
+# `@override` needs typing_extensions before 3.12; build ships no runtime deps for typing
+missing-override-decorator = "ignore"
 
 [tool.ruff]
 exclude = [
@@ -260,7 +259,7 @@ ignore = [
 ]
 
 [tool.repo-review]
-ignore = ["PC140"]  # mypy in tox
+ignore = ["PC140"]  # type checker in tox
 
 
 [tool.towncrier]

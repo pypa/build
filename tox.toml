@@ -51,8 +51,8 @@ dependency_groups = ["lint"]
 [env.type]
 description = "run type check on code base"
 set_env = { PYTHONWARNDEFAULTENCODING = "" }
-commands = [["mypy", { replace = "posargs", extend = true }]]
-dependency_groups = ["mypy"]
+commands = [["ty", "check", "--output-format", "concise", "--error-on-warning", "."]]
+dependency_groups = ["type"]
 
 [env.docs]
 description = "build documentations"

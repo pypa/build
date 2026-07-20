@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 
+# ty types module-scope `__spec__` as `ModuleSpec | None`; narrow it so `__spec__.parent`
+# resolves. https://github.com/astral-sh/ty/issues/4017
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile', 'warnings']
 
 import pathlib
@@ -24,7 +29,7 @@ if TYPE_CHECKING:
 def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        metadata = importlib.metadata.PathDistribution(path).metadata
+        metadata = importlib.metadata.PathDistribution(path).metadata  # ty: ignore[invalid-argument-type]  # https://github.com/python/importlib_metadata/issues/542
         assert metadata is not None
         return metadata
 

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 
+# ty types module-scope `__spec__` as `ModuleSpec | None`; narrow it so `__spec__.parent`
+# resolves. https://github.com/astral-sh/ty/issues/4017
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [
     f'{__spec__.parent}._compat',
     'packaging',

@@ -1,0 +1,1 @@
+Replace ``mypy`` with ``ty`` as the type checker.

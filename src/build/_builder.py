@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 
+# ty types module-scope `__spec__` as `ModuleSpec | None`; narrow it so `__spec__.parent`
+# resolves. https://github.com/astral-sh/ty/issues/4017
+if __spec__ is None:  # pragma: no cover
+    raise RuntimeError
+
 __lazy_modules__ = [
     'contextlib',
     'difflib',
@@ -53,8 +58,11 @@ if TYPE_CHECKING:
 
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
-    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Uses the covariant
-    # ``Sequence``/``Mapping`` so concrete literals (e.g. ``dict[str, list[str]]``) are assignable.
+    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Arrays are ``list`` and
+    # tables are ``dict`` (as ``tomllib`` produces them) rather than the covariant
+    # ``Sequence``/``Mapping``: ``isinstance`` narrowing synthesizes ``Top[Mapping[...]]``, which
+    # degrades a recursive alias to ``Divergent`` and leaves the table unindexable
+    # (https://github.com/astral-sh/ty/issues/3699).
     TOMLValue = (
         str
         | int
@@ -63,8 +71,8 @@ if TYPE_CHECKING:
         | datetime.datetime
         | datetime.date
         | datetime.time
-        | Sequence['TOMLValue']
-        | Mapping[str, 'TOMLValue']
+        | list['TOMLValue']
+        | dict[str, 'TOMLValue']
     )
 
     # The validated ``[build-system]`` table.
