@@ -52,7 +52,7 @@ def test_with_get_requires(package_test_metadata: str) -> None:
 
     # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
     assert metadata['name'].replace('-', '_') == 'test_metadata'
-    assert str(metadata['version']) == '1.0.0'
+    assert metadata['version'] == '1.0.0'
     assert metadata['summary'] == 'hello!'
     assert isinstance(metadata.json, dict)
 

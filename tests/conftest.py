@@ -82,7 +82,7 @@ def _xfail_isolated_strict(item: pytest.Item, *, is_integration_file: bool) -> b
 
 def is_integration(item: pytest.Item) -> bool:
     # item.location is typically a (path, lineno) tuple; cast to str for typing
-    return os.path.basename(str(item.location[0])) == 'test_integration.py'
+    return os.path.basename(item.location[0]) == 'test_integration.py'
 
 
 def pytest_runtest_call(item: pytest.Item) -> None:

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        metadata = importlib.metadata.PathDistribution(path).metadata
+        metadata = importlib.metadata.PathDistribution(path).metadata  # pyrefly: ignore[bad-argument-type]  # https://github.com/python/importlib_metadata/issues/542
         assert metadata is not None
         return metadata
 

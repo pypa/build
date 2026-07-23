@@ -107,7 +107,7 @@ def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> 
     existing_tags = [x.name for x in repo.tags]
     if tag_name in existing_tags:
         print(f'delete existing tag {tag_name}')
-        repo.delete_tag(tag_name)
+        repo.delete_tag(repo.tags[tag_name])
     changelog_content = extract_changelog_for_version(version)
     tag_message = f'build {version}\n\n{changelog_content}'
     print(f'creating tag {tag_name}')

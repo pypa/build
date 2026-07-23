@@ -16,7 +16,7 @@ import unittest.mock
 import venv
 import zipfile
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, TypedDict
 
 import pytest
@@ -890,7 +890,8 @@ def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
 
 def test_log_dependency_versions_none(mocker: pytest_mock.MockerFixture) -> None:
     env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
-    env.installed_versions.return_value = {}
+    installed: dict[str, str] = {}
+    env.installed_versions.return_value = installed
     log = mocker.patch('build.__main__._ctx.log')
 
     build.__main__._log_dependency_versions(env, set())
@@ -969,7 +970,7 @@ def test_build_metadata_runner_without_extra_environ(
     captured_runners: list[CapturedRunner] = []
 
     @contextlib.contextmanager
-    def fake_bootstrap(*_args: object, runner: CapturedRunner, **_kwargs: object) -> Iterator[unittest.mock.MagicMock]:
+    def fake_bootstrap(*_args: object, runner: CapturedRunner, **_kwargs: object) -> Generator[unittest.mock.MagicMock]:
         captured_runners.append(runner)
         builder = mocker.MagicMock()
         metadata_dir = tmp_path / 'metadata'

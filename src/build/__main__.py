@@ -68,7 +68,7 @@ from build.env import DefaultIsolatedEnv
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Mapping, Sequence
+    from collections.abc import Generator, Mapping, Sequence
 
     from build._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
 
@@ -215,7 +215,7 @@ def _bootstrap_build_env(
     installer: _env.Installer,
     env_dir: str | None = None,
     runner: SubprocessRunner | None = None,
-) -> Iterator[ProjectBuilder]:
+) -> Generator[ProjectBuilder]:
     runner = runner or pyproject_hooks.default_subprocess_runner
     if isolation:
         with DefaultIsolatedEnv(installer=installer, path=env_dir) as env:
@@ -281,7 +281,7 @@ def _build(
 
 
 @contextlib.contextmanager
-def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | None) -> Iterator[None]:
+def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | None) -> Generator[None]:
     try:
         yield
     except (BuildException, FailedProcessError) as e:
@@ -877,7 +877,7 @@ def _validate_sdist_archive(archive: StrPath) -> str:
 
 
 @contextlib.contextmanager
-def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | None = None) -> Iterator[str]:
+def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | None = None) -> Generator[str]:
     if extract_dir is None:
         tmp_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
         try:
