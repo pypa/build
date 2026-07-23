@@ -1,0 +1,4 @@
+Make ``auto`` releases derive the semver bump from the pending changelog fragments (``removal`` major,
+``feature``/``deprecation`` minor, else patch), split the towncrier ``removal`` type into ``removal`` and
+``deprecation``, and reflow the built ``CHANGELOG.rst`` with a pinned ``docstrfmt`` during the release - by
+:user:`gaborbernat`

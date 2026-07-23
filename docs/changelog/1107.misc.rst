@@ -1,0 +1,1 @@
+Raise dependency minimums to the first releases that support Python 3.10.

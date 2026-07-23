@@ -120,6 +120,7 @@ mypy = [
   { include-group = "typing" },
 ]
 release = [
+  "docstrfmt == 2.2.0", # keep in sync with the docstrfmt rev in .pre-commit-config.yaml
   "gitpython >= 3.1.44",
   "packaging >= 25",
   "pre-commit >= 3.0",
@@ -292,7 +293,12 @@ showcontent = true
 
 [[tool.towncrier.type]]
 directory = "removal"
-name = "Deprecations and Removals"
+name = "Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "deprecation"
+name = "Deprecations"
 showcontent = true
 
 [[tool.towncrier.type]]

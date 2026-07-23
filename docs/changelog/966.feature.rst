@@ -1,0 +1,2 @@
+On build failure, print a tip pointing to ``--env-dir`` and ``--sdist-extract-dir`` for debugging and link to the "Debug
+a failed build" how-to - reported by :user:`dimpase`, implemented by :user:`gaborbernat`

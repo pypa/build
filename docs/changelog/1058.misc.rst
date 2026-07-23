@@ -1,0 +1,2 @@
+Add test coverage for ``config_settings``, ``dependency_constraints_txt``, and ``installer`` arguments - by
+:user:`terminalchai`

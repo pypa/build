@@ -22,8 +22,13 @@ collected during releases to build the changelog automatically.
 *******************
 
 Navigate to the `pre-release workflow <https://github.com/pypa/build/actions/workflows/pre-release.yml>`_ and click Run
-workflow. Select a version bump type: ``auto`` for patch bumps, ``major`` for X+1.0.0, ``minor`` for X.Y+1.0, or
-``patch`` for X.Y.Z+1.
+workflow, then select a version bump type. ``auto`` (the default) reads the pending changelog fragments: a ``removal``
+bumps major, a ``feature`` or ``deprecation`` bumps minor, and anything else bumps patch. ``major``, ``minor``, and
+``patch`` force ``X+1.0.0``, ``X.Y+1.0``, and ``X.Y.Z+1``.
+
+Releases run in the ``release`` environment, which requires a maintainer other than the one who triggered the run to
+approve before the job proceeds. One approval is enough. Three active maintainers can cover each other, so a single
+reviewer catches a wrong bump without becoming a release bottleneck.
 
 The workflow updates the version in ``src/build/__init__.py``, runs ``towncrier build`` to collect changelog fragments
 from ``docs/changelog/`` and incorporate them into ``CHANGELOG.rst``, creates a release commit with message ``chore:
@@ -68,6 +73,7 @@ Specify an explicit version or bump type:
 .. code-block:: console
 
     $ tox -e release -- --version 1.5.0
+    $ tox -e release -- --version auto   # removal → major, feature/deprecation → minor, else patch
     $ tox -e release -- --version patch  # 1.4.0 → 1.4.1
     $ tox -e release -- --version minor  # 1.4.0 → 1.5.0
     $ tox -e release -- --version major  # 1.4.0 → 2.0.0

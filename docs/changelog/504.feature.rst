@@ -1,0 +1,2 @@
+The "Unmet dependencies" error from ``--no-isolation`` builds now shows the wanted version, found version, and
+interpreter - by :user:`gaborbernat`

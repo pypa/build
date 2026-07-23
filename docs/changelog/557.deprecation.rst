@@ -1,0 +1,1 @@
+Deprecate :func:`build.util.project_wheel_metadata`; use ``python -m build --metadata`` instead - by :user:`gaborbernat`
