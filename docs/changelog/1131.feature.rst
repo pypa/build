@@ -1,1 +1,2 @@
-Add :func:`build.util.wheel_metadata` as a supported in-process metadata API with dependency checks for non-isolated builds - by :user:`deepakganesh78`
+Add :func:`build.util.wheel_metadata` as a supported in-process metadata API with dependency checks for non-isolated
+builds - by :user:`deepakganesh78`
