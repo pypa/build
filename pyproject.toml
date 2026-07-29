@@ -223,6 +223,7 @@ ignore = [
   "ANN401",  # Disallow Any
   "BLE001",  # Blind exceptions are fine if re-raised or passed on
   "COM812",  # Trailing commas teach the formatter
+  "CPY001",  # No copyright notice at top of file
   "D",       # Too many doc requests
   "ERA",     # Commented out code
   "FBT",     # Boolean trap hard to fix on existing API
