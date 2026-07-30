@@ -460,6 +460,41 @@ foo==wot
     install.assert_any_call({'flit_core >=2,<4'}, constraints={'flit-core==12.34', 'foo==wot'}, _fresh=True)
 
 
+@pytest.mark.isolated
+def test_build_package_with_constraints_joins_backslash_continuations(
+    mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, package_test_flit: str
+) -> None:
+    # As produced by e.g. `pip-compile --generate-hashes`: a requirement and its --hash options wrapped onto
+    # continuation lines. Regression test for the requirement/hash pair being split apart and losing its hash
+    # when the file is later reassembled from a set of independently-parsed physical lines.
+    install = mocker.patch('build.env.DefaultIsolatedEnv.install')
+
+    constraints_txt_path = tmp_path.joinpath('constraints.txt')
+    constraints_txt_path.write_text(
+        """\
+flit-core==12.34 \\
+    --hash=sha256:aaaa \\
+    --hash=sha256:bbbb
+    # via test
+foo==wot \\
+    --hash=sha256:cccc
+""",
+        encoding='utf-8',
+    )
+
+    with pytest.raises(build.BuildBackendException, match=re.escape("Backend 'flit_core.buildapi' is not available.")):
+        build.__main__.build_package(package_test_flit, tmp_path, ['wheel'], dependency_constraints_txt=constraints_txt_path)
+
+    install.assert_any_call(
+        {'flit_core >=2,<4'},
+        constraints={
+            'flit-core==12.34 --hash=sha256:aaaa --hash=sha256:bbbb',
+            'foo==wot --hash=sha256:cccc',
+        },
+        _fresh=True,
+    )
+
+
 @pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
     ('args', 'output'),
