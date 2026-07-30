@@ -17,13 +17,13 @@ def test_natural_language_list() -> None:
 
 def test_parse_constraints_txt_single_line(tmp_path: pathlib.Path) -> None:
     path = tmp_path / 'constraints.txt'
-    path.write_text('foo==1.0\nbar==2.0\n')
+    path.write_text('foo==1.0\nbar==2.0\n', encoding='utf-8')
     assert _parse_constraints_txt(path) == {'foo==1.0', 'bar==2.0'}
 
 
 def test_parse_constraints_txt_ignores_comments_and_blank_lines(tmp_path: pathlib.Path) -> None:
     path = tmp_path / 'constraints.txt'
-    path.write_text('# a comment\nfoo==1.0\n\nbar==2.0\n')
+    path.write_text('# a comment\nfoo==1.0\n\nbar==2.0\n', encoding='utf-8')
     assert _parse_constraints_txt(path) == {'foo==1.0', 'bar==2.0'}
 
 
@@ -41,7 +41,8 @@ def test_parse_constraints_txt_joins_backslash_continuations(tmp_path: pathlib.P
         'hatchling==1.31.0 \\\n'
         '    --hash=sha256:6b48ad4068a482ed7239b3a8215bc55b47aad3345d58dfc94e553c5d2d46211b \\\n'
         '    --hash=sha256:aac80bec8b6fe35e8480f1c335be8910fa210a0e6f735a139be205dadcacb544\n'
-        '    # via reprodemo (pyproject.toml::build-system.requires)\n'
+        '    # via reprodemo (pyproject.toml::build-system.requires)\n',
+        encoding='utf-8',
     )
     editables_line = (
         'editables==0.6 '
