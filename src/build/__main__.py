@@ -204,36 +204,6 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
     raise SystemExit(code)
 
 
-def _parse_constraints_txt(path: os.PathLike[str] | str) -> set[str]:
-    """
-    Parse a pip/uv constraints file into a set of constraint lines.
-
-    Requirement files support backslash line continuations (as produced by, e.g.,
-    ``pip-compile --generate-hashes``, where a package's ``--hash`` options are
-    wrapped onto continuation lines). These must be joined back into a single
-    logical line *before* being placed in a set: splitting on physical lines and
-    only later rejoining with ``'\\n'.join()`` loses the continuation marker's
-    positional relationship, and because sets do not preserve insertion order,
-    the rejoined file can scramble unrelated requirement and hash lines together,
-    or separate a hash from its requirement so it stops applying, silently and
-    unpredictably (depending on the interpreter's hash seed for that run).
-    """
-    constraints: list[str] = []
-    logical_line = ''
-    with open(path, encoding='utf-8') as constraints_file:
-        for raw_line in constraints_file:
-            line = raw_line.strip()
-            if logical_line:
-                line = f'{logical_line} {line}'
-                logical_line = ''
-            if line.endswith('\\'):
-                logical_line = line[:-1].strip()
-                continue
-            if line and not line.startswith('#'):
-                constraints.append(line)
-    return set(constraints)
-
-
 @contextlib.contextmanager
 def _bootstrap_build_env(
     isolation: bool,
@@ -253,7 +223,8 @@ def _bootstrap_build_env(
 
             install = env.install
             if dependency_constraints_txt:
-                install = partial(install, constraints=_parse_constraints_txt(dependency_constraints_txt))
+                with open(dependency_constraints_txt, encoding='utf-8') as dependency_constraints_file:
+                    install = partial(install, constraints=set(map(str.strip, dependency_constraints_file)))
 
             # first install the build dependencies
             install(builder.build_system_requires, _fresh=True)

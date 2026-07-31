@@ -1,4 +1,0 @@
-Parse ``--dependency-constraints-txt`` files respecting backslash line continuations before deduplicating them into a
-set, fixing a case where a hashed requirement (e.g. from ``pip-compile --generate-hashes``) could have its ``--hash``
-line separated from its requirement line and silently dropped, depending on the interpreter's hash seed - by
-:user:`manfred-kaiser`
