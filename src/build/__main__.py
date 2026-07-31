@@ -206,9 +206,17 @@ def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
 
 def _parse_constraints_txt(path: os.PathLike[str] | str) -> set[str]:
     """
-    Join backslash-continued lines before deduplicating, so a hashed requirement (e.g. from
-    ``pip-compile --generate-hashes``) can't have its ``--hash`` options split from its requirement line and lost
-    when the set is later reassembled, which would silently skip that hash check depending on the hash seed.
+    Parse a pip/uv constraints file into a set of constraint lines.
+
+    Requirement files support backslash line continuations (as produced by, e.g.,
+    ``pip-compile --generate-hashes``, where a package's ``--hash`` options are
+    wrapped onto continuation lines). These must be joined back into a single
+    logical line *before* being placed in a set: splitting on physical lines and
+    only later rejoining with ``'\\n'.join()`` loses the continuation marker's
+    positional relationship, and because sets do not preserve insertion order,
+    the rejoined file can scramble unrelated requirement and hash lines together,
+    or separate a hash from its requirement so it stops applying, silently and
+    unpredictably (depending on the interpreter's hash seed for that run).
     """
     constraints: list[str] = []
     logical_line = ''
