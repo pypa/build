@@ -224,7 +224,13 @@ def _bootstrap_build_env(
             install = env.install
             if dependency_constraints_txt:
                 with open(dependency_constraints_txt, encoding='utf-8') as dependency_constraints_file:
-                    install = partial(install, constraints=set(map(str.strip, dependency_constraints_file)))
+                    constraints_text = dependency_constraints_file.read()
+                if constraints_text.strip():
+                    # Passed through as a single element so the installer backends' `'\n'.join(constraints)` reproduces
+                    # the file byte-for-byte, instead of re-parsing it into individual lines (which can split a
+                    # requirement from its `--hash` continuation lines, e.g. from `pip-compile --generate-hashes`,
+                    # and silently drop the hash check).
+                    install = partial(install, constraints=(constraints_text,))
 
             # first install the build dependencies
             install(builder.build_system_requires, _fresh=True)
