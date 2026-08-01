@@ -1,0 +1,4 @@
+Pass ``--dependency-constraints-txt`` files through to the installer unmodified instead of re-parsing them into a
+deduplicated set of lines, fixing a case where a hashed requirement (e.g. from ``pip-compile --generate-hashes``) could
+have its ``--hash`` continuation line separated from its requirement line and silently dropped, depending on the
+interpreter's hash seed - by :user:`manfred-kaiser`
