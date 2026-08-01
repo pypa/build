@@ -226,10 +226,11 @@ def _bootstrap_build_env(
                 with open(dependency_constraints_txt, encoding='utf-8') as dependency_constraints_file:
                     constraints_text = dependency_constraints_file.read()
                 if constraints_text.strip():
-                    # Passed through as a single element so the installer backends' `'\n'.join(constraints)` reproduces
-                    # the file byte-for-byte, instead of re-parsing it into individual lines (which can split a
-                    # requirement from its `--hash` continuation lines, e.g. from `pip-compile --generate-hashes`,
-                    # and silently drop the hash check).
+                    # Passed through as a single element instead of re-parsed into lines, so a requirement can never
+                    # be split from its `--hash` continuation lines (as produced by `pip-compile --generate-hashes`)
+                    # and silently lose its hash check. env.py's installer backends reconstruct the original file via
+                    # `'\n'.join(constraints)` (see `_PipInstaller`/`_UvInstaller.install_dependencies`), a no-op here
+                    # since there is only one element.
                     install = partial(install, constraints=(constraints_text,))
 
             # first install the build dependencies
