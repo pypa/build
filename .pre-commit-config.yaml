@@ -46,7 +46,7 @@ repos:
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 39d9ac5938dadb73df0564a45f163e25ff9fa6e2 # frozen: v0.16.1
+    rev: 7c55798a78262d14b2074abf623d8a992ebb70d4 # frozen: v0.16.2
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
@@ -81,7 +81,7 @@ repos:
         entry: files in changelog must be valid (N.type.rst)
         language: fail
   - repo: https://github.com/henryiii/check-sdist
-    rev: 377c4f639d3c5fd025ee882a22ae243e12bef469 # frozen: v1.5.0
+    rev: 5230295f53448dcfc8cc4a9eb00cc776ca92f964 # frozen: v1.6.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
