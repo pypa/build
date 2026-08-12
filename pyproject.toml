@@ -76,6 +76,7 @@ bump = [
   "bump-my-version >= 0.10",
 ]
 docs = [
+  "sphinx-llm >= 0.4.1",
   "furo >= 2025.12.19",
   "pre-commit >= 3.0",
   "proselint >= 0.16",
