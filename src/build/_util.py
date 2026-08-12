@@ -67,6 +67,12 @@ def _check_dependency(
         yield (*ancestral_req_strings, normalised_req_string)
         return
 
+    if not dist.name:
+        # If the distribution doesn't have a name it has no metadata, so it's not actually
+        # a valid distribution. Ignore it.
+        yield (*ancestral_req_strings, normalised_req_string)
+        return
+
     if req.specifier and not req.specifier.contains(dist.version, prereleases=True):
         # the installed version is incompatible.
         yield (*ancestral_req_strings, normalised_req_string)
