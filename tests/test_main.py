@@ -1320,6 +1320,7 @@ def test_main_sdist_input_passes_kwargs(sdist: pathlib.Path, mocker: pytest_mock
     assert kwargs['installer'] == 'pip'
 
 
+@pytest.mark.network
 def test_main_sdist_input_end_to_end(tmp_path: pathlib.Path, package_test_setuptools: str) -> None:
     sdist_dir = tmp_path / 'dist'
     sdist_dir.mkdir()
