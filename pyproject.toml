@@ -117,7 +117,7 @@ typing = [
   { include-group = "extra" },
 ]
 mypy = [
-  "mypy ~= 2.1.0",
+  "mypy ~= 2.3.0",
   { include-group = "typing" },
 ]
 release = [
@@ -196,6 +196,7 @@ filterwarnings = [
 files = ["src", "tests", "tasks", "docs"]
 exclude = ["tests/packages"]
 python_version = "3.10"
+native_parser = true
 strict = true
 disallow_any_explicit = true
 disallow_any_decorated = true

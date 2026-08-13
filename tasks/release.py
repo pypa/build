@@ -47,6 +47,9 @@ def resolve_version(version_str: str, repo: Repo) -> Version:
             parts = [parts[0], parts[1] + 1, 0]
         case 'patch':
             parts[2] += 1
+        case bt:
+            msg = f'Invalid bump type {bt!r}'
+            raise AssertionError(msg)
     return Version('.'.join(str(p) for p in parts))
 
 
