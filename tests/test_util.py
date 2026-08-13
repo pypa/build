@@ -18,7 +18,7 @@ pytestmark = pytest.mark.filterwarnings('ignore:project_wheel_metadata is deprec
 @pytest.mark.pypy3323bug
 @pytest.mark.parametrize('isolated', [False, pytest.param(True, marks=[pytest.mark.network, pytest.mark.isolated])])
 def test_wheel_metadata(package_test_setuptools: str, isolated: bool) -> None:
-    metadata = build.util.project_wheel_metadata(package_test_setuptools, isolated)
+    metadata = build.util.wheel_metadata(package_test_setuptools, isolated)
 
     # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
     assert metadata['name'].replace('-', '_') == 'test_setuptools'
@@ -32,7 +32,7 @@ def test_wheel_metadata_isolation(package_test_flit: str) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
 
-    metadata = build.util.project_wheel_metadata(package_test_flit)
+    metadata = build.util.wheel_metadata(package_test_flit)
 
     assert metadata['name'] == 'test_flit'
     assert metadata['version'] == '1.0.0'
@@ -42,13 +42,13 @@ def test_wheel_metadata_isolation(package_test_flit: str) -> None:
         build.BuildBackendException,
         match=re.escape("Backend 'flit_core.buildapi' is not available."),
     ):
-        build.util.project_wheel_metadata(package_test_flit, isolated=False)
+        build.util.wheel_metadata(package_test_flit, isolated=False)
 
 
 @pytest.mark.network
 @pytest.mark.pypy3323bug
 def test_with_get_requires(package_test_metadata: str) -> None:
-    metadata = build.util.project_wheel_metadata(package_test_metadata)
+    metadata = build.util.wheel_metadata(package_test_metadata)
 
     # Setuptools < v69.0.3 (https://github.com/pypa/setuptools/pull/4159) normalized this to dashes
     assert metadata['name'].replace('-', '_') == 'test_metadata'
@@ -57,7 +57,7 @@ def test_with_get_requires(package_test_metadata: str) -> None:
     assert isinstance(metadata.json, dict)
 
 
-def test_project_wheel_metadata_installs_build_requires_fresh(mocker: pytest_mock.MockerFixture) -> None:
+def test_wheel_metadata_installs_build_requires_fresh(mocker: pytest_mock.MockerFixture) -> None:
     env = mocker.MagicMock()
     env_cm = mocker.MagicMock()
     env_cm.__enter__.return_value = env
@@ -71,7 +71,7 @@ def test_project_wheel_metadata_installs_build_requires_fresh(mocker: pytest_moc
     metadata = unittest.mock.sentinel.metadata
     mocker.patch('build.util._project_wheel_metadata', return_value=metadata)
 
-    assert build.util.project_wheel_metadata('/tmp/project') is metadata
+    assert build.util.wheel_metadata('/tmp/project') is metadata
 
     assert env.install.call_args_list == [
         mocker.call({'dep1'}, _fresh=True),
@@ -79,9 +79,35 @@ def test_project_wheel_metadata_installs_build_requires_fresh(mocker: pytest_moc
     ]
 
 
-def test_project_wheel_metadata_is_deprecated(mocker: pytest_mock.MockerFixture) -> None:
+def test_wheel_metadata_checks_dependencies_by_default(mocker: pytest_mock.MockerFixture) -> None:
+    builder = mocker.MagicMock()
+    builder.check_dependencies.return_value = {('demo>=1',)}
+    mocker.patch('build.util.ProjectBuilder', return_value=builder)
+    format_message = mocker.patch('build.util.format_unmet_dependencies', return_value='deps missing')
     result = mocker.patch('build.util._project_wheel_metadata')
-    mocker.patch('build.util.ProjectBuilder')
 
-    with pytest.warns(DeprecationWarning, match=r'python -m build --metadata'):
+    with pytest.raises(build.BuildException, match='deps missing'):
+        build.util.wheel_metadata('/tmp/project', isolated=False)
+
+    builder.check_dependencies.assert_called_once_with('wheel')
+    format_message.assert_called_once_with({('demo>=1',)})
+    result.assert_not_called()
+
+
+def test_wheel_metadata_can_skip_dependency_checks(mocker: pytest_mock.MockerFixture) -> None:
+    builder = mocker.MagicMock()
+    builder.check_dependencies.return_value = {('demo>=1',)}
+    mocker.patch('build.util.ProjectBuilder', return_value=builder)
+    mocker.patch('build.util.format_unmet_dependencies')
+    result = mocker.patch('build.util._project_wheel_metadata')
+
+    assert build.util.wheel_metadata('/tmp/project', isolated=False, check_dependencies=False) is result.return_value
+    builder.check_dependencies.assert_not_called()
+
+
+def test_project_wheel_metadata_is_deprecated(mocker: pytest_mock.MockerFixture) -> None:
+    result = mocker.patch('build.util.wheel_metadata')
+
+    with pytest.warns(DeprecationWarning, match=r'build\.util\.wheel_metadata'):
         assert build.util.project_wheel_metadata('/tmp/project', isolated=False) is result.return_value
+    result.assert_called_once_with('/tmp/project', isolated=False, check_dependencies=False, runner=unittest.mock.ANY)
