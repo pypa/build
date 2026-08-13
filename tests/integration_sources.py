@@ -35,13 +35,13 @@ def archive_path(name: str) -> Path:
     return STORE_DIR / f'{name}-{version}.tar.gz'
 
 
-def download_archive(name: str) -> Path:
-    """Put the archive in the cache and give its path. Hold a lock around this to make it parallel safe."""
+def download_archive(name: str) -> tuple[Path, str]:
+    """Put the archive in the cache and return its path and version. Hold a lock around this to make it parallel safe."""
+    github_org_repo, version = INTEGRATION_SOURCES[name]
     target = archive_path(name)
     if target.exists():
-        return target
+        return target, version
 
-    github_org_repo, version = INTEGRATION_SOURCES[name]
     url = f'https://github.com/{github_org_repo}/archive/{version}.tar.gz'
     STORE_DIR.mkdir(exist_ok=True)
     # write to a temporary name, because GitHub can drop a large archive request and leave a truncated file behind
@@ -59,14 +59,14 @@ def download_archive(name: str) -> Path:
         else:
             break
     os.replace(partial, target)
-    return target
+    return target, version
 
 
 def main() -> None:
     failed = []
     for name in INTEGRATION_SOURCES:
         try:
-            print(f'ready: {download_archive(name).name}')
+            print(f'ready: {download_archive(name)[0].name}')
         except NETWORK_ERRORS as exception:  # noqa: PERF203
             print(f'failed: {name}: {exception}')
             failed.append(name)
