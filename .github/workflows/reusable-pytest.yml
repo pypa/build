@@ -3,8 +3,27 @@ on:
   workflow_call:
 permissions: {}
 jobs:
+  integration-sources:
+    name: Download integration sources
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the sources
+        run: python tasks/download_integration_sources.py
+      - name: Share the sources with the test matrix
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: integration-sources
+          path: .integration-sources
+          retention-days: 1
+          compression-level: 0 # the archives are compressed already
+          if-no-files-found: error
   pytest:
     name: Run tests
+    needs: integration-sources
+    if: ${{ !cancelled() }}
     runs-on: ${{ matrix.os }}-latest
     env:
       PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10 --reruns 5 --only-rerun CalledProcessError --only-rerun RemoteDisconnected --only-rerun HTTPError"
@@ -34,6 +53,13 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Get the integration sources
+        # a failure here is not fatal, because the test fixture downloads the sources itself
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: integration-sources
+          path: .integration-sources
       - name: Setup uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       - name: Install tox (uv)
