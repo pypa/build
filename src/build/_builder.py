@@ -161,6 +161,8 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
             raise BuildSystemTableValidationError(msg)
+        case _:
+            pass
 
     unknown_props = build_system.keys() - {'requires', 'build-backend', 'backend-path'}
     if unknown_props:
