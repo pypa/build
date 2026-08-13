@@ -1,3 +1,4 @@
+filelock==3.12.2
 importlib-metadata==4.6
 packaging==24.0
 pip==22.3; python_version < "3.12"

@@ -16,7 +16,7 @@ import filelock
 import pytest
 import pytest_mock
 
-from integration_sources import STORE_DIR, archive_path, download_archive
+from integration_sources import STORE_DIR, download_archive
 
 import build.__main__
 
@@ -50,9 +50,8 @@ def get_project(name: str, tmp_path: Path) -> Path:
         return dest
 
     # for other projects download from github and cache it
-    STORE_DIR.mkdir(exist_ok=True)
-    tarball = archive_path(name)
-    with filelock.FileLock(str(STORE_DIR / f'{tarball.name}.lock')):
+    # (filelock makes the dir if this is the first to run)
+    with filelock.FileLock(str(STORE_DIR / f'{name}.lock')):
         _, version = download_archive(name)
     return dest / f'{name}-{version}'
 

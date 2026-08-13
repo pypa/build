@@ -30,15 +30,10 @@ ATTEMPTS = 3
 NETWORK_ERRORS = (OSError, http.client.HTTPException)
 
 
-def archive_path(name: str) -> Path:
-    _, version = INTEGRATION_SOURCES[name]
-    return STORE_DIR / f'{name}-{version}.tar.gz'
-
-
 def download_archive(name: str) -> tuple[Path, str]:
     """Put the archive in the cache and return its path and version. Hold a lock around this to make it parallel safe."""
     github_org_repo, version = INTEGRATION_SOURCES[name]
-    target = archive_path(name)
+    target = STORE_DIR / f'{name}-{version}.tar.gz'
     if target.exists():
         return target, version
 
