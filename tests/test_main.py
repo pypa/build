@@ -1004,9 +1004,7 @@ def test_build_metadata_runner_without_extra_environ(
     captured_runners: list[SubprocessRunner] = []
 
     @contextlib.contextmanager
-    def fake_bootstrap(
-        *_args: object, runner: SubprocessRunner, **_kwargs: object
-    ) -> Generator[unittest.mock.MagicMock, None, None]:
+    def fake_bootstrap(*_args: object, runner: SubprocessRunner, **_kwargs: object) -> Generator[unittest.mock.MagicMock]:
         captured_runners.append(runner)
         builder = mocker.MagicMock()
         metadata_dir = tmp_path / 'metadata'

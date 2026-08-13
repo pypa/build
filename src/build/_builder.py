@@ -405,7 +405,7 @@ class ProjectBuilder:
         return os.path.join(outdir, basename)
 
     @contextlib.contextmanager
-    def _handle_backend(self, hook: str) -> Generator[None, None, None]:
+    def _handle_backend(self, hook: str) -> Generator[None]:
         try:
             yield
         except pyproject_hooks.BackendUnavailable as exception:

@@ -109,7 +109,7 @@ def avoid_constraints(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _clear_keyring_cache() -> Generator[None, None, None]:
+def _clear_keyring_cache() -> Generator[None]:
     build.env._has_keyring_cli.cache_clear()
     yield
     build.env._has_keyring_cli.cache_clear()
@@ -167,7 +167,7 @@ for package_name in package_names:
 
 
 @pytest.fixture
-def test_no_permission(packages_path: str) -> Generator[str, None, None]:
+def test_no_permission(packages_path: str) -> Generator[str]:
     path = os.path.join(packages_path, 'test-no-permission')
     file = os.path.join(path, 'pyproject.toml')
     orig_stat = os.stat(file).st_mode
@@ -180,7 +180,7 @@ def test_no_permission(packages_path: str) -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def tmp_dir() -> Generator[str, None, None]:
+def tmp_dir() -> Generator[str]:
     path = tempfile.mkdtemp(prefix='python-build-test-')
 
     yield path
@@ -220,7 +220,7 @@ def subtests(request: pytest.FixtureRequest) -> SubTests:
         class Subtests:
             @staticmethod
             @contextlib.contextmanager
-            def test(msg: str | None = None, **_kwargs: object) -> Generator[None, None, None]:  # noqa: ARG004
+            def test(msg: str | None = None, **_kwargs: object) -> Generator[None]:  # noqa: ARG004
                 yield
 
         return Subtests()
