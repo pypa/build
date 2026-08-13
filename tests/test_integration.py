@@ -51,7 +51,6 @@ def get_project(name: str, tmp_path: Path) -> Path:
         return dest
 
     # for other projects download from github and cache it
-    STORE_DIR.mkdir(exist_ok=True)  # filelock needs the directory to hold the lock file
     with filelock.FileLock(str(STORE_DIR / f'{name}.lock')):
         tarball, version = download_archive(name)
     with tarfile.open(tarball, 'r:gz') as tar_handler:
