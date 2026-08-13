@@ -41,31 +41,12 @@ from ._util import check_dependency
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    import datetime
-
     from collections.abc import Iterable, Iterator, Mapping, Sequence
-    from typing import TypedDict
+    from typing import TypedDict, TypeGuard
 
-    if sys.version_info < (3, 11):
-        from typing_extensions import NotRequired, Self
-    else:
-        from typing import NotRequired, Self
+    from typing_extensions import NotRequired, Self
 
-    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner
-
-    # A value as produced by ``tomllib`` when parsing ``pyproject.toml``. Uses the covariant
-    # ``Sequence``/``Mapping`` so concrete literals (e.g. ``dict[str, list[str]]``) are assignable.
-    TOMLValue = (
-        str
-        | int
-        | float
-        | bool
-        | datetime.datetime
-        | datetime.date
-        | datetime.time
-        | Sequence['TOMLValue']
-        | Mapping[str, 'TOMLValue']
-    )
+    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner, TOMLValue
 
     # The validated ``[build-system]`` table.
     BuildSystemTable = TypedDict(
@@ -78,6 +59,10 @@ _DEFAULT_BACKEND: BuildSystemTable = {
     'build-backend': 'setuptools.build_meta:__legacy__',
     'requires': ['setuptools >= 40.8.0'],
 }
+
+
+def _is_list_of_str(value: object) -> TypeGuard[list[str]]:
+    return isinstance(value, list) and all(isinstance(item, str) for item in value)
 
 
 def _find_typo(dictionary: Iterable[str], expected: str) -> None:
@@ -135,7 +120,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         msg = '`requires` is a required property'
         raise BuildSystemTableValidationError(msg)
     requires = build_system['requires']
-    if not isinstance(requires, list) or not all(isinstance(i, str) for i in requires):
+    if not _is_list_of_str(requires):
         msg = '`requires` must be an array of strings'
         raise BuildSystemTableValidationError(msg)
 
@@ -156,7 +141,7 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
             _find_typo(build_system, 'build-backend')
 
     match build_system:
-        case {'backend-path': list() as backend_path} if all(isinstance(i, str) for i in backend_path):
+        case {'backend-path': backend_path} if _is_list_of_str(backend_path):
             table['backend-path'] = backend_path
         case {'backend-path': _}:
             msg = '`backend-path` must be an array of strings'
