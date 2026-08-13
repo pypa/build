@@ -233,7 +233,7 @@ ignore = [
   "PLR2004", # Magic values
   "PTH",     # Too many change for now
   "Q",       # Using formatter for quotes
-  "S101",    # Assert is used by mypy and pytest
+  "S101",    # Assert is used by the type checker and pytest
   "SLF001",  # Private members are okay to access
 ]
 
@@ -261,8 +261,8 @@ ignore = [
   "W005",  # We _are_ build
 ]
 
-[tool.repo-review]
-ignore = ["PC140"]  # mypy in tox
+[tool.repo-review.ignore]
+PC140 =  "type checker in tox"
 
 
 [tool.towncrier]
