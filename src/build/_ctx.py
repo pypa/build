@@ -21,7 +21,7 @@ class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, kind: tuple[str, ...] | None = None) -> None: ...
 
 
-_package_name = __spec__.parent
+_package_name = __spec__.parent  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
 _default_logger = logging.getLogger(_package_name)
 
 

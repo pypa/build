@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile']
+__lazy_modules__ = [
+    f'{__spec__.parent}._compat',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}.env',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    'pathlib',
+    'tempfile',
+]
 
 import pathlib
 import tempfile
@@ -23,7 +28,9 @@ if TYPE_CHECKING:
 def _project_wheel_metadata(builder: ProjectBuilder) -> importlib.metadata.PackageMetadata:
     with tempfile.TemporaryDirectory() as tmpdir:
         path = pathlib.Path(builder.metadata_path(tmpdir))
-        metadata = importlib.metadata.PathDistribution(path).metadata
+        metadata = importlib.metadata.PathDistribution(
+            path,  # ty: ignore[invalid-argument-type]  # pyrefly: ignore[bad-argument-type]  # https://github.com/python/importlib_metadata/issues/542
+        ).metadata
         assert metadata is not None
         return metadata
 

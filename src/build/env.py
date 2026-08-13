@@ -4,10 +4,10 @@ from __future__ import annotations
 __lazy_modules__ = [
     'abc',
     'contextlib',
-    f'{__spec__.parent}._compat.importlib',
-    f'{__spec__.parent}._ctx',
-    f'{__spec__.parent}._exceptions',
-    f'{__spec__.parent}._util',
+    f'{__spec__.parent}._compat.importlib',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._ctx',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._exceptions',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._util',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
     'importlib',
     'importlib.util',
     'os',

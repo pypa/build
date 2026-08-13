@@ -174,7 +174,7 @@ def _make_logger() -> _ctx.Logger:
 
 
 def _setup_cli(*, verbosity: int) -> None:
-    warnings.showwarning = _showwarning
+    warnings.showwarning = _showwarning  # ty: ignore[invalid-assignment]  # https://github.com/astral-sh/ty/issues/3962
 
     if platform.system() == 'Windows':
         try:
@@ -186,7 +186,7 @@ def _setup_cli(*, verbosity: int) -> None:
 
     _init_colors()
 
-    _ctx.LOGGER.set(_make_logger())
+    _ctx.LOGGER.set(_make_logger())  # ty: ignore[invalid-argument-type]  # https://github.com/astral-sh/ty/issues/4257
     _ctx.VERBOSITY.set(verbosity)
 
 
@@ -841,13 +841,17 @@ def _select_build(
             'pass --wheel to build a wheel from the sdist (see https://github.com/pypa/build/issues/311)'
         )
     if args.metadata:
-        return partial(_build_metadata, distributions=['wheel'])
+        return partial(_build_metadata, distributions=['wheel'])  # ty: ignore[invalid-argument-type]  # https://github.com/astral-sh/ty/issues/1536
     if sdist_input:
         distributions: list[Distribution] = args.distributions or ['wheel']
         return partial(build_package, distributions=distributions)
     if args.distributions:
         return partial(build_package, distributions=args.distributions)
-    return partial(build_package_via_sdist, distributions=['wheel'], sdist_extract_dir=args.sdist_extract_dir)
+    return partial(
+        build_package_via_sdist,
+        distributions=['wheel'],  # ty: ignore[invalid-argument-type]  # https://github.com/astral-sh/ty/issues/1536
+        sdist_extract_dir=args.sdist_extract_dir,
+    )
 
 
 def _validate_sdist_archive(archive: StrPath) -> str:

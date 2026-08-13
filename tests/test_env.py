@@ -44,7 +44,8 @@ def test_make_extra_environ_overrides_pythonpath() -> None:
 
 def test_installed_versions(mocker: pytest_mock.MockerFixture) -> None:
     env = build.env.DefaultIsolatedEnv()
-    env._env_backend = SimpleNamespace(purelib='/purelib')
+    # _env_backend is created lazily in __enter__, so it is absent on a fresh env
+    mocker.patch.object(env, '_env_backend', SimpleNamespace(purelib='/purelib'), create=True)
     distributions = mocker.patch(
         'build._compat.importlib.metadata.distributions',
         return_value=[
