@@ -16,7 +16,7 @@ import unittest.mock
 import venv
 import zipfile
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, Protocol, TypedDict
 
 import pytest
@@ -1004,7 +1004,9 @@ def test_build_metadata_runner_without_extra_environ(
     captured_runners: list[SubprocessRunner] = []
 
     @contextlib.contextmanager
-    def fake_bootstrap(*_args: object, runner: SubprocessRunner, **_kwargs: object) -> Iterator[unittest.mock.MagicMock]:
+    def fake_bootstrap(
+        *_args: object, runner: SubprocessRunner, **_kwargs: object
+    ) -> Generator[unittest.mock.MagicMock, None, None]:
         captured_runners.append(runner)
         builder = mocker.MagicMock()
         metadata_dir = tmp_path / 'metadata'

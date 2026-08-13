@@ -41,7 +41,7 @@ from ._util import check_dependency
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Mapping, Sequence
+    from collections.abc import Generator, Iterable, Mapping, Sequence
     from typing import TypedDict, TypeGuard
 
     from typing_extensions import NotRequired, Self
@@ -405,7 +405,7 @@ class ProjectBuilder:
         return os.path.join(outdir, basename)
 
     @contextlib.contextmanager
-    def _handle_backend(self, hook: str) -> Iterator[None]:
+    def _handle_backend(self, hook: str) -> Generator[None, None, None]:
         try:
             yield
         except pyproject_hooks.BackendUnavailable as exception:
