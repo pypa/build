@@ -48,7 +48,7 @@ import zipfile
 from functools import partial
 from tarfile import TarError
 from tarfile import open as tar_open
-from typing import NoReturn, TextIO, TypedDict, cast
+from typing import NoReturn, TextIO, TypedDict
 
 import pyproject_hooks
 
@@ -72,23 +72,24 @@ if TYPE_CHECKING:
 
     from build._types import ConfigSettings, Distribution, JSONValue, StrPath, SubprocessRunner
 
-    class _CliArgs(argparse.Namespace):
-        """The arguments :func:`main_parser` produces, typed for the rest of the module."""
 
-        srcdir: str
-        verbosity: int
-        outdir: str | None
-        distributions: list[Distribution] | None
-        metadata: bool
-        config_settings: list[str] | None
-        config_json: str | None
-        installer: _env.Installer
-        no_isolation: bool
-        dependency_constraints_txt: str | None
-        skip_dependency_check: bool
-        sdist_extract_dir: str | None
-        env_dir: str | None
-        report: str | None
+class _CliArgs:
+    """The arguments :func:`main_parser` produces, typed for the rest of the module."""
+
+    srcdir: str
+    verbosity: int
+    outdir: str | None
+    distributions: list[Distribution] | None
+    metadata: bool
+    config_settings: list[str] | None
+    config_json: str | None
+    installer: _env.Installer
+    no_isolation: bool
+    dependency_constraints_txt: str | None
+    skip_dependency_check: bool
+    sdist_extract_dir: str | None
+    env_dir: str | None
+    report: str | None
 
 
 _COLORS = {
@@ -721,7 +722,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     parser = main_parser()
     if prog:
         parser.prog = prog
-    args = cast('_CliArgs', parser.parse_args(cli_args))
+    args = parser.parse_args(cli_args, _CliArgs())
 
     if args.env_dir is not None and args.no_isolation:
         parser.error('--env-dir: not allowed with --no-isolation')
