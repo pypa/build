@@ -7,7 +7,7 @@ jobs:
     name: Run tests
     runs-on: ${{ matrix.os }}-latest
     env:
-      PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10 --reruns 5 --only-rerun subprocess.CalledProcessError"
+      PYTEST_ADDOPTS: "--run-integration --showlocals -vv --durations=10 --reruns 5 --only-rerun CalledProcessError --only-rerun RemoteDisconnected --only-rerun HTTPError"
     strategy:
       fail-fast: false
       matrix:
