@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import importlib.util
 import os
 import os.path
@@ -11,13 +10,14 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import urllib.request
 
 from pathlib import Path
 
 import filelock
 import pytest
 import pytest_mock
+
+from integration_sources import STORE_DIR, download_archive
 
 import build.__main__
 
@@ -26,13 +26,6 @@ IS_WINDOWS = sys.platform.startswith('win')
 IS_PYPY = sys.implementation.name == 'pypy'
 MISSING_UV = not shutil.which('uv')
 
-
-INTEGRATION_SOURCES = {
-    'dateutil': ('dateutil/dateutil', '2.9.0'),
-    'pip': ('pypa/pip', '25.0.1'),
-    'Solaar': ('pwr-Solaar/Solaar', '1.1.14'),
-    'flit': ('pypa/flit', '3.12.0'),
-}
 
 _SDIST = re.compile('.*.tar.gz')
 _WHEEL = re.compile('.*.whl')
@@ -58,21 +51,8 @@ def get_project(name: str, tmp_path: Path) -> Path:
         return dest
 
     # for other projects download from github and cache it
-    tar_store = os.path.join(ROOT, '.integration-sources')
-    # Checking with exists is not parallel safe so just ignore,
-    # if the creation failed we will have another failure soon
-    # that will notify the user.
-    with contextlib.suppress(OSError):
-        os.makedirs(tar_store)
-
-    github_org_repo, version = INTEGRATION_SOURCES[name]
-    tar_filename = f'{name}-{version}.tar.gz'
-    tarball = os.path.join(tar_store, tar_filename)
-    with filelock.FileLock(os.path.join(tar_store, f'{tar_filename}.lock')):
-        if not os.path.exists(tarball):
-            url = f'https://github.com/{github_org_repo}/archive/{version}.tar.gz'
-            with urllib.request.urlopen(url) as request, open(tarball, 'wb') as file_handler:
-                shutil.copyfileobj(request, file_handler)
+    with filelock.FileLock(str(STORE_DIR / f'{name}.lock')):
+        tarball, version = download_archive(name)
     with tarfile.open(tarball, 'r:gz') as tar_handler:
         tar_handler.extractall(str(dest))
     return dest / f'{name}-{version}'

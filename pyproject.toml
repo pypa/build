@@ -96,7 +96,7 @@ test-core = [
   "pytest-xdist >= 2.4.0",
 ]
 test = [
-  "filelock >= 3.4.0",
+  "filelock >= 3.20.1",
   "covdefaults >= 2.3",
   "wheel >= 0.38.1",
   'setuptools >= 56.0.0; python_version == "3.10"',
@@ -152,7 +152,7 @@ exclude-newer = "7 days"
 run.plugins = ["covdefaults"]
 run.core = "ctrace"  # sysmon is 3.14+'s default but can't record dynamic contexts; PyPy falls back to pytrace
 run.source = ["build", "tests"]
-run.omit = ["tests/conftest.py", "tests/test_integration.py",]
+run.omit = ["tests/conftest.py", "tests/test_integration.py", "tests/integration_sources.py",]
 report.omit = ["src/build/_types.py"]
 run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
