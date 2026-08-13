@@ -295,7 +295,7 @@ def test_build_missing_backend(
     builder = build.ProjectBuilder(bad_backend_path)
 
     with pytest.raises(build.BuildBackendException):
-        builder.build(distribution, str(tmpdir))
+        builder.build(distribution, tmpdir)
 
 
 def _nothing_installed(name: str) -> NoReturn:
@@ -429,7 +429,7 @@ def demo_pkg_inline(tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
     tmp_path = tmp_path_factory.mktemp('demo-pkg-inline')
     builder = build.ProjectBuilder(source_dir=os.path.join(os.path.dirname(__file__), 'packages', 'inline'))
     out = tmp_path / 'dist'
-    builder.build('wheel', str(out))
+    builder.build('wheel', out)
     return next(out.iterdir())
 
 
