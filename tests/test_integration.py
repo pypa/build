@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 
 from pathlib import Path
 
@@ -50,9 +51,11 @@ def get_project(name: str, tmp_path: Path) -> Path:
         return dest
 
     # for other projects download from github and cache it
-    # (filelock makes the dir if this is the first to run)
+    STORE_DIR.mkdir(exist_ok=True)  # filelock needs the directory to hold the lock file
     with filelock.FileLock(str(STORE_DIR / f'{name}.lock')):
-        _, version = download_archive(name)
+        tarball, version = download_archive(name)
+    with tarfile.open(tarball, 'r:gz') as tar_handler:
+        tar_handler.extractall(str(dest))
     return dest / f'{name}-{version}'
 
 
