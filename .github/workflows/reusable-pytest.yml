@@ -11,7 +11,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download the sources
-        run: python tasks/download_integration_sources.py
+        run: python tests/integration_sources.py
       - name: Share the sources with the test matrix
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -19,7 +19,6 @@ jobs:
           path: .integration-sources
           retention-days: 1
           compression-level: 0 # the archives are compressed already
-          if-no-files-found: error
   pytest:
     name: Run tests
     needs: integration-sources

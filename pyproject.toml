@@ -152,7 +152,7 @@ exclude-newer = "7 days"
 run.plugins = ["covdefaults"]
 run.core = "ctrace"  # sysmon is 3.14+'s default but can't record dynamic contexts; PyPy falls back to pytrace
 run.source = ["build", "tests"]
-run.omit = ["tests/conftest.py", "tests/test_integration.py",]
+run.omit = ["tests/conftest.py", "tests/test_integration.py", "tests/integration_sources.py",]
 report.omit = ["src/build/_types.py"]
 run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
