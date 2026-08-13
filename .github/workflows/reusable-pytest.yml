@@ -19,6 +19,8 @@ jobs:
           path: .integration-sources
           retention-days: 1
           compression-level: 0 # the archives are compressed already
+          include-hidden-files: true # .integration-sources is a hidden directory
+          if-no-files-found: error # an empty artifact silently returns every job to its own download
   pytest:
     name: Run tests
     needs: integration-sources
