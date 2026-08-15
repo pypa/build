@@ -2,6 +2,9 @@ requires = ["tox-uv>=1.28"]
 env_list = [
     "fix",
     "type",
+    "ty",
+    "pyrefly",
+    "pyright",
     "docs",
     "path",
     { product = [{ prefix = "3.", start = 10, stop = 15 }]},
@@ -10,6 +13,9 @@ env_list = [
     { product = [{ prefix = "min-pypy3.", start = 10, stop = 11 }]},
 ]
 skip_missing_interpreters = true
+
+[labels]
+type = ["type", "ty", "pyrefly", "pyright"]
 
 [env_run_base]
 description = "run test suite with {basepython}"
@@ -47,11 +53,37 @@ commands = [
 ]
 dependency_groups = ["lint"]
 
+[env.ty]
+description = "run ty type checks"
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
+commands = [
+    ["ty", "check", "--output-format", "concise", "--error-on-warning", { replace = "posargs", default = ["."], extend = true }],
+]
+dependency_groups = ["ty"]
+
 [env.type]
-description = "run type check on code base"
+description = "run mypy type checks"
 set_env = { PYTHONWARNDEFAULTENCODING = "" }
 commands = [["mypy", { replace = "posargs", extend = true }]]
 dependency_groups = ["mypy"]
+
+[env.pyrefly]
+description = "run pyrefly type checks and public API type coverage"
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
+commands = [
+    ["pyrefly", "check", { replace = "posargs", extend = true }],
+    ["pyrefly", "coverage", "check", "--strict", "--fail-under", "100", "src/build"],
+]
+dependency_groups = ["pyrefly"]
+
+[env.pyright]
+description = "run pyright type checks and public API type completeness"
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
+commands = [
+    ["pyright", { replace = "posargs", extend = true }],
+    ["pyright", "--verifytypes", "build", "--ignoreexternal"],
+]
+dependency_groups = ["pyright"]
 
 [env.docs]
 description = "build documentations"

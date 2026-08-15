@@ -120,6 +120,18 @@ mypy = [
   "mypy ~= 2.3.0",
   { include-group = "typing" },
 ]
+pyrefly = [
+  "pyrefly >= 1.2",
+  { include-group = "typing" },
+]
+pyright = [
+  "pyright >= 1.1.408",
+  { include-group = "typing" },
+]
+ty = [
+  "ty >= 0.0.69",
+  { include-group = "typing" },
+]
 release = [
   "docstrfmt == 2.2.0", # keep in sync with the docstrfmt rev in .pre-commit-config.yaml
   "gitpython >= 3.1.44",
@@ -131,6 +143,9 @@ dev = [
   "flit-core",
   { include-group = "test" },
   { include-group = "mypy" },
+  { include-group = "pyrefly" },
+  { include-group = "pyright" },
+  { include-group = "ty" },
 ]
 
 [tool.flit.sdist]
@@ -224,6 +239,39 @@ module = [
   "virtualenv", # Optional dependency
 ]
 ignore_missing_imports = true
+
+[tool.pyrefly]
+project-includes = ["src", "tests", "tasks", "docs"]
+project-excludes = ["**/tests/packages*"]
+search-path = ["src", "tests"]
+python-version = "3.10"
+preset = "strict"
+ignore-missing-imports = ["virtualenv"]  # optional dependency
+
+[tool.pyrefly.errors]
+# `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
+missing-override-decorator = false
+# warnings under the strict preset; promoted so an unhandled `Literal` member or an unguarded `NotRequired` key
+# fails the run (https://github.com/pypa/build/pull/1159#issuecomment-5294522232)
+non-exhaustive-match = true
+not-required-key-access = true
+
+[tool.pyright]
+include = ["src", "tests", "tasks", "docs"]
+exclude = ["tests/packages"]
+pythonVersion = "3.10"
+reportMissingModuleSource = false # optional dependencies without stubs
+
+[tool.ty]
+environment.python-version = "3.10"
+
+[tool.ty.src]
+exclude = ["tests/packages"]
+
+[tool.ty.rules]
+all = "error"
+# `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
+missing-override-decorator = "ignore"
 
 [tool.ruff]
 exclude = [

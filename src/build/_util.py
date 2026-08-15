@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
-    f'{__spec__.parent}._compat',
+__lazy_modules__: list[str] = [
+    f'{__spec__.parent}._compat',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
     'packaging',
     'packaging.requirements',
 ]

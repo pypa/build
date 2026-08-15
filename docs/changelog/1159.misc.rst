@@ -1,0 +1,2 @@
+Type check with ``ty``, ``pyrefly`` and ``pyright`` alongside ``mypy``, require full type coverage with ``pyrefly
+coverage check`` and verify the public API is complete with ``pyright --verifytypes`` - by :user:`gaborbernat`.

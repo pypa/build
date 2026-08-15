@@ -4,11 +4,24 @@ on:
 permissions: {}
 jobs:
   type:
-    name: Type check
+    name: Type check with ${{ matrix.checker }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - checker: mypy
+            env: type
+          - checker: ty
+            env: ty
+          - checker: pyrefly
+            env: pyrefly
+          - checker: pyright
+            env: pyright
     env:
       PY_COLORS: 1
       TOX_PARALLEL_NO_SPINNER: 1
+      TOX_ENV: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -20,6 +33,6 @@ jobs:
       - name: Install tox
         run: python -m pip install tox
       - name: Setup run environment
-        run: tox -vv --notest -e type
+        run: tox -vv --notest -e "$TOX_ENV"
       - name: Run check for type
-        run: tox -e type --skip-pkg-install
+        run: tox -e "$TOX_ENV" --skip-pkg-install

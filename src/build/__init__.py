@@ -5,11 +5,11 @@ build - A simple, correct Python build frontend
 from __future__ import annotations
 
 
-__lazy_modules__ = [
-    f'{__spec__.parent}._builder',
-    f'{__spec__.parent}._exceptions',
-    f'{__spec__.parent}._types',
-    f'{__spec__.parent}._util',
+__lazy_modules__: list[str] = [
+    f'{__spec__.parent}._builder',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._exceptions',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._types',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._util',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
 ]
 
 from ._builder import ProjectBuilder

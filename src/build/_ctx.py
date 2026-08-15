@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = ['subprocess']
+__lazy_modules__: list[str] = ['subprocess']
 
 import contextvars
 import logging
@@ -21,7 +21,7 @@ class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, kind: tuple[str, ...] | None = None) -> None: ...
 
 
-_package_name = __spec__.parent
+_package_name = __spec__.parent  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
 _default_logger = logging.getLogger(_package_name)
 
 
@@ -30,8 +30,8 @@ def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None: 
     _default_logger.log(logging.INFO, message, stacklevel=2)
 
 
-LOGGER = contextvars.ContextVar('LOGGER', default=_log_default)
-VERBOSITY = contextvars.ContextVar('VERBOSITY', default=0)
+LOGGER: contextvars.ContextVar[Logger] = contextvars.ContextVar('LOGGER', default=_log_default)
+VERBOSITY: contextvars.ContextVar[int] = contextvars.ContextVar('VERBOSITY', default=0)
 
 
 def log_subprocess_error(error: subprocess.CalledProcessError) -> None:

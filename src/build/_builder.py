@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
+__lazy_modules__: list[str] = [
     'contextlib',
     'difflib',
-    f'{__spec__.parent}._compat',
-    f'{__spec__.parent}._exceptions',
-    f'{__spec__.parent}._util',
+    f'{__spec__.parent}._compat',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._exceptions',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
+    f'{__spec__.parent}._util',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
     'os',
     'pyproject_hooks',
     'subprocess',

@@ -45,7 +45,7 @@ Due to its nature, ``build`` has a somewhat complex test suite with two sets of 
 Unit tests verify the actual code implementation, while integration tests run build on real world projects as a sanity
 check. To run tests we use ``tox``.
 
-Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
+Some example commands for this project include running type checking with ``tox -m type``, running only unit tests
 against Python 3.14 with ``tox run -e 3.14``, running both unit and integration tests with ``tox run --
 --run-integration``, running only integration tests with ``tox run -- --only-integration``, or running only integration
 tests with parallel tasks using ``tox run -- -n auto --only-integration``.
@@ -72,11 +72,15 @@ and with the module being invoked directly from path, sdist install, or wheel in
 and with the module being invoked directly from path, sdist install, or wheel install.
 
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
-minimum versions of dependencies. For type checking,
+minimum versions of dependencies. Type checking runs ``mypy``, ``ty``, ``pyrefly`` and ``pyright`` so the annotations
+hold up under whichever checker a downstream project uses; ``pyrefly`` also requires every symbol in the package to be
+fully typed and ``pyright`` verifies the public API is complete. To run them all,
 
 .. code-block:: console
 
-    tox -e type
+    tox -m type
+
+or a single one, for example ``tox -e pyright``.
 
 Code coverage is tracked to ensure all code paths are tested. Aim for complete coverage of any new code you add. The CI
 system will report coverage metrics on your pull request and runs the test suite across all supported operating systems.

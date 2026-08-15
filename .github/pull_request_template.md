@@ -14,5 +14,5 @@
 
 - [ ] Tests pass locally (`tox`)
 - [ ] Code follows project style (`tox -e fix`)
-- [ ] Type checks pass (`tox -e type`)
+- [ ] Type checks pass (`tox -m type`)
 - [ ] Documentation builds (`tox -e docs`)
