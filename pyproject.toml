@@ -251,6 +251,10 @@ ignore-missing-imports = ["virtualenv"]  # optional dependency
 [tool.pyrefly.errors]
 # `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
 missing-override-decorator = false
+# warnings under the strict preset; promoted so an unhandled `Literal` member or an unguarded `NotRequired` key
+# fails the run (https://github.com/pypa/build/pull/1159#issuecomment-5294522232)
+non-exhaustive-match = true
+not-required-key-access = true
 
 [tool.pyright]
 include = ["src", "tests", "tasks", "docs"]
