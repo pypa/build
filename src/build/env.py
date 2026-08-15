@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
+__lazy_modules__: list[str] = [
     'abc',
     'contextlib',
     f'{__spec__.parent}._compat.importlib',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017
@@ -60,7 +60,7 @@ if TYPE_CHECKING:
 
 Installer = typing.Literal['pip', 'uv']
 
-INSTALLERS = typing.get_args(Installer)
+INSTALLERS: tuple[Installer, ...] = typing.get_args(Installer)
 
 
 class IsolatedEnv(typing.Protocol):

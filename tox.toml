@@ -4,6 +4,7 @@ env_list = [
     "type",
     "ty",
     "pyrefly",
+    "pyright",
     "docs",
     "path",
     { product = [{ prefix = "3.", start = 10, stop = 15 }]},
@@ -14,7 +15,7 @@ env_list = [
 skip_missing_interpreters = true
 
 [labels]
-type = ["type", "ty", "pyrefly"]
+type = ["type", "ty", "pyrefly", "pyright"]
 
 [env_run_base]
 description = "run test suite with {basepython}"
@@ -67,10 +68,22 @@ commands = [["mypy", { replace = "posargs", extend = true }]]
 dependency_groups = ["mypy"]
 
 [env.pyrefly]
-description = "run pyrefly type checks"
+description = "run pyrefly type checks and public API type coverage"
 set_env = { PYTHONWARNDEFAULTENCODING = "" }
-commands = [["pyrefly", "check", { replace = "posargs", extend = true }]]
+commands = [
+    ["pyrefly", "check", { replace = "posargs", extend = true }],
+    ["pyrefly", "coverage", "check", "--public-only", "--strict", "src/build"],
+]
 dependency_groups = ["pyrefly"]
+
+[env.pyright]
+description = "run pyright type checks and public API type completeness"
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
+commands = [
+    ["pyright", { replace = "posargs", extend = true }],
+    ["pyright", "--verifytypes", "build", "--ignoreexternal"],
+]
+dependency_groups = ["pyright"]
 
 [env.docs]
 description = "build documentations"

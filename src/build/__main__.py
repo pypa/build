@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
+__lazy_modules__: list[str] = [
     'argparse',
     'build._compat',
     'build._compat.tarfile',
@@ -186,7 +186,7 @@ def _setup_cli(*, verbosity: int) -> None:
 
     _init_colors()
 
-    _ctx.LOGGER.set(_make_logger())  # ty: ignore[invalid-argument-type]  # https://github.com/astral-sh/ty/issues/4257
+    _ctx.LOGGER.set(_make_logger())
     _ctx.VERBOSITY.set(verbosity)
 
 

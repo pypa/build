@@ -72,11 +72,15 @@ and with the module being invoked directly from path, sdist install, or wheel in
 and with the module being invoked directly from path, sdist install, or wheel install.
 
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
-minimum versions of dependencies. For type checking,
+minimum versions of dependencies. Type checking runs ``mypy``, ``ty``, ``pyrefly`` and ``pyright`` so the annotations
+hold up under whichever checker a downstream project uses; ``pyrefly`` and ``pyright`` also verify that every symbol in
+the public API is fully typed. To run them all,
 
 .. code-block:: console
 
     tox -m type
+
+or a single one, for example ``tox -e pyright``.
 
 Code coverage is tracked to ensure all code paths are tested. Aim for complete coverage of any new code you add. The CI
 system will report coverage metrics on your pull request and runs the test suite across all supported operating systems.

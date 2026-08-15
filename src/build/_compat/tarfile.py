@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
+__lazy_modules__: list[str] = [
     'pathlib',
     'tarfile',
 ]

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
+__lazy_modules__: list[str] = [
     'contextlib',
     'difflib',
     f'{__spec__.parent}._compat',  # ty: ignore[unresolved-attribute]  # https://github.com/astral-sh/ty/issues/4017

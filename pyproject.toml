@@ -124,6 +124,10 @@ pyrefly = [
   "pyrefly >= 1.2",
   { include-group = "typing" },
 ]
+pyright = [
+  "pyright >= 1.1.408",
+  { include-group = "typing" },
+]
 ty = [
   "ty >= 0.0.69",
   { include-group = "typing" },
@@ -140,6 +144,7 @@ dev = [
   { include-group = "test" },
   { include-group = "mypy" },
   { include-group = "pyrefly" },
+  { include-group = "pyright" },
   { include-group = "ty" },
 ]
 
@@ -246,6 +251,12 @@ ignore-missing-imports = ["virtualenv"]  # optional dependency
 [tool.pyrefly.errors]
 # `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
 missing-override-decorator = false
+
+[tool.pyright]
+include = ["src", "tests", "tasks", "docs"]
+exclude = ["tests/packages"]
+pythonVersion = "3.10"
+reportMissingModuleSource = false # optional dependencies without stubs
 
 [tool.ty]
 environment.python-version = "3.10"

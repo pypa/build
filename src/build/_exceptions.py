@@ -7,6 +7,8 @@ if TYPE_CHECKING:
     import subprocess
     import types
 
+    ExcInfo = tuple[type[BaseException], BaseException, types.TracebackType] | tuple[None, None, None]
+
 
 class BuildException(Exception):
     """
@@ -23,15 +25,11 @@ class BuildBackendException(Exception):
         self,
         exception: Exception,
         description: str | None = None,
-        exc_info: tuple[type[BaseException], BaseException, types.TracebackType] | tuple[None, None, None] = (
-            None,
-            None,
-            None,
-        ),
+        exc_info: ExcInfo = (None, None, None),
     ) -> None:
         super().__init__()
-        self.exception = exception
-        self.exc_info = exc_info
+        self.exception: Exception = exception
+        self.exc_info: ExcInfo = exc_info
         self._description = description
 
     def __str__(self) -> str:
@@ -56,7 +54,7 @@ class FailedProcessError(Exception):
 
     def __init__(self, exception: subprocess.CalledProcessError, description: str) -> None:
         super().__init__()
-        self.exception = exception
+        self.exception: subprocess.CalledProcessError = exception
         self._description = description
 
     def __str__(self) -> str:
