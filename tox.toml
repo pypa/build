@@ -72,7 +72,7 @@ description = "run pyrefly type checks and public API type coverage"
 set_env = { PYTHONWARNDEFAULTENCODING = "" }
 commands = [
     ["pyrefly", "check", { replace = "posargs", extend = true }],
-    ["pyrefly", "coverage", "check", "--public-only", "--strict", "src/build"],
+    ["pyrefly", "coverage", "check", "--strict", "--fail-under", "100", "src/build"],
 ]
 dependency_groups = ["pyrefly"]
 

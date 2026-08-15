@@ -73,8 +73,8 @@ and with the module being invoked directly from path, sdist install, or wheel in
 
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
 minimum versions of dependencies. Type checking runs ``mypy``, ``ty``, ``pyrefly`` and ``pyright`` so the annotations
-hold up under whichever checker a downstream project uses; ``pyrefly`` and ``pyright`` also verify that every symbol in
-the public API is fully typed. To run them all,
+hold up under whichever checker a downstream project uses; ``pyrefly`` also requires every symbol in the package to be
+fully typed and ``pyright`` verifies the public API is complete. To run them all,
 
 .. code-block:: console
 
