@@ -52,10 +52,15 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Collection, Mapping
 
+    from typing_extensions import Unpack
+
     if sys.version_info < (3, 11):
         from typing_extensions import Self
     else:
         from typing import Self
+
+    class _DistArgs(typing.TypedDict, total=False):
+        path: list[str]
 
 
 Installer = typing.Literal['pip', 'uv']
@@ -77,7 +82,7 @@ class IsolatedEnv(typing.Protocol):
 
 
 def _has_dependency(
-    name: str, minimum_version_str: str | None = None, /, **distargs: object
+    name: str, minimum_version_str: str | None = None, /, **distargs: Unpack[_DistArgs]
 ) -> importlib_metadata.Distribution | None:
     """
     Given a distribution name, see if it is present and return the distribution

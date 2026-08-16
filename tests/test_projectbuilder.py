@@ -27,6 +27,8 @@ from build._compat import importlib as _importlib
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from typing_extensions import Never
+
     from build._builder import BuildSystemTable
     from build._types import TOMLValue
 
@@ -43,7 +45,7 @@ DEFAULT_BACKEND = {
 class MockDistribution(_importlib.metadata.Distribution):
     _metadata: str = ''
 
-    def locate_file(self, path: str | os.PathLike[str]) -> _importlib.metadata.SimplePath:  # pragma: no cover
+    def locate_file(self, path: str | os.PathLike[str]) -> Never:  # pragma: no cover
         raise NotImplementedError
 
     def read_text(self, filename: str) -> str:
