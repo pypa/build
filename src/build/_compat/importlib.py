@@ -6,7 +6,7 @@ import sys
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    import importlib_metadata as metadata
+    from importlib import metadata
 elif sys.version_info >= (3, 10, 2):
     from importlib import metadata  # pragma: no cover
 else:  # pragma: no cover
