@@ -409,12 +409,8 @@ class ProjectBuilder:
         try:
             yield
         except pyproject_hooks.BackendUnavailable as exception:
-            raise BuildBackendException(
-                exception,
-                f"Backend '{self._backend}' is not available.",
-                sys.exc_info(),
-            ) from None
+            raise BuildBackendException(exception, f"Backend '{self._backend}' is not available.") from None
         except subprocess.CalledProcessError as exception:
             raise BuildBackendException(exception, f'Backend subprocess exited when trying to invoke {hook}') from None
         except Exception as exception:
-            raise BuildBackendException(exception, exc_info=sys.exc_info()) from None
+            raise BuildBackendException(exception) from None

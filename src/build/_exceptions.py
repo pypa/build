@@ -5,7 +5,6 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     import subprocess
-    import types
 
 
 class BuildException(Exception):
@@ -23,15 +22,9 @@ class BuildBackendException(Exception):
         self,
         exception: Exception,
         description: str | None = None,
-        exc_info: tuple[type[BaseException], BaseException, types.TracebackType] | tuple[None, None, None] = (
-            None,
-            None,
-            None,
-        ),
     ) -> None:
         super().__init__()
         self.exception = exception
-        self.exc_info = exc_info
         self._description = description
 
     def __str__(self) -> str:

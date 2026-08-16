@@ -866,10 +866,10 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
     try:
         raise exc
     except ValueError:
-        exc_info = sys.exc_info()
+        pass
 
     with pytest.raises(SystemExit), build.__main__._handle_build_error(env_dir=None, sdist_extract_dir=None):
-        raise build.BuildBackendException(exc, exc_info=exc_info)
+        raise build.BuildBackendException(exc)
 
 
 def test_handle_build_error_prints_debug_tip_on_subprocess_failure(
