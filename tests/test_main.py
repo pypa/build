@@ -862,14 +862,10 @@ def test_entrypoint(mocker: pytest_mock.MockerFixture) -> None:
 def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch('build.__main__._error', side_effect=SystemExit(1))
 
-    exc = ValueError('test error')
-    try:
-        raise exc
-    except ValueError:
-        pass
-
     with pytest.raises(SystemExit), build.__main__._handle_build_error(env_dir=None, sdist_extract_dir=None):
-        raise build.BuildBackendException(exc)
+        raise build.BuildBackendException(
+            ValueError('test error'),
+        )
 
 
 def test_handle_build_error_prints_debug_tip_on_subprocess_failure(

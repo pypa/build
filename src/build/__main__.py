@@ -298,9 +298,7 @@ def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | Non
             _error(str(e))
 
         inner_exception = e.exception
-        tb_lines = traceback.format_exception(
-            inner_exception.__class__, inner_exception, inner_exception.__traceback__, limit=-1
-        )
+        tb_lines = traceback.format_exception(inner_exception, limit=-1)
         tb = ''.join(tb_lines)
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _cprint('{yellow}TIP{reset} {}', hint, file=sys.stderr)
