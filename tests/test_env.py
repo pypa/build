@@ -28,7 +28,6 @@ from build import _ctx
 from build._compat.importlib import metadata as importlib_metadata
 
 
-IS_PYPY = sys.implementation.name == 'pypy'
 IS_WINDOWS = sys.platform.startswith('win')
 
 MISSING_UV = importlib.util.find_spec('uv') is None and not shutil.which('uv')
@@ -91,7 +90,6 @@ def test_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
             )
 
 
-@pytest.mark.skipif(IS_PYPY, reason='PyPy3 uses get path to create and provision venv')
 @pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
 def test_can_get_venv_paths_with_conflicting_default_scheme(  # pragma: no cover -- skipped on PyPy and non-darwin
     mocker: pytest_mock.MockerFixture,
@@ -324,7 +322,6 @@ def test_default_impl_install_cmd_well_formed(
 @pytest.mark.parametrize('verbosity', range(3))
 @pytest.mark.parametrize('constraints', [[], ['foo']])
 @pytest.mark.parametrize('fresh', [False, True])
-@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
     mocker: pytest_mock.MockerFixture,
@@ -384,7 +381,6 @@ def test_default_impl_install_files_line_endings_not_doubled(mocker: pytest_mock
     assert written['constraints'].splitlines() == [b'a-constraint', b'b-constraint']
 
 
-@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_files_line_endings_not_doubled(  # pragma: no cover -- skipped on PyPy, covered on CPython
     mocker: pytest_mock.MockerFixture,
@@ -717,7 +713,6 @@ def test_install_dependencies_passes_keyring_env(
     assert install_call.kwargs['env']['PIP_KEYRING_PROVIDER'] == 'subprocess'
 
 
-@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_install_dependencies_passes_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
     mocker: pytest_mock.MockerFixture,
@@ -732,7 +727,6 @@ def test_uv_install_dependencies_passes_keyring_env(  # pragma: no cover -- uv t
     assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'subprocess'
 
 
-@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_install_respects_existing_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
     mocker: pytest_mock.MockerFixture,
