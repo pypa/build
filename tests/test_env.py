@@ -286,21 +286,27 @@ def test_install_short_circuits(
 
 
 @pytest.mark.parametrize('verbosity', range(3))
-@pytest.mark.parametrize('constraints', [[], ['foo']])
+@pytest.mark.parametrize('constraints_txt', ['', 'foo'])
 @pytest.mark.parametrize('fresh', [False, True])
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_cmd_well_formed(
+    tmp_path: Path,
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
-    constraints: list[str],
+    constraints_txt: str,
     fresh: bool,
 ) -> None:
     mocker.patch.object(_ctx, 'verbosity', verbosity)
 
+    constraints_txt_path = None
+    if constraints_txt:
+        constraints_txt_path = tmp_path.joinpath('constraints.txt')
+        constraints_txt_path.write_text(constraints_txt, encoding='utf-8')
+
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints, _fresh=fresh)
+        env.install(['some', 'requirements'], constraints_txt_path, _fresh=fresh)
 
         run_subprocess.assert_called_once_with(
             [
@@ -316,29 +322,35 @@ def test_default_impl_install_cmd_well_formed(
                 '--no-input',
                 '-r',
                 mocker.ANY,
-                *(['-c', mocker.ANY] if constraints else []),
+                *(['-c', str(constraints_txt_path)] if constraints_txt_path else []),
             ],
             env=mocker.ANY,
         )
 
 
 @pytest.mark.parametrize('verbosity', range(3))
-@pytest.mark.parametrize('constraints', [[], ['foo']])
+@pytest.mark.parametrize('constraints_txt', ['', 'foo'])
 @pytest.mark.parametrize('fresh', [False, True])
 @pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
+    tmp_path: Path,
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
-    constraints: list[str],
+    constraints_txt: str,
     fresh: bool,
 ) -> None:
     mocker.patch.object(_ctx, 'verbosity', verbosity)
 
+    constraints_txt_path = None
+    if constraints_txt:
+        constraints_txt_path = tmp_path.joinpath('constraints.txt')
+        constraints_txt_path.write_text(constraints_txt, encoding='utf-8')
+
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints, _fresh=fresh)
+        env.install(['some', 'requirements'], constraints_txt_path, _fresh=fresh)
 
         run_subprocess.assert_called_once_with(
             [
@@ -350,7 +362,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
                 'requirements',
                 '--python',
                 mocker.ANY,
-                *(['-c', mocker.ANY] if constraints else []),
+                *(['-c', str(constraints_txt_path)] if constraints_txt_path else []),
             ],
             env=mocker.ANY,
         )
@@ -360,7 +372,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
 
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_files_line_endings_not_doubled(mocker: pytest_mock.MockerFixture) -> None:
-    # The requirements/constraints files are opened in text mode, which translates every
+    # The requirements files are opened in text mode, which translates every
     # '\n' written to os.linesep -- '\r\n' on disk is correct on Windows. Joining with
     # os.linesep first (instead of '\n') would double-translate there, turning '\r\n' into
     # '\r\r\n'. Read back as bytes, before the files are deleted by the
@@ -372,38 +384,13 @@ def test_default_impl_install_files_line_endings_not_doubled(mocker: pytest_mock
         for arg in args:
             if arg == '-r':
                 written['requirements'] = Path(next(args)).read_bytes()
-            elif arg == '-c':
-                written['constraints'] = Path(next(args)).read_bytes()
 
     with build.env.DefaultIsolatedEnv() as env:
         mocker.patch('build.env.run_subprocess', side_effect=fake_run_subprocess)
-        env.install(['some', 'requirements'], ['a-constraint', 'b-constraint'])
+        env.install(['some', 'requirements'])
 
     assert b'\r\r' not in written['requirements']
     assert written['requirements'].splitlines() == [b'some', b'requirements']
-    assert b'\r\r' not in written['constraints']
-    assert written['constraints'].splitlines() == [b'a-constraint', b'b-constraint']
-
-
-@pytest.mark.skipif(IS_PYPY, reason='uv cannot find PyPy executable')
-@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
-def test_uv_impl_install_files_line_endings_not_doubled(  # pragma: no cover -- skipped on PyPy, covered on CPython
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    written: dict[str, bytes] = {}
-
-    def fake_run_subprocess(cmd: list[str], **_kwargs: object) -> None:
-        args = iter(cmd)
-        for arg in args:
-            if arg == '-c':
-                written['constraints'] = Path(next(args)).read_bytes()
-
-    with build.env.DefaultIsolatedEnv(installer='uv') as env:
-        mocker.patch('build.env.run_subprocess', side_effect=fake_run_subprocess)
-        env.install(['some', 'requirements'], ['a-constraint', 'b-constraint'])
-
-    assert b'\r\r' not in written['constraints']
-    assert written['constraints'].splitlines() == [b'a-constraint', b'b-constraint']
 
 
 @pytest.mark.usefixtures('local_pip')

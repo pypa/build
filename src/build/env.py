@@ -56,6 +56,8 @@ if TYPE_CHECKING:
     else:
         from typing import Self
 
+    from . import _types
+
     class _DistArgs(typing.TypedDict, total=False):
         path: list[str]
 
@@ -208,7 +210,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
     def install(
         self,
         requirements: Collection[str],
-        constraints: Collection[str] = (),
+        constraints_txt_path: _types.StrPath | None = None,
         *,
         _fresh: bool = False,  # Used internally by CLI to support preset PYTHONPATH
     ) -> None:
@@ -227,7 +229,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
             kind=('step',),
         )
-        self._env_backend.install_dependencies(requirements, constraints, _fresh=_fresh)
+        self._env_backend.install_dependencies(requirements, constraints_txt_path, _fresh=_fresh)
 
 
 def _canonical_requirement_name(requirement: str) -> str | None:
@@ -247,7 +249,7 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
     def install_dependencies(
         self,
         requirements: Collection[str],
-        constraints: Collection[str],
+        constraints_txt_path: _types.StrPath | None,
         *,
         _fresh: bool = False,
     ) -> None: ...
@@ -392,7 +394,7 @@ class _PipBackend(_EnvBackend):
     def install_dependencies(
         self,
         requirements: Collection[str],
-        constraints: Collection[str],
+        constraints_txt_path: _types.StrPath | None,
         *,
         _fresh: bool = False,
     ) -> None:
@@ -420,14 +422,8 @@ class _PipBackend(_EnvBackend):
 
             cmd += ['-r', os.path.abspath(requirement_file.name)]
 
-            if constraints:
-                with tempfile.NamedTemporaryFile(
-                    'w', prefix='build-constraints-', suffix='.txt', delete=False, encoding='utf-8'
-                ) as constraint_file:
-                    constraint_file.write('\n'.join(constraints))
-                exit_stack.callback(functools.partial(os.unlink, constraint_file.name))
-
-                cmd += ['-c', os.path.abspath(constraint_file.name)]
+            if constraints_txt_path:
+                cmd += ['-c', str(constraints_txt_path)]
 
             run_subprocess(cmd, env=_pip_env())
 
@@ -461,32 +457,25 @@ class _UvBackend(_EnvBackend):
     def install_dependencies(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
         self,
         requirements: Collection[str],
-        constraints: Collection[str],
+        constraints_txt_path: _types.StrPath | None,
         *,
         _fresh: bool = False,
     ) -> None:
-        with contextlib.ExitStack() as exit_stack:
-            cmd = [self._uv_bin, 'pip']
+        cmd = [self._uv_bin, 'pip']
 
-            if (verbosity := _ctx.verbosity) > 1:
-                cmd += [f'-{"v" * min(2, verbosity - 1)}']
+        if (verbosity := _ctx.verbosity) > 1:
+            cmd += [f'-{"v" * min(2, verbosity - 1)}']
 
-            cmd += ['install', *requirements, '--python', self.python_executable]
+        cmd += ['install', *requirements, '--python', self.python_executable]
 
-            if constraints:
-                with tempfile.NamedTemporaryFile(
-                    'w', prefix='build-constraints-', suffix='.txt', delete=False, encoding='utf-8'
-                ) as constraint_file:
-                    constraint_file.write('\n'.join(constraints))
-                exit_stack.callback(functools.partial(os.unlink, constraint_file.name))
+        if constraints_txt_path:
+            cmd += ['-c', str(constraints_txt_path)]
 
-                cmd += ['-c', os.path.abspath(constraint_file.name)]
-
-            env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
-            env['VIRTUAL_ENV'] = self._env_path
-            if 'UV_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
-                env['UV_KEYRING_PROVIDER'] = 'subprocess'
-            run_subprocess(cmd, env=env)
+        env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
+        env['VIRTUAL_ENV'] = self._env_path
+        if 'UV_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
+            env['UV_KEYRING_PROVIDER'] = 'subprocess'
+        run_subprocess(cmd, env=env)
 
     @property
     def display_name(self) -> str:
