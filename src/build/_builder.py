@@ -3,19 +3,15 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
-    'contextlib',
+__lazy_modules__ = {
     'difflib',
+    'subprocess',
+    'warnings',
+    'zipfile',
     f'{__spec__.parent}._compat',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
-    'os',
-    'pyproject_hooks',
-    'subprocess',
-    'sys',
-    'warnings',
-    'zipfile',
-]
+}
 
 import contextlib
 import difflib

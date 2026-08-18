@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
-    f'{__spec__.parent}._compat',
-    'packaging',
-    'packaging.requirements',
-]
+__lazy_modules__ = {'packaging', 'packaging.requirements', f'{__spec__.parent}._compat'}
 
 import sys
 

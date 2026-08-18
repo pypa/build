@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [f'{__spec__.parent}._compat', f'{__spec__.parent}.env', 'pathlib', 'tempfile']
+__lazy_modules__ = {
+    'pathlib',
+    'tempfile',
+    f'{__spec__.parent}._compat',
+    f'{__spec__.parent}.env',
+}
 
 import pathlib
 import tempfile

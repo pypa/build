@@ -231,6 +231,7 @@ exclude = [
   "tests/packages/test-bad-syntax",
 ]
 line-length = 127
+show-fixes = true
 
 [tool.ruff.format]
 quote-style = "single"
