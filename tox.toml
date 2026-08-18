@@ -28,7 +28,6 @@ dependency_groups = ["test"]
 
 [env_run_base.set_env]
 COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}"
-PYPY3323BUG = "1"
 PYTHONWARNDEFAULTENCODING = "1"
 TEST_STATUS_DIR = "{envtmpdir}"
 
