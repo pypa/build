@@ -46,16 +46,17 @@ repos:
         additional_dependencies: ["sphinx>=9.1"]
         exclude: ^docs/index\.rst$ # https://github.com/LilSpazJoekp/docstrfmt/issues/176
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 7c55798a78262d14b2074abf623d8a992ebb70d4 # frozen: v0.16.2
+    rev: 65dbdb59d2f2d9c3bdc343c566821ad3319ddaa3 # frozen: v0.16.3
     hooks:
       - id: ruff-check
-        args: [--fix, --show-fixes]
+        args: [--fix]
       - id: ruff-format
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: 5fed9a818f2583f0403aed779bf2b6c9aa8d25f4 # frozen: v0.8.5
+    rev: 3b5e52593dfaec56e6e4a48f237bafcf3d0b83ea # frozen: v0.9.0
     hooks:
       - id: flake8-lazy
         files: ^src/
+        args: [--apply=set]
   - repo: https://github.com/codespell-project/codespell
     rev: "57b21406f092110c18776e39b0bda50d37c945c8" # frozen: v2.4.3
     hooks:

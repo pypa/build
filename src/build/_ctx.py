@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = ['subprocess']
+__lazy_modules__ = {'subprocess'}
 
 import contextvars
 import logging

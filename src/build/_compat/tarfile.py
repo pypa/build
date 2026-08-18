@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
-    'pathlib',
-    'tarfile',
-]
+__lazy_modules__ = {'pathlib', 'tarfile'}
 
 import sys
 import tarfile

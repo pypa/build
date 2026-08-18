@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
+__lazy_modules__ = {
     'argparse',
     'build._compat',
     'build._compat.tarfile',
@@ -13,7 +13,6 @@ __lazy_modules__ = [
     'functools',
     'hashlib',
     'json',
-    'os',
     'packaging',
     'packaging.utils',
     'packaging.version',
@@ -27,7 +26,7 @@ __lazy_modules__ = [
     'traceback',
     'warnings',
     'zipfile',
-]
+}
 
 import argparse
 import contextlib

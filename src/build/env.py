@@ -1,27 +1,24 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = [
-    'abc',
+__lazy_modules__ = {
     'contextlib',
-    f'{__spec__.parent}._compat.importlib',
-    f'{__spec__.parent}._ctx',
-    f'{__spec__.parent}._exceptions',
-    f'{__spec__.parent}._util',
     'importlib',
     'importlib.util',
-    'os',
     'packaging',
     'packaging.requirements',
     'packaging.utils',
     'platform',
     'shutil',
     'subprocess',
-    'sys',
     'sysconfig',
     'tempfile',
     'warnings',
-]
+    f'{__spec__.parent}._compat.importlib',
+    f'{__spec__.parent}._ctx',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}._util',
+}
 
 import abc
 import contextlib
