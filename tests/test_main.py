@@ -403,7 +403,6 @@ def test_build_raises_build_backend_exception(mocker: pytest_mock.MockerFixture,
 
 
 @pytest.mark.network
-@pytest.mark.pypy3323bug
 def test_build_package(tmp_dir: str, package_test_setuptools: str) -> None:
     build.__main__.build_package(package_test_setuptools, tmp_dir, ['sdist', 'wheel'])
 
@@ -414,7 +413,6 @@ def test_build_package(tmp_dir: str, package_test_setuptools: str) -> None:
 
 
 @pytest.mark.network
-@pytest.mark.pypy3323bug
 def test_build_package_via_sdist(tmp_dir: str, package_test_setuptools: str) -> None:
     build.__main__.build_package_via_sdist(package_test_setuptools, tmp_dir, ['wheel'])
 
@@ -424,7 +422,6 @@ def test_build_package_via_sdist(tmp_dir: str, package_test_setuptools: str) -> 
     ]
 
 
-@pytest.mark.pypy3323bug
 def test_build_package_via_sdist_incomplete_sdist(tmp_dir: str, package_test_cant_build_via_sdist: str) -> None:
     # The backend produces an sdist without a PKG-INFO, so it is rejected up front rather than
     # failing later when the wheel build cannot find its missing source file.
@@ -495,7 +492,6 @@ def test_build_package_with_empty_constraints_txt(
     install.assert_any_call({'flit_core >=2,<4'}, _fresh=True)
 
 
-@pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
     ('args', 'output'),
     [
@@ -622,7 +618,6 @@ def test_logging_output_backend_versions(
     assert any(re.fullmatch(r' {2}- setuptools==\d[\w.]*', line) for line in stderr.splitlines())
 
 
-@pytest.mark.pypy3323bug
 @pytest.mark.parametrize(
     ('color', 'stderr_error', 'stderr_body'),
     [

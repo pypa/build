@@ -9,7 +9,6 @@ import os
 import os.path
 import shutil
 import stat
-import sys
 import sysconfig
 import tempfile
 
@@ -36,12 +35,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
 
 
-PYPY3_WIN_VENV_BAD = (
-    sys.implementation.name == 'pypy' and sys.implementation.version < (7, 3, 9) and sys.platform.startswith('win')
-)
-PYPY3_WIN_M = 'https://foss.heptapod.net/pypy/pypy/-/issues/3323 and https://foss.heptapod.net/pypy/pypy/-/issues/3321'
-
-
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     skip_int = pytest.mark.skip(reason='integration tests not run (no --run-integration flag)')
     skip_other = pytest.mark.skip(reason='only integration tests are run (got --only-integration flag)')
@@ -54,14 +47,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         return
     for item in items:
         is_integration_file = is_integration(item)
-        if PYPY3_WIN_VENV_BAD and item.get_closest_marker('pypy3323bug') and os.environ.get('PYPY3323BUG', None):
-            item.add_marker(pytest.mark.xfail(reason=PYPY3_WIN_M, strict=False))
-        if (
-            PYPY3_WIN_VENV_BAD
-            and item.get_closest_marker('isolated')
-            and _xfail_isolated_strict(item, is_integration_file=is_integration_file)
-        ):
-            item.add_marker(pytest.mark.xfail(reason=PYPY3_WIN_M, strict=True))
         if is_integration_file:  # pragma: no cover
             if not config.getoption('--run-integration') and not config.getoption('--only-integration'):
                 item.add_marker(skip_int)

@@ -152,7 +152,6 @@ def test_isolated_env_abstract() -> None:
         PartialEnv2()
 
 
-@pytest.mark.pypy3323bug
 def test_isolated_env_log(
     caplog: pytest.LogCaptureFixture,
     mocker: pytest_mock.MockerFixture,

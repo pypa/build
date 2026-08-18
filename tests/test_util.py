@@ -12,7 +12,6 @@ import pytest_mock
 import build.util
 
 
-@pytest.mark.pypy3323bug
 @pytest.mark.parametrize('isolated', [False, pytest.param(True, marks=[pytest.mark.network, pytest.mark.isolated])])
 def test_wheel_metadata(package_test_setuptools: str, isolated: bool) -> None:
     metadata = build.util.project_wheel_metadata(package_test_setuptools, isolated)
@@ -24,7 +23,6 @@ def test_wheel_metadata(package_test_setuptools: str, isolated: bool) -> None:
 
 
 @pytest.mark.network
-@pytest.mark.pypy3323bug
 def test_wheel_metadata_isolation(package_test_flit: str) -> None:
     if importlib.util.find_spec('flit_core'):
         pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
@@ -43,7 +41,6 @@ def test_wheel_metadata_isolation(package_test_flit: str) -> None:
 
 
 @pytest.mark.network
-@pytest.mark.pypy3323bug
 def test_with_get_requires(package_test_metadata: str) -> None:
     metadata = build.util.project_wheel_metadata(package_test_metadata)
 
