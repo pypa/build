@@ -269,10 +269,15 @@ class ProjectBuilder:
         """
         _ctx.log(f'Getting build dependencies for {distribution}...', kind=('step',))
         hook_name = f'get_requires_for_build_{distribution}'
-        get_requires = getattr(self._hook, hook_name)
 
         with self._handle_backend(hook_name):
-            return set(get_requires(config_settings))
+            if distribution == 'editable':
+                requires = self._hook.get_requires_for_build_editable(config_settings)
+            elif distribution == 'sdist':
+                requires = self._hook.get_requires_for_build_sdist(config_settings)
+            else:
+                requires = self._hook.get_requires_for_build_wheel(config_settings)
+            return set(requires)
 
     def check_dependencies(
         self,

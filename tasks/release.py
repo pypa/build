@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from subprocess import call, check_call
+from typing import cast
 
 from git import Commit, Remote, Repo, TagReference
 from packaging.version import Version
@@ -39,7 +40,7 @@ def main(version_str: str, *, push: bool) -> None:
 def resolve_version(version_str: str, repo: Repo) -> Version:
     if version_str not in {'auto', 'major', 'minor', 'patch'}:
         return Version(version_str)
-    parts = [int(x) for x in repo.git.describe('--tags', '--abbrev=0').lstrip('v').split('.')[:3]]
+    parts = [int(part) for part in cast('str', repo.git.describe('--tags', '--abbrev=0')).lstrip('v').split('.')[:3]]
     match detect_bump() if version_str == 'auto' else version_str:
         case 'major':
             parts = [parts[0] + 1, 0, 0]

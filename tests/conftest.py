@@ -15,7 +15,7 @@ import tempfile
 from collections.abc import Callable, Generator
 from functools import partial, update_wrapper
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, cast
 
 import pytest
 
@@ -123,7 +123,7 @@ def is_setuptools(package_path: Path) -> bool:
     pyproject = package_path / 'pyproject.toml'
     try:
         with pyproject.open('rb') as f:
-            pp = tomllib.load(f)
+            pp = cast(dict[str, dict[str, str]], tomllib.load(f))
     except (FileNotFoundError, ValueError):
         return True
     return 'setuptools' in pp.get('build-system', {}).get('build-backend', 'setuptools')

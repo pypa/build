@@ -270,7 +270,7 @@ def test_init_makes_source_dir_absolute(package_test_flit: str) -> None:
     assert os.path.isabs(builder.source_dir)
 
 
-@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist', 'editable'])
 def test_get_requires_for_build_missing_backend(
     packages_path: str, distribution: typing.Literal['sdist', 'wheel', 'editable']
 ) -> None:
@@ -281,7 +281,7 @@ def test_get_requires_for_build_missing_backend(
         builder.get_requires_for_build(distribution)
 
 
-@pytest.mark.parametrize('distribution', ['wheel', 'sdist'])
+@pytest.mark.parametrize('distribution', ['wheel', 'sdist', 'editable'])
 def test_get_requires_for_build_missing_optional_hooks(
     package_test_optional_hooks: str, distribution: typing.Literal['sdist', 'wheel', 'editable']
 ) -> None:

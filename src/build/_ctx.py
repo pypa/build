@@ -21,8 +21,7 @@ class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, kind: tuple[str, ...] | None = None) -> None: ...
 
 
-_package_name = __spec__.parent
-_default_logger = logging.getLogger(_package_name)
+_default_logger = logging.getLogger(typing.cast('str', __spec__.parent))
 
 
 def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None:  # noqa: ARG001
