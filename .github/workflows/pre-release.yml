@@ -1,4 +1,5 @@
 name: Pre-release
+run-name: Pre-release (${{ inputs.bump }})
 on:
   workflow_dispatch:
     inputs:
@@ -20,16 +21,17 @@ jobs:
   pre-release:
     name: Pre-release
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment: release
     permissions:
-      contents: write # to push release commit and tag
+      contents: read # to checkout
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-          token: ${{ secrets.GH_RELEASE_TOKEN }}
+          ref: main
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
@@ -38,13 +40,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python
         run: uv python install 3.14
-      - name: Configure git identity from token owner
+      - name: Create release token
+        id: release-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - name: Configure git identity
         env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+          APP_SLUG: ${{ steps.release-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
         run: |
-          user_info=$(gh api /user)
-          git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
-          git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
+          user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
       - name: Generate release commit and tag
         run: uv tool run --with tox-uv tox r -e release -- --version "$BUMP" --no-push
         env:
@@ -53,9 +63,8 @@ jobs:
         run: uv tool run --with tox-uv tox r -e docs
       - name: Push release commit and tag
         run: |
-          git remote set-url origin "https://x-access-token:${GH_RELEASE_TOKEN}@github.com/$GITHUB_REPOSITORY.git"
-          git push origin HEAD:main
-          git push origin "$(git describe --tags --abbrev=0)"
+          gh auth setup-git
+          tag=$(git describe --tags --exact-match HEAD)
+          git push --atomic origin HEAD:main "refs/tags/${tag}"
         env:
-          GH_RELEASE_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
