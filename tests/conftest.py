@@ -53,7 +53,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         elif config.getoption('--only-integration'):  # pragma: no cover
             item.add_marker(skip_other)
     # run integration tests after unit tests
-    items.sort(key=lambda i: 1 if is_integration(i) else 0)
+    items.sort(key=is_integration)
 
 
 def _xfail_isolated_strict(item: pytest.Item, *, is_integration_file: bool) -> bool:

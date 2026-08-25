@@ -30,8 +30,8 @@ def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None: 
     _default_logger.log(logging.INFO, message, stacklevel=2)
 
 
-LOGGER = contextvars.ContextVar('LOGGER', default=_log_default)
-VERBOSITY = contextvars.ContextVar('VERBOSITY', default=0)
+LOGGER: typing.Final[contextvars.ContextVar[Logger]] = contextvars.ContextVar('LOGGER', default=_log_default)
+VERBOSITY: typing.Final[contextvars.ContextVar[int]] = contextvars.ContextVar('VERBOSITY', default=0)
 
 
 def log_subprocess_error(error: subprocess.CalledProcessError) -> None:

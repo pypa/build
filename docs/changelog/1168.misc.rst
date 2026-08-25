@@ -1,0 +1,1 @@
+Use ``pyrefly`` for project type checking and require 100% package type coverage - by :user:`gaborbernat`.

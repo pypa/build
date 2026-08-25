@@ -315,7 +315,7 @@ def test_check_dependencies(
 
     builder = build.ProjectBuilder(package_test_flit)
 
-    side_effects = [
+    side_effects: list[list[str] | type[pyproject_hooks.BackendUnavailable]] = [
         [],
         ['something'],
         pyproject_hooks.BackendUnavailable,
@@ -762,11 +762,19 @@ def test_parse_invalid_build_system_table_type(pyproject_toml: Mapping[str, TOML
         build._builder._parse_build_system_table(pyproject_toml)
 
 
+def _no_backend_path(_tmp_path: pathlib.Path) -> None:
+    return None
+
+
+def _backend_path_as_file(tmp_path: pathlib.Path) -> None:
+    (tmp_path / 'bad').write_text('', encoding='utf-8')
+
+
 @pytest.mark.parametrize(
     'setup',
     [
-        pytest.param(lambda _tmp_path: None, id='nonexistent'),
-        pytest.param(lambda tmp_path: (tmp_path / 'bad').write_text('', encoding='utf-8'), id='file-not-dir'),
+        pytest.param(_no_backend_path, id='nonexistent'),
+        pytest.param(_backend_path_as_file, id='file-not-dir'),
     ],
 )
 def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[[pathlib.Path], None]) -> None:
