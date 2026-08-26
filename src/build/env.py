@@ -62,7 +62,7 @@ if TYPE_CHECKING:
 
 Installer = typing.Literal['pip', 'uv']
 
-INSTALLERS: typing.Final[tuple[Installer, ...]] = typing.get_args(Installer)
+INSTALLERS: tuple[Installer, ...] = typing.get_args(Installer)
 
 
 class IsolatedEnv(typing.Protocol):
