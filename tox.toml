@@ -47,10 +47,13 @@ commands = [
 dependency_groups = ["lint"]
 
 [env.type]
-description = "run type check on code base"
+description = "run pyrefly type checks and package type coverage"
 set_env = { PYTHONWARNDEFAULTENCODING = "" }
-commands = [["mypy", { replace = "posargs", extend = true }]]
-dependency_groups = ["mypy"]
+commands = [
+    ["pyrefly", "check", { replace = "posargs", extend = true }],
+    ["pyrefly", "coverage", "check", "--strict", "--public-only", "--fail-under", "100", "src/build"],
+]
+dependency_groups = ["pyrefly"]
 
 [env.docs]
 description = "build documentations"

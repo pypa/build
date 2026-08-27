@@ -21,8 +21,7 @@ class Logger(typing.Protocol):  # pragma: no cover
     def __call__(self, message: str, *, kind: tuple[str, ...] | None = None) -> None: ...
 
 
-_package_name = __spec__.parent
-_default_logger = logging.getLogger(_package_name)
+_default_logger = logging.getLogger(typing.cast('str', __spec__.parent))
 
 
 def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None:  # noqa: ARG001
@@ -30,8 +29,8 @@ def _log_default(message: str, *, kind: tuple[str, ...] | None = None) -> None: 
     _default_logger.log(logging.INFO, message, stacklevel=2)
 
 
-LOGGER = contextvars.ContextVar('LOGGER', default=_log_default)
-VERBOSITY = contextvars.ContextVar('VERBOSITY', default=0)
+LOGGER = contextvars.ContextVar[Logger]('LOGGER', default=_log_default)
+VERBOSITY = contextvars.ContextVar[int]('VERBOSITY', default=0)
 
 
 def log_subprocess_error(error: subprocess.CalledProcessError) -> None:

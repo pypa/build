@@ -17,7 +17,7 @@ import venv
 import zipfile
 
 from collections.abc import Callable, Generator
-from typing import TYPE_CHECKING, Protocol, TypedDict
+from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
 import pytest
 import pytest_mock
@@ -57,6 +57,19 @@ class BuildKwargs(TypedDict):
     dependency_constraints_txt: str | None
     installer: str
     env_dir: str | None
+
+
+class ArtifactReport(TypedDict):
+    name: str
+    path: str
+    kind: str
+    size: int
+    hashes: dict[str, str]
+
+
+class BuildReport(TypedDict):
+    version: str
+    artifacts: list[ArtifactReport]
 
 
 def make_kwargs(
@@ -300,7 +313,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     )
 
     assert built == ['demo-1.0.0.tar.gz', 'demo-1.0.0-py3-none-any.whl']
-    extractall = tar_open.return_value.__enter__.return_value.extractall
+    extractall = cast(unittest.mock.MagicMock, tar_open.return_value.__enter__.return_value.extractall)
     extractall.assert_called_once()
     assert extractall.call_args.args[0] == 'temp-sdist-dir'
     build_cmd.assert_has_calls(
@@ -818,7 +831,7 @@ def test_metadata_json_output(
     build.__main__.main([package_test_setuptools, '--metadata', '-n'])
 
     stdout = capsys.readouterr().out
-    metadata = json.loads(stdout)
+    metadata = cast(dict[str, str], json.loads(stdout))
     # Name normalised in old versions of setuptools.
     assert metadata['name'] in {'test_setuptools', 'test-setuptools'}
     assert metadata['version'] == '1.0.0'
@@ -916,7 +929,8 @@ def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
 
 def test_log_dependency_versions_none(mocker: pytest_mock.MockerFixture) -> None:
     env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
-    env.installed_versions.return_value = {}
+    installed: dict[str, str] = {}
+    env.installed_versions.return_value = installed
     log = mocker.patch('build.__main__._ctx.log')
 
     build.__main__._log_dependency_versions(env, set())
@@ -1370,7 +1384,7 @@ def test_report_written(
 
     build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report)])
 
-    payload = json.loads(report.read_text(encoding='utf-8'))
+    payload = cast(BuildReport, json.loads(report.read_text(encoding='utf-8')))
     assert payload['version'] == '1.0'
     assert [artifact['name'] for artifact in payload['artifacts']] == names
     for artifact, name in zip(payload['artifacts'], names, strict=True):

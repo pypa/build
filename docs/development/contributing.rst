@@ -89,9 +89,8 @@ build follows modern Python code style conventions enforced by `ruff <https://do
 a pull request, run the linter to ensure your code meets the project's style guidelines. The ruff configuration is
 defined in the pyproject.toml file and includes both formatting and linting rules.
 
-The project also uses type annotations throughout the codebase. All new code should include appropriate type hints, and
-changes to existing code should preserve or improve type annotations. Use `pyright
-<https://microsoft.github.io/pyright/>`_ for type checking to verify your type annotations are correct.
+The project uses type annotations throughout the codebase. Add type hints to new code and preserve or improve existing
+annotations. The ``type`` tox environment runs `Pyrefly <https://pyrefly.org/>`_ and requires full package coverage.
 
 ***************
  Documentation
