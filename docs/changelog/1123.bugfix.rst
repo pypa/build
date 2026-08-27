@@ -1,2 +1,0 @@
-Decide color support independently for stdout and stderr instead of only checking ``stdout.isatty()``, so redirecting
-one stream no longer disables or leaks ANSI colors on the other - by :user:`henryiii`

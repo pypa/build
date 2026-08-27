@@ -1,1 +1,0 @@
-Accept ``pathlib.Path`` in ``safe_extractall`` - by :user:`henryiii`

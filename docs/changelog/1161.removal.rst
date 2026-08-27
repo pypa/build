@@ -1,1 +1,0 @@
-Remove ``exc_info`` parameter and attribute from ``BuildBackendException``. - by :user:`layday`

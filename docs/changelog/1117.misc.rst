@@ -1,1 +1,0 @@
-The ``--installer`` CLI option now has an explicit ``pip`` default instead of relying on ``None``.
