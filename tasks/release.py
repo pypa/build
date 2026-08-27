@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
-from subprocess import call, check_call
+from subprocess import call, check_call, run
 from typing import cast
 
 from git import Commit, Remote, Repo, TagReference
@@ -16,6 +18,7 @@ CHANGELOG_FILE = ROOT_SRC_DIR / 'CHANGELOG.rst'
 CHANGELOG_FRAGMENTS_DIR = ROOT_SRC_DIR / 'docs' / 'changelog'
 MAJOR_FRAGMENT_TYPES = frozenset({'removal'})
 MINOR_FRAGMENT_TYPES = frozenset({'feature', 'deprecation'})
+CHECKED_FILE_COUNT = re.compile(r'(\d+) files? was checked')
 
 
 def main(version_str: str, *, push: bool) -> None:
@@ -81,18 +84,34 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     update_version_file(version)
     print('build changelog from fragments with towncrier')
     check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S603
-    # towncrier appends the issue reference past docstrfmt's width budget, so its raw output can run over the
-    # limit; reflow it here with a pinned docstrfmt instead of trusting the release job's isolated hook env,
-    # which passed over-long lines into 1.5.1 and left a changelog that failed pre-commit everywhere else.
-    check_call(['docstrfmt', '--line-length', '120', 'CHANGELOG.rst'], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     repo.git.add('src/build/__init__.py', 'CHANGELOG.rst', 'docs/changelog/*')
-    check_call(['pre-commit', 'run', '--all-files', '--show-diff-on-failure'], cwd=str(ROOT_SRC_DIR))
+    verify_hooks_ran()
     if repo.is_dirty(index=False, working_tree=True, untracked_files=False):
         msg = 'Pre-commit hooks modified files after final run. This indicates an environment inconsistency.'
         raise RuntimeError(msg)
     return repo.index.commit(f'chore: prepare for {version}')
+
+
+def verify_hooks_ran() -> None:
+    # docstrfmt exits 0 whether it formats or inspects nothing, and pre-commit hides a passing hook's output.
+    # --verbose exposes its file count, the only proof it did work: a zero shipped 1.6.0 unformatted.
+    result = run(
+        ['pre-commit', 'run', '--all-files', '--verbose', '--show-diff-on-failure'],
+        capture_output=True,
+        check=False,
+        cwd=str(ROOT_SRC_DIR),
+        encoding='utf-8',
+    )
+    report = f'{result.stdout}{result.stderr}'.strip()
+    print(report)
+    if result.returncode:
+        msg = f'Pre-commit hooks failed on the release commit:\n{report}'
+        raise RuntimeError(msg)
+    if (checked := CHECKED_FILE_COUNT.search(report)) is None or not int(checked[1]):
+        msg = f'docstrfmt inspected no files, so the changelog formatting is unverified:\n{report}'
+        raise RuntimeError(msg)
 
 
 def update_version_file(version: Version) -> None:
