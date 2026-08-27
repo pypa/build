@@ -108,6 +108,7 @@ test = [
   { include-group = "extra" },
 ]
 typing = [
+  "colorama",
   "importlib-metadata >= 5.1",
   "tomli",
   "typing-extensions >= 4.0.0",
@@ -116,8 +117,8 @@ typing = [
   { include-group = "test-core" },
   { include-group = "extra" },
 ]
-mypy = [
-  "mypy ~= 2.3.0",
+pyrefly = [
+  "pyrefly >= 1.2",
   { include-group = "typing" },
 ]
 release = [
@@ -130,7 +131,7 @@ release = [
 dev = [
   "flit-core",
   { include-group = "test" },
-  { include-group = "mypy" },
+  { include-group = "pyrefly" },
 ]
 
 [tool.flit.sdist]
@@ -191,38 +192,19 @@ filterwarnings = [
   "ignore:os.path.commonprefix:DeprecationWarning" # https://github.com/pypa/pyproject-hooks/pull/222
 ]
 
-[tool.mypy]
-files = ["src", "tests", "tasks", "docs"]
-exclude = ["tests/packages"]
-python_version = "3.10"
-native_parser = true
-strict = true
-disallow_any_explicit = true
-disallow_any_decorated = true
-disallow_any_unimported = true
-disallow_untyped_globals = true
-disallow_redefinition = true
-warn_unused_configs = true
-warn_unreachable = true
-enable_error_code = [
-  "deprecated",
-  "exhaustive-match",
-  "ignore-without-code",
-  "mutable-override",
-  "possibly-undefined",
-  "redundant-expr",
-  "redundant-self",
-  "truthy-bool",
-  "truthy-iterable",
-  "unimported-reveal",
-  "unused-awaitable",
-]
+[tool.pyrefly]
+project-includes = ["src", "tests", "tasks", "docs"]
+project-excludes = ["**/tests/packages*"]
+search-path = ["src", "tests"]
+python-version = "3.10"
+preset = "all"
 
-[[tool.mypy.overrides]]
-module = [
-  "virtualenv", # Optional dependency
-]
-ignore_missing_imports = true
+[tool.pyrefly.errors]
+# `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
+missing-override-decorator = false
+# These style rules reject intentional truthiness checks and side-effect calls throughout the project.
+implicit-bool = false
+unused-call-result = false
 
 [tool.ruff]
 exclude = [

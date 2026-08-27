@@ -62,7 +62,7 @@ if TYPE_CHECKING:
 
 Installer = typing.Literal['pip', 'uv']
 
-INSTALLERS = typing.get_args(Installer)
+INSTALLERS: tuple[Installer, ...] = typing.get_args(Installer)
 
 
 class IsolatedEnv(typing.Protocol):
@@ -107,6 +107,9 @@ class DefaultIsolatedEnv(IsolatedEnv):
     Isolated environment which supports several different underlying implementations.
     """
 
+    _env_backend: _EnvBackend
+    _path: str
+
     def __init__(
         self,
         *,
@@ -141,8 +144,6 @@ class DefaultIsolatedEnv(IsolatedEnv):
             # Ref: https://bugs.python.org/issue46171
             path = os.path.realpath(path)
             self._path = path
-
-            self._env_backend: _EnvBackend
 
             # uv is opt-in only.
             if self.installer == 'uv':
@@ -437,6 +438,9 @@ class _PipBackend(_EnvBackend):
 
 
 class _UvBackend(_EnvBackend):
+    _env_path: str
+    _uv_bin: str
+
     def create(self, path: str) -> None:
         import venv
 

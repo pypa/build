@@ -13,6 +13,7 @@ import http.client
 import os
 import shutil
 import time
+import typing
 import urllib.request
 
 from pathlib import Path
@@ -44,7 +45,7 @@ def download_archive(name: str) -> tuple[Path, str]:
     for attempt in range(1, ATTEMPTS + 1):
         try:
             with urllib.request.urlopen(url) as request, partial.open('wb') as file_handler:
-                shutil.copyfileobj(request, file_handler)
+                shutil.copyfileobj(typing.cast(http.client.HTTPResponse, request), file_handler)
         except NETWORK_ERRORS as exception:  # noqa: PERF203
             partial.unlink(missing_ok=True)
             if attempt == ATTEMPTS:

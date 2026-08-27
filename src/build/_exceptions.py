@@ -24,7 +24,7 @@ class BuildBackendException(Exception):
         description: str | None = None,
     ) -> None:
         super().__init__()
-        self.exception = exception
+        self.exception: Exception = exception
         self._description = description
 
     def __str__(self) -> str:
@@ -49,7 +49,7 @@ class FailedProcessError(Exception):
 
     def __init__(self, exception: subprocess.CalledProcessError, description: str) -> None:
         super().__init__()
-        self.exception = exception
+        self.exception: subprocess.CalledProcessError = exception
         self._description = description
 
     def __str__(self) -> str:
