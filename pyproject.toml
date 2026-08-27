@@ -122,7 +122,6 @@ pyrefly = [
   { include-group = "typing" },
 ]
 release = [
-  "docstrfmt == 2.2.0", # keep in sync with the docstrfmt rev in .pre-commit-config.yaml
   "gitpython >= 3.1.44",
   "packaging >= 25",
   "pre-commit >= 3.0",
