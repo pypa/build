@@ -81,9 +81,7 @@ def create_release_commit(repo: Repo, version: Version) -> Commit:
     update_version_file(version)
     print('build changelog from fragments with towncrier')
     check_call(['towncrier', 'build', '--yes', '--version', version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S603
-    # towncrier appends the issue reference past docstrfmt's width budget, so its raw output can run over the
-    # limit; reflow it here with a pinned docstrfmt instead of trusting the release job's isolated hook env,
-    # which passed over-long lines into 1.5.1 and left a changelog that failed pre-commit everywhere else.
+    # towncrier can append issue references past docstrfmt's width budget.
     check_call(['docstrfmt', '--line-length', '120', 'CHANGELOG.rst'], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))
     call(['pre-commit', 'run', '--all-files'], cwd=str(ROOT_SRC_DIR))

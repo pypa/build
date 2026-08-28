@@ -39,7 +39,7 @@ repos:
           - mdformat-gfm>=1
           - mdformat-ruff>=0.1.3
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: a05381030e526dc863e2006d34824271d7681d08 # frozen: v2.2.0
+    rev: c1813841673cdcd6cf602dde1edb78a5d5e45235 # frozen: v2.2.1
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
