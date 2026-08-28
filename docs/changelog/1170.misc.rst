@@ -1,2 +1,1 @@
-Fail the release when the changelog formatting check verifies nothing, and reformat the 1.6.0 changelog - by
-:user:`gaborbernat`
+Format generated release changelogs with docstrfmt 2.2.1 and reformat the 1.6.0 changelog - by :user:`gaborbernat`

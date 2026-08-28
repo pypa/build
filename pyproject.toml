@@ -122,6 +122,7 @@ pyrefly = [
   { include-group = "typing" },
 ]
 release = [
+  "docstrfmt == 2.2.1", # keep in sync with the docstrfmt rev in .pre-commit-config.yaml
   "gitpython >= 3.1.44",
   "packaging >= 25",
   "pre-commit >= 3.0",
@@ -146,6 +147,7 @@ exclude = [
 
 [tool.uv]
 exclude-newer = "7 days"
+exclude-newer-package = { docstrfmt = "2026-08-28T18:00:18Z" }
 
 
 [tool.coverage]
