@@ -66,6 +66,9 @@ Installer = typing.Literal['pip', 'uv']
 
 INSTALLERS: tuple[Installer, ...] = typing.get_args(Installer)
 
+# Match the ``venv`` CLI default. Symlinked interpreters on Windows can fail, see #1175.
+_USE_SYMLINKS = os.name != 'nt'
+
 
 class IsolatedEnv(typing.Protocol):
     """Isolated build environment ABC."""
@@ -361,7 +364,7 @@ class _PipBackend(_EnvBackend):
             with_pip = not self._has_valid_outer_pip
 
             try:
-                venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=with_pip).create(path)
+                venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=with_pip).create(path)
             except subprocess.CalledProcessError as exc:
                 _ctx.log_subprocess_error(exc)
                 raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
@@ -455,7 +458,7 @@ class _UvBackend(_EnvBackend):
             _ctx.log(f'Using external uv from {uv_bin}')
             self._uv_bin = uv_bin
 
-        venv.EnvBuilder(symlinks=_fs_supports_symlink(), with_pip=False).create(self._env_path)
+        venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=False).create(self._env_path)
         self.python_executable, self.scripts_dir, self.purelib = _find_executable_and_scripts(self._env_path)
 
     def install_dependencies(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
@@ -484,24 +487,6 @@ class _UvBackend(_EnvBackend):
     @property
     def display_name(self) -> str:
         return 'venv+uv'
-
-
-@functools.cache
-def _fs_supports_symlink() -> bool:
-    """Return True if symlinks are supported"""
-    # Using definition used by venv.main()
-    if os.name != 'nt':
-        return True  # pragma: win32 no cover
-
-    # Windows may support symlinks (setting in Windows 10)
-    with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:  # pragma: win32 cover
-        dest = f'{tmp_file.name}-b'
-        try:
-            os.symlink(tmp_file.name, dest)
-            os.unlink(dest)
-        except (OSError, NotImplementedError, AttributeError):
-            return False
-        return True
 
 
 def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:

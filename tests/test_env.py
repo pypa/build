@@ -212,62 +212,6 @@ def test_pip_needs_upgrade_mac_os_11(
             )
 
 
-@pytest.mark.parametrize('has_symlink', [True, False] if sys.platform.startswith('win') else [True])
-def test_venv_symlink(
-    mocker: pytest_mock.MockerFixture,
-    has_symlink: bool,
-) -> None:
-    if has_symlink:
-        mocker.patch('os.symlink')
-        mocker.patch('os.unlink')
-    else:  # pragma: win32 cover
-        mocker.patch('os.symlink', side_effect=OSError())
-
-    # Cache must be cleared to rerun
-    build.env._fs_supports_symlink.cache_clear()
-    supports_symlink = build.env._fs_supports_symlink()
-    build.env._fs_supports_symlink.cache_clear()
-
-    assert supports_symlink is has_symlink
-
-
-def test_fs_supports_symlink_windows_dest_is_tmp_file_path(
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    """Regression test for the Windows-only branch of ``_fs_supports_symlink``.
-
-    ``dest`` must be built from ``tmp_file.name``, not from the ``NamedTemporaryFile`` object itself: interpolating the
-    object yields its repr (containing ``<`` and ``>``, which are invalid in Windows filenames), so ``os.symlink`` would
-    always fail and the function would always report symlinks as unsupported, even when Windows Developer Mode enables
-    them.
-
-    """
-    mocker.patch('os.name', 'nt')
-
-    # Avoid exercising the real tempfile module: on some platforms tempfile's own
-    # internals branch on os.name, which we're patching to 'nt' above.
-    fake_tmp_file = mocker.MagicMock()
-    fake_tmp_file.name = r'C:\Users\test\AppData\Local\Temp\build-symlink-abc123'
-    fake_tmp_file.__enter__.return_value = fake_tmp_file
-    fake_tmp_file.__exit__.return_value = False
-    mocker.patch('build.env.tempfile.NamedTemporaryFile', return_value=fake_tmp_file)
-
-    recorded_dest = {}
-
-    def fake_symlink(_src: str, dst: str) -> None:
-        recorded_dest['dst'] = dst
-
-    mocker.patch('os.symlink', side_effect=fake_symlink)
-    mocker.patch('os.unlink')
-
-    build.env._fs_supports_symlink.cache_clear()
-    supports_symlink = build.env._fs_supports_symlink()
-    build.env._fs_supports_symlink.cache_clear()
-
-    assert supports_symlink is True
-    assert recorded_dest['dst'] == f'{fake_tmp_file.name}-b'
-
-
 def test_install_short_circuits(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
