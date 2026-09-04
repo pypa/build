@@ -31,7 +31,7 @@ def main(version_str: str, *, push: bool) -> None:
     tag = tag_release_commit(release_commit, repo, version)
     if push:
         print('push release commit')
-        repo.git.push(remote.name, 'HEAD:main')
+        repo.git.push(remote.name, f'HEAD:{repo.active_branch.name}')
         print('push release tag')
         repo.git.push(remote.name, tag)
     print('All done! ✨ 🍰 ✨')
