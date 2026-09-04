@@ -1,3 +1,1 @@
-Write the Windows pip configuration path as ``%APPDATA%\pip\pip.ini`` in the environment variables reference and the
-corporate environments how-to; the backslashes were doubled inside an inline literal, where reStructuredText does not
-treat them as escapes, so the rendered docs showed an invalid path - by :user:`aroh3006`
+Fix doubled backslashes in the Windows pip config path (``%APPDATA%\pip\pip.ini``) in the docs - by :user:`aroh3006`
