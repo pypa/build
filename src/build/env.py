@@ -473,7 +473,12 @@ class _UvBackend(_EnvBackend):
         if (verbosity := _ctx.verbosity) > 1:
             cmd += [f'-{"v" * min(2, verbosity - 1)}']
 
-        cmd += ['install', *requirements, '--python', self.python_executable]
+        cmd += ['install']
+        if _fresh:
+            # Match pip's ``--ignore-installed`` so CLI / project_wheel_metadata
+            # ``_fresh=True`` (preset PYTHONPATH) actually reinstalls into the env.
+            cmd += ['--reinstall']
+        cmd += [*requirements, '--python', self.python_executable]
 
         if constraints_txt_path:
             cmd += ['-c', str(constraints_txt_path)]

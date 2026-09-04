@@ -1,0 +1,1 @@
+Honor ``_fresh`` isolated installs when using the uv installer - by :user:`r3wretrhy`
