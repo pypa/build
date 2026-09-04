@@ -292,7 +292,7 @@ This is convenient if you always use the same settings.
 
 **Linux/macOS**: ``~/.config/pip/pip.conf``
 
-**Windows**: ``%APPDATA%\\pip\\pip.ini``
+**Windows**: ``%APPDATA%\pip\pip.ini``
 
 Example configuration:
 

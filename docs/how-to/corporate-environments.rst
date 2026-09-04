@@ -227,7 +227,7 @@ On Linux/macOS (``~/.config/pip/pip.conf``):
     trusted-host = pypi.company.com
     cert = /path/to/company-ca-bundle.crt
 
-On Windows (``%APPDATA%\\pip\\pip.ini``):
+On Windows (``%APPDATA%\pip\pip.ini``):
 
 .. code-block:: ini
 
