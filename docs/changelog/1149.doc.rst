@@ -1,0 +1,1 @@
+Fix doubled backslashes in the Windows pip config path (``%APPDATA%\pip\pip.ini``) in the docs - by :user:`aroh3006`
