@@ -488,20 +488,9 @@ class _UvBackend(_EnvBackend):
 
 @functools.cache
 def _fs_supports_symlink() -> bool:
-    """Return True if symlinks are supported"""
-    # Using definition used by venv.main()
-    if os.name != 'nt':
-        return True  # pragma: win32 no cover
-
-    # Windows may support symlinks (setting in Windows 10)
-    with tempfile.NamedTemporaryFile(prefix='build-symlink-') as tmp_file:  # pragma: win32 cover
-        dest = f'{tmp_file.name}-b'
-        try:
-            os.symlink(tmp_file.name, dest)
-            os.unlink(dest)
-        except (OSError, NotImplementedError, AttributeError):
-            return False
-        return True
+    """Return True if symlinks are supported."""
+    # Match stdlib venv.main(): symlinks on POSIX, copies on Windows (os.name == 'nt')
+    return os.name != 'nt'
 
 
 def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:

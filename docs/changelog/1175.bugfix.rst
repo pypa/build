@@ -1,0 +1,1 @@
+Do not use symlinks in virtual environments on Windows, matching stdlib venv - by :user:`kishansaaai`, fixes :issue:`1175`.
