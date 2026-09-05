@@ -21,7 +21,7 @@ jobs:
   pre-release:
     name: Pre-release
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v')
     environment: release
     permissions:
       contents: read # to checkout
@@ -31,7 +31,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: main
+          ref: ${{ github.ref }}
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
@@ -65,6 +65,7 @@ jobs:
         run: |
           gh auth setup-git
           tag=$(git describe --tags --exact-match HEAD)
-          git push --atomic origin HEAD:main "refs/tags/${tag}"
+          git push --atomic origin "HEAD:${BRANCH}" "refs/tags/${tag}"
         env:
           GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
