@@ -298,6 +298,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
                 'pip',
                 *(['-vv' if verbosity > 2 else '-v'] if verbosity > 1 else []),
                 'install',
+                *(['--reinstall'] if fresh else []),
                 'some',
                 'requirements',
                 '--python',
