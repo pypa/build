@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - v*
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
