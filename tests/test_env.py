@@ -766,3 +766,29 @@ def test_env_dir_rejects_file_at_location(tmp_path: pathlib.Path) -> None:
 def test_env_dir_accepts_existing_empty_location(tmp_path: pathlib.Path) -> None:
     with build.env.DefaultIsolatedEnv(path=str(tmp_path)) as env:
         assert env.path == os.path.realpath(tmp_path)
+
+
+@pytest.mark.parametrize('installer', ['pip', 'uv'])
+@pytest.mark.parametrize('error_type', [KeyboardInterrupt, SystemExit])
+@pytest.mark.parametrize('requested', [False, True])
+def test_interrupted_environment_creation(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+    installer: build.env.Installer,
+    error_type: type[BaseException],
+    requested: bool,
+) -> None:
+    target = tmp_path / 'build-env'
+    if not requested:
+        target.mkdir()
+        mocker.patch('build.env.tempfile.mkdtemp', return_value=str(target))
+    error = error_type('interrupted')
+    backend = '_UvBackend' if installer == 'uv' else '_PipBackend'
+    mocker.patch(f'build.env.{backend}.create', side_effect=error)
+    env = build.env.DefaultIsolatedEnv(installer=installer, path=str(target) if requested else None)
+
+    with pytest.raises(error_type) as caught, env:
+        raise AssertionError
+
+    assert caught.value is error
+    assert target.exists() is requested
