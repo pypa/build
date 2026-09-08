@@ -41,7 +41,10 @@ def log_subprocess_error(error: subprocess.CalledProcessError) -> None:
     for stream_name in ('stdout', 'stderr'):
         stream = getattr(error, stream_name)
         if stream:
-            log(stream.decode() if isinstance(stream, bytes) else stream, kind=('subprocess', stream_name))
+            log(
+                stream.decode(errors='backslashreplace') if isinstance(stream, bytes) else stream,
+                kind=('subprocess', stream_name),
+            )
 
 
 def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[str, str] | None = None) -> None:
@@ -51,7 +54,13 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
         log = LOGGER.get()
 
         with subprocess.Popen(  # noqa: S603
-            cmd, cwd=cwd, encoding='utf-8', env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            cmd,
+            cwd=cwd,
+            encoding='utf-8',
+            errors='backslashreplace',
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         ) as process:
             log(subprocess.list2cmdline(cmd), kind=('subprocess', 'cmd'))
 

@@ -1,0 +1,1 @@
+Preserve subprocess exit errors and verbose output when build tools emit bytes that are not valid UTF-8.

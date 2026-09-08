@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 import sys
 
 import pytest
@@ -64,3 +65,25 @@ def test_custom_subprocess_runner_ctx_logging(
 
     assert log_stub.call_count == len(kwarg_origins)
     assert [c.kwargs['kind'] for c in log_stub.call_args_list] == kwarg_origins
+
+
+@pytest.mark.parametrize('verbosity', [0, 1])
+def test_subprocess_invalid_utf8_preserves_failure(mocker: pytest_mock.MockerFixture, verbosity: int) -> None:
+    log_stub = mocker.stub('custom_logger')
+    build._ctx.LOGGER.set(log_stub)
+    build._ctx.VERBOSITY.set(verbosity)
+    command = [sys.executable, '-c', "import os; os.write(2, b'failed: \\xff\\n'); raise SystemExit(7)"]
+
+    with pytest.raises(subprocess.CalledProcessError) as caught:
+        build._ctx.run_subprocess(command)
+
+    assert caught.value.returncode == 7
+    assert any(r'failed: \xff' in call.args[0] for call in log_stub.call_args_list)
+
+
+def test_verbose_subprocess_invalid_utf8_success(mocker: pytest_mock.MockerFixture) -> None:
+    log_stub = mocker.stub('custom_logger')
+    build._ctx.LOGGER.set(log_stub)
+    build._ctx.VERBOSITY.set(1)
+    build._ctx.run_subprocess([sys.executable, '-c', "import os; os.write(1, b'output: \\xff\\n')"])
+    assert any(r'output: \xff' in call.args[0] for call in log_stub.call_args_list)
