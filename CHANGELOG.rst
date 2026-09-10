@@ -1,4 +1,27 @@
 ####################
+ 1.6.1 (2026-09-10)
+####################
+
+**********
+ Bugfixes
+**********
+
+- Avoid trying to detect symlinks on Windows, regression in 1.6.0 - by :user:`henryiii` (:issue:`1175`) (:issue:`1175`)
+
+***************
+ Documentation
+***************
+
+- Fix doubled backslashes in the Windows pip config path (``%APPDATA%\pip\pip.ini``) in the docs - by :user:`aroh3006`
+  (:issue:`1149`)
+
+***************
+ Miscellaneous
+***************
+
+- :issue:`1168`, :issue:`1170`, :issue:`1178`
+
+####################
  1.6.0 (2026-08-27)
 ####################
 
