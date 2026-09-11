@@ -1,0 +1,1 @@
+Remove the ``--srcdir`` option from the basic usage how-to; the source directory is positional and no such option exists - by :user:`hxperl`
