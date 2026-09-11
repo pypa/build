@@ -70,11 +70,7 @@ Build defaults to the current directory. To build from a different location:
 
     $ python -m build path/to/project
 
-Or explicitly:
-
-.. code-block:: console
-
-    $ python -m build --srcdir path/to/project
+The source directory is positional; there is no option form.
 
 *************************************
  Building from a source distribution
