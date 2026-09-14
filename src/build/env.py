@@ -159,7 +159,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             _ctx.log(f'Creating isolated environment: {self._env_backend.display_name}...', kind=('step',))
             self._env_backend.create(self._path)
 
-        except Exception:  # cleanup folder if creation fails
+        except BaseException:  # cleanup folder if creation fails or is interrupted
             self.__exit__(*sys.exc_info())
             raise
 

@@ -1,0 +1,1 @@
+Clean up temporary build environments when their creation is interrupted by KeyboardInterrupt or SystemExit.
