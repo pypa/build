@@ -1,0 +1,1 @@
+Ignore invalid distributions when checking dependencies - by :user:`rossburton`
