@@ -324,19 +324,25 @@ actually building:
 
 .. code-block:: python
 
+    import subprocess
+    import sys
+
     from build import ProjectBuilder
 
     builder = ProjectBuilder(".")
 
-    # Get all build dependencies
+    # Install the backend before asking it for additional build dependencies
     requires = builder.build_system_requires
+    if requires:
+        subprocess.run([sys.executable, "-m", "pip", "install", *requires], check=True)
+
+    # Collect the dependencies required for both distribution formats
     for dist in ["sdist", "wheel"]:
-        requires.extend(builder.get_requires_for_build(dist))
+        requires.update(builder.get_requires_for_build(dist))
 
-    # Install them
-    import subprocess
-
-    subprocess.run(["pip", "install", *requires])
+    # Install them into the same Python environment
+    if requires:
+        subprocess.run([sys.executable, "-m", "pip", "install", *requires], check=True)
 
 This is useful when you need the same environment that build would create, but want to run other tools (like mypy, ruff,
 or custom linters) instead of building the package.
