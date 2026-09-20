@@ -17,6 +17,7 @@ from ._exceptions import (
     BuildBackendException,
     BuildException,
     BuildSystemTableValidationError,
+    DependencyError,
     FailedProcessError,
     TypoWarning,
 )
@@ -33,6 +34,7 @@ __all__ = [
     'BuildException',
     'BuildSystemTableValidationError',
     'ConfigSettingsType',
+    'DependencyError',
     'DistributionType',
     'FailedProcessError',
     'ProjectBuilder',

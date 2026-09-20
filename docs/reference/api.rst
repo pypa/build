@@ -75,13 +75,21 @@ Getting package metadata without building:
 
 .. code-block:: python
 
-    from build import ProjectBuilder
-    import tempfile
+    from build.util import wheel_metadata
 
-    builder = ProjectBuilder(".")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        metadata_dir = builder.metadata_path(tmpdir)
-        # Read METADATA file from metadata_dir to extract package info
+    metadata = wheel_metadata(".")
+    print(metadata["name"], metadata["version"])
+
+``wheel_metadata()`` returns a parsed, JSON-serialisable mapping with the same shape as ``python -m build --metadata``.
+By default, it creates an isolated environment and installs the project's build dependencies. To use the current
+environment instead, while still verifying its build dependencies before invoking the backend:
+
+.. code-block:: python
+
+    metadata = wheel_metadata(".", isolated=False, check_dependencies=True)
+
+An unmet dependency raises :class:`build.DependencyError`. For lower-level access to the generated ``.dist-info``
+directory, use :meth:`~build.ProjectBuilder.metadata_path` directly.
 
 Accessing build dependencies:
 

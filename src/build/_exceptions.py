@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 
+__lazy_modules__ = {f'{__spec__.parent}._util'}
+
+from ._util import format_unmet_dependencies
+
+
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
@@ -40,6 +45,19 @@ class BuildSystemTableValidationError(BuildException):
 
     def __str__(self) -> str:
         return f'Failed to validate `build-system` in pyproject.toml: {self.args[0]}'
+
+
+class DependencyError(BuildException):
+    """
+    Exception raised when declared build dependencies are not satisfied in the current environment.
+    """
+
+    def __init__(self, unmet: set[tuple[str, ...]]) -> None:
+        super().__init__()
+        self.unmet: set[tuple[str, ...]] = unmet
+
+    def __str__(self) -> str:
+        return format_unmet_dependencies(self.unmet)
 
 
 class FailedProcessError(Exception):

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import pathlib
 import re
 import unittest.mock
 
@@ -67,6 +68,74 @@ def test_project_wheel_metadata_installs_build_requires_fresh(mocker: pytest_moc
 
     assert build.util.project_wheel_metadata('/tmp/project') is metadata
 
+    assert env.install.call_args_list == [
+        mocker.call({'dep1'}, _fresh=True),
+        mocker.call({'dep2'}),
+    ]
+
+
+def test_parsed_wheel_metadata(package_test_setuptools: str) -> None:
+    metadata = build.util.wheel_metadata(package_test_setuptools, isolated=False)
+
+    assert metadata.get('name', '').replace('-', '_') == 'test_setuptools'
+    assert metadata.get('version') == '1.0.0'
+    assert metadata.get('metadata_version') is not None
+
+
+def test_wheel_metadata_parses_metadata_file(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+    dist_info = tmp_path / 'demo-1.0.dist-info'
+    dist_info.mkdir()
+    (dist_info / 'METADATA').write_bytes(b'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n\n')
+    builder = mocker.create_autospec(build.ProjectBuilder, instance=True)
+    builder.metadata_path.return_value = str(dist_info)
+
+    assert build.util._wheel_metadata(builder) == {
+        'metadata_version': '2.1',
+        'name': 'demo',
+        'version': '1.0',
+    }
+
+
+def test_wheel_metadata_dependency_check_is_opt_in(mocker: pytest_mock.MockerFixture) -> None:
+    builder = mocker.create_autospec(build.ProjectBuilder, instance=True)
+    mocker.patch('build.util.ProjectBuilder', return_value=builder)
+    metadata = unittest.mock.sentinel.metadata
+    mocker.patch('build.util._wheel_metadata', return_value=metadata)
+
+    assert build.util.wheel_metadata('/tmp/project', isolated=False) is metadata
+    builder.check_dependencies.assert_not_called()
+
+
+def test_wheel_metadata_raises_on_unmet_dependencies(mocker: pytest_mock.MockerFixture) -> None:
+    builder = mocker.create_autospec(build.ProjectBuilder, instance=True)
+    unmet = {('definitely-missing-build-dependency>=2',)}
+    builder.check_dependencies.return_value = unmet
+    mocker.patch('build.util.ProjectBuilder', return_value=builder)
+    metadata = mocker.patch('build.util._wheel_metadata')
+
+    with pytest.raises(build.DependencyError, match='definitely-missing-build-dependency>=2') as exc_info:
+        build.util.wheel_metadata('/tmp/project', isolated=False, check_dependencies=True)
+
+    assert exc_info.value.unmet == unmet
+    metadata.assert_not_called()
+
+
+def test_wheel_metadata_installs_build_requires_fresh(mocker: pytest_mock.MockerFixture) -> None:
+    env = mocker.MagicMock()
+    env_cm = mocker.MagicMock()
+    env_cm.__enter__.return_value = env
+    env_cm.__exit__.return_value = False
+    mocker.patch('build.util.DefaultIsolatedEnv', return_value=env_cm)
+
+    builder = mocker.create_autospec(build.ProjectBuilder, instance=True)
+    builder.build_system_requires = {'dep1'}
+    builder.get_requires_for_build.return_value = {'dep2'}
+    mocker.patch('build.util.ProjectBuilder.from_isolated_env', return_value=builder)
+    metadata = unittest.mock.sentinel.metadata
+    mocker.patch('build.util._wheel_metadata', return_value=metadata)
+
+    assert build.util.wheel_metadata('/tmp/project') is metadata
+    builder.check_dependencies.assert_not_called()
     assert env.install.call_args_list == [
         mocker.call({'dep1'}, _fresh=True),
         mocker.call({'dep2'}),
