@@ -1,0 +1,2 @@
+Add :func:`build.util.wheel_metadata` for parsed wheel metadata with optional non-isolated dependency validation - by
+:user:`HanpuLi`, :user:`gaborbernat`, and :user:`astrojuanlu`.
