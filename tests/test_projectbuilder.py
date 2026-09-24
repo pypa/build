@@ -609,6 +609,7 @@ def test_metadata_path_legacy(tmp_dir: str, package_legacy: str) -> None:
 
     assert metadata['name'] == 'legacy'
     assert metadata['Version'] == '1.0.0'
+    assert metadata['License'] == 'MIT'
 
 
 def test_metadata_invalid_wheel(tmp_dir: str, package_test_bad_wheel: str) -> None:
