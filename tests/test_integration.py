@@ -58,7 +58,10 @@ def get_project(name: str, tmp_path: Path) -> Path:
     return dest / f'{name}-{version}'
 
 
+# These pinned third-party sources emit backend deprecations that are not
+# controlled by build; keep other warning categories as errors.
 @pytest.mark.network
+@pytest.mark.filterwarnings('ignore::pyproject_hooks.BuildBackendWarning')
 @pytest.mark.parametrize(
     'call',
     [
