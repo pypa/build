@@ -59,9 +59,13 @@ def get_project(name: str, tmp_path: Path) -> Path:
 
 
 # These pinned third-party sources emit backend deprecations that are not
-# controlled by build; keep other warning categories as errors.
+# controlled by build; keep other warnings as errors. Match messages rather
+# than BuildBackendWarning, which is absent in the minimum pyproject-hooks.
 @pytest.mark.network
-@pytest.mark.filterwarnings('ignore::pyproject_hooks.BuildBackendWarning')
+@pytest.mark.filterwarnings(r'ignore:`project\.license` as a TOML table is deprecated')
+@pytest.mark.filterwarnings('ignore:License classifiers are deprecated')
+@pytest.mark.filterwarnings('ignore:The test command is disabled and references to it are deprecated')
+@pytest.mark.filterwarnings(r'ignore:bdist_wheel\.universal is deprecated')
 @pytest.mark.parametrize(
     'call',
     [
