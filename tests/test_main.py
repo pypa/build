@@ -1352,10 +1352,37 @@ def test_report_written(
     assert [artifact['name'] for artifact in payload['artifacts']] == names
     for artifact, name in zip(payload['artifacts'], names, strict=True):
         path = outdir / name
-        assert artifact['path'] == os.path.join(str(outdir), name)
+        # The schema says `path` is relative to the current directory, so it
+        # must not echo back an absolute --outdir.
+        assert artifact['path'] == os.path.relpath(path)
         assert artifact['kind'] == ('sdist' if name.endswith('.tar.gz') else 'wheel')
         assert artifact['size'] == path.stat().st_size
         assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def test_report_path_is_relative_to_cwd(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    The documented invocation, `python -m build --report report.json` with no
+    --outdir, resolves the output directory from the absolute srcdir, so the
+    report used to carry machine-specific absolute paths even though the schema
+    says `path` is relative to the current directory.
+    """
+    _outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+    monkeypatch.chdir(tmp_path)
+    report = tmp_path / 'report.json'
+
+    build.__main__.main(['--report', str(report)])
+
+    payload = cast(BuildReport, json.loads(report.read_text(encoding='utf-8')))
+    for artifact, name in zip(payload['artifacts'], names, strict=True):
+        assert not os.path.isabs(artifact['path'])
+        assert artifact['path'] == os.path.join('dist', name)
 
 
 def test_report_requires_path(capsys: pytest.CaptureFixture[str]) -> None:

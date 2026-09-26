@@ -766,9 +766,20 @@ class _BuildReport(TypedDict):
 
 
 def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> None:
+    # `outdir` is normally absolute, because the default resolves it from the
+    # absolute `srcdir`, so joining it would put a machine-specific path in the
+    # report. The schema documents `path` as relative to the current directory.
+    cwd = os.getcwd()
     report: _BuildReport = {
         'version': '1.0',
-        'artifacts': [_describe_artifact(os.path.join(outdir, name), name) for name in artifacts],
+        'artifacts': [
+            _describe_artifact(
+                os.path.join(outdir, name),
+                name,
+                os.path.relpath(os.path.join(outdir, name), cwd),
+            )
+            for name in artifacts
+        ],
     }
     data = json.dumps(report, indent=2) + '\n'
 
@@ -783,7 +794,7 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
         raise
 
 
-def _describe_artifact(path: str, name: str) -> _ArtifactReport:
+def _describe_artifact(path: str, name: str, relative_path: str) -> _ArtifactReport:
     digest = hashlib.sha256()
     size = 0
     with open(path, 'rb') as artifact:
@@ -792,7 +803,7 @@ def _describe_artifact(path: str, name: str) -> _ArtifactReport:
             digest.update(chunk)
     return {
         'name': name,
-        'path': path,
+        'path': relative_path,
         'kind': 'sdist' if name.endswith('.tar.gz') else 'wheel',
         'size': size,
         'hashes': {'sha256': digest.hexdigest()},
