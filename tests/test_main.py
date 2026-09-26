@@ -1353,8 +1353,11 @@ def test_report_written(
     for artifact, name in zip(payload['artifacts'], names, strict=True):
         path = outdir / name
         # The schema says `path` is relative to the current directory, so it
-        # must not echo back an absolute --outdir.
-        assert artifact['path'] == os.path.relpath(path)
+        # must not echo back an absolute --outdir. Comparing with samefile
+        # rather than a string keeps this meaningful when the temporary
+        # directory is on another Windows drive, where no relative path exists;
+        # test_report_path_is_relative_to_cwd pins the relative form.
+        assert os.path.samefile(artifact['path'], path)
         assert artifact['kind'] == ('sdist' if name.endswith('.tar.gz') else 'wheel')
         assert artifact['size'] == path.stat().st_size
         assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
@@ -1383,6 +1386,30 @@ def test_report_path_is_relative_to_cwd(
     for artifact, name in zip(payload['artifacts'], names, strict=True):
         assert not os.path.isabs(artifact['path'])
         assert artifact['path'] == os.path.join('dist', name)
+
+
+def test_report_path_stays_absolute_across_windows_drives(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+) -> None:
+    """
+    ``os.path.relpath`` raises on Windows when the two paths are on different
+    drives, where no relative path exists. That must not fail the build.
+    """
+    outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+    mocker.patch(
+        'build.__main__.os.path.relpath',
+        side_effect=ValueError("path is on mount 'C:', start on mount 'D:'"),
+    )
+    report = tmp_path / 'report.json'
+
+    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report)])
+
+    payload = cast(BuildReport, json.loads(report.read_text(encoding='utf-8')))
+    for artifact, name in zip(payload['artifacts'], names, strict=True):
+        assert artifact['path'] == os.path.join(str(outdir), name)
 
 
 def test_report_requires_path(capsys: pytest.CaptureFixture[str]) -> None:

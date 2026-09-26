@@ -765,18 +765,30 @@ class _BuildReport(TypedDict):
     artifacts: list[_ArtifactReport]
 
 
+def _relative_to_cwd(path: str) -> str:
+    """
+    Return *path* relative to the current directory, as the report schema
+    specifies. On Windows two paths on different drives have no relative form
+    and `os.path.relpath` raises, so keep the absolute path there rather than
+    failing the build over a cosmetic field.
+    """
+    try:
+        return os.path.relpath(path)
+    except ValueError:
+        return path
+
+
 def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> None:
     # `outdir` is normally absolute, because the default resolves it from the
     # absolute `srcdir`, so joining it would put a machine-specific path in the
-    # report. The schema documents `path` as relative to the current directory.
-    cwd = os.getcwd()
+    # report.
     report: _BuildReport = {
         'version': '1.0',
         'artifacts': [
             _describe_artifact(
                 os.path.join(outdir, name),
                 name,
-                os.path.relpath(os.path.join(outdir, name), cwd),
+                _relative_to_cwd(os.path.join(outdir, name)),
             )
             for name in artifacts
         ],
