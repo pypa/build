@@ -1,0 +1,1 @@
+Reject ``--outdir`` when it is combined with ``--metadata`` instead of silently ignoring the requested output directory.

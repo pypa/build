@@ -570,7 +570,9 @@ foo==wot
 def test_logging_output(
     package_test_setuptools: str, tmp_dir: str, capsys: pytest.CaptureFixture[str], args: list[str], output: list[str]
 ) -> None:
-    build.__main__.main([package_test_setuptools, '-o', tmp_dir, *args])
+    # --outdir is rejected together with --metadata, so it cannot be passed unconditionally here
+    outdir: list[str] = [] if '--metadata' in args else ['-o', tmp_dir]
+    build.__main__.main([package_test_setuptools, *outdir, *args])
     _, stderr = capsys.readouterr()
     # the installed-version step lists dynamic versions, exercised in its own test below
     version_pin = re.compile(r' {2}- \S+==\S+')
@@ -1392,6 +1394,13 @@ def test_report_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) ->
         build.__main__.main(['--report', 'r.json', '--metadata'])
 
     assert '--report: not allowed with --metadata' in capsys.readouterr().err
+
+
+def test_outdir_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        build.__main__.main(['--outdir', 'dist', '--metadata'])
+
+    assert '--outdir: not allowed with --metadata' in capsys.readouterr().err
 
 
 @pytest.fixture
