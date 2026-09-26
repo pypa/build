@@ -1,0 +1,1 @@
+Emit ``--report`` artifact paths relative to the current directory, as the report schema specifies, instead of echoing an absolute ``--outdir``.
