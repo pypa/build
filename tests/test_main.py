@@ -1369,12 +1369,7 @@ def test_report_path_is_relative_to_cwd(
     built_dist: tuple[pathlib.Path, list[str]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """
-    The documented invocation, `python -m build --report report.json` with no
-    --outdir, resolves the output directory from the absolute srcdir, so the
-    report used to carry machine-specific absolute paths even though the schema
-    says `path` is relative to the current directory.
-    """
+    """With no --outdir the report carried absolute paths, not the relative ones the schema asks for."""
     _outdir, names = built_dist
     mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
     monkeypatch.chdir(tmp_path)
@@ -1393,10 +1388,7 @@ def test_report_path_stays_absolute_across_windows_drives(
     tmp_path: pathlib.Path,
     built_dist: tuple[pathlib.Path, list[str]],
 ) -> None:
-    """
-    ``os.path.relpath`` raises on Windows when the two paths are on different
-    drives, where no relative path exists. That must not fail the build.
-    """
+    """relpath raises across Windows drives, where no relative path exists; that must not fail the build."""
     outdir, names = built_dist
     mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
     mocker.patch(
