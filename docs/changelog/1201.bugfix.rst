@@ -1,0 +1,1 @@
+Reject a file passed as ``--sdist-extract-dir`` with ``BuildException`` instead of ``FileExistsError`` - by :user:`00200200` (:issue:`1200`)
