@@ -881,6 +881,9 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
             shutil.rmtree(tmp_dir, ignore_errors=True)
     else:
         root = os.fspath(extract_dir)
+        if os.path.exists(root) and not os.path.isdir(root):
+            msg = f'Sdist extract location is not a directory: {root}'
+            raise BuildException(msg)
         os.makedirs(root, exist_ok=True)
         target = os.path.join(root, top_level)
         shutil.rmtree(target, ignore_errors=True)
