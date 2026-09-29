@@ -1170,6 +1170,42 @@ def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
 
 
+def test_extract_sdist_rejects_file_at_location(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    file_path = tmp_path / 'not-a-dir'
+    file_path.write_text('x', encoding='utf-8')
+
+    with (
+        pytest.raises(build.BuildException, match='Sdist extract location is not a directory'),
+        build.__main__._extract_sdist(str(sdist), 'demo-1.0.0', extract_dir=str(file_path)),
+    ):
+        raise AssertionError
+
+    assert file_path.is_file()
+
+
+def test_main_sdist_extract_dir_rejects_file(
+    sdist: pathlib.Path,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    monkeypatch.delenv('FORCE_COLOR', raising=False)
+    file_path = tmp_path / 'not-a-dir'
+    file_path.write_text('x', encoding='utf-8')
+    mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    with pytest.raises(SystemExit) as exc_info:
+        build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', str(file_path)])
+
+    assert exc_info.value.code == 1
+    err = capsys.readouterr().err
+    assert 'Sdist extract location is not a directory' in err
+    assert 'Traceback' not in err
+    assert file_path.is_file()
+
+
 @pytest.mark.parametrize(
     ('extra_args', 'expected'),
     [
