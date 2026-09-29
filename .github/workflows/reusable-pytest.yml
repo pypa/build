@@ -62,7 +62,7 @@ jobs:
           name: integration-sources
           path: .integration-sources
       - name: Setup uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: Install tox (uv)
         run: uv tool install tox --with tox-uv
       - name: Setup python for test ${{ matrix.py }}
@@ -96,7 +96,7 @@ jobs:
       - name: Combine coverage files
         if: always()
         run: tox -e coverage
-      - uses: codecov/codecov-action@0b35c9ecc4f0529d0eb674914510c22f85b196b4 # v7.1.0
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         if: always()
         env:
           PYTHON: ${{ matrix.python }}
