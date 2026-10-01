@@ -1394,6 +1394,26 @@ def test_report_written(
         assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def test_report_path_is_absolute_with_relative_outdir(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A relative --outdir used to echo a relative path into the report; the schema promises an absolute one."""
+    outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+    monkeypatch.chdir(tmp_path)
+    report = tmp_path / 'report.json'
+
+    build.__main__.main([str(tmp_path), '-o', 'dist', '--report', str(report)])
+
+    payload = cast(BuildReport, json.loads(report.read_text(encoding='utf-8')))
+    for artifact, name in zip(payload['artifacts'], names, strict=True):
+        assert os.path.isabs(artifact['path'])
+        assert os.path.samefile(artifact['path'], outdir / name)
+
+
 def test_report_requires_path(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main(['--report'])

@@ -768,7 +768,7 @@ class _BuildReport(TypedDict):
 def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> None:
     report: _BuildReport = {
         'version': '1.0',
-        'artifacts': [_describe_artifact(os.path.join(outdir, name), name) for name in artifacts],
+        'artifacts': [_describe_artifact(os.path.abspath(os.path.join(outdir, name)), name) for name in artifacts],
     }
     data = json.dumps(report, indent=2) + '\n'
 
