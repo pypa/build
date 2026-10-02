@@ -5,7 +5,7 @@ permissions: {}
 jobs:
   type:
     name: Type check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       PY_COLORS: 1
       TOX_PARALLEL_NO_SPINNER: 1

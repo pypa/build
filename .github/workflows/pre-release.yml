@@ -20,7 +20,7 @@ permissions: {}
 jobs:
   pre-release:
     name: Pre-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v')
     environment: release
     permissions:
