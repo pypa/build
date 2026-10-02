@@ -1,0 +1,1 @@
+Make the artifact paths recorded in the ``--report`` output absolute.

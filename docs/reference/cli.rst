@@ -118,7 +118,7 @@ The schema is:
       "artifacts": [
         {
           "name": "mypackage-1.0.0.tar.gz",
-          "path": "dist/mypackage-1.0.0.tar.gz",
+          "path": "/path/to/example/dist/mypackage-1.0.0.tar.gz",
           "kind": "sdist",
           "size": 852,
           "hashes": {
@@ -127,7 +127,7 @@ The schema is:
         },
         {
           "name": "mypackage-1.0.0-py3-none-any.whl",
-          "path": "dist/mypackage-1.0.0-py3-none-any.whl",
+          "path": "/path/to/example/dist/mypackage-1.0.0-py3-none-any.whl",
           "kind": "wheel",
           "size": 1121,
           "hashes": {
@@ -137,9 +137,9 @@ The schema is:
       ]
     }
 
-``version`` is the schema version. Each artifact lists its ``name`` (basename), ``path`` (relative to the current
-directory, mirroring ``--outdir``), ``kind`` (``sdist`` or ``wheel``), ``size`` in bytes, and ``hashes`` keyed by
-algorithm. ``--report`` cannot be combined with ``--metadata``.
+``version`` is the schema version. Each artifact lists its ``name`` (basename), ``path`` (absolute, so the report reads
+the same wherever it is saved), ``kind`` (``sdist`` or ``wheel``), ``size`` in bytes, and ``hashes`` keyed by algorithm.
+``--report`` cannot be combined with ``--metadata``.
 
 To inspect a wheel listed in the report, pass its path straight to ``--metadata``: when the source argument is a
 ``.whl`` file, build reads ``METADATA`` from the archive and prints it as JSON instead of building anything.
