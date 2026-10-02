@@ -818,6 +818,8 @@ def _select_build(
 ) -> partial[list[str]]:
     if args.report is not None and args.metadata:
         parser.error('--report: not allowed with --metadata')
+    if args.outdir is not None and args.metadata:
+        parser.error('--outdir: not allowed with --metadata')
     if wheel_input and not args.metadata:
         parser.error('a wheel can only be used with --metadata, to read its metadata; it cannot be built from')
     if args.metadata and args.distributions:
