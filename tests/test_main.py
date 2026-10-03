@@ -1486,9 +1486,9 @@ def test_main_report_rejects_unwritable_path_before_building(
 ) -> None:
     """An unusable ``--report`` target must fail before the artifacts are built.
 
-    ``_write_report`` runs after the build, so without this guard the caller
-    pays for a full build, gets exit status 1, and is left holding artifacts
-    that a pipeline has already been told are a failure.
+    ``_write_report`` runs after the build, so without this guard the caller pays for a full build, gets exit status 1,
+    and is left holding artifacts that a pipeline has already been told are a failure.
+
     """
     monkeypatch.delenv('NO_COLOR', raising=False)
     monkeypatch.delenv('FORCE_COLOR', raising=False)

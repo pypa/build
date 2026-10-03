@@ -1,1 +1,2 @@
-Validate ``--report`` before building, so an unwritable target raises ``BuildException`` naming the path instead of an ``OSError`` traceback about a temporary file after the artifacts have already been built - by :user:`harsh-thakkar7`
+Validate ``--report`` before building, so an unwritable target raises ``BuildException`` naming the path instead of an
+``OSError`` traceback about a temporary file after the artifacts have already been built - by :user:`harsh-thakkar7`
