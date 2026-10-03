@@ -173,6 +173,26 @@ def tmp_dir() -> Generator[str]:
     shutil.rmtree(path)
 
 
+@pytest.fixture
+def make_symlink(tmp_path: Path) -> Callable[..., Path]:
+    """Factory creating a symlink at ``tmp_path / name`` pointing at ``target``.
+
+    Windows only grants symlink creation to elevated callers, so a platform that refuses gets a skip rather than a
+    failure: the behaviour under test is ``lexists`` semantics, which hold wherever a symlink can be made at all.
+
+    """
+
+    def make(name: str, target: Path, *, target_is_directory: bool = False) -> Path:
+        link = tmp_path / name
+        try:
+            link.symlink_to(target, target_is_directory=target_is_directory)
+        except OSError as exc:
+            pytest.skip(f'cannot create a symlink on this platform: {exc}')
+        return link
+
+    return make
+
+
 def pytest_report_header() -> str:
     interesting_packages = [
         'build',

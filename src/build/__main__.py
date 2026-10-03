@@ -883,7 +883,10 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
             shutil.rmtree(tmp_dir, ignore_errors=True)
     else:
         root = os.fspath(extract_dir)
-        if os.path.exists(root) and not os.path.isdir(root):
+        # ``lexists`` rather than ``exists``: a symlink whose target is gone is still
+        # a path we cannot create, and ``os.makedirs(..., exist_ok=True)`` refuses it
+        # via lstat, so the check has to agree with the call it guards.
+        if os.path.lexists(root) and not os.path.isdir(root):
             msg = f'Sdist extract location is not a directory: {root}'
             raise BuildException(msg)
         os.makedirs(root, exist_ok=True)

@@ -13,6 +13,7 @@ import sysconfig
 import typing
 import unittest.mock
 
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -760,6 +761,29 @@ def test_env_dir_rejects_file_at_location(tmp_path: pathlib.Path) -> None:
         raise AssertionError
 
     assert file_path.is_file()
+
+
+def test_env_dir_rejects_dangling_symlink_at_location(make_symlink: Callable[..., Path], tmp_path: pathlib.Path) -> None:
+    """A symlink whose target is gone is a path we cannot create, and ``os.makedirs`` refuses it."""
+    link = make_symlink('env-link', tmp_path / 'vanished')
+
+    with (
+        pytest.raises(build.BuildException, match='Build environment location is not a directory'),
+        build.env.DefaultIsolatedEnv(path=str(link)),
+    ):
+        raise AssertionError
+
+    assert link.is_symlink()
+
+
+@pytest.mark.usefixtures('mock_env_create')
+def test_env_dir_accepts_symlink_to_empty_location(make_symlink: Callable[..., Path], tmp_path: pathlib.Path) -> None:
+    """A symlink that resolves to a directory is a legitimate location and must keep working."""
+    real = tmp_path / 'real'
+    real.mkdir()
+
+    with build.env.DefaultIsolatedEnv(path=str(make_symlink('env-link', real, target_is_directory=True))) as env:
+        assert env.path == os.path.realpath(real)
 
 
 @pytest.mark.usefixtures('mock_env_create')
