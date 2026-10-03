@@ -3,7 +3,7 @@ ci:
   autoupdate_commit_msg: "pre-commit: bump repositories"
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
       - id: check-ast
       - id: check-builtin-literals
@@ -16,16 +16,16 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: "0.26"
+    rev: "17e12779811926f000bdfa1795f9e3735dd71ac3" # frozen: 0.26
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: "1.20.0"
+    rev: "dda8db18cfc68df532abf33b185ecd12d5b7b326" # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
   - repo: https://github.com/google/yamlfmt
-    rev: "v0.21.0"
+    rev: "b5ca1890231d5e1e5181fef75a1be609d1e25029" # frozen: v0.21.0
     hooks:
       - id: yamlfmt
   - repo: local
@@ -39,7 +39,7 @@ repos:
           - mdformat-gfm>=1
           - mdformat-ruff>=0.1.3
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: v2.2.1
+    rev: c1813841673cdcd6cf602dde1edb78a5d5e45235 # frozen: v2.2.1
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
@@ -47,30 +47,30 @@ repos:
         # title must outrank the included CHANGELOG.rst headings
         exclude: ^docs/changelog\.rst$
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.10
+    rev: f12be1ebaa5351c1fc76472de98db2c3446c8253 # frozen: v0.16.10
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: v0.9.0
+    rev: 3b5e52593dfaec56e6e4a48f237bafcf3d0b83ea # frozen: v0.9.0
     hooks:
       - id: flake8-lazy
         files: ^src/
         args: [--apply=set]
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.3"
+    rev: "57b21406f092110c18776e39b0bda50d37c945c8" # frozen: v2.4.3
     hooks:
       - id: codespell
         args: ["-L", "sur"]
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: "v1.10.0"
+    rev: "3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316" # frozen: v1.10.0
     hooks:
       - id: rst-backticks
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.30.1
+    rev: fa412071e4f5d44d44f9e365f4676f9df92456a2 # frozen: v1.30.1
     hooks:
       - id: zizmor
         files: "^\\.github"
@@ -83,7 +83,7 @@ repos:
         entry: files in changelog must be valid (N.type.rst)
         language: fail
   - repo: https://github.com/henryiii/check-sdist
-    rev: v1.6.0
+    rev: 5230295f53448dcfc8cc4a9eb00cc776ca92f964 # frozen: v1.6.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
