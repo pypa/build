@@ -19,6 +19,7 @@ import zipfile
 from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
+import pyproject_hooks
 import pytest
 import pytest_mock
 
@@ -800,6 +801,46 @@ def test_metadata_json_output(
     # Name normalised in old versions of setuptools.
     assert metadata['name'] in {'test_setuptools', 'test-setuptools'}
     assert metadata['version'] == '1.0.0'
+
+
+@pytest.mark.parametrize('prepare_metadata', [True, False], ids=['prepare', 'wheel-fallback'])
+@pytest.mark.parametrize('config_args', [['-Cversion=2.0'], ['--config-json={"version": "2.0"}']])
+def test_metadata_config_settings(
+    mocker: pytest_mock.MockerFixture,
+    capsys: pytest.CaptureFixture[str],
+    package_test_flit: str,
+    prepare_metadata: bool,
+    config_args: list[str],
+) -> None:
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
+
+    def metadata_contents(config_settings: dict[str, str] | None) -> str:
+        version = (config_settings or {}).get('version', '1.0')
+        return f'Metadata-Version: 2.2\nName: example\nVersion: {version}\n'
+
+    def prepare(outdir: str, config_settings: dict[str, str] | None, **_kwargs: object) -> str:
+        dist_info = pathlib.Path(outdir, 'example-2.0.dist-info')
+        dist_info.mkdir()
+        dist_info.joinpath('METADATA').write_text(metadata_contents(config_settings), encoding='utf-8')
+        return dist_info.name
+
+    def build_wheel(outdir: str, config_settings: dict[str, str] | None) -> str:
+        wheel_name = 'example-2.0-py3-none-any.whl'
+        with zipfile.ZipFile(os.path.join(outdir, wheel_name), 'w') as archive:
+            archive.writestr('example-2.0.dist-info/METADATA', metadata_contents(config_settings))
+        return wheel_name
+
+    if prepare_metadata:
+        hook.prepare_metadata_for_build_wheel.side_effect = prepare
+    else:
+        hook.prepare_metadata_for_build_wheel.side_effect = pyproject_hooks.HookMissing('prepare_metadata_for_build_wheel')
+    hook.build_wheel.side_effect = build_wheel
+
+    build.__main__.main([package_test_flit, '--metadata', '-nx', *config_args])
+
+    metadata = json.loads(capsys.readouterr().out)
+    assert metadata['version'] == '2.0'
+    assert hook.build_wheel.call_count == (0 if prepare_metadata else 1)
 
 
 def test_setup_cli_windows_colorama_available(mocker: pytest_mock.MockerFixture) -> None:
