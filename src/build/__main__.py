@@ -737,6 +737,8 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
         outdir = os.path.join(args.srcdir, 'dist')
 
     with _handle_build_error(env_dir=args.env_dir, sdist_extract_dir=args.sdist_extract_dir):
+        if args.report is not None:
+            _validate_report_path(args.report)
         if sdist_input:
             top_level = _validate_sdist_archive(args.srcdir)
             with _extract_sdist(args.srcdir, top_level, extract_dir=args.sdist_extract_dir) as extracted_srcdir:
@@ -763,6 +765,26 @@ class _ArtifactReport(TypedDict):
 class _BuildReport(TypedDict):
     version: str
     artifacts: list[_ArtifactReport]
+
+
+def _validate_report_path(path: StrPath) -> None:
+    """Reject a ``--report`` target that cannot be written, before spending a build on it.
+
+    ``_write_report`` writes atomically through ``tempfile.mkstemp`` in the
+    report's own directory, so a target that is a directory, or one whose parent
+    does not exist, is only discovered once the artifacts have been built -- and
+    it surfaces as a bare ``OSError`` naming a temporary file the caller never
+    asked for. Both conditions are knowable up front, and neither depends on
+    permissions that could change between here and the write.
+    """
+    report_path = os.path.abspath(path)
+    if os.path.isdir(report_path):
+        msg = f'Report path is a directory: {report_path}'
+        raise BuildException(msg)
+    parent = os.path.dirname(report_path)
+    if not os.path.isdir(parent):
+        msg = f'Report directory does not exist: {parent}'
+        raise BuildException(msg)
 
 
 def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> None:
