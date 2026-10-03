@@ -1452,6 +1452,69 @@ def test_report_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) ->
     assert '--report: not allowed with --metadata' in capsys.readouterr().err
 
 
+def test_validate_report_path_rejects_directory(tmp_path: pathlib.Path) -> None:
+    target = tmp_path / 'report.json'
+    target.mkdir()
+
+    with pytest.raises(build.BuildException, match='Report path is a directory'):
+        build.__main__._validate_report_path(str(target))
+
+    assert target.is_dir()
+
+
+def test_validate_report_path_rejects_missing_parent(tmp_path: pathlib.Path) -> None:
+    target = tmp_path / 'nope' / 'report.json'
+
+    with pytest.raises(build.BuildException, match='Report directory does not exist'):
+        build.__main__._validate_report_path(str(target))
+
+    assert not target.parent.exists()
+
+
+def test_validate_report_path_accepts_existing_parent(tmp_path: pathlib.Path) -> None:
+    build.__main__._validate_report_path(str(tmp_path / 'report.json'))
+    build.__main__._validate_report_path('report.json')
+
+
+@pytest.mark.parametrize('shape', ['directory', 'missing-parent'])
+def test_main_report_rejects_unwritable_path_before_building(
+    shape: str,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An unusable ``--report`` target must fail before the artifacts are built.
+
+    ``_write_report`` runs after the build, so without this guard the caller pays for a full build, gets exit status 1,
+    and is left holding artifacts that a pipeline has already been told are a failure.
+
+    """
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    monkeypatch.delenv('FORCE_COLOR', raising=False)
+    if shape == 'directory':
+        target = tmp_path / 'report.json'
+        target.mkdir()
+        expected = 'Report path is a directory'
+    else:
+        target = tmp_path / 'nope' / 'report.json'
+        expected = 'Report directory does not exist'
+    build_package = mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    with pytest.raises(SystemExit) as exc_info:
+        build.__main__.main([str(tmp_path), '--wheel', '-o', str(tmp_path), '--report', str(target)])
+
+    assert exc_info.value.code == 1
+    err = capsys.readouterr().err
+    assert expected in err
+    assert 'Traceback' not in err
+    # The point of failing early: no build was attempted, so no temporary file
+    # leaks out of _write_report either.
+    build_package.assert_not_called()
+    assert not list(tmp_path.glob('*.tmp'))
+    assert not list(tmp_path.glob('nope'))
+
+
 def test_outdir_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main(['--outdir', 'dist', '--metadata'])
