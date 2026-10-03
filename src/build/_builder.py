@@ -345,7 +345,7 @@ class ProjectBuilder:
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)
 
-    def metadata_path(self, output_directory: StrPath) -> str:
+    def metadata_path(self, output_directory: StrPath, config_settings: ConfigSettings | None = None) -> str:
         """
         Generate the metadata directory of a distribution and return its path.
 
@@ -353,15 +353,16 @@ class ProjectBuilder:
         hook, a wheel will be built and the metadata will be extracted from it.
 
         :param output_directory: Directory to put the metadata distribution in
+        :param config_settings: Config settings for the build backend
         :returns: The path of the metadata directory
         """
         # prepare_metadata hook
-        metadata = self.prepare('wheel', output_directory)
+        metadata = self.prepare('wheel', output_directory, config_settings)
         if metadata is not None:
             return metadata
 
         # fallback to build_wheel hook
-        wheel = self.build('wheel', output_directory)
+        wheel = self.build('wheel', output_directory, config_settings)
         try:
             whl = zipfile.ZipFile(wheel)
         except (OSError, zipfile.BadZipFile) as exception:

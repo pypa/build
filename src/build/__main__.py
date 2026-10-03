@@ -461,7 +461,7 @@ def _build_metadata(
         ) as builder,
         tempfile.TemporaryDirectory() as tempdir,
         open(
-            os.path.join(builder.metadata_path(tempdir), 'METADATA'),
+            os.path.join(builder.metadata_path(tempdir, config_settings), 'METADATA'),
             'rb',
         ) as metadata_file,
     ):

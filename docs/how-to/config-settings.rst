@@ -6,6 +6,9 @@ The ``--config-setting`` (or ``-C``) flag allows you to pass options to your **b
 options depend entirely on which backend you're using (e.g., `setuptools <https://setuptools.pypa.io/>`_, hatchling,
 `flit <https://flit.pypa.io/>`_).
 
+Settings also apply when generating metadata with ``--metadata``, including when the backend needs to build a wheel to
+obtain its metadata.
+
 .. important::
 
     The ``--config-setting`` flag passes options to the **build backend** that actually builds your package, not to
