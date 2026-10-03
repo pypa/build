@@ -12,7 +12,7 @@ permissions: {}
 jobs:
   change-detection:
     name: Identify source changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 1
     outputs:
       run-docs: ${{ steps.docs-changes.outputs.run-docs || false }}
