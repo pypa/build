@@ -862,6 +862,11 @@ def _validate_sdist_archive(archive: StrPath) -> str:
         raise BuildException(msg)
 
     top = next(iter(top_levels))
+    if top in {os.curdir, os.pardir}:
+        # ``_extract_sdist`` resolves ``top`` against the destination and deletes whatever it
+        # points at, so a relative component would escape the directory the user chose.
+        msg = f'source distribution {archive} has a top-level directory that escapes the destination: {top!r}'
+        raise BuildException(msg)
     if not any(m.name == f'{top}/PKG-INFO' and m.isfile() for m in members):
         msg = (
             f'source distribution {archive} does not contain {top}/PKG-INFO; '
