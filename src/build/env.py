@@ -129,7 +129,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
             path = tempfile.mkdtemp(prefix='build-env-')
         else:
             path = self._requested_path
-            if os.path.exists(path) and not os.path.isdir(path):
+            # ``lexists`` rather than ``exists``: a symlink whose target is gone is still
+            # a path we cannot create, and ``os.makedirs(..., exist_ok=True)`` refuses it
+            # via lstat, so the check has to agree with the call it guards.
+            if os.path.lexists(path) and not os.path.isdir(path):
                 msg = f'Build environment location is not a directory: {path}'
                 raise BuildException(msg)
             if os.path.isdir(path):
