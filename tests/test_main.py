@@ -1179,7 +1179,9 @@ def test_extract_sdist_rejects_top_level_escaping_dest(
 
 
 @pytest.mark.skipif(IS_WINDOWS, reason='a leading dot is a path only off Windows')
-def test_extract_sdist_allows_dot_top_level(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+def test_extract_sdist_allows_dot_top_level(  # pragma: no cover -- os.curdir is only a path off Windows
+    tmp_path: pathlib.Path, write_sdist: WriteSdist
+) -> None:
     """``./pkg-1.0`` resolves back inside the destination, so the filter lets it through.
 
     The clear-out step then removes the destination's own previous contents, which is the point of
