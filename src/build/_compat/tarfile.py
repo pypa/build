@@ -26,6 +26,17 @@ if _HAS_DATA_FILTER:
         """Extract every member of ``tar`` into ``path`` via the PEP 706 ``data`` filter."""
         tar.extractall(path, filter='data')
 
+    def check_extractable(tar: tarfile.TarFile, path: Path | str) -> None:
+        """Reject every member of ``tar`` that the PEP 706 ``data`` filter would refuse, without extracting anything.
+
+        This asks :mod:`tarfile` itself rather than re-deriving its rules, so the verdict here is exactly the one
+        :func:`safe_extractall` will reach. Useful before acting on an archive's contents, when nothing has been written
+        yet and a refusal costs nothing.
+
+        """
+        for member in tar.getmembers():
+            tarfile.data_filter(member, str(path))
+
 else:
 
     def safe_extractall(tar: tarfile.TarFile, path: Path | str) -> None:  # pragma: no cover
@@ -40,6 +51,17 @@ else:
         for member in tar.getmembers():
             _validate_safe_member(member, base)
         tar.extractall(path)  # noqa: S202
+
+    def check_extractable(tar: tarfile.TarFile, path: Path | str) -> None:  # pragma: no cover
+        """Reject every member of ``tar`` that :func:`safe_extractall` would refuse, without extracting anything.
+
+        The 3.10.0-3.10.12 / 3.11.0-3.11.4 counterpart of the stdlib-filter branch above, checking the same rules with
+        the same helper that performs the extraction.
+
+        """
+        base = Path(path).resolve()
+        for member in tar.getmembers():
+            _validate_safe_member(member, base)
 
 
 def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
@@ -59,5 +81,6 @@ def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
 
 
 __all__ = [
+    'check_extractable',
     'safe_extractall',
 ]

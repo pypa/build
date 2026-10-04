@@ -11,7 +11,7 @@ from typing import Protocol
 
 import pytest
 
-from build._compat.tarfile import _validate_safe_member, safe_extractall
+from build._compat.tarfile import _validate_safe_member, check_extractable, safe_extractall
 
 
 FileMember = Callable[[str, bytes], TarInfo]
@@ -78,6 +78,99 @@ def test_validate_safe_member_rejects_device_file(tmp_path: Path, device_member:
     base = tmp_path.resolve()
     with pytest.raises(TarError, match='special device file'):
         _validate_safe_member(device_member('pkg/null'), base)
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        pytest.param('pkg/file.txt', id='plain'),
+        pytest.param('pkg/nested/deep.txt', id='nested'),
+        pytest.param('./pkg-1.0/file.txt', id='leading-dot'),
+        # The filter does not refuse a leading separator, it drops it: this one is rewritten to
+        # 'etc/evil.txt' and lands inside the destination, which is the property that matters.
+        pytest.param('/etc/evil.txt', id='absolute'),
+    ],
+)
+def test_check_extractable_accepts_contained_members(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    file_member: FileMember,
+    name: str,
+) -> None:
+    """Anything the filter resolves inside the destination is left to the extraction itself."""
+    archive = tmp_path / 'ok.tar'
+    make_archive(archive, [(file_member(name, b'x'), b'x')])
+
+    with tar_open(archive) as tar:
+        check_extractable(tar, tmp_path / 'out')
+
+
+def test_check_extractable_rejects_traversal(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    file_member: FileMember,
+) -> None:
+    archive = tmp_path / 'traversal.tar'
+    make_archive(archive, [(file_member('../evil.txt', b'x'), b'x')])
+
+    with tar_open(archive) as tar, pytest.raises(TarError):
+        check_extractable(tar, tmp_path / 'out')
+
+
+def test_check_extractable_rejects_traversal_behind_dot(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    file_member: FileMember,
+) -> None:
+    """``realpath`` folds the ``.`` away first, so this escapes just like a bare ``..`` does."""
+    archive = tmp_path / 'dotdot.tar'
+    make_archive(archive, [(file_member('./../evil.txt', b'x'), b'x')])
+
+    with tar_open(archive) as tar, pytest.raises(TarError):
+        check_extractable(tar, tmp_path / 'out')
+
+
+def test_check_extractable_rejects_device_file(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    device_member: DeviceMember,
+) -> None:
+    archive = tmp_path / 'device.tar'
+    make_archive(archive, [(device_member('pkg/null'), None)])
+
+    with tar_open(archive) as tar, pytest.raises(TarError):
+        check_extractable(tar, tmp_path / 'out')
+
+
+def test_check_extractable_rejects_escaping_symlink(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    link_member: LinkMember,
+) -> None:
+    archive = tmp_path / 'symlink.tar'
+    make_archive(archive, [(link_member('pkg/evil', '../../outside'), None)])
+
+    with tar_open(archive) as tar, pytest.raises(TarError):
+        check_extractable(tar, tmp_path / 'out')
+
+
+def test_check_extractable_agrees_with_safe_extractall(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    file_member: FileMember,
+) -> None:
+    """Checking is a dry run of the extraction: what it accepts, ``safe_extractall`` extracts, and vice versa."""
+    archive = tmp_path / 'agree.tar'
+    body = b'meta'
+    make_archive(archive, [(file_member('pkg/PKG-INFO', body), body)])
+
+    out = tmp_path / 'out'
+    out.mkdir()
+    with tar_open(archive) as tar:
+        check_extractable(tar, out)
+        safe_extractall(tar, out)
+
+    assert (out / 'pkg' / 'PKG-INFO').read_bytes() == body
 
 
 @pytest.fixture

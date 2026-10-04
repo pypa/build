@@ -45,7 +45,7 @@ import warnings
 import zipfile
 
 from functools import partial
-from tarfile import TarError
+from tarfile import TarError, TarFile
 from tarfile import open as tar_open
 from typing import NoReturn, TextIO, TypedDict
 
@@ -58,7 +58,7 @@ import build
 import build.env as _env
 
 from build import ProjectBuilder, _ctx
-from build._compat.tarfile import safe_extractall
+from build._compat.tarfile import check_extractable, safe_extractall
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
 from build._util import format_unmet_dependencies
 from build.env import DefaultIsolatedEnv
@@ -862,13 +862,6 @@ def _validate_sdist_archive(archive: StrPath) -> str:
         raise BuildException(msg)
 
     top = next(iter(top_levels))
-    if top in {os.curdir, os.pardir} or os.path.basename(top) != top or os.path.splitdrive(top)[0]:
-        # ``_extract_sdist`` joins ``top`` onto the destination and deletes whatever it points at
-        # before extracting anything, so the value has to be a plain name inside that directory.
-        # ``os.path`` resolves separators per platform: on Windows a ``top`` of ``..\\x`` or
-        # ``C:foo`` would still escape, while on POSIX both are ordinary file names.
-        msg = f'source distribution {archive} has a top-level directory that escapes the destination: {top!r}'
-        raise BuildException(msg)
     if not any(m.name == f'{top}/PKG-INFO' and m.isfile() for m in members):
         msg = (
             f'source distribution {archive} does not contain {top}/PKG-INFO; '
@@ -884,6 +877,7 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
         tmp_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
         try:
             with tar_open(archive) as tar:
+                _check_sdist_extractable(archive, tar, tmp_dir)
                 safe_extractall(tar, tmp_dir)
             yield os.path.join(tmp_dir, top_level)
         finally:
@@ -895,10 +889,30 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
             raise BuildException(msg)
         os.makedirs(root, exist_ok=True)
         target = os.path.join(root, top_level)
-        shutil.rmtree(target, ignore_errors=True)
         with tar_open(archive) as tar:
+            # ``top_level`` is read out of the archive and the line above joins it onto ``root``,
+            # so a crafted one would aim the rmtree below at an unrelated directory.
+            _check_sdist_extractable(archive, tar, root)
+            shutil.rmtree(target, ignore_errors=True)
             safe_extractall(tar, root)
         yield target
+
+
+def _check_sdist_extractable(archive: StrPath, tar: TarFile, dest: str) -> None:
+    """Refuse an archive that cannot be extracted into ``dest``, before writing or deleting anything.
+
+    The verdict comes from tarfile's own extraction filter, so it is exactly the one ``safe_extractall``
+    will reach -- no second set of path rules to keep in step, and no partial extraction on the way
+    to a member that would have been refused.
+    """
+    try:
+        check_extractable(tar, dest)
+    except (TarError, ValueError) as exc:
+        # The filter detects escapes with ``os.path.commonpath``, which raises ``ValueError``
+        # rather than a ``FilterError`` for a drive-relative member name such as ``C:pkg/PKG-INFO``
+        # when ``dest`` sits on another Windows drive.
+        msg = f'source distribution {archive} contains a member that cannot be extracted safely: {exc}'
+        raise BuildException(msg) from exc
 
 
 def entrypoint() -> None:

@@ -1118,23 +1118,12 @@ def _missing_pkg_info(tmp_path: pathlib.Path, write: WriteSdist) -> str:
     return str(archive)
 
 
-def _escaping_top_level(top_level: str) -> Callable[[pathlib.Path, WriteSdist], str]:
-    def _write(tmp_path: pathlib.Path, write: WriteSdist) -> str:
-        archive = tmp_path / 'demo-1.0.0.tar.gz'
-        write(archive, top_level)
-        return str(archive)
-
-    return _write
-
-
 _REJECT_CASES: dict[str, Callable[[pathlib.Path, WriteSdist], str]] = {
     'invalid-filename': _invalid_filename,
     'invalid-version': _invalid_version,
     'corrupt-tar': _corrupt_tar,
     'multiple-top-level': _multiple_top_level,
     'missing-pkg-info': _missing_pkg_info,
-    'top-level-dot': _escaping_top_level(os.curdir),
-    'top-level-dotdot': _escaping_top_level(os.pardir),
 }
 
 
@@ -1146,8 +1135,6 @@ _REJECT_CASES: dict[str, Callable[[pathlib.Path, WriteSdist], str]] = {
         pytest.param('corrupt-tar', 'failed to read source distribution', id='corrupt-tar'),
         pytest.param('multiple-top-level', 'single top-level directory', id='multiple-top-level'),
         pytest.param('missing-pkg-info', 'does not contain demo-1.0.0/PKG-INFO', id='missing-pkg-info'),
-        pytest.param('top-level-dot', 'escapes the destination', id='top-level-dot'),
-        pytest.param('top-level-dotdot', 'escapes the destination', id='top-level-dotdot'),
     ],
 )
 def test_validate_sdist_archive_rejects(
@@ -1161,32 +1148,125 @@ def test_validate_sdist_archive_rejects(
         build.__main__._validate_sdist_archive(archive)
 
 
-@pytest.mark.skipif(not IS_WINDOWS, reason='backslash and drive semantics are Windows-specific')
-@pytest.mark.parametrize('top_level', ['..\\x', 'C:\\Users', 'C:foo'])
-def test_validate_sdist_archive_rejects_windows_escape(  # pragma: no cover -- os.path reads these as paths on Windows only
-    tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
+def _refuses_to_extract(
+    archive: pathlib.Path,
+    top_level: str,
+    dest: pathlib.Path,
+    match: str = 'cannot be extracted safely',
 ) -> None:
-    """On Windows these all resolve outside ``--sdist-extract-dir``; ``os.path`` sees them as paths."""
+    """Assert ``_extract_sdist`` refuses ``archive``, without a body that would never run.
+
+    The guard fires on ``__enter__``, before the generator yields, so the body of a plain ``with`` is unreachable and
+    would count against the coverage gate.
+
+    """
+    with contextlib.ExitStack() as stack, pytest.raises(build.BuildException, match=match):
+        stack.enter_context(build.__main__._extract_sdist(str(archive), top_level, extract_dir=dest))
+
+
+@pytest.mark.parametrize('member', [os.pardir, f'{os.pardir}/x', f'.{os.sep}{os.pardir}'])
+def test_extract_sdist_rejects_top_level_escaping_dest(
+    tmp_path: pathlib.Path,
+    write_sdist: WriteSdist,
+    member: str,
+) -> None:
+    """A top level that resolves outside the destination must be refused by the extraction filter."""
     archive = tmp_path / 'demo-1.0.0.tar.gz'
-    write_sdist(archive, top_level)
-    with pytest.raises(build.BuildException, match='escapes the destination'):
-        build.__main__._validate_sdist_archive(str(archive))
+    write_sdist(archive, 'demo-1.0.0', extra={f'{member}/PKG-INFO': 'x'})
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    _refuses_to_extract(archive, member.split('/', 1)[0], dest)
+
+
+@pytest.mark.skipif(IS_WINDOWS, reason='a leading dot is a path only off Windows')
+def test_extract_sdist_allows_dot_top_level(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    """``./pkg-1.0`` resolves back inside the destination, so the filter lets it through.
+
+    The clear-out step then removes the destination's own previous contents, which is the point of
+    ``--sdist-extract-dir``; what it must never do is reach past that directory.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, os.curdir)
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    (dest / 'stale.txt').write_text('from a previous build', encoding='utf-8')
+    neighbour = tmp_path / 'neighbour.txt'
+    neighbour.write_text('keep me', encoding='utf-8')
+
+    with build.__main__._extract_sdist(str(archive), os.curdir, extract_dir=dest) as extracted:
+        assert os.path.realpath(extracted) == os.path.realpath(dest)
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+
+    assert neighbour.read_text(encoding='utf-8') == 'keep me', 'a sibling of the extract dir was deleted'
+
+
+@pytest.mark.skipif(not IS_WINDOWS, reason='backslash and drive semantics are Windows-specific')
+@pytest.mark.parametrize('member', ['..\\x/PKG-INFO', 'C:\\Users\\PKG-INFO', 'C:foo/PKG-INFO'])
+def test_extract_sdist_rejects_windows_escape(  # pragma: no cover -- os.path reads these as paths on Windows only
+    tmp_path: pathlib.Path, write_sdist: WriteSdist, member: str
+) -> None:
+    """On Windows these all resolve outside the destination."""
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0', extra={member: 'x'})
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    _refuses_to_extract(archive, 'demo-1.0.0', dest)
+
+
+def test_extract_sdist_reports_windows_drive_mismatch(
+    tmp_path: pathlib.Path,
+    write_sdist: WriteSdist,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    """A drive-relative member name makes the filter's ``commonpath`` check raise ``ValueError``.
+
+    That is the one refusal that is not a ``FilterError``, and it still has to reach the user as an ordinary build error
+    rather than a traceback. Raised directly so the path is covered off Windows.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0')
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    mocker.patch.object(build.__main__, 'check_extractable', side_effect=ValueError("Paths don't have the same drive"))
+    _refuses_to_extract(archive, 'demo-1.0.0', dest, match="cannot be extracted safely: Paths don't have the same drive")
+
+
+def test_extract_sdist_rejects_without_extract_dir(
+    tmp_path: pathlib.Path,
+    write_sdist: WriteSdist,
+) -> None:
+    """The default path uses a temporary directory, but a bad archive is still refused up front.
+
+    Without the check landing here first, ``safe_extractall`` would raise a bare ``FilterError`` and the CLI would print
+    a traceback instead of a build error.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0', extra={f'{os.pardir}/PKG-INFO': 'x'})
+    with contextlib.ExitStack() as stack, pytest.raises(build.BuildException, match='cannot be extracted safely'):
+        stack.enter_context(build.__main__._extract_sdist(str(archive), 'demo-1.0.0'))
 
 
 @pytest.mark.skipif(IS_WINDOWS, reason='on Windows these are paths, not file names')
 @pytest.mark.parametrize('top_level', ['..\\x', 'C:foo'])
-def test_validate_sdist_archive_allows_posix_backslash_name(  # pragma: no cover -- these are plain file names off Windows
+def test_extract_sdist_allows_posix_backslash_name(  # pragma: no cover -- these are plain file names off Windows
     tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
 ) -> None:
-    """A backslash or colon is a legal file name on POSIX, so the check must stay platform-scoped."""
+    """A backslash or colon is a legal file name on POSIX, so the filter must not reject it there."""
     archive = tmp_path / 'demo-1.0.0.tar.gz'
     write_sdist(archive, top_level)
-    assert build.__main__._validate_sdist_archive(str(archive)) == top_level
+    dest = tmp_path / 'extract'
+    with build.__main__._extract_sdist(str(archive), top_level, extract_dir=dest) as extracted:
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
 
 
-@pytest.mark.parametrize('top_level', [os.curdir, os.pardir])
-def test_main_rejects_top_level_escaping_extract_dir(tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str) -> None:
-    """A ``.``/``..`` top level must not let ``--sdist-extract-dir`` delete outside itself."""
+def test_extract_sdist_rejects_before_touching_destination(
+    tmp_path: pathlib.Path,
+    write_sdist: WriteSdist,
+) -> None:
+    """The refusal has to land before the rmtree, otherwise the escaping top level aims it elsewhere."""
     extract_dir = tmp_path / 'extract'
     extract_dir.mkdir()
     inner = extract_dir / 'inner.txt'
@@ -1195,7 +1275,27 @@ def test_main_rejects_top_level_escaping_extract_dir(tmp_path: pathlib.Path, wri
     neighbour.write_text('keep me', encoding='utf-8')
 
     archive = tmp_path / 'demo-1.0.0.tar.gz'
-    write_sdist(archive, top_level)
+    write_sdist(archive, os.pardir)
+
+    _refuses_to_extract(archive, os.pardir, extract_dir)
+
+    assert extract_dir.is_dir(), 'the extract dir was deleted'
+    assert inner.read_text(encoding='utf-8') == 'keep me too', 'the extract dir was emptied'
+    assert neighbour.is_file(), 'a sibling of the extract dir was deleted'
+    assert neighbour.read_text(encoding='utf-8') == 'keep me'
+
+
+def test_main_rejects_top_level_escaping_extract_dir(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    """End to end: ``--sdist-extract-dir`` must not delete anything outside itself."""
+    extract_dir = tmp_path / 'extract'
+    extract_dir.mkdir()
+    inner = extract_dir / 'inner.txt'
+    inner.write_text('keep me too', encoding='utf-8')
+    neighbour = tmp_path / 'neighbour.txt'
+    neighbour.write_text('keep me', encoding='utf-8')
+
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, os.pardir)
 
     with pytest.raises(SystemExit):
         build.__main__.main(['-n', str(archive), '--sdist-extract-dir', str(extract_dir), '--wheel'])
@@ -1236,7 +1336,7 @@ def test_extract_sdist_rejects_path_traversal(tmp_path: pathlib.Path) -> None:
         tar.addfile(info, io.BytesIO(body))
 
     cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
-    with pytest.raises(tarfile.TarError):
+    with pytest.raises(build.BuildException, match='cannot be extracted safely'):
         cm.__enter__()
     assert not (tmp_path / 'evil.txt').exists()
 
@@ -1250,7 +1350,7 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
         tar.addfile(info)
 
     cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
-    with pytest.raises(tarfile.TarError):
+    with pytest.raises(build.BuildException, match='cannot be extracted safely'):
         cm.__enter__()
 
 

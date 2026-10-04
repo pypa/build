@@ -1,2 +1,3 @@
-Reject a source distribution whose single top-level directory is ``.`` or ``..``, which could delete files outside
-``--sdist-extract-dir`` - by :user:`harsh-thakkar7`
+Reject a source distribution with a member that ``tarfile``'s extraction filter refuses, checked before anything is
+written or deleted, so a crafted top-level directory can no longer delete files outside ``--sdist-extract-dir`` - by
+:user:`harsh-thakkar7`
