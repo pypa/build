@@ -1201,8 +1201,8 @@ def test_extract_sdist_allows_dot_top_level(tmp_path: pathlib.Path, write_sdist:
     assert neighbour.read_text(encoding='utf-8') == 'keep me', 'a sibling of the extract dir was deleted'
 
 
-@pytest.mark.skipif(not IS_WINDOWS, reason='backslash and drive semantics are Windows-specific')
-@pytest.mark.parametrize('member', ['..\\x/PKG-INFO', 'C:\\Users\\PKG-INFO', 'C:foo/PKG-INFO'])
+@pytest.mark.skipif(not IS_WINDOWS, reason='backslash semantics are Windows-specific')
+@pytest.mark.parametrize('member', ['..\\x/PKG-INFO', 'C:\\Users\\PKG-INFO'])
 def test_extract_sdist_rejects_windows_escape(  # pragma: no cover -- os.path reads these as paths on Windows only
     tmp_path: pathlib.Path, write_sdist: WriteSdist, member: str
 ) -> None:
@@ -1212,6 +1212,63 @@ def test_extract_sdist_rejects_windows_escape(  # pragma: no cover -- os.path re
     dest = tmp_path / 'extract'
     dest.mkdir()
     _refuses_to_extract(archive, 'demo-1.0.0', dest)
+
+
+@pytest.mark.skipif(not IS_WINDOWS, reason='backslash semantics are Windows-specific')
+def test_extract_sdist_refuses_windows_top_level_escape(  # pragma: no cover -- os.path reads this as a path on Windows only
+    tmp_path: pathlib.Path, write_sdist: WriteSdist
+) -> None:
+    r"""A top level carrying a backslash escapes on Windows, so the guard has to precede the ``rmtree``.
+
+    ``os.path.join(dest, '..\x')`` is ``dest\..\x``, which is outside ``dest``, so that is the directory the clear-out
+    step would remove if the filter ran after it. The top level is taken from the archive rather than passed in, so this
+    also covers how it is derived.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, '..\\x')
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    neighbour = tmp_path / 'neighbour.txt'
+    neighbour.write_text('keep me', encoding='utf-8')
+
+    top_level = build.__main__._validate_sdist_archive(archive)
+    assert top_level == '..\\x', 'the archive chose the top level the guard has to catch'
+
+    with contextlib.ExitStack() as stack, pytest.raises(build.BuildException, match='cannot be extracted safely'):
+        stack.enter_context(build.__main__._extract_sdist(str(archive), top_level, extract_dir=dest))
+
+    assert neighbour.read_text(encoding='utf-8') == 'keep me', 'a sibling of the extract dir was deleted'
+    assert not (tmp_path / 'x').exists(), 'the top level escaped the extract dir'
+
+
+@pytest.mark.skipif(not IS_WINDOWS, reason='drive semantics are Windows-specific')
+def test_extract_sdist_confines_drive_relative_member(  # pragma: no cover -- os.path reads this as a path on Windows only
+    tmp_path: pathlib.Path, write_sdist: WriteSdist
+) -> None:
+    r"""``C:foo/PKG-INFO`` is drive-relative, not absolute, so the filter does not always refuse it.
+
+    ``os.path.join`` folds it into the destination when the destination is on the same drive, and ``os.path.commonpath``
+    rejects the mix outright when it is not. Staying inside ``dest`` is the property that matters, so that is what is
+    pinned.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, 'demo-1.0.0', extra={'C:foo/PKG-INFO': 'x'})
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    neighbour = tmp_path / 'neighbour.txt'
+    neighbour.write_text('keep me', encoding='utf-8')
+
+    try:
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(build.__main__._extract_sdist(str(archive), 'demo-1.0.0', extract_dir=dest))
+    except build.BuildException:
+        return  # a different drive: refused before anything was written
+
+    assert os.path.isfile(os.path.join(dest, 'foo', 'PKG-INFO')), 'the member did not land inside the extract dir'
+    assert not (tmp_path / 'foo').exists(), 'the member escaped the extract dir'
+    assert neighbour.read_text(encoding='utf-8') == 'keep me', 'a sibling of the extract dir was deleted'
 
 
 def test_extract_sdist_reports_windows_drive_mismatch(
