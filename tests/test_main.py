@@ -1163,7 +1163,7 @@ def test_validate_sdist_archive_rejects(
 
 @pytest.mark.skipif(not IS_WINDOWS, reason='backslash and drive semantics are Windows-specific')
 @pytest.mark.parametrize('top_level', ['..\\x', 'C:\\Users', 'C:foo'])
-def test_validate_sdist_archive_rejects_windows_escape(
+def test_validate_sdist_archive_rejects_windows_escape(  # pragma: no cover -- os.path reads these as paths on Windows only
     tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
 ) -> None:
     """On Windows these all resolve outside ``--sdist-extract-dir``; ``os.path`` sees them as paths."""
@@ -1175,7 +1175,7 @@ def test_validate_sdist_archive_rejects_windows_escape(
 
 @pytest.mark.skipif(IS_WINDOWS, reason='on Windows these are paths, not file names')
 @pytest.mark.parametrize('top_level', ['..\\x', 'C:foo'])
-def test_validate_sdist_archive_allows_posix_backslash_name(
+def test_validate_sdist_archive_allows_posix_backslash_name(  # pragma: no cover -- these are plain file names off Windows
     tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
 ) -> None:
     """A backslash or colon is a legal file name on POSIX, so the check must stay platform-scoped."""
