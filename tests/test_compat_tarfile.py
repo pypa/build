@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
 from tarfile import CHRTYPE, LNKTYPE, SYMTYPE, TarError, TarInfo
@@ -11,7 +12,7 @@ from typing import Protocol
 
 import pytest
 
-from build._compat.tarfile import _validate_safe_member, check_extractable, safe_extractall
+from build._compat.tarfile import _HAS_DATA_FILTER, _validate_safe_member, check_extractable, safe_extractall
 
 
 FileMember = Callable[[str, bytes], TarInfo]
@@ -86,9 +87,6 @@ def test_validate_safe_member_rejects_device_file(tmp_path: Path, device_member:
         pytest.param('pkg/file.txt', id='plain'),
         pytest.param('pkg/nested/deep.txt', id='nested'),
         pytest.param('./pkg-1.0/file.txt', id='leading-dot'),
-        # The filter does not refuse a leading separator, it drops it: this one is rewritten to
-        # 'etc/evil.txt' and lands inside the destination, which is the property that matters.
-        pytest.param('/etc/evil.txt', id='absolute'),
     ],
 )
 def test_check_extractable_accepts_contained_members(
@@ -102,6 +100,29 @@ def test_check_extractable_accepts_contained_members(
     make_archive(archive, [(file_member(name, b'x'), b'x')])
 
     with tar_open(archive) as tar:
+        check_extractable(tar, tmp_path / 'out')
+
+
+def test_check_extractable_absolute_member_never_escapes(
+    tmp_path: Path,
+    make_archive: ArchiveBuilder,
+    file_member: FileMember,
+) -> None:
+    """The two branches disagree about an absolute member, and both answers are safe.
+
+    The stdlib filter does not refuse a leading separator, it drops it, so ``/etc/evil.txt`` is rewritten to
+    ``etc/evil.txt`` and lands inside the destination. The pre-filter fallback refuses it outright. Written as one test
+    that runs on both, because this suite is measured for 100% coverage and a test skipped on the current interpreter is
+    a hole on it.
+
+    """
+    archive = tmp_path / 'absolute.tar'
+    make_archive(archive, [(file_member('/etc/evil.txt', b'x'), b'x')])
+
+    refusal = (
+        nullcontext() if _HAS_DATA_FILTER else pytest.raises(TarError, match='escapes destination')
+    )  # pragma: no branch - the interpreter picks the branch, not the test
+    with tar_open(archive) as tar, refusal:
         check_extractable(tar, tmp_path / 'out')
 
 

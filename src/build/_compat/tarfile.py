@@ -26,16 +26,8 @@ if _HAS_DATA_FILTER:
         """Extract every member of ``tar`` into ``path`` via the PEP 706 ``data`` filter."""
         tar.extractall(path, filter='data')
 
-    def check_extractable(tar: tarfile.TarFile, path: Path | str) -> None:
-        """Reject every member of ``tar`` that the PEP 706 ``data`` filter would refuse, without extracting anything.
-
-        This asks :mod:`tarfile` itself rather than re-deriving its rules, so the verdict here is exactly the one
-        :func:`safe_extractall` will reach. Useful before acting on an archive's contents, when nothing has been written
-        yet and a refusal costs nothing.
-
-        """
-        for member in tar.getmembers():
-            tarfile.data_filter(member, str(path))
+    def _accept_member(member: tarfile.TarInfo, path: Path | str) -> None:  # pragma: no cover
+        tarfile.data_filter(member, str(path))
 
 else:
 
@@ -52,16 +44,20 @@ else:
             _validate_safe_member(member, base)
         tar.extractall(path)  # noqa: S202
 
-    def check_extractable(tar: tarfile.TarFile, path: Path | str) -> None:  # pragma: no cover
-        """Reject every member of ``tar`` that :func:`safe_extractall` would refuse, without extracting anything.
+    def _accept_member(member: tarfile.TarInfo, path: Path | str) -> None:  # pragma: no cover
+        _validate_safe_member(member, Path(path).resolve())
 
-        The 3.10.0-3.10.12 / 3.11.0-3.11.4 counterpart of the stdlib-filter branch above, checking the same rules with
-        the same helper that performs the extraction.
 
-        """
-        base = Path(path).resolve()
-        for member in tar.getmembers():
-            _validate_safe_member(member, base)
+def check_extractable(tar: tarfile.TarFile, path: Path | str) -> None:
+    """Reject every member of ``tar`` that :func:`safe_extractall` would refuse, without extracting anything.
+
+    This asks the same rule :func:`safe_extractall` applies rather than re-deriving it, so the verdict here is exactly
+    the one extraction will reach. Useful before acting on an archive's contents, when nothing has been written yet and
+    a refusal costs nothing.
+
+    """
+    for member in tar.getmembers():
+        _accept_member(member, path)
 
 
 def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
