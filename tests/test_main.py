@@ -1034,6 +1034,9 @@ def test_build_metadata_runner_without_extra_environ(
     ctx_run.assert_called_once_with(['echo', 'test'], None, mocker.ANY)
 
 
+IS_WINDOWS = sys.platform.startswith('win')
+
+
 class WriteSdist(Protocol):
     def __call__(
         self, path: pathlib.Path, top_level: str, *, with_pkg_info: bool = ..., extra: dict[str, str] | None = ...
@@ -1156,6 +1159,29 @@ def test_validate_sdist_archive_rejects(
     archive = _REJECT_CASES[case](tmp_path, write_sdist)
     with pytest.raises(build.BuildException, match=match):
         build.__main__._validate_sdist_archive(archive)
+
+
+@pytest.mark.skipif(not IS_WINDOWS, reason='backslash and drive semantics are Windows-specific')
+@pytest.mark.parametrize('top_level', ['..\\x', 'C:\\Users', 'C:foo'])
+def test_validate_sdist_archive_rejects_windows_escape(
+    tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
+) -> None:
+    """On Windows these all resolve outside ``--sdist-extract-dir``; ``os.path`` sees them as paths."""
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, top_level)
+    with pytest.raises(build.BuildException, match='escapes the destination'):
+        build.__main__._validate_sdist_archive(str(archive))
+
+
+@pytest.mark.skipif(IS_WINDOWS, reason='on Windows these are paths, not file names')
+@pytest.mark.parametrize('top_level', ['..\\x', 'C:foo'])
+def test_validate_sdist_archive_allows_posix_backslash_name(
+    tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
+) -> None:
+    """A backslash or colon is a legal file name on POSIX, so the check must stay platform-scoped."""
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, top_level)
+    assert build.__main__._validate_sdist_archive(str(archive)) == top_level
 
 
 @pytest.mark.parametrize('top_level', [os.curdir, os.pardir])
