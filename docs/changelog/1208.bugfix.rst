@@ -1,0 +1,2 @@
+Reject a source distribution whose single top-level directory is ``.`` or ``..``, which could delete files outside
+``--sdist-extract-dir`` - by :user:`harsh-thakkar7`

@@ -1034,6 +1034,9 @@ def test_build_metadata_runner_without_extra_environ(
     ctx_run.assert_called_once_with(['echo', 'test'], None, mocker.ANY)
 
 
+IS_WINDOWS = sys.platform.startswith('win')
+
+
 class WriteSdist(Protocol):
     def __call__(
         self, path: pathlib.Path, top_level: str, *, with_pkg_info: bool = ..., extra: dict[str, str] | None = ...
@@ -1115,12 +1118,23 @@ def _missing_pkg_info(tmp_path: pathlib.Path, write: WriteSdist) -> str:
     return str(archive)
 
 
+def _escaping_top_level(top_level: str) -> Callable[[pathlib.Path, WriteSdist], str]:
+    def _write(tmp_path: pathlib.Path, write: WriteSdist) -> str:
+        archive = tmp_path / 'demo-1.0.0.tar.gz'
+        write(archive, top_level)
+        return str(archive)
+
+    return _write
+
+
 _REJECT_CASES: dict[str, Callable[[pathlib.Path, WriteSdist], str]] = {
     'invalid-filename': _invalid_filename,
     'invalid-version': _invalid_version,
     'corrupt-tar': _corrupt_tar,
     'multiple-top-level': _multiple_top_level,
     'missing-pkg-info': _missing_pkg_info,
+    'top-level-dot': _escaping_top_level(os.curdir),
+    'top-level-dotdot': _escaping_top_level(os.pardir),
 }
 
 
@@ -1132,6 +1146,8 @@ _REJECT_CASES: dict[str, Callable[[pathlib.Path, WriteSdist], str]] = {
         pytest.param('corrupt-tar', 'failed to read source distribution', id='corrupt-tar'),
         pytest.param('multiple-top-level', 'single top-level directory', id='multiple-top-level'),
         pytest.param('missing-pkg-info', 'does not contain demo-1.0.0/PKG-INFO', id='missing-pkg-info'),
+        pytest.param('top-level-dot', 'escapes the destination', id='top-level-dot'),
+        pytest.param('top-level-dotdot', 'escapes the destination', id='top-level-dotdot'),
     ],
 )
 def test_validate_sdist_archive_rejects(
@@ -1143,6 +1159,51 @@ def test_validate_sdist_archive_rejects(
     archive = _REJECT_CASES[case](tmp_path, write_sdist)
     with pytest.raises(build.BuildException, match=match):
         build.__main__._validate_sdist_archive(archive)
+
+
+@pytest.mark.skipif(not IS_WINDOWS, reason='backslash and drive semantics are Windows-specific')
+@pytest.mark.parametrize('top_level', ['..\\x', 'C:\\Users', 'C:foo'])
+def test_validate_sdist_archive_rejects_windows_escape(  # pragma: no cover -- os.path reads these as paths on Windows only
+    tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
+) -> None:
+    """On Windows these all resolve outside ``--sdist-extract-dir``; ``os.path`` sees them as paths."""
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, top_level)
+    with pytest.raises(build.BuildException, match='escapes the destination'):
+        build.__main__._validate_sdist_archive(str(archive))
+
+
+@pytest.mark.skipif(IS_WINDOWS, reason='on Windows these are paths, not file names')
+@pytest.mark.parametrize('top_level', ['..\\x', 'C:foo'])
+def test_validate_sdist_archive_allows_posix_backslash_name(  # pragma: no cover -- these are plain file names off Windows
+    tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str
+) -> None:
+    """A backslash or colon is a legal file name on POSIX, so the check must stay platform-scoped."""
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, top_level)
+    assert build.__main__._validate_sdist_archive(str(archive)) == top_level
+
+
+@pytest.mark.parametrize('top_level', [os.curdir, os.pardir])
+def test_main_rejects_top_level_escaping_extract_dir(tmp_path: pathlib.Path, write_sdist: WriteSdist, top_level: str) -> None:
+    """A ``.``/``..`` top level must not let ``--sdist-extract-dir`` delete outside itself."""
+    extract_dir = tmp_path / 'extract'
+    extract_dir.mkdir()
+    inner = extract_dir / 'inner.txt'
+    inner.write_text('keep me too', encoding='utf-8')
+    neighbour = tmp_path / 'neighbour.txt'
+    neighbour.write_text('keep me', encoding='utf-8')
+
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, top_level)
+
+    with pytest.raises(SystemExit):
+        build.__main__.main(['-n', str(archive), '--sdist-extract-dir', str(extract_dir), '--wheel'])
+
+    assert extract_dir.is_dir(), 'the extract dir was deleted'
+    assert inner.read_text(encoding='utf-8') == 'keep me too', 'the extract dir was emptied'
+    assert neighbour.is_file(), 'a sibling of the extract dir was deleted'
+    assert neighbour.read_text(encoding='utf-8') == 'keep me'
 
 
 def test_extract_sdist_yields_top_level(sdist: pathlib.Path) -> None:

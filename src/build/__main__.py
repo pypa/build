@@ -862,6 +862,13 @@ def _validate_sdist_archive(archive: StrPath) -> str:
         raise BuildException(msg)
 
     top = next(iter(top_levels))
+    if top in {os.curdir, os.pardir} or os.path.basename(top) != top or os.path.splitdrive(top)[0]:
+        # ``_extract_sdist`` joins ``top`` onto the destination and deletes whatever it points at
+        # before extracting anything, so the value has to be a plain name inside that directory.
+        # ``os.path`` resolves separators per platform: on Windows a ``top`` of ``..\\x`` or
+        # ``C:foo`` would still escape, while on POSIX both are ordinary file names.
+        msg = f'source distribution {archive} has a top-level directory that escapes the destination: {top!r}'
+        raise BuildException(msg)
     if not any(m.name == f'{top}/PKG-INFO' and m.isfile() for m in members):
         msg = (
             f'source distribution {archive} does not contain {top}/PKG-INFO; '
