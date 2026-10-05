@@ -36,6 +36,7 @@ dynamic = ["version"]
 dependencies = [
   "packaging >= 24.0",
   "pyproject_hooks",
+  'backports.tarfile >= 1.2.0; python_full_version < "3.10.13" or (python_version == "3.11" and python_full_version < "3.11.5")',
   # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
   'colorama; os_name == "nt"',
   'importlib-metadata >= 4.6; python_full_version < "3.10.2"',  # Not required but fixes a stdlib bug
@@ -108,6 +109,7 @@ test = [
   { include-group = "extra" },
 ]
 typing = [
+  "backports.tarfile >= 1.2.0",
   "colorama",
   "importlib-metadata >= 5.1",
   "tomli",
