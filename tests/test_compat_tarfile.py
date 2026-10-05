@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
 from tarfile import CHRTYPE, LNKTYPE, SYMTYPE, TarError, TarInfo
@@ -12,7 +11,12 @@ from typing import Protocol
 
 import pytest
 
-from build._compat.tarfile import _HAS_DATA_FILTER, _validate_safe_member, check_extractable, safe_extractall
+from build._compat.tarfile import (
+    _HAS_DATA_FILTER,
+    _validate_safe_member,
+    extractable_member_names,
+    safe_extractall,
+)
 
 
 FileMember = Callable[[str, bytes], TarInfo]
@@ -89,44 +93,45 @@ def test_validate_safe_member_rejects_device_file(tmp_path: Path, device_member:
         pytest.param('./pkg-1.0/file.txt', id='leading-dot'),
     ],
 )
-def test_check_extractable_accepts_contained_members(
+def test_extractable_member_names_returns_the_written_names(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     file_member: FileMember,
     name: str,
 ) -> None:
-    """Anything the filter resolves inside the destination is left to the extraction itself."""
+    """A name the filter keeps comes back unchanged, so the caller can reason about where files land."""
     archive = tmp_path / 'ok.tar'
     make_archive(archive, [(file_member(name, b'x'), b'x')])
 
     with tar_open(archive) as tar:
-        check_extractable(tar, tmp_path / 'out')
+        assert extractable_member_names(tar, tmp_path / 'out') == [name]
 
 
-def test_check_extractable_absolute_member_never_escapes(
+def test_extractable_member_names_absolute_member_rewritten(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     file_member: FileMember,
 ) -> None:
-    """The two branches disagree about an absolute member, and both answers are safe.
+    """The two branches disagree about an absolute member, and only one of them hands back a name.
 
     The stdlib filter does not refuse a leading separator, it drops it, so ``/etc/evil.txt`` is rewritten to
-    ``etc/evil.txt`` and lands inside the destination. The pre-filter fallback refuses it outright. Written as one test
-    that runs on both, because this suite is measured for 100% coverage and a test skipped on the current interpreter is
-    a hole on it.
+    ``etc/evil.txt`` and lands inside the destination -- which is why the name has to come from the filter's output. The
+    pre-filter fallback refuses it outright instead. Written as one test that runs on both, because this suite is
+    measured for 100% coverage and a test skipped on the current interpreter is a hole on it.
 
     """
     archive = tmp_path / 'absolute.tar'
     make_archive(archive, [(file_member('/etc/evil.txt', b'x'), b'x')])
 
-    refusal = (
-        nullcontext() if _HAS_DATA_FILTER else pytest.raises(TarError, match='escapes destination')
-    )  # pragma: no branch - the interpreter picks the branch, not the test
-    with tar_open(archive) as tar, refusal:
-        check_extractable(tar, tmp_path / 'out')
+    with tar_open(archive) as tar:
+        if _HAS_DATA_FILTER:
+            assert extractable_member_names(tar, tmp_path / 'out') == ['etc/evil.txt']
+        else:  # pragma: no cover - the fallback is what the older matrix jobs measure
+            with pytest.raises(TarError, match='escapes destination'):
+                extractable_member_names(tar, tmp_path / 'out')
 
 
-def test_check_extractable_rejects_traversal(
+def test_extractable_member_names_rejects_traversal(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     file_member: FileMember,
@@ -135,10 +140,10 @@ def test_check_extractable_rejects_traversal(
     make_archive(archive, [(file_member('../evil.txt', b'x'), b'x')])
 
     with tar_open(archive) as tar, pytest.raises(TarError):
-        check_extractable(tar, tmp_path / 'out')
+        extractable_member_names(tar, tmp_path / 'out')
 
 
-def test_check_extractable_rejects_traversal_behind_dot(
+def test_extractable_member_names_rejects_traversal_behind_dot(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     file_member: FileMember,
@@ -148,10 +153,10 @@ def test_check_extractable_rejects_traversal_behind_dot(
     make_archive(archive, [(file_member('./../evil.txt', b'x'), b'x')])
 
     with tar_open(archive) as tar, pytest.raises(TarError):
-        check_extractable(tar, tmp_path / 'out')
+        extractable_member_names(tar, tmp_path / 'out')
 
 
-def test_check_extractable_rejects_device_file(
+def test_extractable_member_names_rejects_device_file(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     device_member: DeviceMember,
@@ -160,10 +165,10 @@ def test_check_extractable_rejects_device_file(
     make_archive(archive, [(device_member('pkg/null'), None)])
 
     with tar_open(archive) as tar, pytest.raises(TarError):
-        check_extractable(tar, tmp_path / 'out')
+        extractable_member_names(tar, tmp_path / 'out')
 
 
-def test_check_extractable_rejects_escaping_symlink(
+def test_extractable_member_names_rejects_escaping_symlink(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     link_member: LinkMember,
@@ -172,26 +177,34 @@ def test_check_extractable_rejects_escaping_symlink(
     make_archive(archive, [(link_member('pkg/evil', '../../outside'), None)])
 
     with tar_open(archive) as tar, pytest.raises(TarError):
-        check_extractable(tar, tmp_path / 'out')
+        extractable_member_names(tar, tmp_path / 'out')
 
 
-def test_check_extractable_agrees_with_safe_extractall(
+def test_extractable_member_names_predicts_where_extraction_lands(
     tmp_path: Path,
     make_archive: ArchiveBuilder,
     file_member: FileMember,
 ) -> None:
-    """Checking is a dry run of the extraction: what it accepts, ``safe_extractall`` extracts, and vice versa."""
+    """Every returned name is a real path under the destination once the extraction has run.
+
+    This is the property the caller relies on: a name it was handed is a file that then exists, so it can act on the
+    name (delete it, descend into it) without re-deriving tarfile's rules.
+
+    """
     archive = tmp_path / 'agree.tar'
     body = b'meta'
-    make_archive(archive, [(file_member('pkg/PKG-INFO', body), body)])
+    names = ('pkg/PKG-INFO', 'pkg/nested/inner.txt')
+    make_archive(archive, [(file_member(name, body), body) for name in names])
 
     out = tmp_path / 'out'
     out.mkdir()
     with tar_open(archive) as tar:
-        check_extractable(tar, out)
+        reported = extractable_member_names(tar, out)
         safe_extractall(tar, out)
 
-    assert (out / 'pkg' / 'PKG-INFO').read_bytes() == body
+    assert reported == list(names)
+    for name in reported:
+        assert (out / name).is_file(), f'{name} was reported but never written'
 
 
 @pytest.fixture

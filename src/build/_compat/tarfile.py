@@ -26,8 +26,15 @@ if _HAS_DATA_FILTER:
         """Extract every member of ``tar`` into ``path`` via the PEP 706 ``data`` filter."""
         tar.extractall(path, filter='data')
 
-    def _accept_member(member: tarfile.TarInfo, path: Path | str) -> None:  # pragma: no cover
-        tarfile.data_filter(member, str(path))
+    def extractable_member_names(tar: tarfile.TarFile, path: Path | str) -> list[str]:  # pragma: no cover
+        """Name each member of ``tar`` will actually land on, or refuse the archive.
+
+        The names come from the ``data`` filter's *output*, not from ``TarInfo.name``: the filter rewrites a member it
+        would still accept (an absolute ``/pkg/x`` becomes ``pkg/x``), so the raw name is not always where the file ends
+        up. Anything it would refuse is refused here too, before extraction.
+
+        """
+        return [tarfile.data_filter(member, str(path)).name for member in tar.getmembers()]
 
 else:
 
@@ -44,20 +51,19 @@ else:
             _validate_safe_member(member, base)
         tar.extractall(path)  # noqa: S202
 
-    def _accept_member(member: tarfile.TarInfo, path: Path | str) -> None:  # pragma: no cover
-        _validate_safe_member(member, Path(path).resolve())
+    def extractable_member_names(tar: tarfile.TarFile, path: Path | str) -> list[str]:  # pragma: no cover
+        """Name each member of ``tar`` will actually land on, or refuse the archive.
 
+        Reached on the runtimes without the stdlib ``data`` filter, where nothing rewrites a name, so a member that
+        survives the check keeps the name the archive gave it.
 
-def check_extractable(tar: tarfile.TarFile, path: Path | str) -> None:
-    """Reject every member of ``tar`` that :func:`safe_extractall` would refuse, without extracting anything.
-
-    This asks the same rule :func:`safe_extractall` applies rather than re-deriving it, so the verdict here is exactly
-    the one extraction will reach. Useful before acting on an archive's contents, when nothing has been written yet and
-    a refusal costs nothing.
-
-    """
-    for member in tar.getmembers():
-        _accept_member(member, path)
+        """
+        base = Path(path).resolve()
+        names = []
+        for member in tar.getmembers():
+            _validate_safe_member(member, base)
+            names.append(member.name)
+        return names
 
 
 def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
@@ -77,6 +83,6 @@ def _validate_safe_member(member: tarfile.TarInfo, base: Path) -> None:
 
 
 __all__ = [
-    'check_extractable',
+    'extractable_member_names',
     'safe_extractall',
 ]

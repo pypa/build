@@ -58,7 +58,7 @@ import build
 import build.env as _env
 
 from build import ProjectBuilder, _ctx
-from build._compat.tarfile import check_extractable, safe_extractall
+from build._compat.tarfile import extractable_member_names, safe_extractall
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
 from build._util import format_unmet_dependencies
 from build.env import DefaultIsolatedEnv
@@ -877,7 +877,10 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
         tmp_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
         try:
             with tar_open(archive) as tar:
-                _check_sdist_extractable(archive, tar, tmp_dir)
+                # ``top_level`` was read from the raw member names, but everything downstream -- the
+                # rmtree in the branch below and the directory handed to the backend -- has to follow
+                # the names the extraction filter really writes.
+                top_level = _extractable_top_level(archive, tar, tmp_dir)
                 safe_extractall(tar, tmp_dir)
             yield os.path.join(tmp_dir, top_level)
         finally:
@@ -888,31 +891,42 @@ def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | N
             msg = f'Sdist extract location is not a directory: {root}'
             raise BuildException(msg)
         os.makedirs(root, exist_ok=True)
-        target = os.path.join(root, top_level)
         with tar_open(archive) as tar:
-            # ``top_level`` is read out of the archive and the line above joins it onto ``root``,
-            # so a crafted one would aim the rmtree below at an unrelated directory.
-            _check_sdist_extractable(archive, tar, root)
+            # As above: a ``top_level`` taken from the raw names would aim the rmtree below at an
+            # unrelated directory. Deriving it from the filtered names also collapses a crafted "./"
+            # into a real child, so the rmtree can no longer land on ``root`` itself.
+            top_level = _extractable_top_level(archive, tar, root)
+            target = os.path.join(root, top_level)
             shutil.rmtree(target, ignore_errors=True)
             safe_extractall(tar, root)
         yield target
 
 
-def _check_sdist_extractable(archive: StrPath, tar: TarFile, dest: str) -> None:
-    """Refuse an archive that cannot be extracted into ``dest``, before writing or deleting anything.
+def _extractable_top_level(archive: StrPath, tar: TarFile, dest: str) -> str:
+    """The single top-level directory ``tar`` will extract into under ``dest``.
 
-    The verdict comes from tarfile's own extraction filter, so it is exactly the one ``safe_extractall``
-    will reach -- no second set of path rules to keep in step, and no partial extraction on the way
-    to a member that would have been refused.
+    The names are the ones the extraction filter produces, so this sees the directory that will really
+    exist rather than the one the archive claims: the filter rewrites an absolute member (``/pkg/x``
+    becomes ``pkg/x``) and refuses one that escapes ``dest``. What is left is split on ``/``, which tar
+    uses on every platform, and the empty and ``.`` segments dropped -- those two would otherwise aim the
+    clear-out step at ``dest`` itself.
     """
     try:
-        check_extractable(tar, dest)
+        member_names = extractable_member_names(tar, dest)
     except (TarError, ValueError) as exc:
         # The filter detects escapes with ``os.path.commonpath``, which raises ``ValueError``
         # rather than a ``FilterError`` for a drive-relative member name such as ``C:pkg/PKG-INFO``
         # when ``dest`` sits on another Windows drive.
         msg = f'source distribution {archive} contains a member that cannot be extracted safely: {exc}'
         raise BuildException(msg) from exc
+
+    top_levels = {name.split('/', 1)[0] for name in member_names}
+    top_levels.discard('')
+    top_levels.discard(os.curdir)
+    if len(top_levels) != 1:
+        msg = f'source distribution {archive} must contain a single top-level directory, got: {sorted(top_levels)}'
+        raise BuildException(msg)
+    return next(iter(top_levels))
 
 
 def entrypoint() -> None:

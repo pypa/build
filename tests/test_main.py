@@ -298,6 +298,9 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     mocker.patch('build.__main__.tempfile.mkdtemp', return_value='temp-sdist-dir')
     rmtree = mocker.patch('build.__main__.shutil.rmtree')
     tar_open = mocker.patch('build.__main__.tar_open')
+    # The top level is derived from the members the extraction filter reports, so the mocked archive has
+    # to have one for the derivation to resolve -- an empty one would be refused as having no top level.
+    tar_open.return_value.__enter__.return_value.getmembers.return_value = [tarfile.TarInfo('demo-1.0.0/PKG-INFO')]
     mocker.patch('build.__main__._validate_sdist_archive', return_value='demo-1.0.0')
     mocker.patch('build.__main__._ctx.log')
     config_settings = {'--flag': 'value'}
@@ -1178,14 +1181,15 @@ def test_extract_sdist_rejects_top_level_escaping_dest(
     _refuses_to_extract(archive, member.split('/', 1)[0], dest)
 
 
-@pytest.mark.skipif(IS_WINDOWS, reason='a leading dot is a path only off Windows')
-def test_extract_sdist_allows_dot_top_level(  # pragma: no cover -- os.curdir is only a path off Windows
-    tmp_path: pathlib.Path, write_sdist: WriteSdist
-) -> None:
-    """``./pkg-1.0`` resolves back inside the destination, so the filter lets it through.
+def test_extract_sdist_rejects_dot_top_level(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    """A ``.`` top level makes the clear-out step aim at the extract dir itself, so it must be refused.
 
-    The clear-out step then removes the destination's own previous contents, which is the point of
-    ``--sdist-extract-dir``; what it must never do is reach past that directory.
+    ``os.path.join(dest, os.curdir)`` is ``dest``, so the ``rmtree`` would remove everything already in
+    ``--sdist-extract-dir`` before the archive is even looked at. Unlike a bare ``..`` member this one is *not* an
+    escape the extraction filter can see -- both of its members sit inside the destination -- so the only thing that
+    catches it is deriving the top level from the names the filter produces. Asserted on Windows as well as POSIX
+    because ``os.curdir`` and the ``.`` in a tar member name mean the same thing on both, and a test skipped on the
+    current interpreter is a hole in the coverage gate.
 
     """
     archive = tmp_path / 'demo-1.0.0.tar.gz'
@@ -1196,11 +1200,62 @@ def test_extract_sdist_allows_dot_top_level(  # pragma: no cover -- os.curdir is
     neighbour = tmp_path / 'neighbour.txt'
     neighbour.write_text('keep me', encoding='utf-8')
 
-    with build.__main__._extract_sdist(str(archive), os.curdir, extract_dir=dest) as extracted:
-        assert os.path.realpath(extracted) == os.path.realpath(dest)
-        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+    _refuses_to_extract(archive, os.curdir, dest, match='single top-level directory')
 
+    assert (dest / 'stale.txt').read_text(encoding='utf-8') == 'from a previous build', (
+        'the contents of the extract dir were deleted'
+    )
     assert neighbour.read_text(encoding='utf-8') == 'keep me', 'a sibling of the extract dir was deleted'
+
+
+@pytest.mark.parametrize('member', ['', '/', '//'])
+def test_extract_sdist_rejects_an_archive_with_no_top_level(tmp_path: pathlib.Path, member: str) -> None:
+    r"""A member the filter reduces to nothing leaves ``''`` behind, and ``os.path.join(root, '')`` is ``root``.
+
+    ``tarfile`` rewrites ``/pkg/x`` to ``pkg/x``, but ``''``, ``/`` and ``//`` have nothing left once the leading
+    separators are dropped, so those come back from the filter as an empty name. Paired here with a ``./`` member so the
+    two empty-ish heads are the *only* ones there are: that is what makes this an archive with no top level rather than
+    one that happens to have two.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    with tarfile.open(archive, 'w:gz') as tar:
+        for name, body in ((member, b''), ('./setup.py', b'x')):
+            info = tarfile.TarInfo(name=name)
+            info.size = len(body)
+            tar.addfile(info, io.BytesIO(body))
+    dest = tmp_path / 'extract'
+    dest.mkdir()
+    (dest / 'stale.txt').write_text('from a previous build', encoding='utf-8')
+
+    _refuses_to_extract(archive, os.curdir, dest, match='single top-level directory')
+
+    assert (dest / 'stale.txt').read_text(encoding='utf-8') == 'from a previous build'
+
+
+def test_extract_sdist_follows_the_rewritten_top_level(tmp_path: pathlib.Path) -> None:
+    """The top level comes from the extracted names, so an absolute member no longer reads as ``/``.
+
+    ``data_filter`` drops the leading separator rather than refusing it, so this archive really extracts into ``pkg``.
+    Taking the top level from the raw ``TarInfo.name`` would see ``''`` for every member and find no top-level directory
+    at all; taking it from the filter's output gives the one that exists. Every member has to be absolute for the two
+    readings to differ, which is what makes this the case worth pinning.
+
+    """
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    pkg_info = b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n'
+    with tarfile.open(archive, 'w:gz') as tar:
+        for name in ('/pkg/PKG-INFO', '/pkg/pyproject.toml'):
+            info = tarfile.TarInfo(name=name)
+            info.size = len(pkg_info)
+            tar.addfile(info, io.BytesIO(pkg_info))
+    dest = tmp_path / 'extract'
+
+    with build.__main__._extract_sdist(str(archive), os.curdir, extract_dir=dest) as extracted:
+        assert pathlib.Path(extracted) == dest / 'pkg'
+        assert pathlib.Path(extracted, 'PKG-INFO').is_file()
+
+    assert not dest.parent.joinpath('pkg').exists(), 'nothing was written outside the destination'
 
 
 @pytest.mark.skipif(not IS_WINDOWS, reason='backslash semantics are Windows-specific')
@@ -1288,7 +1343,7 @@ def test_extract_sdist_reports_windows_drive_mismatch(
     write_sdist(archive, 'demo-1.0.0')
     dest = tmp_path / 'extract'
     dest.mkdir()
-    mocker.patch.object(build.__main__, 'check_extractable', side_effect=ValueError("Paths don't have the same drive"))
+    mocker.patch.object(build.__main__, 'extractable_member_names', side_effect=ValueError("Paths don't have the same drive"))
     _refuses_to_extract(archive, 'demo-1.0.0', dest, match="cannot be extracted safely: Paths don't have the same drive")
 
 

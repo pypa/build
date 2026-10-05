@@ -1,3 +1,3 @@
-Reject a source distribution with a member that ``tarfile``'s extraction filter refuses, checked before anything is
-written or deleted, so a crafted top-level directory can no longer delete files outside ``--sdist-extract-dir`` - by
-:user:`harsh-thakkar7`
+Take the top-level directory of a source distribution from the names ``tarfile``'s extraction filter reports rather than
+the raw archive, so a crafted one can no longer aim the clear-out step at ``--sdist-extract-dir`` itself or at a
+directory outside it - by :user:`harsh-thakkar7`
