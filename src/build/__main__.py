@@ -5,7 +5,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'argparse',
-    'build._compat',
+    'build',
     'build._compat.tarfile',
     'build._exceptions',
     'build._util',
@@ -13,7 +13,6 @@ __lazy_modules__ = {
     'functools',
     'hashlib',
     'json',
-    'packaging',
     'packaging.utils',
     'packaging.version',
     'platform',

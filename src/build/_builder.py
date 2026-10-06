@@ -8,6 +8,7 @@ __lazy_modules__ = {
     'subprocess',
     'warnings',
     'zipfile',
+    f'{__spec__.parent}',
     f'{__spec__.parent}._compat',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',

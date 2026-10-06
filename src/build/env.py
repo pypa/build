@@ -3,9 +3,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'contextlib',
-    'importlib',
     'importlib.util',
-    'packaging',
     'packaging.requirements',
     'packaging.utils',
     'platform',
@@ -14,6 +12,7 @@ __lazy_modules__ = {
     'sysconfig',
     'tempfile',
     'warnings',
+    f'{__spec__.parent}',
     f'{__spec__.parent}._compat.importlib',
     f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
