@@ -6,6 +6,7 @@ from __future__ import annotations
 __lazy_modules__ = {
     'pathlib',
     'tempfile',
+    f'{__spec__.parent}',
     f'{__spec__.parent}._compat',
     f'{__spec__.parent}.env',
 }

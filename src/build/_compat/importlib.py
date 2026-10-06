@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+
+__lazy_modules__ = {'importlib'}
+
 import sys
 
 
