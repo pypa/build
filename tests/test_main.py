@@ -11,7 +11,6 @@ import pathlib
 import re
 import subprocess
 import sys
-import tarfile
 import unittest.mock
 import venv
 import zipfile
@@ -29,6 +28,7 @@ import build._ctx
 import build.env
 
 from build._compat import importlib as _importlib
+from build._compat.tarfile import tarfile
 
 
 if TYPE_CHECKING:
@@ -295,11 +295,8 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
             os.path.join('dist', 'demo-1.0.0-py3-none-any.whl'),
         ],
     )
-    mocker.patch('build.__main__.tempfile.mkdtemp', return_value='temp-sdist-dir')
-    rmtree = mocker.patch('build.__main__.shutil.rmtree')
-    tar_open = mocker.patch('build.__main__.tar_open')
-    mocker.patch('build.__main__._validate_sdist_archive', return_value='demo-1.0.0')
-    mocker.patch('build.__main__._ctx.log')
+    mocker.patch('build.__main__._extract_sdist')
+
     config_settings = {'--flag': 'value'}
 
     built = build.__main__.build_package_via_sdist(
@@ -314,9 +311,6 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
     )
 
     assert built == ['demo-1.0.0.tar.gz', 'demo-1.0.0-py3-none-any.whl']
-    extractall = cast(unittest.mock.MagicMock, tar_open.return_value.__enter__.return_value.extractall)
-    extractall.assert_called_once()
-    assert extractall.call_args.args[0] == 'temp-sdist-dir'
     build_cmd.assert_has_calls(
         [
             unittest.mock.call(
@@ -324,7 +318,7 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
             ),
             unittest.mock.call(
                 False,
-                os.path.join('temp-sdist-dir', 'demo-1.0.0'),
+                mocker.ANY,
                 'dist',
                 'wheel',
                 config_settings,
@@ -335,7 +329,6 @@ def test_build_package_via_sdist_passes_config_settings_to_build(mocker: pytest_
             ),
         ]
     )
-    rmtree.assert_called_once_with('temp-sdist-dir', ignore_errors=True)
 
 
 def test_build_no_isolation_check_deps_not_installed(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
@@ -1075,14 +1068,17 @@ def sdist(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> pathlib.Path:
     return archive
 
 
-def test_validate_sdist_archive_happy(sdist: pathlib.Path) -> None:
-    assert build.__main__._validate_sdist_archive(str(sdist)) == 'demo-1.0.0'
+def test_prepare_sdist_archive_happy(tmp_path: pathlib.Path, sdist: pathlib.Path) -> None:
+    with build.__main__._prepare_sdist_archive(str(sdist), extract_dir=tmp_path) as (_, top_level_dir):
+        assert top_level_dir == 'demo-1.0.0'
 
 
-def test_validate_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+def test_prepare_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
     archive = tmp_path / 'demo-1.0.0.tar.gz'
     write_sdist(archive, 'something-else-1.0')
-    assert build.__main__._validate_sdist_archive(str(archive)) == 'something-else-1.0'
+
+    with build.__main__._prepare_sdist_archive(str(archive), extract_dir=tmp_path) as (_, top_level_dir):
+        assert top_level_dir == 'something-else-1.0'
 
 
 def _invalid_filename(tmp_path: pathlib.Path, write: WriteSdist) -> str:
@@ -1094,12 +1090,6 @@ def _invalid_filename(tmp_path: pathlib.Path, write: WriteSdist) -> str:
 def _invalid_version(tmp_path: pathlib.Path, write: WriteSdist) -> str:
     archive = tmp_path / 'demo-not_a_version.tar.gz'
     write(archive, 'demo-not_a_version')
-    return str(archive)
-
-
-def _corrupt_tar(tmp_path: pathlib.Path, _write: WriteSdist) -> str:
-    archive = tmp_path / 'demo-1.0.0.tar.gz'
-    archive.write_bytes(b'not a real tar.gz')
     return str(archive)
 
 
@@ -1115,38 +1105,28 @@ def _missing_pkg_info(tmp_path: pathlib.Path, write: WriteSdist) -> str:
     return str(archive)
 
 
-_REJECT_CASES: dict[str, Callable[[pathlib.Path, WriteSdist], str]] = {
-    'invalid-filename': _invalid_filename,
-    'invalid-version': _invalid_version,
-    'corrupt-tar': _corrupt_tar,
-    'multiple-top-level': _multiple_top_level,
-    'missing-pkg-info': _missing_pkg_info,
-}
-
-
 @pytest.mark.parametrize(
-    ('case', 'match'),
+    ('writer', 'match'),
     [
-        pytest.param('invalid-filename', 'does not look like a source distribution', id='invalid-filename'),
-        pytest.param('invalid-version', 'does not look like a source distribution', id='invalid-version'),
-        pytest.param('corrupt-tar', 'failed to read source distribution', id='corrupt-tar'),
-        pytest.param('multiple-top-level', 'single top-level directory', id='multiple-top-level'),
-        pytest.param('missing-pkg-info', 'does not contain demo-1.0.0/PKG-INFO', id='missing-pkg-info'),
+        pytest.param(_invalid_filename, 'does not look like a source distribution', id='invalid-filename'),
+        pytest.param(_invalid_version, 'does not look like a source distribution', id='invalid-version'),
+        pytest.param(_multiple_top_level, 'single top-level directory', id='multiple-top-level'),
+        pytest.param(_missing_pkg_info, 'does not contain demo-1.0.0/PKG-INFO', id='missing-pkg-info'),
     ],
 )
-def test_validate_sdist_archive_rejects(
+def test_prepare_sdist_archive_rejects(
     tmp_path: pathlib.Path,
     write_sdist: WriteSdist,
-    case: str,
+    writer: Callable[[pathlib.Path, WriteSdist], str],
     match: str,
 ) -> None:
-    archive = _REJECT_CASES[case](tmp_path, write_sdist)
+    archive = writer(tmp_path, write_sdist)
     with pytest.raises(build.BuildException, match=match):
-        build.__main__._validate_sdist_archive(archive)
+        build.__main__._prepare_sdist_archive(archive, extract_dir=tmp_path).__enter__()
 
 
 def test_extract_sdist_yields_top_level(sdist: pathlib.Path) -> None:
-    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0') as extracted:
+    with build.__main__._extract_sdist(str(sdist)) as extracted:
         assert os.path.isdir(extracted)
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
         extract_root = os.path.dirname(extracted)
@@ -1154,7 +1134,7 @@ def test_extract_sdist_yields_top_level(sdist: pathlib.Path) -> None:
 
 
 def _raise_inside_extract(sdist: pathlib.Path) -> None:
-    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0') as extracted:
+    with build.__main__._extract_sdist(str(sdist)) as extracted:
         msg = 'boom'
         raise RuntimeError(msg, os.path.dirname(extracted))
 
@@ -1174,7 +1154,7 @@ def test_extract_sdist_rejects_path_traversal(tmp_path: pathlib.Path) -> None:
         info.size = len(body)
         tar.addfile(info, io.BytesIO(body))
 
-    cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
+    cm = build.__main__._extract_sdist(str(archive))
     with pytest.raises(tarfile.TarError):
         cm.__enter__()
     assert not (tmp_path / 'evil.txt').exists()
@@ -1188,14 +1168,14 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
         info.linkname = '/etc/passwd'
         tar.addfile(info)
 
-    cm = build.__main__._extract_sdist(str(archive), 'demo-1.0.0')
+    cm = build.__main__._extract_sdist(str(archive))
     with pytest.raises(tarfile.TarError):
         cm.__enter__()
 
 
 def test_extract_sdist_fixed_dir_is_deterministic_and_kept(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
     extract_dir = tmp_path / 'extract'
-    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0', extract_dir=str(extract_dir)) as extracted:
+    with build.__main__._extract_sdist(str(sdist), extract_dir=str(extract_dir)) as extracted:
         assert extracted == str(extract_dir / 'demo-1.0.0')
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
     assert (extract_dir / 'demo-1.0.0' / 'PKG-INFO').is_file()
@@ -1207,7 +1187,7 @@ def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path
     stale.parent.mkdir(parents=True)
     stale.write_text('old', encoding='utf-8')
 
-    with build.__main__._extract_sdist(str(sdist), 'demo-1.0.0', extract_dir=str(extract_dir)) as extracted:
+    with build.__main__._extract_sdist(str(sdist), extract_dir=str(extract_dir)) as extracted:
         assert extracted == str(extract_dir / 'demo-1.0.0')
         assert not stale.exists()
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
@@ -1219,7 +1199,7 @@ def test_extract_sdist_rejects_file_at_location(sdist: pathlib.Path, tmp_path: p
 
     with (
         pytest.raises(build.BuildException, match='Sdist extract location is not a directory'),
-        build.__main__._extract_sdist(str(sdist), 'demo-1.0.0', extract_dir=str(file_path)),
+        build.__main__._extract_sdist(str(sdist), extract_dir=str(file_path)),
     ):
         raise AssertionError
 

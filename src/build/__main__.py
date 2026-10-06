@@ -20,7 +20,6 @@ __lazy_modules__ = {
     'pyproject_hooks',
     'shutil',
     'subprocess',
-    'tarfile',
     'tempfile',
     'textwrap',
     'traceback',
@@ -45,8 +44,6 @@ import warnings
 import zipfile
 
 from functools import partial
-from tarfile import TarError
-from tarfile import open as tar_open
 from typing import NoReturn, TextIO, TypedDict
 
 import pyproject_hooks
@@ -58,7 +55,7 @@ import build
 import build.env as _env
 
 from build import ProjectBuilder, _ctx
-from build._compat.tarfile import safe_extractall
+from build._compat.tarfile import tarfile
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
 from build._util import format_unmet_dependencies
 from build.env import DefaultIsolatedEnv
@@ -67,7 +64,7 @@ from build.env import DefaultIsolatedEnv
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping, Sequence
+    from collections.abc import Callable, Generator, Mapping, Sequence
 
     from build._types import ConfigSettings, Distribution, JSONValue, StrPath, SubprocessRunner
 
@@ -407,8 +404,7 @@ def build_package_via_sdist(
     sdist_name = os.path.basename(sdist)
     built: list[str] = []
     if distributions:
-        top_level = _validate_sdist_archive(sdist)
-        with _extract_sdist(sdist, top_level, extract_dir=sdist_extract_dir) as extracted_srcdir:
+        with _extract_sdist(sdist, extract_dir=sdist_extract_dir) as extracted_srcdir:
             _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
             for distribution in distributions:
                 out = _build(
@@ -738,8 +734,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
 
     with _handle_build_error(env_dir=args.env_dir, sdist_extract_dir=args.sdist_extract_dir):
         if sdist_input:
-            top_level = _validate_sdist_archive(args.srcdir)
-            with _extract_sdist(args.srcdir, top_level, extract_dir=args.sdist_extract_dir) as extracted_srcdir:
+            with _extract_sdist(args.srcdir, extract_dir=args.sdist_extract_dir) as extracted_srcdir:
                 built = run_build(extracted_srcdir, outdir)
         else:
             built = run_build(args.srcdir, outdir)
@@ -839,59 +834,73 @@ def _select_build(
     return partial(build_package_via_sdist, distributions=['wheel'], sdist_extract_dir=args.sdist_extract_dir)
 
 
-def _validate_sdist_archive(archive: StrPath) -> str:
-    """Validate that ``archive`` is a PEP 625 source distribution and return its top-level directory name."""
-    name = os.path.basename(os.fspath(archive))
+@contextlib.contextmanager
+def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Generator[tuple[Callable[[StrPath], None], str]]:
+
+    name = os.path.basename(os.fspath(archive_path))
     try:
         parse_sdist_filename(name)
     except (InvalidSdistFilename, InvalidVersion) as exc:
         msg = f'{name!r} does not look like a source distribution: {exc}'
         raise BuildException(msg) from exc
 
-    try:
-        with tar_open(archive) as tar:
-            members = tar.getmembers()
-    except (OSError, TarError) as exc:
-        msg = f'failed to read source distribution {archive}: {exc}'
-        raise BuildException(msg) from exc
+    extract_dir = os.fspath(extract_dir)
 
-    top_levels = {m.name.split('/', 1)[0] for m in members if m.name}
-    top_levels.discard('')
-    if len(top_levels) != 1:
-        msg = f'source distribution {archive} must contain a single top-level directory, got: {sorted(top_levels)}'
-        raise BuildException(msg)
+    with tarfile.open(archive_path) as archive:
+        safe_members = [tarfile.data_filter(m, extract_dir) for m in archive.getmembers()]
 
-    top = next(iter(top_levels))
-    if not any(m.name == f'{top}/PKG-INFO' and m.isfile() for m in members):
-        msg = (
-            f'source distribution {archive} does not contain {top}/PKG-INFO; '
-            'this does not appear to be a valid source distribution'
+        top_level_dirs = {m.name.split('/', 1)[0] for m in safe_members}
+        try:
+            (top_level_dir,) = top_level_dirs
+        except ValueError:
+            msg = (
+                f'source distribution {archive_path} must contain a single top-level directory, got: {sorted(top_level_dirs)}'
+            )
+            raise BuildException(msg) from None
+
+        if not any(m.name == f'{top_level_dir}/PKG-INFO' and m.isfile() for m in safe_members):
+            msg = (
+                f'source distribution {archive} does not contain {top_level_dir}/PKG-INFO; '
+                'this does not appear to be a valid source distribution'
+            )
+            raise BuildException(msg)
+
+        yield (
+            partial(
+                archive.extractall,
+                # We filtered the member list further up so we don't need to do it again.
+                filter='fully_trusted',
+                members=safe_members,
+            ),
+            top_level_dir,
         )
-        raise BuildException(msg)
-    return top
 
 
 @contextlib.contextmanager
-def _extract_sdist(archive: StrPath, top_level: str, *, extract_dir: StrPath | None = None) -> Generator[str]:
+def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None) -> Generator[str]:
+
     if extract_dir is None:
-        tmp_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
+        extract_dir = tempfile.mkdtemp(prefix='build-via-sdist-')
         try:
-            with tar_open(archive) as tar:
-                safe_extractall(tar, tmp_dir)
-            yield os.path.join(tmp_dir, top_level)
+            with _prepare_sdist_archive(archive_path, extract_dir=extract_dir) as (extractall, top_level_dir):
+                extractall(extract_dir)
+            sdist_dir = os.path.join(extract_dir, top_level_dir)
+            yield sdist_dir
         finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
+            shutil.rmtree(extract_dir, ignore_errors=True)
+
     else:
-        root = os.fspath(extract_dir)
-        if os.path.exists(root) and not os.path.isdir(root):
-            msg = f'Sdist extract location is not a directory: {root}'
+        if os.path.exists(extract_dir) and not os.path.isdir(extract_dir):
+            msg = f'Sdist extract location is not a directory: {extract_dir}'
             raise BuildException(msg)
-        os.makedirs(root, exist_ok=True)
-        target = os.path.join(root, top_level)
-        shutil.rmtree(target, ignore_errors=True)
-        with tar_open(archive) as tar:
-            safe_extractall(tar, root)
-        yield target
+        os.makedirs(extract_dir, exist_ok=True)
+
+        with _prepare_sdist_archive(archive_path, extract_dir=extract_dir) as (extractall, top_level_dir):
+            sdist_dir = os.path.join(extract_dir, top_level_dir)
+            shutil.rmtree(sdist_dir, ignore_errors=True)
+            extractall(extract_dir)
+
+        yield sdist_dir
 
 
 def entrypoint() -> None:
