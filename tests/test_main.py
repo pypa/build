@@ -380,6 +380,7 @@ def test_build_no_isolation_check_deps_chain_without_specifier(
         (['-Cone=1', '--config-json={"two": 2}'], 'not allowed with argument'),
         (['--config-json={"two": 2'], 'Invalid JSON in --config-json'),
         (['--config-json=[1]'], '--config-json must contain a JSON object'),
+        (['--config-json', ''], 'Invalid JSON in --config-json'),
     ],
 )
 def test_config_json_errors(cli_args: list[str], err_msg: str, capsys: pytest.CaptureFixture[str]) -> None:

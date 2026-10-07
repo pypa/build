@@ -1,0 +1,1 @@
+Reject an empty ``--config-json`` value as invalid JSON instead of silently building without the requested settings.

@@ -794,7 +794,9 @@ def _describe_artifact(path: str, name: str) -> _ArtifactReport:
 
 
 def _resolve_config_settings(args: _CliArgs) -> Mapping[str, JSONValue]:
-    if args.config_json:
+    # ``config_json`` is a string, so an empty value is still a value the user asked for: report it as invalid
+    # JSON instead of falling through and silently building with no settings.
+    if args.config_json is not None:
         try:
             config_settings = json.loads(args.config_json)
         except json.JSONDecodeError as e:
