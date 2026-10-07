@@ -1,0 +1,2 @@
+Recognise a symlink with a missing target when validating ``--env-dir`` and ``--sdist-extract-dir``, so it is rejected
+with ``BuildException`` instead of ``FileExistsError`` - by :user:`harsh-thakkar7`

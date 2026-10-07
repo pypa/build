@@ -1206,6 +1206,36 @@ def test_extract_sdist_rejects_file_at_location(sdist: pathlib.Path, tmp_path: p
     assert file_path.is_file()
 
 
+def test_extract_sdist_rejects_dangling_symlink_at_location(
+    sdist: pathlib.Path, make_symlink: Callable[..., pathlib.Path], tmp_path: pathlib.Path
+) -> None:
+    """A symlink whose target is gone is a path we cannot create, and ``os.makedirs`` refuses it."""
+    link = make_symlink('extract-link', tmp_path / 'vanished')
+
+    with (
+        pytest.raises(build.BuildException, match='Sdist extract location is not a directory'),
+        build.__main__._extract_sdist(str(sdist), extract_dir=str(link)),
+    ):
+        raise AssertionError
+
+    assert link.is_symlink()
+
+
+def test_extract_sdist_accepts_symlink_to_directory(
+    sdist: pathlib.Path, make_symlink: Callable[..., pathlib.Path], tmp_path: pathlib.Path
+) -> None:
+    """A symlink that resolves to a directory is a legitimate location and must keep working."""
+    real = tmp_path / 'real'
+    real.mkdir()
+    link = make_symlink('extract-link', real, target_is_directory=True)
+
+    with build.__main__._extract_sdist(str(sdist), extract_dir=str(link)) as extracted:
+        assert extracted == str(link / 'demo-1.0.0')
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+
+    assert (real / 'demo-1.0.0' / 'PKG-INFO').is_file()
+
+
 def test_main_sdist_extract_dir_rejects_file(
     sdist: pathlib.Path,
     tmp_path: pathlib.Path,
@@ -1227,6 +1257,30 @@ def test_main_sdist_extract_dir_rejects_file(
     assert 'Sdist extract location is not a directory' in err
     assert 'Traceback' not in err
     assert file_path.is_file()
+
+
+def test_main_sdist_extract_dir_rejects_dangling_symlink(
+    sdist: pathlib.Path,
+    make_symlink: Callable[..., pathlib.Path],
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The CLI reports an unusable ``--sdist-extract-dir`` without a traceback."""
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    monkeypatch.delenv('FORCE_COLOR', raising=False)
+    link = make_symlink('extract-link', tmp_path / 'vanished')
+    mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    with pytest.raises(SystemExit) as exc_info:
+        build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', str(link)])
+
+    assert exc_info.value.code == 1
+    err = capsys.readouterr().err
+    assert 'Sdist extract location is not a directory' in err
+    assert 'Traceback' not in err
+    assert link.is_symlink()
 
 
 @pytest.mark.parametrize(

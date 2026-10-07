@@ -889,7 +889,8 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
             shutil.rmtree(extract_dir, ignore_errors=True)
 
     else:
-        if os.path.exists(extract_dir) and not os.path.isdir(extract_dir):
+        # ``lexists`` also includes broken symlinks.
+        if os.path.lexists(extract_dir) and not os.path.isdir(extract_dir):
             msg = f'Sdist extract location is not a directory: {extract_dir}'
             raise BuildException(msg)
         os.makedirs(extract_dir, exist_ok=True)
