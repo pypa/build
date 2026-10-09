@@ -10,8 +10,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.15"
+          enable-cache: false
       - name: Download the sources
-        run: python tests/integration_sources.py
+        run: uv run --no-project --python 3.15 python tests/integration_sources.py
       - name: Share the sources with the test matrix
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -64,9 +69,12 @@ jobs:
           path: .integration-sources
       - name: Setup uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.15"
       - name: Install tox (uv)
         run: uv tool install tox --with tox-uv
       - name: Setup python for test ${{ matrix.py }}
+        if: matrix.py != '3.15'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.py }}
