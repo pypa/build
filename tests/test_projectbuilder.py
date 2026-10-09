@@ -127,9 +127,11 @@ def test_check_dependency_cycle_reports_each_chain(
 ) -> None:
     graph = {
         'cycle_root': root_dependencies,
-        'cycle_a': ('cycle_b', 'cycle_missing') if missing else ('cycle_b',),
-        'cycle_b': ('cycle_a',),
+        'cycle_a': ('cycle_b', 'cycle_leaf', 'cycle_missing') if missing else ('cycle_b', 'cycle_leaf'),
+        'cycle_b': ('cycle_a', 'cycle_leaf'),
+        'cycle_leaf': (),
     }
+    lookups: dict[str, int] = {}
 
     class CycleDistribution(MockDistribution):
         _name = ''
@@ -144,6 +146,7 @@ def test_check_dependency_cycle_reports_each_chain(
         def from_name(cls, name: str) -> CycleDistribution:
             if name not in graph:
                 raise _importlib.metadata.PackageNotFoundError(name)
+            lookups[name] = lookups.get(name, 0) + 1
             dist = cls()
             dist._name = name
             return dist
@@ -159,6 +162,7 @@ def test_check_dependency_cycle_reports_each_chain(
         else set()
     )
     assert set(build.check_dependency('cycle_root')) == expected
+    assert lookups['cycle_leaf'] == 1
 
 
 @pytest.mark.parametrize(
