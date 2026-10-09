@@ -3,6 +3,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'contextlib',
+    'importlib',
     'importlib.util',
     'packaging.requirements',
     'packaging.utils',
@@ -13,7 +14,6 @@ __lazy_modules__ = {
     'tempfile',
     'warnings',
     f'{__spec__.parent}',
-    f'{__spec__.parent}._compat.importlib',
     f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
@@ -33,11 +33,12 @@ import tempfile
 import typing
 import warnings
 
+from importlib import metadata as importlib_metadata
+
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 
 from . import _ctx
-from ._compat.importlib import metadata as importlib_metadata
 from ._ctx import run_subprocess
 from ._exceptions import BuildException, FailedProcessError
 from ._util import check_dependency
@@ -47,13 +48,7 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Mapping
-
-    from typing_extensions import Unpack
-
-    if sys.version_info < (3, 11):
-        from typing_extensions import Self
-    else:
-        from typing import Self
+    from typing import Self, Unpack
 
     from . import _types
 
@@ -332,10 +327,10 @@ class _PipBackend(_EnvBackend):
 
     def create(self, path: str) -> None:
         if self._create_with_virtualenv:
+            import importlib.metadata
+
             import packaging.version
             import virtualenv
-
-            from ._compat import importlib
 
             virtualenv_ver = packaging.version.Version(importlib.metadata.version('virtualenv'))
 

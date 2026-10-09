@@ -1,12 +1,11 @@
 [build-system]
-requires = ["flit-core >= 3.11"]
 build-backend = "flit_core.buildapi"
+requires = [ "flit-core>=3.11" ]
 
 [project]
 name = "build"
 description = "A simple, correct Python build frontend"
 readme = "README.md"
-requires-python = ">= 3.10"
 license = "MIT"
 authors = [
   { name = "Filipe Laíns", email = "lains@riseup.net" },
@@ -14,11 +13,10 @@ authors = [
   { name = "layday", email = "layday@protonmail.com" },
   { name = "Henry Schreiner", email = "henryschreineriii@gmail.com" },
 ]
+requires-python = ">=3.11"
 classifiers = [
-  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
 
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -27,118 +25,106 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
+# Version read from __version__ field in __init__.py by Flit
+dynamic = [ "version" ]
+dependencies = [
+  "backports-tarfile>=1.2; python_version=='3.11' and python_full_version<'3.11.5'",
+  # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
+  "colorama; os_name=='nt'",
+  "packaging>=24",
+  "pyproject-hooks",
+]
+optional-dependencies.keyring = [
+  "keyring",
+]
+optional-dependencies.uv = [
+  "uv>=0.1.18",
+]
+optional-dependencies.virtualenv = [
+  "virtualenv>=20.36.1",
+]
 urls.changelog = "https://build.pypa.io/en/stable/changelog.html"
 urls.homepage = "https://build.pypa.io"
 urls.issues = "https://github.com/pypa/build/issues"
 urls.source = "https://github.com/pypa/build"
-# Version read from __version__ field in __init__.py by Flit
-dynamic = ["version"]
-dependencies = [
-  "packaging >= 24.0",
-  "pyproject_hooks",
-  'backports.tarfile >= 1.2.0; python_full_version < "3.10.13" or (python_version == "3.11" and python_full_version < "3.11.5")',
-  # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
-  'colorama; os_name == "nt"',
-  'importlib-metadata >= 4.6; python_full_version < "3.10.2"',  # Not required but fixes a stdlib bug
-  'tomli >= 1.1.0; python_version < "3.11"',
-]
-
-[project.optional-dependencies]
-uv = [
-  "uv >= 0.1.18",
-]
-keyring = [
-  "keyring",
-]
-virtualenv = [
-  "virtualenv >= 20.36.1",
-]
-
-[project.scripts]
-pyproject-build = "build.__main__:entrypoint"
-
-[project.entry-points."pipx.run"]
-build = "build.__main__:entrypoint"
+scripts.pyproject-build = "build.__main__:entrypoint"
+entry-points."pipx.run".build = "build.__main__:entrypoint"
 
 [dependency-groups]
-extra = [
-  "uv >= 0.1.18",
-  "virtualenv >= 20.36.1",
-]
-lint = [
-  "prek",
-]
-coverage = [
-  "covdefaults >= 2.3",
-  "coverage[toml] >= 6.0",
-  "diff_cover >= 6.4.2",
-]
-bump = [
-  "bump-my-version >= 0.10",
-]
-docs = [
-  "furo >= 2025.12.19",
-  "pre-commit >= 3.0",
-  "proselint >= 0.16",
-  "sphinx >= 8.1",
-  "sphinx-argparse-cli >= 1.17",
-  "sphinx-autodoc-typehints >= 2.3",
-  "sphinx-copybutton >= 0.5.2",
-  "sphinx-inline-tabs >= 2025.12.21",
-  "sphinx-issues >= 5.0",
-  "sphinxcontrib-mermaid >= 2.0",
-  "towncrier >= 24.8",
-]
-test-core = [
-  "pytest >= 6.2.5, != 9.1.0",
-  "pytest-cov >= 3.0.0",
-  "pytest-mock >= 3.7.0",
-  "pytest-rerunfailures >= 10.2",
-  "pytest-xdist >= 2.4.0",
-]
-test = [
-  "filelock >= 3.20.1",
-  "covdefaults >= 2.3",
-  "wheel >= 0.38.1",
-  'setuptools >= 56.0.0; python_version == "3.10"',
-  'setuptools >= 56.0.0; python_version == "3.11"',
-  'setuptools >= 67.8.0; python_version >= "3.12"',
-  "setuptools_scm >= 6.4.2",
-  "pip >= 22.3",
-  { include-group = "test-core" },
-  { include-group = "extra" },
-]
-typing = [
-  "backports.tarfile >= 1.2.0",
-  "colorama",
-  "importlib-metadata >= 5.1",
-  "tomli",
-  "typing-extensions >= 4.0.0",
-  "types-colorama",
-  "gitpython >= 3.1.44",
-  { include-group = "test-core" },
-  { include-group = "extra" },
-]
-pyrefly = [
-  "pyrefly >= 1.2",
-  { include-group = "typing" },
-]
-release = [
-  "docstrfmt == 2.2.1", # keep in sync with the docstrfmt rev in .pre-commit-config.yaml
-  "gitpython >= 3.1.44",
-  "packaging >= 25",
-  "pre-commit >= 3.0",
-  "towncrier >= 24.8",
-]
 dev = [
   "flit-core",
   { include-group = "test" },
   { include-group = "pyrefly" },
 ]
+test = [
+  "covdefaults>=2.3",
+  "filelock>=3.20.1",
+  "pip>=22.3",
+  "setuptools>=56; python_version=='3.11'",
+  "setuptools>=67.8; python_version>='3.12'",
+  "setuptools-scm>=6.4.2",
+  "wheel>=0.38.1",
+  { include-group = "test-core" },
+  { include-group = "extra" },
+]
+docs = [
+  "furo>=2025.12.19",
+  "pre-commit>=3",
+  "proselint>=0.16",
+  "sphinx>=8.1",
+  "sphinx-argparse-cli>=1.17",
+  "sphinx-autodoc-typehints>=2.3",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-inline-tabs>=2025.12.21",
+  "sphinx-issues>=5",
+  "sphinxcontrib-mermaid>=2",
+  "towncrier>=24.8",
+]
+bump = [
+  "bump-my-version>=0.10",
+]
+coverage = [
+  "covdefaults>=2.3",
+  "coverage[toml]>=6",
+  "diff-cover>=6.4.2",
+]
+extra = [
+  "uv>=0.1.18",
+  "virtualenv>=20.36.1",
+]
+lint = [
+  "prek",
+]
+pyrefly = [
+  "pyrefly>=1.2",
+  { include-group = "typing" },
+]
+release = [
+  "docstrfmt==2.2.1",  # keep in sync with the docstrfmt rev in .pre-commit-config.yaml
+  "gitpython>=3.1.44",
+  "packaging>=25",
+  "pre-commit>=3",
+  "towncrier>=24.8",
+]
+test-core = [
+  "pytest>=6.2.5,!=9.1",
+  "pytest-cov>=3",
+  "pytest-mock>=3.7",
+  "pytest-rerunfailures>=10.2",
+  "pytest-xdist>=2.4",
+]
+typing = [
+  "backports-tarfile>=1.2",
+  "colorama",
+  "gitpython>=3.1.44",
+  "types-colorama",
+  { include-group = "test-core" },
+  { include-group = "extra" },
+]
 
-[tool.flit.sdist]
-include = ["tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.toml"]
-exclude = [
+[tool.flit]
+sdist.include = [ "tests/", ".gitignore", "CHANGELOG.rst", "docs/", ".dockerignore", "tox.toml" ]
+sdist.exclude = [
   "**/__pycache__",
   "docs/_build",
   "**/*.egg-info",
@@ -151,78 +137,16 @@ exclude = [
 exclude-newer = "7 days"
 exclude-newer-package = { docstrfmt = "2026-08-28T18:00:18Z" }
 
-
-[tool.coverage]
-run.plugins = ["covdefaults"]
-run.core = "ctrace"  # sysmon is 3.14+'s default but can't record dynamic contexts; PyPy falls back to pytrace
-run.source = ["build", "tests"]
-run.omit = ["tests/conftest.py", "tests/test_integration.py", "tests/integration_sources.py",]
-report.omit = ["src/build/_types.py"]
-run.disable_warnings = [
-  "module-not-measured",  # Triggers in multithreaded context on build
-]
-covdefaults.subtract_omit = "*/__main__.py"
-report.exclude_also = [
-  "if typing.TYPE_CHECKING:",
-]
-paths.build = [
-  "src",
-  "*/site-packages",
-  '*\site-packages',
-]
-html.show_contexts = true
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = ["-ra", "--strict-config", "--strict-markers"]
-log_level = "INFO"
-testpaths = ["tests"]
-xfail_strict = true
-junit_family = "xunit2"
-norecursedirs = "tests/integration/*"
-markers = [
-  "contextvars",
-  "isolated",
-  "network",
-]
-filterwarnings = [
-  "error",
-  "ignore:path is deprecated.:DeprecationWarning",
-  "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
-  "ignore:check_home argument is deprecated and ignored:DeprecationWarning:",  # PyPy 3.11
-  "default:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
-  "default:unclosed:ResourceWarning", # Python 3.11 Windows
-  "ignore:os.path.commonprefix:DeprecationWarning" # https://github.com/pypa/pyproject-hooks/pull/222
-]
-
-[tool.pyrefly]
-project-includes = ["src", "tests", "tasks", "docs"]
-project-excludes = ["**/tests/packages*"]
-search-path = ["src", "tests"]
-python-version = "3.10"
-preset = "all"
-
-[tool.pyrefly.errors]
-# `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
-missing-override-decorator = false
-# These style rules reject intentional truthiness checks and side-effect calls throughout the project.
-implicit-bool = false
-unused-call-result = false
-
 [tool.ruff]
+line-length = 127
 exclude = [
   "tests/packages/*/pyproject.toml",
   "tests/packages/test-bad-syntax",
 ]
-line-length = 127
 show-fixes = true
-
-[tool.ruff.format]
-quote-style = "single"
-
-[tool.ruff.lint]
-select = ["ALL"]
-ignore = [
+format.quote-style = "single"
+lint.select = [ "ALL" ]
+lint.ignore = [
   "A002",    # Arguments can shadow builtins
   "ANN401",  # Disallow Any
   "BLE001",  # Blind exceptions are fine if re-raised or passed on
@@ -240,84 +164,106 @@ ignore = [
   "S101",    # Assert is used by the type checker and pytest
   "SLF001",  # Private members are okay to access
 ]
+lint.per-file-ignores."docs/**.py" = [ "A001", "INP" ]
+lint.per-file-ignores."tasks/**.py" = [ "INP", "S607", "T20" ]
+lint.per-file-ignores."tests/**.py" = [ "INP", "S", "T20", "TC", "TID251" ]
+lint.per-file-ignores."tests/packages/**.py" = [ "ANN", "ARG001", "INP" ]
+lint.flake8-tidy-imports.banned-api."os.path.commonprefix".msg = """\
+  Use os.path.commonpath or manually implement string manip\
+  """
+lint.flake8-tidy-imports.banned-api."typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
+lint.isort.lines-after-imports = 2
+lint.isort.lines-between-types = 1
+lint.mccabe.max-complexity = 10
 
-
-
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING=False instead"
-"os.path.commonprefix".msg = "Use os.path.commonpath or manually implement string manip"
-
-[tool.ruff.lint.per-file-ignores]
-"tasks/**.py" = ["T20", "INP", "S607"]
-"tests/**.py" = ["TID251", "TC", "T20", "INP", "S"]
-"tests/packages/**.py" = ["ANN", "INP", "ARG001"]
-"docs/**.py" = ["INP", "A001"]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 10
-
-[tool.ruff.lint.isort]
-lines-between-types = 1
-lines-after-imports = 2
+[tool.repo-review]
+ignore.PC140 = "type checker in tox"
 
 [tool.check-wheel-contents]
 ignore = [
-  "W005",  # We _are_ build
+  "W005", # We _are_ build
 ]
 
-[tool.repo-review.ignore]
-PC140 =  "type checker in tox"
+[tool.pyrefly]
+python-version = "3.11"
+project-includes = [ "docs", "src", "tasks", "tests" ]
+project-excludes = [ "**/tests/packages*" ]
+search-path = [ "src", "tests" ]
+# These style rules reject intentional truthiness checks and side-effect calls throughout the project.
+errors.implicit-bool = false
+# `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
+errors.missing-override-decorator = false
+errors.unused-call-result = false
+preset = "all"
 
+[tool.pytest]
+ini_options.minversion = "6.0"
+ini_options.testpaths = [ "tests" ]
+ini_options.norecursedirs = "tests/integration/*"
+ini_options.addopts = [ "-ra", "--strict-config", "--strict-markers" ]
+ini_options.markers = [
+  "contextvars",
+  "isolated",
+  "network",
+]
+ini_options.xfail_strict = true
+ini_options.filterwarnings = [
+  "error",
+  "ignore:path is deprecated.:DeprecationWarning",
+  "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
+  "ignore:check_home argument is deprecated and ignored:DeprecationWarning:",                                     # PyPy 3.11
+  "default:Python 3.14 will, by default, filter extracted tar archives:DeprecationWarning",
+  "default:unclosed:ResourceWarning",                                                                             # Python 3.11 Windows
+  "ignore:os.path.commonprefix:DeprecationWarning"                                                               # https://github.com/pypa/pyproject-hooks/pull/222
+]
+ini_options.log_level = "INFO"
+ini_options.junit_family = "xunit2"
 
-[tool.towncrier]
-name = "build"
-filename = "CHANGELOG.rst"
-directory = "docs/changelog"
-title_format = false
-issue_format = ":issue:`{issue}`"
-template = "docs/changelog/template.jinja2"
-underlines = ["#", "*", "=", "-"]
-
-[[tool.towncrier.section]]
-path = ""
-
-[[tool.towncrier.type]]
-directory = "feature"
-name = "Features"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "bugfix"
-name = "Bugfixes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "doc"
-name = "Documentation"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "removal"
-name = "Removals"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "deprecation"
-name = "Deprecations"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "misc"
-name = "Miscellaneous"
-showcontent = false
+[tool.coverage]
+run.source = [ "build", "tests" ]
+run.omit = [
+  "tests/conftest.py",
+  "tests/integration_sources.py",
+  "tests/test_integration.py",
+]
+run.disable_warnings = [
+  "module-not-measured", # Triggers in multithreaded context on build
+]
+run.plugins = [ "covdefaults" ]
+run.core = "ctrace"  # sysmon is 3.14+'s default but can't record dynamic contexts; PyPy falls back to pytrace
+paths.build = [
+  "src",
+  "*/site-packages",
+  '*\site-packages',
+]
+report.omit = [ "src/build/_types.py" ]
+report.exclude_also = [
+  "if typing.TYPE_CHECKING:",
+]
+html.show_contexts = true
+covdefaults.subtract_omit = "*/__main__.py"
 
 [tool.bumpversion]
 current_version = "1.0.0"
+files = [
+  { filename = "pyproject.toml", search = 'version = "{current_version}"' },
+  { filename = "src/build/__init__.py", search = "__version__ = '{current_version}'" },
+]
 
-[[tool.bumpversion.files]]
-filename = "pyproject.toml"
-search = 'version = "{current_version}"'
-
-[[tool.bumpversion.files]]
-filename = "src/build/__init__.py"
-search = "__version__ = '{current_version}'"
+[tool.towncrier]
+name = "build"
+directory = "docs/changelog"
+filename = "CHANGELOG.rst"
+template = "docs/changelog/template.jinja2"
+title_format = false
+issue_format = ":issue:`{issue}`"
+underlines = [ "#", "*", "=", "-" ]
+type = [
+  { directory = "feature", name = "Features", showcontent = true },
+  { directory = "bugfix", name = "Bugfixes", showcontent = true },
+  { directory = "doc", name = "Documentation", showcontent = true },
+  { directory = "removal", name = "Removals", showcontent = true },
+  { directory = "deprecation", name = "Deprecations", showcontent = true },
+  { directory = "misc", name = "Miscellaneous", showcontent = false },
+]
+section = [ { path = "" } ]

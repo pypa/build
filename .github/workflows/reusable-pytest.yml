@@ -36,7 +36,6 @@ jobs:
           - macos-26
           - windows-2025
         py:
-          - "pypy3.10-v7.3.19"
           - "pypy3.11-v8.0.0"
           - "pypy3.12-v8.0.0"
           - "3.15"
@@ -44,7 +43,6 @@ jobs:
           - "3.13"
           - "3.12"
           - "3.11"
-          - "3.10"
         tox-target:
           - "tox"
           - "min"
@@ -95,7 +93,7 @@ jobs:
           PYTHON_VERSION_RAW: ${{ matrix.py }}
           TOX_TARGET: ${{ matrix.tox-target }}
       - name: Run path test
-        if: matrix.tox-target == 'tox' && matrix.py == '3.10'
+        if: matrix.tox-target == 'tox' && matrix.py == '3.15'
         run: tox -e path
       - name: Combine coverage files
         if: always()

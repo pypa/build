@@ -11,6 +11,7 @@ import shutil
 import stat
 import sysconfig
 import tempfile
+import tomllib
 
 from collections.abc import Callable, Generator
 from functools import partial, update_wrapper
@@ -20,8 +21,6 @@ from typing import Protocol, cast
 import pytest
 
 import build.env
-
-from build._compat import tomllib
 
 
 class SubTests(Protocol):
