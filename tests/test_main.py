@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
-import importlib.metadata as _importlib_metadata
+import importlib.metadata
 import io
 import json
 import os
@@ -335,7 +335,7 @@ def test_build_no_isolation_check_deps_not_installed(mocker: pytest_mock.MockerF
     error = mocker.patch('build.__main__._error')
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[('foo>=1.0',)])
-    mocker.patch('importlib.metadata.distribution', side_effect=_importlib_metadata.PackageNotFoundError)
+    mocker.patch('importlib.metadata.distribution', side_effect=importlib.metadata.PackageNotFoundError)
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 
@@ -364,7 +364,7 @@ def test_build_no_isolation_check_deps_chain_without_specifier(
     error = mocker.patch('build.__main__._error')
     mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[('matplotlib>=2.2', 'kiwisolver')])
-    mocker.patch('importlib.metadata.distribution', side_effect=_importlib_metadata.PackageNotFoundError)
+    mocker.patch('importlib.metadata.distribution', side_effect=importlib.metadata.PackageNotFoundError)
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'], isolation=False)
 

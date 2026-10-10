@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib.metadata
 import importlib.util
 import logging
 import os
@@ -13,7 +14,6 @@ import sysconfig
 import typing
 import unittest.mock
 
-from importlib import metadata as importlib_metadata
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -584,7 +584,7 @@ def test_venv_creation_no_setuptools(
 ) -> None:
     original = build.env._has_dependency
 
-    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: list[str]) -> importlib_metadata.Distribution | None:
+    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: list[str]) -> importlib.metadata.Distribution | None:
         if name == 'setuptools':
             return None
         return original(name, min_ver, **kwargs)
