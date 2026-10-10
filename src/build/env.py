@@ -3,7 +3,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'contextlib',
-    'importlib',
+    'importlib.metadata',
     'importlib.util',
     'packaging.requirements',
     'packaging.utils',
@@ -22,6 +22,7 @@ __lazy_modules__ = {
 import abc
 import contextlib
 import functools
+import importlib.metadata
 import importlib.util
 import os
 import platform
@@ -32,8 +33,6 @@ import sysconfig
 import tempfile
 import typing
 import warnings
-
-from importlib import metadata as importlib_metadata
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
@@ -79,7 +78,7 @@ class IsolatedEnv(typing.Protocol):
 
 def _has_dependency(
     name: str, minimum_version_str: str | None = None, /, **distargs: Unpack[_DistArgs]
-) -> importlib_metadata.Distribution | None:
+) -> importlib.metadata.Distribution | None:
     """
     Given a distribution name, see if it is present and return the distribution
     if the version is sufficient for build, None if the package is missing or
@@ -88,7 +87,7 @@ def _has_dependency(
     from packaging.version import Version
 
     try:
-        distribution = next(iter(importlib_metadata.distributions(name=name, **distargs)))
+        distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
     except StopIteration:
         return None
 
@@ -198,7 +197,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             paths or URLs accepted by :meth:`install`) are skipped since their installed name cannot be derived
         """
         wanted = {name for requirement in requirements if (name := _canonical_requirement_name(requirement)) is not None}
-        distributions = importlib_metadata.distributions(path=[self._env_backend.purelib])
+        distributions = importlib.metadata.distributions(path=[self._env_backend.purelib])
         return {
             name: distribution.version
             for distribution in distributions
@@ -327,8 +326,6 @@ class _PipBackend(_EnvBackend):
 
     def create(self, path: str) -> None:
         if self._create_with_virtualenv:
-            import importlib.metadata
-
             import packaging.version
             import virtualenv
 
