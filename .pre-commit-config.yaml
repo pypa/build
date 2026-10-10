@@ -1,5 +1,3 @@
-default_language_version:
-  python: python3.15
 ci:
   autofix_prs: false
   autoupdate_commit_msg: "pre-commit: bump repositories"
