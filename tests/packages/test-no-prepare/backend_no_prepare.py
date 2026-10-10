@@ -3,9 +3,8 @@
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     import os.path
+    import tomllib
     import zipfile
-
-    from build._compat import tomllib
 
     with open('pyproject.toml', 'rb') as f:
         metadata = tomllib.load(f)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'contextlib',
+    'importlib.metadata',
     'importlib.util',
     'packaging.requirements',
     'packaging.utils',
@@ -13,7 +14,6 @@ __lazy_modules__ = {
     'tempfile',
     'warnings',
     f'{__spec__.parent}',
-    f'{__spec__.parent}._compat.importlib',
     f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
@@ -22,6 +22,7 @@ __lazy_modules__ = {
 import abc
 import contextlib
 import functools
+import importlib.metadata
 import importlib.util
 import os
 import platform
@@ -37,7 +38,6 @@ from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 
 from . import _ctx
-from ._compat.importlib import metadata as importlib_metadata
 from ._ctx import run_subprocess
 from ._exceptions import BuildException, FailedProcessError
 from ._util import check_dependency
@@ -47,13 +47,7 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Mapping
-
-    from typing_extensions import Unpack
-
-    if sys.version_info < (3, 11):
-        from typing_extensions import Self
-    else:
-        from typing import Self
+    from typing import Self, Unpack
 
     from . import _types
 
@@ -84,7 +78,7 @@ class IsolatedEnv(typing.Protocol):
 
 def _has_dependency(
     name: str, minimum_version_str: str | None = None, /, **distargs: Unpack[_DistArgs]
-) -> importlib_metadata.Distribution | None:
+) -> importlib.metadata.Distribution | None:
     """
     Given a distribution name, see if it is present and return the distribution
     if the version is sufficient for build, None if the package is missing or
@@ -93,7 +87,7 @@ def _has_dependency(
     from packaging.version import Version
 
     try:
-        distribution = next(iter(importlib_metadata.distributions(name=name, **distargs)))
+        distribution = next(iter(importlib.metadata.distributions(name=name, **distargs)))
     except StopIteration:
         return None
 
@@ -203,7 +197,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             paths or URLs accepted by :meth:`install`) are skipped since their installed name cannot be derived
         """
         wanted = {name for requirement in requirements if (name := _canonical_requirement_name(requirement)) is not None}
-        distributions = importlib_metadata.distributions(path=[self._env_backend.purelib])
+        distributions = importlib.metadata.distributions(path=[self._env_backend.purelib])
         return {
             name: distribution.version
             for distribution in distributions
@@ -334,8 +328,6 @@ class _PipBackend(_EnvBackend):
         if self._create_with_virtualenv:
             import packaging.version
             import virtualenv
-
-            from ._compat import importlib
 
             virtualenv_ver = packaging.version.Version(importlib.metadata.version('virtualenv'))
 

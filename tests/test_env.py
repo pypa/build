@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib.metadata
 import importlib.util
 import logging
 import os
@@ -25,7 +26,6 @@ import build
 import build.env
 
 from build import _ctx
-from build._compat.importlib import metadata as importlib_metadata
 
 
 IS_WINDOWS = sys.platform.startswith('win')
@@ -45,7 +45,7 @@ def test_installed_versions(mocker: pytest_mock.MockerFixture) -> None:
     env = build.env.DefaultIsolatedEnv()
     mocker.patch.object(env, '_env_backend', SimpleNamespace(purelib='/purelib'), create=True)
     distributions = mocker.patch(
-        'build._compat.importlib.metadata.distributions',
+        'importlib.metadata.distributions',
         return_value=[
             SimpleNamespace(name='Setuptools', version='80.9.0'),
             SimpleNamespace(name='wheel', version='0.45.1'),
@@ -189,7 +189,7 @@ def test_pip_needs_upgrade_mac_os_11(
     run_subprocess = mocker.patch('build.env.run_subprocess')
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.mac_ver', return_value=('11.0', ('', '', ''), arch))
-    mocker.patch('build._compat.importlib.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
+    mocker.patch('importlib.metadata.distributions', return_value=(SimpleNamespace(version=pip_version),))
 
     min_pip_version = '20.3.0' if arch == 'x86_64' else '21.0.1'
 
@@ -490,7 +490,7 @@ def test_virtualenv_no_wheel_flag(
     mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', None)
     mocker.patch.object(build.env._PipBackend, '_has_virtualenv', True)
 
-    mocker.patch('build._compat.importlib.metadata.version', return_value=version)
+    mocker.patch('importlib.metadata.version', return_value=version)
     cli_run = mocker.patch('virtualenv.cli_run')
     cli_run.return_value = SimpleNamespace(
         creator=SimpleNamespace(exe=Path('/fake/python'), script_dir=Path('/fake/scripts'), purelib=Path('/fake/purelib'))
@@ -584,7 +584,7 @@ def test_venv_creation_no_setuptools(
 ) -> None:
     original = build.env._has_dependency
 
-    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: list[str]) -> importlib_metadata.Distribution | None:
+    def no_setuptools(name: str, min_ver: str | None = None, /, **kwargs: list[str]) -> importlib.metadata.Distribution | None:
         if name == 'setuptools':
             return None
         return original(name, min_ver, **kwargs)

@@ -46,7 +46,7 @@ Unit tests verify the actual code implementation, while integration tests run bu
 check. To run tests we use ``tox``.
 
 Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
-against Python 3.14 with ``tox run -e 3.14``, running both unit and integration tests with ``tox run --
+against Python 3.15 with ``tox run -e 3.15``, running both unit and integration tests with ``tox run --
 --run-integration``, running only integration tests with ``tox run -- --only-integration``, or running only integration
 tests with parallel tasks using ``tox run -- -n auto --only-integration``.
 
@@ -63,11 +63,11 @@ and only run integration tests. CI still runs both test suites.
 
 The project has a fairly large environment matrix, running tests for all supported Python versions and implementations,
 and with the module being invoked directly from path, sdist install, or wheel install. To run tests only for Python
-3.14:
+3.15:
 
 .. code-block:: console
 
-    tox -e 3.14
+    tox -e 3.15
 
 and with the module being invoked directly from path, sdist install, or wheel install.
 

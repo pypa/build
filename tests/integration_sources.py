@@ -46,7 +46,7 @@ def download_archive(name: str) -> tuple[Path, str]:
         try:
             with urllib.request.urlopen(url) as request, partial.open('wb') as file_handler:
                 shutil.copyfileobj(typing.cast(http.client.HTTPResponse, request), file_handler)
-        except NETWORK_ERRORS as exception:  # noqa: PERF203
+        except NETWORK_ERRORS as exception:
             partial.unlink(missing_ok=True)
             if attempt == ATTEMPTS:
                 raise
@@ -63,7 +63,7 @@ def main() -> None:
     for name in INTEGRATION_SOURCES:
         try:
             print(f'ready: {download_archive(name)[0].name}')
-        except NETWORK_ERRORS as exception:  # noqa: PERF203
+        except NETWORK_ERRORS as exception:
             print(f'failed: {name}: {exception}')
             failed.append(name)
     if failed:

@@ -1,120 +1,143 @@
-requires = ["tox-uv>=1.28"]
+requires = [ "tox>=4.64.7", "tox-uv>=1.28" ]
 env_list = [
-    "fix",
-    "type",
-    "docs",
-    "path",
-    { product = [{ prefix = "3.", start = 10, stop = 15 }]},
-    { product = [{ prefix = "pypy3.", start = 10, stop = 12 }]},
-    { product = [{ prefix = "min-3.", start = 10, stop = 15 }]},
-    { product = [{ prefix = "min-pypy3.", start = 10, stop = 12 }]},
+  "docs",
+  "fix",
+  "path",
+  "type",
+  { product = [ { prefix = "3.", start = 11, stop = 15 } ] },
+  { product = [ { prefix = "pypy3.", start = 11, stop = 12 } ] },
+  { product = [ { prefix = "min-3.", start = 11, stop = 15 } ] },
+  { product = [ { prefix = "min-pypy3.", start = 11, stop = 12 } ] },
 ]
 skip_missing_interpreters = true
 
 [env_run_base]
 description = "run test suite with {basepython}"
-uv_seed = true
-pass_env = ["LC_ALL", "PIP_*", "PYTEST_*", "TERM"]
+default_base_python = [ "3.15" ]
+dependency_groups = [ "test" ]
+pass_env = [ "LC_ALL", "PIP_*", "PYTEST_*", "TERM" ]
+set_env.COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}"
+set_env.PYTHONWARNDEFAULTENCODING = "1"
+set_env.TEST_STATUS_DIR = "{envtmpdir}"
 commands = [
-    [
-        "pytest", "-ra", "--cov", "--cov-config", "pyproject.toml",
-        "--cov-report=html:{envdir}/htmlcov", "--cov-context=test",
-        "--cov-report=xml:{toxworkdir}/coverage.{envname}.xml",
-        "--cov-report", "term-missing",
-        { replace = "posargs", default = ["-n", "auto"], extend = true },
-    ],
+  [
+    "pytest",
+    "-ra",
+    "--cov",
+    "--cov-config",
+    "pyproject.toml",
+    "--cov-report=html:{envdir}/htmlcov",
+    "--cov-context=test",
+    "--cov-report=xml:{toxworkdir}/coverage.{envname}.xml",
+    "--cov-report",
+    "term-missing",
+    { replace = "posargs", default = [ "-n", "auto" ], extend = true },
+  ],
 ]
-dependency_groups = ["test"]
+uv_seed = true
 
-[env_run_base.set_env]
-COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}"
-PYTHONWARNDEFAULTENCODING = "1"
-TEST_STATUS_DIR = "{envtmpdir}"
+[env_pkg_base]
+default_base_python = [ "3.15" ]
 
-[env_base.min]
-factors = [["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "pypy3.10", "pypy3.11", "pypy3.12"]]
-description = "check minimum versions required of all dependencies"
-set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }
+[env.docs]
+description = "build documentations"
+base_python = "3.15"
+dependency_groups = [ "docs" ]
+set_env = { PYTHONUTF8 = "1" }
+commands = [
+  # RE2 lacks Python 3.15 wheels: https://github.com/google/re2/issues/647
+  [ "uv", "tool", "run", "--python", "3.14", "--from", "proselint>=0.16", "proselint", "check", "docs" ],
+  [ "sphinx-build", "-W", "-n", "-b", "html", "docs", "{env:READTHEDOCS_OUTPUT:{envtmpdir}}/html" ],
+  [
+    "python",
+    "-c",
+    """\
+  import os; print(\"Documentation available under file://\" + os.environ.get(\"READTHEDOCS_OUTPUT\", \"{envtmpdir}\") \
+  + \"/html/index.html\")\
+  """,
+  ],
+]
 
 [env.fix]
 description = "run static analysis and style checks"
 skip_install = true
-pass_env = ["HOMEPATH", "PROGRAMDATA"]
+dependency_groups = [ "lint" ]
+pass_env = [ "HOMEPATH", "PROGRAMDATA" ]
 commands = [
-    ["prek", "run", "--all-files", "--show-diff-on-failure"],
-    ["python", "-c", 'print("hint: run {envdir}/bin/prek install to add checks as pre-commit hook")'],
+  [ "prek", "run", "--all-files", "--show-diff-on-failure" ],
+  [ "python", "-c", 'print("hint: run {envdir}/bin/prek install to add checks as pre-commit hook")' ],
 ]
-dependency_groups = ["lint"]
-
-[env.type]
-description = "run pyrefly type checks and package type coverage"
-set_env = { PYTHONWARNDEFAULTENCODING = "" }
-commands = [
-    ["pyrefly", "check", { replace = "posargs", extend = true }],
-    ["pyrefly", "coverage", "check", "--strict", "--public-only", "--fail-under", "100", "src/build"],
-]
-dependency_groups = ["pyrefly"]
-
-[env.docs]
-description = "build documentations"
-base_python = "3.14"
-set_env = { PYTHONUTF8 = "1" }
-commands = [
-    ["proselint", "check", "docs"],
-    ["sphinx-build", "-W", "-n", "-b", "html", "docs", "{env:READTHEDOCS_OUTPUT:{envtmpdir}}/html"],
-    ["python", "-c", 'import os; print("Documentation available under file://" + os.environ.get("READTHEDOCS_OUTPUT", "{envtmpdir}") + "/html/index.html")'],
-]
-dependency_groups = ["docs"]
 
 [env.path]
 description = "verify build can run from source (bootstrap)"
 set_env = { COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}", PYTHONPATH = "{toxinidir}/src" }
 commands_pre = [
-    ["python", "-E", "-m", "pip", "uninstall", "-y", "build", "colorama"],
+  [ "python", "-E", "-m", "pip", "uninstall", "-y", "build", "colorama" ],
 ]
 
-[env.dev]
-description = "generate a DEV environment"
-package = "editable"
-deps = ["virtualenv>=20.0.34"]
+[env.type]
+description = "run pyrefly type checks and package type coverage"
+dependency_groups = [ "pyrefly" ]
+set_env = { PYTHONWARNDEFAULTENCODING = "" }
 commands = [
-    ["python", "-m", "pip", "list", "--format=columns"],
-    ["python", "-c", "import sys; print(sys.executable)"],
-]
-dependency_groups = ["docs", "test"]
-
-[env.coverage]
-description = "combine coverage from test environments"
-skip_install = true
-parallel_show_output = true
-dependency_groups = ["coverage"]
-pass_env = ["DIFF_AGAINST"]
-set_env = {}
-commands = [
-    ["-", "coverage", "combine", "{toxworkdir}"],
-    ["coverage", "report", "--skip-covered", "--show-missing", "-i"],
-    ["coverage", "xml", "-o", "{toxworkdir}/coverage.xml", "-i"],
-    ["coverage", "html", "-d", "{toxworkdir}/htmlcov", "-i"],
-    ["python", "-m", "diff_cover.diff_cover_tool", "--compare-branch", "{env:DIFF_AGAINST:origin/main}", "{toxworkdir}/coverage.xml"],
-]
-depends = [
-    "path",
-    { product = [{ prefix = "3.", start = 10, stop = 15 }]},
-    { product = [{ prefix = "pypy3.", start = 10, stop = 12 }]},
-    { product = [{ prefix = "min-3.", start = 10, stop = 15 }]},
-    { product = [{ prefix = "min-pypy3.", start = 10, stop = 12 }]},
+  [ "pyrefly", "check", { replace = "posargs", extend = true } ],
+  [ "pyrefly", "coverage", "check", "--strict", "--public-only", "--fail-under", "100", "src/build" ],
 ]
 
 [env.bump]
 description = "bump versions, pass major/minor/patch"
 skip_install = true
+dependency_groups = [ "bump" ]
 set_env = {}
-commands = [["bump-my-version", "bump", { replace = "posargs", extend = true }]]
-dependency_groups = ["bump"]
+commands = [ [ "bump-my-version", "bump", { replace = "posargs", extend = true } ] ]
+
+[env.coverage]
+description = "combine coverage from test environments"
+skip_install = true
+dependency_groups = [ "coverage" ]
+parallel_show_output = true
+pass_env = [ "DIFF_AGAINST" ]
+set_env = {}
+commands = [
+  [ "-", "coverage", "combine", "{toxworkdir}" ],
+  [ "coverage", "report", "--skip-covered", "--show-missing", "-i" ],
+  [ "coverage", "xml", "-o", "{toxworkdir}/coverage.xml", "-i" ],
+  [ "coverage", "html", "-d", "{toxworkdir}/htmlcov", "-i" ],
+  [
+    "python",
+    "-m",
+    "diff_cover.diff_cover_tool",
+    "--compare-branch",
+    "{env:DIFF_AGAINST:origin/main}",
+    "{toxworkdir}/coverage.xml",
+  ],
+]
+depends = [
+  "path",
+  { product = [ { prefix = "3.", start = 11, stop = 15 } ] },
+  { product = [ { prefix = "pypy3.", start = 11, stop = 12 } ] },
+  { product = [ { prefix = "min-3.", start = 11, stop = 15 } ] },
+  { product = [ { prefix = "min-pypy3.", start = 11, stop = 12 } ] },
+]
+
+[env.dev]
+description = "generate a DEV environment"
+package = "editable"
+deps = [ "virtualenv>=20.0.34" ]
+dependency_groups = [ "docs", "test" ]
+commands = [
+  [ "python", "-m", "pip", "list", "--format=columns" ],
+  [ "python", "-c", "import sys; print(sys.executable)" ],
+]
 
 [env.release]
 description = "create a release (commit, tag, and push)"
 skip_install = true
+dependency_groups = [ "release" ]
 change_dir = "{toxinidir}/tasks"
-commands = [["python", "release.py", { replace = "posargs", extend = true }]]
-dependency_groups = ["release"]
+commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
+
+[env_base.min]
+factors = [ [ "3.11", "3.12", "3.13", "3.14", "3.15", "pypy3.11", "pypy3.12" ] ]
+description = "check minimum versions required of all dependencies"
+set_env = { PIP_CONSTRAINT = "{toxinidir}/tests/constraints.txt", UV_CONSTRAINT = "{toxinidir}/tests/constraints.txt" }

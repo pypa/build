@@ -4,20 +4,20 @@ from __future__ import annotations
 
 
 __lazy_modules__ = {
+    'importlib.metadata',
     'pathlib',
     'tempfile',
     f'{__spec__.parent}',
-    f'{__spec__.parent}._compat',
     f'{__spec__.parent}.env',
 }
 
+import importlib.metadata
 import pathlib
 import tempfile
 
 import pyproject_hooks
 
 from . import ProjectBuilder
-from ._compat import importlib
 from .env import DefaultIsolatedEnv
 
 

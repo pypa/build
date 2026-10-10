@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 
-__lazy_modules__ = {'packaging.requirements', f'{__spec__.parent}._compat'}
+__lazy_modules__ = {'importlib.metadata', 'packaging.requirements'}
 
+import importlib.metadata
 import sys
 
 import packaging.requirements
-
-from ._compat import importlib
 
 
 TYPE_CHECKING = False

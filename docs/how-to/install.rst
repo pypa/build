@@ -77,9 +77,8 @@ On conda-forge, this package is called python-build_, therefore it can be instal
  Bootstrapping
 ***************
 
-This package can build itself only with the `tomli <https://github.com/hukkin/tomli>`_ (can be omitted in Python 3.11+)
-and `pyproject-hooks <https://github.com/pypa/pyproject-hooks>`_ dependencies. The ``--skip-dependency-check`` flag
-should be used in this case.
+This package can build itself with the `pyproject-hooks <https://github.com/pypa/pyproject-hooks>`_ dependency. The
+``--skip-dependency-check`` flag should be used in this case.
 
 ***************
  Compatibility
@@ -87,12 +86,11 @@ should be used in this case.
 
 ``build`` is verified to be compatible with the following Python versions:
 
-- 3.10
 - 3.11
 - 3.12
 - 3.13
 - 3.14
-- PyPy 3.10
+- 3.15
 - PyPy 3.11
 
 .. _conda: https://github.com/conda/conda

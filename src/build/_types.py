@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections.abc
-import datetime
+import datetime as dt
 import os
 import typing
 
@@ -26,9 +26,9 @@ TOMLValue: typing.TypeAlias = (
     | int
     | float
     | bool
-    | datetime.datetime
-    | datetime.date
-    | datetime.time
+    | dt.datetime
+    | dt.date
+    | dt.time
     | collections.abc.Sequence['TOMLValue']
     | collections.abc.Mapping[str, 'TOMLValue']
 )
