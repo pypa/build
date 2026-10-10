@@ -120,6 +120,51 @@ class NestedCircularMockDistribution(MockDistribution):
         Requires-Dist: circular_dep""")
 
 
+@pytest.mark.parametrize('root_dependencies', [('cycle_a', 'cycle_b'), ('cycle_b', 'cycle_a')])
+@pytest.mark.parametrize('missing', [False, True])
+def test_check_dependency_cycle_reports_each_chain(
+    monkeypatch: pytest.MonkeyPatch, root_dependencies: tuple[str, str], missing: bool
+) -> None:
+    graph = {
+        'cycle_root': root_dependencies,
+        'cycle_a': ('cycle_b', 'cycle_leaf', 'cycle_missing') if missing else ('cycle_b', 'cycle_leaf'),
+        'cycle_b': ('cycle_a', 'cycle_leaf'),
+        'cycle_leaf': (),
+    }
+    lookups: dict[str, int] = {}
+
+    class CycleDistribution(MockDistribution):
+        _name = ''
+
+        def read_text(self, filename: str) -> str:
+            if filename == 'METADATA':
+                requirements = ''.join(f'\nRequires-Dist: {name}' for name in graph[self._name])
+                return f'Metadata-Version: 2.2\nName: {self._name}\nVersion: 1.0.0{requirements}'
+            return ''
+
+        @classmethod
+        def from_name(cls, name: str) -> CycleDistribution:
+            if name not in graph:
+                raise _importlib.metadata.PackageNotFoundError(name)
+            lookups[name] = lookups.get(name, 0) + 1
+            dist = cls()
+            dist._name = name
+            return dist
+
+    monkeypatch.setattr(_importlib.metadata, 'Distribution', CycleDistribution)
+
+    expected = (
+        {
+            ('cycle_root', 'cycle_a', 'cycle_missing'),
+            ('cycle_root', 'cycle_b', 'cycle_a', 'cycle_missing'),
+        }
+        if missing
+        else set()
+    )
+    assert set(build.check_dependency('cycle_root')) == expected
+    assert lookups['cycle_leaf'] == 1
+
+
 @pytest.mark.parametrize(
     ('requirement_string', 'expected'),
     [
