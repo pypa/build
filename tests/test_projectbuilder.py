@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import importlib.metadata as _importlib_metadata
 import logging
 import os
 import pathlib
@@ -21,13 +22,10 @@ import pytest_mock
 import build
 import build._builder
 
-from build._compat import importlib as _importlib
-
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from typing_extensions import Never
+    from typing import Never
 
     from build._builder import BuildSystemTable
     from build._types import TOMLValue
@@ -42,7 +40,7 @@ DEFAULT_BACKEND = {
 }
 
 
-class MockDistribution(_importlib.metadata.Distribution):
+class MockDistribution(_importlib_metadata.Distribution):
     _metadata: str = ''
 
     def locate_file(self, path: str | os.PathLike[str]) -> Never:  # pragma: no cover
@@ -65,7 +63,7 @@ class MockDistribution(_importlib.metadata.Distribution):
         }
         if (dist_cls := registry.get(name)) is not None:
             return dist_cls()
-        raise _importlib.metadata.PackageNotFoundError
+        raise _importlib_metadata.PackageNotFoundError
 
 
 class ExtraMockDistribution(MockDistribution):
@@ -154,7 +152,7 @@ class NestedCircularMockDistribution(MockDistribution):
     ],
 )
 def test_check_dependency(monkeypatch: pytest.MonkeyPatch, requirement_string: str, expected: tuple[str, ...] | None) -> None:
-    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    monkeypatch.setattr(_importlib_metadata, 'Distribution', MockDistribution)
     assert next(build.check_dependency(requirement_string), None) == expected
 
 
@@ -185,7 +183,7 @@ def test_check_dependency_diamond_visits_each_once(monkeypatch: pytest.MonkeyPat
             dist._name = name
             return dist
 
-    monkeypatch.setattr(_importlib.metadata, 'Distribution', DiamondDistribution)
+    monkeypatch.setattr(_importlib_metadata, 'Distribution', DiamondDistribution)
 
     assert list(build.check_dependency('diamond_a')) == []
     assert lookups == {'diamond_a': 1, 'diamond_b': 1, 'diamond_c': 1, 'diamond_d': 1}
@@ -203,7 +201,7 @@ def test_check_dependency_exhausted(
 ) -> None:
     # Unlike ``next``-based checks, exhausting the generator runs the code past
     # each yield, including the unsatisfied-subtree exit.
-    monkeypatch.setattr(_importlib.metadata, 'Distribution', MockDistribution)
+    monkeypatch.setattr(_importlib_metadata, 'Distribution', MockDistribution)
     assert list(build.check_dependency(requirement_string)) == expected
 
 
@@ -302,7 +300,7 @@ def test_build_missing_backend(
 
 
 def _nothing_installed(name: str) -> NoReturn:
-    raise _importlib.metadata.PackageNotFoundError(name)
+    raise _importlib_metadata.PackageNotFoundError(name)
 
 
 def test_check_dependencies(
@@ -311,7 +309,7 @@ def test_check_dependencies(
     get_requires_sdist = mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_sdist')
     get_requires_wheel = mocker.patch('pyproject_hooks.BuildBackendHookCaller.get_requires_for_build_wheel')
 
-    monkeypatch.setattr(_importlib.metadata, 'distribution', _nothing_installed)
+    monkeypatch.setattr(_importlib_metadata, 'distribution', _nothing_installed)
 
     builder = build.ProjectBuilder(package_test_flit)
 
@@ -577,7 +575,7 @@ def test_runner_user_specified(tmp_dir: str, package_test_flit: str) -> None:
 def test_metadata_path_no_prepare(tmp_dir: str, package_test_no_prepare: str) -> None:
     builder = build.ProjectBuilder(package_test_no_prepare)
 
-    metadata = _importlib.metadata.PathDistribution(
+    metadata = _importlib_metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
     assert metadata is not None
@@ -589,7 +587,7 @@ def test_metadata_path_no_prepare(tmp_dir: str, package_test_no_prepare: str) ->
 def test_metadata_path_with_prepare(tmp_dir: str, package_test_setuptools: str) -> None:
     builder = build.ProjectBuilder(package_test_setuptools)
 
-    metadata = _importlib.metadata.PathDistribution(
+    metadata = _importlib_metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
     assert metadata is not None
@@ -602,7 +600,7 @@ def test_metadata_path_with_prepare(tmp_dir: str, package_test_setuptools: str) 
 def test_metadata_path_legacy(tmp_dir: str, package_legacy: str) -> None:
     builder = build.ProjectBuilder(package_legacy)
 
-    metadata = _importlib.metadata.PathDistribution(
+    metadata = _importlib_metadata.PathDistribution(
         pathlib.Path(builder.metadata_path(tmp_dir)),
     ).metadata
     assert metadata is not None

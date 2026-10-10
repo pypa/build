@@ -6,10 +6,10 @@ from __future__ import annotations
 __lazy_modules__ = {
     'difflib',
     'subprocess',
+    'tomllib',
     'warnings',
     'zipfile',
     f'{__spec__.parent}',
-    f'{__spec__.parent}._compat',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
 }
@@ -19,13 +19,13 @@ import difflib
 import os
 import subprocess
 import sys
+import tomllib
 import warnings
 import zipfile
 
 import pyproject_hooks
 
 from . import _ctx, env
-from ._compat import tomllib
 from ._exceptions import (
     BuildBackendException,
     BuildException,
@@ -39,9 +39,7 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
-    from typing import TypedDict, TypeGuard
-
-    from typing_extensions import NotRequired, Self
+    from typing import NotRequired, Self, TypedDict, TypeGuard
 
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner, TOMLValue
 
