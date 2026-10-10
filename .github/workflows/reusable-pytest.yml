@@ -13,9 +13,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          version: "0.13.0"
           python-version: "3.15"
-          enable-cache: false
       - name: Download the sources
         run: uv run --no-project --python 3.15 python tests/integration_sources.py
       - name: Share the sources with the test matrix
@@ -42,8 +40,8 @@ jobs:
           - macos-26
           - windows-2025
         py:
-          - "pypy3.11-v8.0.0"
-          - "pypy3.12-v8.0.0"
+          - "pypy3.11"
+          - "pypy3.12"
           - "3.15"
           - "3.14"
           - "3.13"
@@ -71,36 +69,24 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          version: "0.13.0"
-      - name: Install Python and tox for ${{ matrix.py }}
-        shell: bash
-        run: |
-          BASE=${PYTHON_VERSION_RAW%-*}
-          uv python install "$BASE"
-          uv tool install tox --with tox-uv --python "$BASE" --managed-python
-        env:
-          PYTHON_VERSION_RAW: ${{ matrix.py }}
+          python-version: ${{ matrix.py }}
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
       - wait: integration-sources
       - name: Run test suite via tox
         if: matrix.tox-target == 'tox'
         shell: bash
         run: |
-          PYTHON_VERSION=$PYTHON_VERSION_RAW
-          BASE=${PYTHON_VERSION%-*}
-          tox -vv --notest -e $BASE
-          tox -e $BASE --skip-pkg-install
+          tox -vv --notest -e "$PYTHON_VERSION"
+          tox -e "$PYTHON_VERSION" --skip-pkg-install
         env:
-          PYTHON_VERSION_RAW: ${{ matrix.py }}
+          PYTHON_VERSION: ${{ matrix.py }}
       - name: Run minimum version test
         if: matrix.tox-target == 'min'
         shell: bash
-        run: |
-          PYTHON_VERSION=$PYTHON_VERSION_RAW
-          BASE=${PYTHON_VERSION%-*}
-          tox -e $TOX_TARGET-$BASE
+        run: tox -e "min-$PYTHON_VERSION"
         env:
-          PYTHON_VERSION_RAW: ${{ matrix.py }}
-          TOX_TARGET: ${{ matrix.tox-target }}
+          PYTHON_VERSION: ${{ matrix.py }}
       - name: Run path test
         if: matrix.tox-target == 'tox' && matrix.py == '3.15'
         run: tox -e path
