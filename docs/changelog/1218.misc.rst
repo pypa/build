@@ -1,0 +1,1 @@
+Fix module references in the cyclic dependency regression tests - by :user:`xiehuanyi`
