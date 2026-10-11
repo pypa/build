@@ -766,7 +766,9 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
     }
     data = json.dumps(report, indent=2) + '\n'
 
-    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), suffix='.tmp')
+    report_dir = os.path.dirname(os.path.abspath(path))
+    os.makedirs(report_dir, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=report_dir, suffix='.tmp')
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
             report_file.write(data)
