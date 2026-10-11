@@ -1466,9 +1466,7 @@ def test_write_report_cleans_tmp_on_failure(
     assert not list(tmp_path.glob('*.tmp'))
 
 
-def test_write_report_creates_parent_directory(
-    tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]
-) -> None:
+def test_write_report_creates_parent_directory(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
     outdir, names = built_dist
     report = tmp_path / 'nested' / 'dir' / 'report.json'
 
