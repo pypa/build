@@ -1,0 +1,1 @@
+Create parent directories when writing the build report via ``--report``.

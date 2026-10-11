@@ -1466,6 +1466,15 @@ def test_write_report_cleans_tmp_on_failure(
     assert not list(tmp_path.glob('*.tmp'))
 
 
+def test_write_report_creates_parent_directory(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'nested' / 'dir' / 'report.json'
+
+    build.__main__._write_report(report, str(outdir), names)
+
+    assert report.is_file()
+
+
 def test_report_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main(['--report', 'r.json', '--metadata'])
