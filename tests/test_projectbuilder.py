@@ -143,13 +143,13 @@ def test_check_dependency_cycle_reports_each_chain(
         @classmethod
         def from_name(cls, name: str) -> CycleDistribution:
             if name not in graph:
-                raise _importlib.metadata.PackageNotFoundError(name)
+                raise importlib.metadata.PackageNotFoundError(name)
             lookups[name] = lookups.get(name, 0) + 1
             dist = cls()
             dist._name = name
             return dist
 
-    monkeypatch.setattr(_importlib.metadata, 'Distribution', CycleDistribution)
+    monkeypatch.setattr(importlib.metadata, 'Distribution', CycleDistribution)
 
     expected = (
         {
