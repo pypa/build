@@ -1,0 +1,1 @@
+Clarify that ``--metadata`` may build a wheel when the backend does not provide a metadata hook.

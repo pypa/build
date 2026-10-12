@@ -293,17 +293,28 @@ Or to avoid stale artifacts, use a unique output directory:
 
     $ python -m build --outdir dist/v1.0.0
 
-***********************************
- Getting metadata without building
-***********************************
+************************
+ Reading wheel metadata
+************************
 
-To extract package metadata without building the full package:
+To print a project's wheel metadata as JSON:
 
 .. code-block:: console
 
     $ python -m build --metadata
 
-This outputs the wheel metadata in JSON format to stdout.
+For a source directory, build uses the backend's ``prepare_metadata_for_build_wheel`` hook when available. If the
+backend does not provide that hook, build builds a wheel in a temporary directory and reads its metadata. This fallback
+can require compiling the project, so ``--metadata`` does not guarantee that no wheel is built.
+
+If you already have a wheel, pass its path to read the metadata without invoking a build backend or installing build
+dependencies:
+
+.. code-block:: console
+
+    $ python -m build --metadata dist/mypackage-1.0.0-py3-none-any.whl
+
+Both forms output the wheel metadata in JSON format to stdout.
 
 ****************************
  Checking the build version
