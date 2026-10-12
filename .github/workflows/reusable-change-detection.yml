@@ -36,7 +36,7 @@ jobs:
             .github/workflows/reusable-pytest.yml
       - name: Set a flag for running the tests
         if: >-
-          github.event_name != 'pull_request' || steps.changed-testable-files.outputs.added_modified_renamed != ''
+          github.event_name != 'pull_request' || steps.changed-testable-files.outputs.all != ''
         id: tests-changes
         run: >-
           echo "run-tests=true" >> "${GITHUB_OUTPUT}"
@@ -53,7 +53,7 @@ jobs:
             .github/workflows/reusable-docs.yml
       - name: Set a flag for building the docs
         if: >-
-          github.event_name != 'pull_request' || steps.changed-docs-files.outputs.added_modified_renamed != ''
+          github.event_name != 'pull_request' || steps.changed-docs-files.outputs.all != ''
         id: docs-changes
         run: >-
           echo "run-docs=true" >> "${GITHUB_OUTPUT}"
