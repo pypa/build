@@ -1332,7 +1332,7 @@ def test_main_sdist_input_validation_error_surfaced(
     with pytest.raises(SystemExit):
         build.__main__.main([str(archive), '--wheel'])
 
-    assert 'PKG-INFO' in capsys.readouterr().err
+    assert f'source distribution {archive} does not contain demo-1.0.0/PKG-INFO' in capsys.readouterr().err
 
 
 def test_main_sdist_input_passes_kwargs(sdist: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:

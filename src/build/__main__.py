@@ -861,7 +861,7 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
 
         if not any(m.name == f'{top_level_dir}/PKG-INFO' and m.isfile() for m in safe_members):
             msg = (
-                f'source distribution {archive} does not contain {top_level_dir}/PKG-INFO; '
+                f'source distribution {archive_path} does not contain {top_level_dir}/PKG-INFO; '
                 'this does not appear to be a valid source distribution'
             )
             raise BuildException(msg)

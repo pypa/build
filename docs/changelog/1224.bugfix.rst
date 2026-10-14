@@ -1,0 +1,2 @@
+Name the archive path instead of the ``TarFile`` object in the error for an sdist without ``PKG-INFO``, a regression
+from :issue:`1210` - by :user:`PDGGK`
