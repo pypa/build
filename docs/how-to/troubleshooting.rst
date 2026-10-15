@@ -439,15 +439,13 @@ Verify your ``pyproject.toml`` is valid:
 
     $ python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb')))"
 
-Test the build backend directly
-===============================
+Run backend-specific diagnostics
+================================
 
-You can test if your build backend works independently:
-
-.. code-block:: console
-
-    $ pip install your-build-backend
-    $ python -m your_build_backend
+PEP 517 defines build-backend hooks, not a standard command for running a backend module directly. Some backends provide
+their own command-line interface; others, including ``flit_core`` and ``poetry.core``, do not. Check the backend's
+documentation for a standalone command, if it provides one. To exercise a backend through its PEP 517 hooks, run
+``python -m build -vv`` and inspect the output.
 
 Inspect the build environment
 =============================
