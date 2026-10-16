@@ -439,15 +439,14 @@ Verify your ``pyproject.toml`` is valid:
 
     $ python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb')))"
 
-Test the build backend directly
-===============================
+Run backend-specific diagnostics
+================================
 
-You can test if your build backend works independently:
-
-.. code-block:: console
-
-    $ pip install your-build-backend
-    $ python -m your_build_backend
+The ``build-backend`` value in ``pyproject.toml`` names a Python object, not necessarily a command-line program. Some
+backends are part of larger tools that provide a command-line interface. Check the backend's documentation for available
+diagnostic commands. To exercise the configured backend through the ``build`` frontend, run ``python -m build -vv`` and
+inspect the output. For an overview, see the `Choosing a build backend section of the Python Packaging User Guide
+<https://packaging.python.org/en/latest/tutorials/packaging-projects/#choosing-a-build-backend>`_.
 
 Inspect the build environment
 =============================
