@@ -10,12 +10,8 @@ release script locally for testing.
  Changelog Fragments
 *********************
 
-Contributors add changelog fragments that get collected during releases. Create a file in ``docs/changelog/`` named
-``<pr_number>.<type>.rst`` where type is ``feature`` for new functionality, ``bugfix`` for fixes, ``doc`` for
-documentation changes, ``removal`` for deprecations, or ``misc`` for internal changes. The file should contain a single
-line describing the change, optionally crediting the author with ``:user:`username``` syntax. For example,
-``123.feature.rst`` might contain ``Add support for custom backends - by :user:`contributor```. These fragments are
-collected during releases to build the changelog automatically.
+Releases collect the pending fragments from ``docs/changelog/``. See :ref:`changelog-fragments` for naming, types, and
+previewing the assembled changelog.
 
 *******************
  Automated Release

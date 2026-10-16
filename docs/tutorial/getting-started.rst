@@ -8,7 +8,7 @@ This tutorial will guide you through installing build and creating your first Py
 
     New to Python packaging? Start with the `Python Packaging User Guide tutorial
     <https://packaging.python.org/en/latest/tutorials/packaging-projects/>`_ to learn how to structure a Python project.
-    This tutorial assumes you already have a project with a ``pyproject.toml`` file.
+    The example below uses a minimal project to demonstrate build's commands.
 
 ***************
  Prerequisites
@@ -25,19 +25,14 @@ You need Python 3.11 or later installed on your system. Check your Python versio
  Installation
 **************
 
-The recommended way to install build is using pip:
+For this tutorial, install build using pip:
 
 .. code-block:: console
 
     $ pip install build
 
-Or, if you prefer to install it in an isolated environment using pipx:
-
-.. code-block:: console
-
-    $ pipx install build
-
-For corporate environments or systems with restricted internet access, see :doc:`../how-to/corporate-environments`.
+See :doc:`../how-to/install` for other installation methods and :doc:`../how-to/corporate-environments` for restricted
+networks.
 
 ***************************
  Creating a simple package
@@ -155,20 +150,8 @@ on your computer. It:
  Seeing which backend versions were used
 *****************************************
 
-build deletes the isolated environment after each build, so it does not leave the installed versions behind. Instead it
-prints them as it goes:
-
-.. code-block:: console
-
-    $ python -m build --wheel
-    ...
-    * Getting build dependencies for wheel...
-    * Installed build dependency versions:
-      - hatchling==1.30.1
-    * Building wheel...
-
-build prints each installed build dependency as ``name==version``. Keep this handy when reporting a problem to a
-backend's issue tracker, which usually asks for the exact version you built with. See :doc:`../how-to/troubleshooting`.
+When reporting a build failure, include the backend version from the output. See :ref:`backend-version` for how to find
+it.
 
 **********************************
  Building a wheel from your sdist
@@ -182,19 +165,15 @@ against its contents, which catches missing files in the sdist:
     $ python -m build dist/mypackage-0.1.0.tar.gz
     Successfully built mypackage-0.1.0-py3-none-any.whl
 
-The wheel lands next to the sdist. Pass ``--outdir`` to write somewhere else. If your package compiles C/C++ and you
-rebuild often, ``--sdist-extract-dir`` keeps the extracted sources at a fixed path so ``ccache``/``sccache`` can reuse
-earlier compilations; see :doc:`../how-to/basic-usage`.
+The wheel lands next to the sdist. Pass ``--outdir`` to write somewhere else. For repeated native builds, see
+:ref:`compiler-caching`.
 
 ****************************
  Building without isolation
 ****************************
 
-If you install the build dependencies yourself and build with ``--no-isolation``, build first checks that every declared
-dependency is present in the interpreter you are running. When something is missing it stops with an ``Unmet
-dependencies`` error that names the interpreter it checked and, for each requirement, the version it ``wanted`` against
-the version it ``found`` - so you can tell "not installed" apart from "installed, but the wrong version". See
-:doc:`../how-to/troubleshooting` for how to read it.
+If you manage build dependencies yourself, see :ref:`building-without-isolation`. For dependency errors in that mode,
+see :ref:`unmet-dependencies`.
 
 *******************************
  Recording what build produced

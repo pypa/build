@@ -27,15 +27,15 @@ The recommended way to install build is using `uv <https://docs.astral.sh/uv/>`_
 
         $ pip install build
 
+.. _optional-dependencies:
+
 Optional Dependencies
 =====================
 
 build supports optional extras for different use cases:
 
-- ``build[virtualenv]`` - Use `virtualenv <https://virtualenv.pypa.io/>`_ for isolation instead of `venv
-  <https://docs.python.org/3/library/venv.html>`_. This can be useful when using automation tools that rely on
-  virtualenv (such as `tox <https://tox.wiki/>`_), or when your operating system's Python package does not include venv
-  in the standard installation.
+- ``build[virtualenv]`` - Make `virtualenv <https://virtualenv.pypa.io/>`_ available for isolated environment creation.
+  See :ref:`virtual-environment-backend` for how build selects the implementation.
 
   .. code-block:: console
 

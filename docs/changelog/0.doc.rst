@@ -1,0 +1,1 @@
+Consolidate duplicate documentation and correct backend diagnostics, isolation, metadata, and changelog guidance.

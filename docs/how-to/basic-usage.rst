@@ -102,6 +102,8 @@ Or the short form:
 
     $ python -m build -o /path/to/output
 
+.. _compiler-caching:
+
 *******************************************
  Speeding up rebuilds of compiled packages
 *******************************************
@@ -128,23 +130,15 @@ remapping on top of this flag (e.g. ``-fdebug-prefix-map``, or sccache's ``base_
  Controlling verbosity
 ***********************
 
-Increase verbosity to see more details:
-
-.. code-block:: console
-
-    $ python -m build -v
-
-Or even more verbose:
-
-.. code-block:: console
-
-    $ python -m build -vv
+Use ``-v`` or ``-vv`` to increase output. See :ref:`build-verbosity` for what each level adds.
 
 Decrease verbosity for quieter output:
 
 .. code-block:: console
 
     $ python -m build -q
+
+.. _using-uv:
 
 **************************
  Using a faster installer
@@ -163,14 +157,15 @@ This requires uv to be installed:
 
     $ pip install uv
 
+.. _building-without-isolation:
+
 ****************************
  Building without isolation
 ****************************
 
 By default, build creates an `isolated environment
 <https://packaging.python.org/en/latest/glossary/#term-Isolated-Build>`_ (a clean temporary `virtual environment
-<https://docs.python.org/3/tutorial/venv.html>`_) to ensure reproducible builds. To skip this and use your current
-environment:
+<https://docs.python.org/3/tutorial/venv.html>`_) for build dependencies. To skip this and use your current environment:
 
 .. code-block:: console
 
@@ -292,6 +287,8 @@ Or to avoid stale artifacts, use a unique output directory:
 .. code-block:: console
 
     $ python -m build --outdir dist/v1.0.0
+
+.. _read-wheel-metadata:
 
 ************************
  Reading wheel metadata

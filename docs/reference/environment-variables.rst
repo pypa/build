@@ -9,13 +9,18 @@ package indexes, proxies, SSL certificates, and other settings.
  Variables Set by build
 ************************
 
+``PATH`` and ``PYTHONPATH``
+===========================
+
+For isolated backend subprocesses, build prepends the environment's scripts directory to ``PATH`` and sets
+``PYTHONPATH`` to an empty string so host import paths do not leak into the build.
+
 ``VIRTUAL_ENV``
 ===============
 
-build sets this variable when creating `isolated environments
-<https://packaging.python.org/en/latest/glossary/#term-Isolated-Build>`_. It contains the absolute path to the temporary
-`virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ that build creates for installing dependencies.
-Build backends can use this to detect they're running in an isolated environment.
+When using the uv installer, build sets ``VIRTUAL_ENV`` for the dependency-installation subprocess to identify the
+target environment. It does not set this variable for backend hooks, so backends should not rely on it to identify
+build's isolated environment.
 
 *****************************
  Package Index Configuration
@@ -38,10 +43,7 @@ Sets the primary `package index <https://packaging.python.org/en/latest/glossary
 looks for packages. Use this to point to private package repositories or PyPI mirrors. Defaults to
 ``https://pypi.org/simple``.
 
-.. code-block:: console
-
-    $ export PIP_INDEX_URL=https://pypi.company.com/simple
-    $ python -m build
+See :doc:`../how-to/corporate-environments` for private-index setup.
 
 ``PIP_EXTRA_INDEX_URL``
 =======================
@@ -49,15 +51,7 @@ looks for packages. Use this to point to private package repositories or PyPI mi
 Adds additional package indexes to search beyond the primary index. This allows using both `PyPI <https://pypi.org/>`_
 and a private index simultaneously.
 
-.. code-block:: console
-
-    $ export PIP_EXTRA_INDEX_URL=https://pypi.company.com/simple
-    $ python -m build
-
-.. warning::
-
-    A malicious package on any extra index can shadow packages from other indexes. Use ``PIP_INDEX_URL`` exclusively
-    when possible for better security.
+See :doc:`../how-to/corporate-environments` for the security considerations when combining indexes.
 
 ``PIP_CERT``
 ============
@@ -65,10 +59,7 @@ and a private index simultaneously.
 Path to a custom CA certificate bundle for SSL/TLS verification. Use this when your organization uses self-signed
 certificates or a custom certificate authority. Defaults to system certificates.
 
-.. code-block:: console
-
-    $ export PIP_CERT=/path/to/company-ca-bundle.crt
-    $ python -m build
+See :ref:`corporate-certificates` for setup instructions.
 
 ``PIP_TRUSTED_HOST``
 ====================
@@ -76,14 +67,7 @@ certificates or a custom certificate authority. Defaults to system certificates.
 Disables SSL verification for the specified host. Only use this in secure development environments where SSL
 certificates aren't available.
 
-.. code-block:: console
-
-    $ export PIP_TRUSTED_HOST=pypi.company.com
-    $ python -m build
-
-.. warning::
-
-    Disabling SSL verification is insecure. Prefer using ``PIP_CERT`` with proper certificates.
+Prefer configuring a CA bundle as described in :ref:`corporate-certificates`.
 
 ***********************
  Network Configuration
@@ -128,36 +112,23 @@ completely clean builds, though this makes builds slower.
 If you're behind a corporate proxy, configure these variables to route pip's network requests through your proxy server.
 Both uppercase and lowercase versions are recognized.
 
+See :ref:`corporate-proxies` for examples, including authentication and bypassing the proxy for internal hosts.
+
 ``HTTP_PROXY`` / ``http_proxy``
 ===============================
 
 Proxy server for HTTP requests. Specify the proxy URL including protocol and port.
-
-.. code-block:: console
-
-    $ export HTTP_PROXY=http://proxy.company.com:8080
-    $ python -m build
 
 ``HTTPS_PROXY`` / ``https_proxy``
 =================================
 
 Proxy server for HTTPS requests. Even though the proxy URL uses ``http://``, this handles HTTPS traffic.
 
-.. code-block:: console
-
-    $ export HTTPS_PROXY=http://proxy.company.com:8080
-    $ python -m build
-
 ``NO_PROXY`` / ``no_proxy``
 ===========================
 
 Comma-separated list of hosts that should bypass the proxy. Use this for internal servers that don't require proxy
 access.
-
-.. code-block:: console
-
-    $ export NO_PROXY=localhost,127.0.0.1,.company.com
-    $ python -m build
 
 ***********************************
  SSL/TLS Certificate Configuration
@@ -172,10 +143,7 @@ certificates or custom certificate authorities.
 Path to custom CA certificate bundle. The `requests <https://requests.readthedocs.io/>`_ library (which `pip
 <https://pip.pypa.io/>`_ depends on) uses this variable. Alternative to ``PIP_CERT``.
 
-.. code-block:: console
-
-    $ export REQUESTS_CA_BUNDLE=/path/to/company-ca-bundle.crt
-    $ python -m build
+See :ref:`corporate-certificates` for an example.
 
 ``SSL_CERT_FILE``
 =================
@@ -190,6 +158,8 @@ Another variable for specifying a custom CA certificate bundle. Recognized by va
 ******************************
  Python Runtime Configuration
 ******************************
+
+.. _python-warnings:
 
 ``PYTHONWARNINGS``
 ==================
@@ -239,8 +209,8 @@ On Windows, use ``TEMP``:
     $ set TEMP=C:\path\to\custom\tmp
     $ python -m build
 
-These variables only change *where* build creates the temporary directory. build still removes its environment when the
-build ends. To pin the environment to a stable path, or to keep it for inspection, use the ``--env-dir`` option instead.
+These variables only change *where* build creates temporary directories. For retaining a failed build environment, see
+:ref:`inspect-build-environment`.
 
 **Common use cases**:
 
@@ -248,25 +218,13 @@ build ends. To pin the environment to a stable path, or to keep it for inspectio
 - **Performance**: Use faster storage (e.g., tmpfs on Linux)
 - **Restricted filesystems**: Point at the writable part of a read-only container
 
-``TMPDIR`` only relocates the base directory; build still appends a random suffix, so the extraction path differs on
-every run. For compiler caches such as ``ccache`` or ``sccache``, which key on the source path, that random suffix is a
-guaranteed cache miss - use ``--sdist-extract-dir`` to pin the path instead.
-
-See :doc:`../how-to/troubleshooting` for debugging examples.
+For stable paths that work with compiler caches, see :ref:`compiler-caching`.
 
 ****************************
  Backend-Specific Variables
 ****************************
 
-Each **build backend** may define its own environment variables for configuration. Check your backend's documentation:
-
-- `Setuptools <https://setuptools.pypa.io/en/latest/userguide/index.html>`_
-- `Hatchling <https://hatch.pypa.io/latest/config/build/>`_
-- `PDM-Backend <https://pdm-backend.fming.dev/>`_
-- `Flit <https://flit.pypa.io/en/stable/>`_
-- `Poetry-Core <https://python-poetry.org/docs/pyproject/>`_
-- `scikit-build-core <https://scikit-build-core.readthedocs.io/en/latest/configuration.html>`_
-- `meson-python <https://meson-python.readthedocs.io/en/latest/reference/config-settings.html>`_
+Each backend may define its own environment variables. See :ref:`backend-documentation` for links to backend guides.
 
 *********************
  Non-Isolated Builds
@@ -287,24 +245,7 @@ build does not set ``VIRTUAL_ENV`` in this mode. You're responsible for installi
  Alternative: Configuration Files
 **********************************
 
-Instead of environment variables, you can configure `pip <https://pip.pypa.io/>`_ using persistent configuration files.
-This is convenient if you always use the same settings.
-
-**Linux/macOS**: ``~/.config/pip/pip.conf``
-
-**Windows**: ``%APPDATA%\pip\pip.ini``
-
-Example configuration:
-
-.. code-block:: ini
-
-    [global]
-    index-url = https://pypi.company.com/simple
-    trusted-host = pypi.company.com
-    cert = /path/to/company-ca-bundle.crt
-
-For more details and examples, see :doc:`../how-to/corporate-environments` and the `pip configuration documentation
-<https://pip.pypa.io/en/stable/topics/configuration/>`_.
+For persistent installer settings, see :ref:`pip-configuration`.
 
 **********
  See also
