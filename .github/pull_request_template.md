@@ -6,7 +6,9 @@
 
 <!-- All PRs should include a changelog fragment in docs/changelog/ -->
 
-- [ ] Added a [changelog fragment](https://build.pypa.io/en/latest/development/contributing.html#changelog-fragments)
+- [ ] Added changelog fragment: `docs/changelog/<pr_number>.<type>.rst`
+  - Types: `feature`, `bugfix`, `doc`, `removal`, `misc`
+  - Example: `123.feature.rst` containing `` Add custom backend support - by :user:`yourname`  ``
 
 ## Checklist
 
