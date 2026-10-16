@@ -5,6 +5,9 @@
 This guide covers common scenarios when using build behind corporate firewalls, with private package indexes (custom
 package repositories), or in restricted network environments.
 
+The pip settings below apply to the default installer. With ``--installer=uv``, use uv's `environment variables
+<https://docs.astral.sh/uv/configuration/environment/>`_.
+
 *************************
  Private package indexes
 *************************
@@ -133,6 +136,8 @@ Ensure the file has restricted permissions:
 
     $ chmod 600 ~/.netrc
 
+.. _corporate-certificates:
+
 **********************
  SSL/TLS certificates
 **********************
@@ -164,20 +169,12 @@ For development environments with self-signed certificates (not recommended for 
     $ export PIP_TRUSTED_HOST=pypi.company.com
     $ python -m build
 
-Using virtualenv for better SSL support
-=======================================
+.. _using-virtualenv-for-better-ssl-support:
 
-If you encounter SSL/TLS errors with Python's built-in venv, install virtualenv:
+Certificate handling depends on the installer version. See `pip's certificate documentation
+<https://pip.pypa.io/en/stable/topics/https-certificates/>`_ for how it uses system certificates and custom CA bundles.
 
-.. code-block:: console
-
-    $ pip install build[virtualenv]
-
-This provides a more recent version of pip with better SSL support and truststore capabilities.
-
-.. note::
-
-    Python 3.11.8+ and 3.12.2+ have improved SSL support and may not need this workaround.
+.. _corporate-proxies:
 
 ***************
  Proxy servers
@@ -209,6 +206,8 @@ No proxy for certain hosts
     $ export NO_PROXY=localhost,127.0.0.1,.company.com
     $ python -m build
 
+.. _pip-configuration:
+
 *************************
  pip configuration files
 *************************
@@ -216,47 +215,29 @@ No proxy for certain hosts
 Global configuration
 ====================
 
-Instead of environment variables, you can create a pip configuration file.
-
-On Linux/macOS (``~/.config/pip/pip.conf``):
+Instead of environment variables, you can create a pip configuration file. Use `pip's configuration file locations
+<https://pip.pypa.io/en/stable/topics/configuration/#location>`_ to find the appropriate file for your system. For
+example:
 
 .. code-block:: ini
 
     [global]
     index-url = https://pypi.company.com/simple
-    trusted-host = pypi.company.com
     cert = /path/to/company-ca-bundle.crt
-
-On Windows (``%APPDATA%\pip\pip.ini``):
-
-.. code-block:: ini
-
-    [global]
-    index-url = https://pypi.company.com/simple
-    trusted-host = pypi.company.com
-    cert = C:\\path\\to\\company-ca-bundle.crt
 
 Per-project configuration
 =========================
 
-Create a ``pip.conf`` file in your project directory. This is useful for team settings.
+pip does not automatically load ``pip.conf`` from the project directory. Set `PIP_CONFIG_FILE
+<https://pip.pypa.io/en/stable/topics/configuration/#pip-config-file>`_ to its absolute path to select it explicitly.
 
 *************************
  Air-gapped environments
 *************************
 
-For completely offline builds, you must manually install dependencies first:
-
-.. code-block:: console
-
-    $ pip install setuptools wheel your-build-backend
-    $ python -m build --no-isolation
-
-The ``--no-isolation`` flag tells build to use your current environment instead of creating an isolated one.
-
-.. warning::
-
-    When using ``--no-isolation``, ensure all build dependencies are installed and compatible.
+If build dependencies are already installed in the active environment, follow :ref:`building-without-isolation`.
+Alternatively, configure the installer to use a local package index or wheel directory containing all required
+dependencies.
 
 ********************
  CI/CD environments
@@ -287,19 +268,7 @@ GitLab CI
  Catching backend warnings
 ***************************
 
-To catch deprecation warnings from your build backend (useful in CI):
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error::DeprecationWarning python -m build
-
-Or for setuptools specifically:
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error:::setuptools.config.setupcfg python -m build
-
-See :doc:`troubleshooting` for more details on warnings.
+See :ref:`python-warnings` for turning backend deprecation warnings into errors in CI.
 
 ***************
  Common issues
@@ -320,8 +289,7 @@ Authentication failed. Verify your credentials and ensure they have access to th
 SSL verification failed
 =======================
 
-Your system doesn't trust the certificate. Use ``REQUESTS_CA_BUNDLE`` or ``PIP_CERT`` to provide the CA certificate, or
-install ``build[virtualenv]`` for better SSL support.
+Your installer does not trust the certificate. Follow :ref:`corporate-certificates` to configure its trust settings.
 
 Conda environment conflicts
 ===========================

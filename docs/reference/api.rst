@@ -34,7 +34,7 @@ Building both sdist and wheel:
     builder.build("sdist", "dist/")
     builder.build("wheel", "dist/")
 
-Using isolated environments (default):
+Using an isolated environment:
 
 ``DefaultIsolatedEnv`` creates a clean virtual environment, but it is initially empty. You must install the project's
 build dependencies before invoking the backend:
@@ -52,26 +52,16 @@ build dependencies before invoking the backend:
         env.install(builder.get_requires_for_build("wheel"))
         builder.build("wheel", "dist/")
 
-Pass ``path`` to create the environment at a fixed location instead of a temporary directory. The location must be
-empty; ``DefaultIsolatedEnv`` removes it on a clean exit and keeps it when the block raises:
+Pass ``path=".build-env"`` to ``DefaultIsolatedEnv`` to use a fixed location. The directory must be empty; it is removed
+on a clean exit and kept when the block raises.
 
-.. code-block:: python
+``ProjectBuilder`` on its own uses the current environment. The ``runner`` argument customizes subprocess execution; it
+does not control isolation.
 
-    with DefaultIsolatedEnv(path=".build-env") as env:
-        builder = ProjectBuilder.from_isolated_env(env, ".")
-        env.install(builder.build_system_requires)
-        builder.build("wheel", "dist/")
+Getting package metadata:
 
-Disabling isolation:
-
-.. code-block:: python
-
-    from build import ProjectBuilder
-
-    builder = ProjectBuilder(".", runner=lambda cmd, **kwargs: None)
-    builder.build("wheel", "dist/")
-
-Getting package metadata without building:
+:meth:`~build.ProjectBuilder.metadata_path` may build a wheel if the backend has no metadata hook. See
+:ref:`read-wheel-metadata` for the fallback behavior and the equivalent CLI commands.
 
 .. code-block:: python
 

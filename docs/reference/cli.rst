@@ -22,14 +22,16 @@ archive, since the archive already is an sdist.
     :title: python -m build
     :usage_width: 97
 
+.. _build-isolation:
+
 ********************
  Isolation Behavior
 ********************
 
 By default build will build the package in an isolated environment, but this behavior can be disabled with
 ``--no-isolation``. When using isolation, build creates a temporary virtual environment, installs the build dependencies
-specified in your ``pyproject.toml``, runs the build, and then cleans up the environment. This ensures reproducible
-builds regardless of what packages are installed in your development environment.
+specified in your ``pyproject.toml`` and requested by the backend, runs the build, and then cleans up the environment.
+This prevents packages in your development environment from satisfying undeclared build dependencies.
 
 Pass ``--env-dir PATH`` to put the environment at a fixed location instead of a temporary directory. The location must
 be empty. build removes it after a successful build and keeps it after a failure so you can inspect it. A fixed path
@@ -39,27 +41,17 @@ the cache. You cannot combine ``--env-dir`` with ``--no-isolation``.
 When a build fails, ``--env-dir`` and ``--sdist-extract-dir`` keep the environment and the extracted sources for
 inspection; see :ref:`debug-a-failed-build`.
 
+.. _dependency-check:
+
 ******************
  Dependency Check
 ******************
 
 With ``--no-isolation``, build does not install anything; it checks that the build dependencies are already present in
-the interpreter running build. When a requirement is unmet it exits with an ``Unmet dependencies`` error that names the
-interpreter checked and, for each requirement, the version specifier that was ``wanted`` and the version that was
-``found`` (``not installed`` when absent):
+the interpreter running build. An unmet requirement stops the build. Pass ``--skip-dependency-check`` to skip this
+check. See :ref:`unmet-dependencies` for how to interpret and resolve the error.
 
-.. code-block:: text
-
-    ERROR Unmet dependencies (checked against /usr/local/bin/python3.9):
-        anndata>=0.7.4
-            wanted: >=0.7.4
-            found: not installed
-        matplotlib>=3.4 -> kiwisolver>=1.0.1
-            wanted: >=1.0.1
-            found: 1.0.0
-
-Transitive requirements are shown as a ``parent -> child`` chain; the ``wanted``/``found`` lines describe the unmet
-leaf. Pass ``--skip-dependency-check`` to skip this check (see :doc:`../how-to/basic-usage`).
+.. _build-verbosity:
 
 ****************
  Verbose Output
@@ -70,44 +62,31 @@ Repeating ``-v`` raises the verbosity level. Each level adds to the previous one
 - ``-v`` streams the output of the environment-creation and dependency-installation subprocesses.
 - ``-vv`` additionally passes ``-v`` through to the installer.
 
-Regardless of verbosity, after installing the build dependencies of an isolated build, build prints a summary of the
-resolved versions, one ``name==version`` per line. build reads these from the isolated environment's installed metadata,
-so they reflect what was installed rather than the specifiers in ``pyproject.toml``:
+Backend output is visible by default. These flags do not change the backend's own logging settings; see
+:ref:`backend-diagnostics`.
 
-.. code-block:: console
+At normal verbosity, isolated builds also print the installed versions of declared build dependencies. See
+:ref:`backend-version` for an example and instructions for builds without isolation.
 
-    $ python -m build --wheel
-    * Creating isolated environment: venv+pip...
-    * Installing packages in isolated environment:
-      - setuptools >= 42.0.0
-    * Getting build dependencies for wheel...
-    * Installed build dependency versions:
-      - setuptools==82.0.1
-    * Building wheel...
-    Successfully built mypackage-1.0.0-py3-none-any.whl
-
-build reports this for isolated builds only; with ``--no-isolation`` build installs nothing, so inspect the active
-interpreter with your installer instead (for example ``pip list``).
+.. _build-report:
 
 **************
  Build Report
 **************
 
-``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
-names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
-refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
-standard output, because the build backend may write to ``stdout``/``stderr`` too.
+``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build.
 
 .. code-block:: console
 
     $ python -m build --report build-report.json
-    $ twine upload $(jq -r '.artifacts[].path' build-report.json)
 
 .. note::
 
-    Keep the report out of the output directory: tools commonly upload ``dist/*`` wholesale (``twine upload dist/*``),
-    and a stray non-distribution file there can break that. The write is atomic, so a reader never sees a partial file;
-    builds running in parallel still need a distinct ``PATH`` each to avoid overwriting one another's report.
+    The write is atomic. Builds running in parallel need a distinct ``PATH`` each to avoid overwriting one another's
+    report.
+
+See :ref:`discovering-built-artifacts` for using reports in CI and :ref:`build-report-design` for why reports use a
+separate file.
 
 The schema is:
 

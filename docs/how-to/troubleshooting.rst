@@ -18,14 +18,14 @@ This guide helps you resolve common issues when using build.
 
     $ python -m build
 
-Build will read your ``pyproject.toml`` and install all required dependencies.
+Build reads your ``pyproject.toml`` and installs declared build dependencies. If the backend needs a package that is not
+declared, update the project's `build requirements
+<https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#declaring-the-build-backend>`_.
 
-**Solution 2**: If using ``--no-isolation``, manually install dependencies:
+**Solution 2**: If using ``--no-isolation``, follow :ref:`building-without-isolation` to manage build dependencies in
+the active environment.
 
-.. code-block:: console
-
-    $ pip install setuptools your-build-backend
-    $ python -m build --no-isolation
+.. _unmet-dependencies:
 
 **********************************************
  "Unmet dependencies" with ``--no-isolation``
@@ -39,6 +39,9 @@ Build will read your ``pyproject.toml`` and install all required dependencies.
         anndata>=0.7.4
             wanted: >=0.7.4
             found: not installed
+        matplotlib>=3.4 -> kiwisolver>=1.0.1
+            wanted: >=1.0.1
+            found: 1.0.0
 
 **Cause**: build checks the declared requirements against the interpreter named in the header (the one running build),
 not against a virtual environment or your system package manager. Read each entry as:
@@ -51,6 +54,9 @@ not against a virtual environment or your system package manager. Read each entr
 
 **Solution 1**: Install or fix the offending dependency for the interpreter shown in the header.
 
+Transitive requirements appear as a ``parent -> child`` chain. The ``wanted`` and ``found`` lines describe the unmet
+requirement at the end of the chain.
+
 **Solution 2**: If you manage build dependencies externally (distribution packaging), skip the check entirely:
 
 .. code-block:: console
@@ -58,6 +64,8 @@ not against a virtual environment or your system package manager. Read each entr
     $ python -m build --no-isolation --skip-dependency-check
 
 See :doc:`basic-usage` for more on ``--skip-dependency-check``.
+
+.. _backend-version:
 
 *******************************************
  Find the backend version for a bug report
@@ -114,28 +122,8 @@ read the version from the active interpreter instead (for example ``pip show set
 
 **Cause**: Your system doesn't trust the SSL certificate of the package index.
 
-**Solution 1**: Provide the CA certificate (recommended):
-
-.. code-block:: console
-
-    $ export PIP_CERT=/path/to/company-ca-bundle.crt
-    $ python -m build
-
-**Solution 2**: Use build with virtualenv for better SSL support:
-
-.. code-block:: console
-
-    $ pip install build[virtualenv]
-    $ python -m build
-
-**Solution 3**: For development only, disable verification (not recommended):
-
-.. code-block:: console
-
-    $ export PIP_TRUSTED_HOST=pypi.company.com
-    $ python -m build
-
-See :doc:`corporate-environments` for more details.
+**Solution**: Configure your installer to trust the certificate authority. See :ref:`corporate-certificates` for the
+setup instructions.
 
 **************************
  Permission denied errors
@@ -214,7 +202,7 @@ Use the ``include`` and ``exclude`` options:
 
 **For flit** (`flit documentation <https://flit.pypa.io/>`_):
 
-Flit includes all files tracked by `git <https://git-scm.com/>`_ by default. Ensure files are committed.
+Consult flit's documentation for its source-file inclusion rules.
 
 **Test your sdist**: Always verify the sdist contains all necessary files:
 
@@ -253,28 +241,14 @@ Flit includes all files tracked by `git <https://git-scm.com/>`_ by default. Ens
 
 **Cause**: Build dependencies have incompatible version requirements.
 
-**Solution 1**: Update your build backend and its dependencies:
+**Solution 1**: For an isolated build, reconcile the conflicting requirements in ``[build-system].requires`` and any
+additional requirements reported by the backend. Updating a backend in your development environment does not change what
+the isolated build installs. Consult :ref:`backend-documentation` for backend configuration.
 
-.. code-block:: console
+**Solution 2**: If using ``--no-isolation``, install compatible build dependencies in the active environment as
+described in :ref:`building-without-isolation`.
 
-    $ pip install --upgrade pip setuptools
-
-Then try building again:
-
-.. code-block:: console
-
-    $ python -m build
-
-**Solution 2**: If using ``--no-isolation``, create a fresh virtual environment:
-
-.. code-block:: console
-
-    $ python -m venv fresh-env
-    $ source fresh-env/bin/activate  # On Windows: fresh-env\\Scripts\\activate
-    $ pip install build
-    $ python -m build
-
-The isolated build (without ``--no-isolation``) avoids this issue by creating a clean environment each time.
+Isolation avoids dependencies leaking from the development environment; it cannot resolve incompatible requirements.
 
 *************************************
  Build works locally but fails in CI
@@ -312,19 +286,7 @@ See :doc:`ci-cd` for CI-specific guidance.
  Catching deprecation warnings
 *******************************
 
-To catch warnings from your build backend in CI:
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error::DeprecationWarning python -m build
-
-Or for setuptools specifically:
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error:::setuptools.config.setupcfg python -m build
-
-This fails the build if deprecated features are used, helping you catch issues early.
+Use :ref:`python-warnings` to turn backend deprecation warnings into errors in CI.
 
 *************************
  Build backend not found
@@ -350,6 +312,8 @@ This fails the build if deprecated features are used, helping you catch issues e
 
        $ pip install hatchling
        $ python -m build --no-isolation
+
+.. _default-build-backend:
 
 *******************************************
  No build-system section in pyproject.toml
@@ -421,14 +385,7 @@ The package metadata preserves your original name, only the filename is normaliz
 Verbose output
 ==============
 
-Use ``-v`` or ``-vv`` for detailed output:
-
-.. code-block:: console
-
-    $ python -m build -v      # Verbose
-    $ python -m build -vv     # Very verbose
-
-This shows what build is doing and can help identify where failures occur.
+See :ref:`build-verbosity` for the output added by ``-v`` and ``-vv``.
 
 Check your configuration
 ========================
@@ -439,14 +396,16 @@ Verify your ``pyproject.toml`` is valid:
 
     $ python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb')))"
 
+.. _backend-diagnostics:
+
 Run backend-specific diagnostics
 ================================
 
-The ``build-backend`` value in ``pyproject.toml`` names a Python object, not necessarily a command-line program. Some
-backends are part of larger tools that provide a command-line interface. Check the backend's documentation for available
-diagnostic commands. To exercise the configured backend through the ``build`` frontend, run ``python -m build -vv`` and
-inspect the output. For an overview, see the `Choosing a build backend section of the Python Packaging User Guide
-<https://packaging.python.org/en/latest/tutorials/packaging-projects/#choosing-a-build-backend>`_.
+Consult your backend's documentation for its diagnostic and logging settings. See :doc:`config-settings` for how to pass
+settings through build. For an example, see :ref:`scikit-build-core logging <scikit-build-core-logging>`. To keep build
+directories and find backend log files, see :ref:`debug-a-failed-build`.
+
+.. _inspect-build-environment:
 
 Inspect the build environment
 =============================
@@ -462,13 +421,6 @@ build removes that location after a successful build and keeps it after a failur
 environment in ``.build-env`` for you to examine. Setting ``TMPDIR`` (or ``TEMP`` on Windows) only moves the temporary
 directory; it does not keep the environment around.
 
-build forwards the backend's output to your terminal as it happens, so compilation logs and error messages are already
-visible. Raise the verbosity to add build's own diagnostics and stream the environment setup live:
-
-.. code-block:: console
-
-    $ python -m build -vv
-
 .. _debug-a-failed-build:
 
 **********************
@@ -481,14 +433,8 @@ need.
 Stream the backend output
 =========================
 
-build forwards everything the backend writes to standard output and error straight to your terminal, so compiler
-invocations and backend tracebacks already appear without any extra flag. Raise the verbosity to add build's own
-diagnostics and to stream the environment setup (installing the backend and its dependencies) live instead of only on
-failure:
-
-.. code-block:: console
-
-    $ python -m build -vv
+Check :ref:`build-verbosity` for build's output controls and :ref:`backend-diagnostics` for the backend's own logging
+settings.
 
 Keep the build environment and sources
 ======================================
@@ -508,14 +454,14 @@ Find the backend's own logs
 
 build cannot capture log *files* the backend writes inside its own working directory, because PEP 517 gives the frontend
 no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python`` and
-``scikit-build``, point its build directory at a path you control:
+``scikit-build-core``, point its build directory at a path you control:
 
 .. code-block:: console
 
-    $ python -m build -C build-dir=_build
+    $ python -m build --wheel -C build-dir=_build
 
-The backend then usually writes its build tree and logs under ``_build``. Check your backend's documentation for the
-equivalent setting.
+``--wheel`` builds directly from your source tree, so the relative ``_build`` directory stays in your project. Check
+your backend's documentation for log locations and the equivalent setting.
 
 **********************
  Still having issues?

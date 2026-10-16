@@ -19,7 +19,8 @@ When you run ``python -m build``, the following happens:
         C -->|Yes default| D[Create temporary venv]
         C -->|--no-isolation| E[Use current environment]
         D --> F[Install build dependencies]
-        E --> F
+        E --> Q[Check installed build dependencies]
+        Q --> G
         F --> G[Invoke build backend hooks]
         G --> H{Build what?}
         H -->|Default| I[Build sdist]
@@ -52,30 +53,13 @@ The process in detail:
 
 2. **Create isolated environment** (default behavior)
 
-   build creates a temporary `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ to ensure
-   reproducible builds:
-
-   - Creates a fresh virtualenv in a temporary directory
-   - Sets ``VIRTUAL_ENV`` `environment variable <https://docs.python.org/3/library/venv.html#how-venvs-work>`_
-   - Installs the build backend and its dependencies via `pip <https://pip.pypa.io/>`_
-
-   This isolation ensures your build doesn't depend on what's installed in your development environment, making builds
-   reproducible across different machines.
+   build creates a temporary environment for the backend and its dependencies. See `Build Isolation Explained`_ for why
+   this is separate from your development environment and :ref:`build-isolation` for the CLI controls.
 
 3. **Invoke build backend hooks**
 
-   build calls standardized hooks (functions) in your **build backend**:
-
-   - For source distributions: calls ``build_sdist(sdist_directory, config_settings=None)``
-   - For wheels: calls ``build_wheel(wheel_directory, config_settings=None, metadata_directory=None)``
-
-   These hooks are defined in :PEP:`517` (the build system interface standard).
-
-   build runs each hook in a subprocess and forwards its standard output and error straight through, so a failing
-   backend's messages reach your terminal regardless of verbosity (``-vv`` adds build's own diagnostics on top). build
-   cannot collect log *files* the backend writes inside its own working directory: :PEP:`517` exposes no way for a
-   frontend to learn where those live, so retrieving them depends on backend-specific settings. See
-   :ref:`debug-a-failed-build` for how to keep them.
+   build invokes the `Backend hooks`_ in subprocesses. See :ref:`build-verbosity` for output handling and
+   :ref:`debug-a-failed-build` for inspecting a failed build.
 
 4. **Build artifacts**
 
@@ -90,30 +74,19 @@ The process in detail:
 
 5. **Cleanup**
 
-   build removes the temporary isolated environment, leaving only the distribution files in ``dist/``.
+   build removes temporary working directories. Explicitly retained paths follow the rules in :ref:`build-isolation` and
+   :ref:`compiler-caching`.
 
 ************************
  Default Build Strategy
 ************************
 
-By default, ``python -m build`` creates both sdist and wheel following this strategy:
+By default, build creates the wheel from the sdist so missing build inputs in the sdist can be caught before release.
+See :doc:`../how-to/basic-usage` for building distributions separately or using an existing sdist.
 
-1. Build sdist from source directory
-2. Extract sdist to temporary directory
-3. Build wheel from the extracted sdist
-
-This "build wheel from sdist" strategy ensures your sdist is complete. If files are missing from the sdist, the wheel
-build will fail, alerting you to the problem.
-
-Step 2 defaults to a random temporary directory that build removes after the run. Build randomises the path on purpose:
-it surfaces backends that hard-code absolute paths and keeps successive builds independent. That same randomness defeats
-compiler caches keyed on the source path, so ``--sdist-extract-dir`` lets you opt into a stable, persistent location
-when cache hits matter more than isolation.
-
-If the positional argument is a ``.tar.gz`` rather than a directory, the default is **wheel-only**: build checks the
-archive, extracts it into a temporary directory, and runs the wheel build against the extracted source. There is no
-sdist step. The archive already is an sdist, and PEP 517 has no hook for turning one sdist into another, so ``--sdist``
-against an sdist errors out.
+The sdist is extracted to a random temporary directory that build removes after the run. This exposes backends that
+hard-code absolute paths and keeps successive builds independent. For the effect on compiler caches and how to choose a
+stable path, see :ref:`compiler-caching`.
 
 ***************************
  Build Isolation Explained
@@ -130,57 +103,28 @@ environment for every build.
 How isolation works
 ===================
 
-1. build creates a temporary virtual environment using Python's ``venv`` module
-2. Installs only the packages listed in ``[build-system] requires``
+1. build creates a temporary virtual environment
+2. Installs ``[build-system] requires`` and any additional dependencies requested by the backend
 3. Runs the build backend in this isolated environment
 4. Deletes the environment after building
 
 The isolated environment has access to the Python standard library, the build backend and its dependencies, and nothing
 from your development environment except environment variables.
 
-build picks a temporary directory for this environment by default and deletes it after the build. Pass ``--env-dir`` to
-choose the location yourself. You might do this to keep a failed environment for inspection, to place the environment on
-a writable path inside a read-only container, or to give a fixed path to a compilation cache such as ccache or sccache.
-Those caches treat a changed build-environment path as a new file, so a path that changes every run never hits the
-cache.
+For environment lifetime and path controls, see :ref:`build-isolation`. To examine a failed environment, see
+:ref:`inspect-build-environment`.
 
 When to disable isolation
 =========================
 
-Use ``--no-isolation`` only when:
-
-- You're in an offline/air-gapped environment and have pre-installed dependencies
-- You're debugging build issues and need to inspect the environment
-- You're a Linux distribution packager providing dependencies externally
-- You understand the reproducibility implications
-
-Under ``--no-isolation`` build installs nothing; it instead validates that the declared dependencies are already present
-(use ``--skip-dependency-check`` to opt out), so a missing dependency is reported rather than silently producing a
-broken build. That check compares each declared requirement against the installed metadata of the *single interpreter
-running build*, discovered through ``importlib.metadata``. This explains two otherwise confusing outcomes, which the
-error message spells out per requirement (``wanted`` versus ``found``). A package can be present but reported missing
-because its installed version does not satisfy the specifier (``found`` shows that version). And a package you know is
-installed can read as ``not installed`` when it was installed for a *different* Python — a system or distribution
-package manager often targets an interpreter other than the one invoking build, and metadata is not shared across
-interpreters. The error names the interpreter checked so the mismatch is visible rather than left to guesswork.
-
-See :doc:`../how-to/basic-usage` for usage.
+Disabling isolation transfers responsibility for build dependencies to the caller. See :ref:`building-without-isolation`
+for use cases and :ref:`dependency-check` for the checks build performs in that mode.
 
 ***********************************
  Build Frontends vs Build Backends
 ***********************************
 
-build is a **build frontend** that reads ``pyproject.toml``, creates isolated environments, invokes build backends, and
-handles the command-line interface. It does NOT know how to build your specific package.
-
-Your **build backend** (setuptools, hatchling, flit, etc.) knows how to build your package by implementing PEP 517
-hooks. The backend handles package discovery, file inclusion, metadata generation, and creates the actual sdist and
-wheel files.
-
-This separation of concerns allows different backends for different project needs, ensures frontend improvements benefit
-all backends, and allows backend improvements to work with all frontends.
-
-See :doc:`build-backends` for more details.
+See :doc:`build-backends` for the responsibilities of the frontend and backend.
 
 *********************
  PEP 517 Integration
@@ -192,17 +136,9 @@ backends). The key concepts:
 Build system table
 ==================
 
-Your `pyproject.toml <https://packaging.python.org/en/latest/specifications/pyproject-toml/>`_ must have a
-``[build-system]`` section:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["hatchling"]
-    build-backend = "hatchling.build"
-
-- ``requires``: Packages needed to build (installed in isolated environment)
-- ``build-backend``: Python import path to backend object
+The `build-system declaration
+<https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#declaring-the-build-backend>`_ selects the
+backend and its initial dependencies. For legacy projects without this declaration, see :ref:`default-build-backend`.
 
 Backend hooks
 =============
@@ -242,39 +178,17 @@ The backend interprets these settings. See :doc:`../how-to/config-settings` for 
  Metadata Extraction
 *********************
 
-build can extract package metadata without a full build:
-
-.. code-block:: console
-
-    $ python -m build --metadata
-
-This:
-
-1. Creates isolated environment
-2. Calls ``prepare_metadata_for_build_wheel()`` if available
-3. Otherwise, calls ``build_wheel()`` and extracts metadata
-4. Outputs metadata in JSON format to stdout
-
-Useful for tools that need package metadata without building the full package.
+Metadata can depend on backend configuration and generated files, so build asks the backend for it. See
+:ref:`read-wheel-metadata` for the metadata-hook fallback and for reading an existing wheel without invoking a backend.
 
 ***************************
  Diagnostics and Verbosity
 ***************************
 
 ``pyproject.toml`` declares build dependencies as *specifiers* (``setuptools >= 40.8.0``), not exact versions. The
-installer resolves each specifier to a concrete version at build time, and on an isolated build that version lives only
-in the temporary environment, which build deletes once it finishes. The installer's own output reports the versions, but
-only at ``-vv``, interleaved with the rest of its log.
-
-So once build has installed the dependencies it prints a concise summary of the resolved version of each, as
-``name==version``, the single piece a backend bug report usually asks for. build obtains these by reading the installed
-distribution metadata from the environment's ``site-packages`` through ``importlib.metadata`` rather than by spawning a
-process inside the environment, so the summary is cheap and works the same for the ``venv``/``virtualenv`` and ``uv``
-backends. Because it reads installed metadata, it reflects what build used, including any transitive resolution the
-specifier allowed.
-
-This is an isolated-build concern. Under ``--no-isolation`` build installs nothing - it builds against the interpreter
-that is already running it - so the versions are whatever that interpreter has, discoverable with your installer.
+installer resolves each specifier to a concrete version at build time. build reads the installed distribution metadata
+for declared build dependencies from the isolated environment to report the versions actually used. See
+:ref:`backend-version` for reading this output and :ref:`build-verbosity` for the other output controls.
 
 ****************
  Error Handling
@@ -282,8 +196,7 @@ that is already running it - so the versions are whatever that interpreter has, 
 
 build performs minimal error handling:
 
-- Validates ``pyproject.toml`` exists and is valid TOML
-- Checks ``[build-system]`` section exists
+- Validates ``pyproject.toml`` and its ``[build-system]`` table when present
 - Verifies backend is importable
 - Checks hook return values are valid
 
@@ -295,40 +208,18 @@ This keeps build simple and focused on its role as a frontend.
  Installer Selection
 *********************
 
-By default, build uses pip to install dependencies in isolated environments. You can use a different installer:
+build supports pip and uv for installing build dependencies. See :ref:`using-uv` for selecting uv and
+:doc:`../reference/environment-variables` for installer configuration.
 
-.. code-block:: console
-
-    $ python -m build --installer=uv
-
-Requirements for custom installers:
-
-- Must accept ``install`` command
-- Must accept package specifications as arguments
-- Must support ``--no-deps`` flag
-
-Currently, pip and uv are the primary supported installers.
+.. _virtual-environment-backend:
 
 *****************************
  Virtual Environment Backend
 *****************************
 
-build can use different virtual environment implementations:
-
-- ``venv`` (default): Python's built-in venv module
-- ``virtualenv``: Third-party virtualenv package
-
-To use virtualenv:
-
-.. code-block:: console
-
-    $ pip install build[virtualenv]
-    $ python -m build
-
-virtualenv provides better SSL support on older Python versions, faster environment creation, and more features (though
-build uses only basic functionality).
-
-See :doc:`../how-to/corporate-environments` for when this matters.
+With the pip installer, build uses ``venv`` when a suitable outer pip is available. Otherwise, it uses a supported
+``virtualenv`` installation if available, falling back to ``venv`` with pip installed inside the environment. The uv
+installer uses uv to create the environment. See :ref:`optional-dependencies` for installing the optional tools.
 
 ****************************
  Output Directory Structure
@@ -347,38 +238,14 @@ By default, build places files in ``dist/`` within your source directory:
     │       └── __init__.py
     └── pyproject.toml
 
-Use ``--outdir`` to change the output location:
-
-.. code-block:: console
-
-    $ python -m build --outdir /tmp/build-output
+See :doc:`../how-to/basic-usage` for choosing the output directory.
 
 *******************************
  Environment Variable Handling
 *******************************
 
-build passes most environment variables to the build backend:
-
-**Always passed**:
-
-- ``PATH`` - For finding executables
-- ``PYTHONPATH`` - For Python module discovery
-- HTTP/HTTPS proxy variables
-- SSL certificate variables
-- Custom pip variables (``PIP_*``)
-
-**Set by build**:
-
-- ``VIRTUAL_ENV`` - Points to isolated environment (when using isolation)
-
-**When using ``--no-isolation``**:
-
-- All environment variables from your shell are passed through unchanged
-
-This behavior allows corporate environments to configure pip via environment variables, build backends to use custom
-environment variables, and proxy and SSL configuration to work transparently.
-
-See :doc:`../reference/environment-variables` for details.
+See :doc:`../reference/environment-variables` for inherited settings and the variables build overrides for isolated
+subprocesses.
 
 *********************
  Reproducible Builds
@@ -386,7 +253,7 @@ See :doc:`../reference/environment-variables` for details.
 
 build aims for reproducible builds by:
 
-1. **Isolated environments**: Same dependencies every time
+1. **Isolated environments**: Build dependencies are separated from the development environment
 2. **Declared dependencies**: ``[build-system] requires`` is explicit
 3. **Standardized interface**: PEP 517 hooks are well-defined
 4. **Minimal intervention**: build doesn't modify your code or backend behavior
@@ -394,6 +261,8 @@ build aims for reproducible builds by:
 However, full reproducibility also requires pinned backend versions in ``requires``, reproducible builds in your backend
 (some backends support ``SOURCE_DATE_EPOCH``), consistent Python version, and consistent platform for platform-specific
 wheels.
+
+.. _build-report-design:
 
 ***************
  Build Reports
@@ -407,7 +276,7 @@ learn what was built.
 runs as a subprocess that inherits build's streams and may print to them, so a consumer could not separate the report
 from backend chatter on ``stdout``. A file build controls keeps the machine-readable output apart from the human- and
 backend-facing log. Build writes the report only after the build succeeds and replaces it atomically, so a consumer
-never reads a half-written file. See :doc:`../reference/cli` for the schema.
+never reads a half-written file. See :ref:`build-report` for the schema.
 
 ****************************
  Performance Considerations

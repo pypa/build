@@ -140,7 +140,7 @@ Test building with multiple Python versions:
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+            python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
 
         steps:
           - uses: actions/checkout@v4
@@ -154,6 +154,8 @@ Test building with multiple Python versions:
 
           - name: Build package
             run: python -m build
+
+.. _ci-platform-wheels:
 
 Building wheels for multiple platforms
 ======================================
@@ -292,13 +294,13 @@ Matrix builds
         paths:
           - dist/
 
-    build:py310:
+    build:py311:
       extends: .build_template
-      image: python:3.10
+      image: python:3.11
 
-    build:py314:
+    build:py315:
       extends: .build_template
-      image: python:3.14
+      image: python:3.15
 
 **********
  CircleCI
@@ -342,11 +344,11 @@ Basic build
 
     language: python
     python:
-      - "3.10"
       - "3.11"
       - "3.12"
       - "3.13"
       - "3.14"
+      - "3.15"
 
     install:
       - pip install build
@@ -371,10 +373,10 @@ Basic build
 
     strategy:
       matrix:
-        Python310:
-          python.version: '3.10'
-        Python314:
-          python.version: '3.14'
+        Python311:
+          python.version: '3.11'
+        Python315:
+          python.version: '3.15'
 
     steps:
     - task: UsePythonVersion@0
@@ -448,6 +450,8 @@ Build packages in a Docker container:
 
     CMD ["python"]
 
+.. _tox-integration:
+
 *****************
  tox Integration
 *****************
@@ -483,6 +487,8 @@ Run the build environment:
 
     $ tox -e build
 
+.. _discovering-built-artifacts:
+
 *****************************
  Discovering Built Artifacts
 *****************************
@@ -505,7 +511,7 @@ The report also includes each artifact's size and SHA-256 hash, useful for emitt
 
     $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' build-report.json
 
-See :doc:`../reference/cli` for the full report schema.
+See :ref:`build-report` for the full report schema.
 
 ******************
  Verifying Builds
@@ -565,7 +571,7 @@ This builds on every push and PR, but only publishes when pushing a version tag.
 Enable verbose output
 =====================
 
-Add ``-vv`` flag for debugging:
+See :ref:`build-verbosity` for output levels. For example, in GitHub Actions:
 
 .. code-block:: yaml
 

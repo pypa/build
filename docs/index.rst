@@ -7,8 +7,8 @@ A simple, correct `Python packaging <https://packaging.python.org/>`_ **build fr
 build reads your project's `pyproject.toml configuration file
 <https://packaging.python.org/en/latest/specifications/pyproject-toml/>`_ and invokes **build backends** to create
 `distribution packages <https://packaging.python.org/en/latest/glossary/#term-Distribution-Package>`_ (the files you
-upload to PyPI_ or install with pip_). It focuses solely on building packages and does not manage dependencies or
-virtual environments.
+upload to PyPI_ or install with pip_). It manages temporary build dependencies and environments, leaving application
+dependency management to other tools.
 
 *******************
  Mission Statement
@@ -27,45 +27,18 @@ We keep dependencies minimal to make build easy to install and use in restricted
  Differences from other tools
 ******************************
 
-Thanks to standardization, all compliant build frontends produce the same outputs (`source distributions
-<https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ and `wheels
-<https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_) from the same project. The
-differences are mainly in scope, dependencies, and extra features.
+.. _cibuildwheel:
 
-``uv build``
-============
+.. _flit-build:
 
-`uv build <https://docs.astral.sh/uv/>`_ is essentially equivalent to ``python -m build --installer=uv``. Both follow
-packaging standards. build offers features like ``--config-json`` for passing complex nested configuration to backends,
-and the pip installer works on systems that don't have pre-compiled uv wheels.
+.. _hatch-build:
 
-``setup.py sdist bdist_wheel``
-==============================
+.. _setup-py-sdist-bdist-wheel:
 
-build is the modern equivalent of ``setup.py sdist bdist_wheel``, supporting any backend — not just `setuptools
-<https://setuptools.pypa.io/>`_.
+.. _uv-build:
 
-``hatch build``
-===============
-
-`hatch build <https://hatch.pypa.io/>`_ is the build command from the Hatch project management tool. It provides a
-convenient wrapper around the build process as part of the larger Hatch ecosystem for managing Python projects, while
-build is a standalone tool focused solely on building.
-
-``flit build``
-==============
-
-`flit build <https://flit.pypa.io/>`_ is the build command from the Flit project. One important difference: flit-core
-produces slightly different source distributions when built by flit itself compared to other frontends. Using build (or
-any standards-compliant frontend) ensures consistent outputs regardless of the backend.
-
-``cibuildwheel``
-================
-
-`cibuildwheel <https://cibuildwheel.pypa.io/>`_ is a different kind of tool. While build creates a single wheel for the
-current platform, cibuildwheel orchestrates building wheels across many platforms and Python versions in CI. It actually
-calls a build frontend (like build or pip) internally for each platform. Use build to create a pure-Python wheel or a
-single native wheel; use cibuildwheel when you need to produce native wheels for many platforms.
+See :doc:`how-to/choosing-tools` for when to use build, cibuildwheel, or a project management tool. For the distinction
+between a backend and its command-line tools, see :doc:`explanation/build-backends`.
 
 ****************
  Where to start

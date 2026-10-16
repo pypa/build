@@ -58,8 +58,9 @@ The relationship between build and backends follows a clear contract:
         style Backend fill:#fff3e0,stroke:#f57c00,color:#000
         style I fill:#2e7d32,stroke:#1b5e20,color:#fff
 
-Your ``pyproject.toml`` specifies which backend to use in the ``[build-system]`` section. For example, using hatchling
-as the backend looks like this:
+Your ``pyproject.toml`` specifies which backend to use in the `build-system declaration
+<https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#declaring-the-build-backend>`_. For example,
+using hatchling as the backend looks like this:
 
 .. code-block:: toml
 
@@ -69,7 +70,8 @@ as the backend looks like this:
 
 The ``requires`` field lists the packages needed to perform a build, which build installs in an isolated environment.
 The ``build-backend`` field specifies the Python import path to the backend object that implements the PEP 517
-interface.
+interface. This object need not provide a command-line interface, so running ``python -m`` with that import path is not
+a general way to test a backend.
 
 When building, build creates an isolated environment, installs the required packages, imports the backend module, and
 calls standardized hook functions like ``build_wheel()`` or ``build_sdist()``. The backend then creates the distribution
@@ -79,158 +81,25 @@ files and returns their filenames.
  Available Build Backends
 **************************
 
-Several build backends are available, each with different features and philosophies.
+See :ref:`backend-documentation` for links to backend guides and configuration references.
 
-setuptools
-==========
+.. raw:: html
 
-setuptools is the traditional and most widely used build backend. It has extensive features and backwards compatibility
-with older packaging standards, making it suitable for complex projects and projects that need to maintain compatibility
-with older tooling.
-
-To use setuptools, configure your ``pyproject.toml`` like this:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["setuptools>=61.0", "wheel"]
-    build-backend = "setuptools.build_meta"
-
-setuptools excels at handling complex build requirements including C extensions, namespace packages, and entry points.
-However, it can be complex to configure correctly and has many legacy features that may be confusing.
-
-See the `setuptools documentation <https://setuptools.pypa.io/>`_ for details.
-
-hatchling
-=========
-
-hatchling is the build backend from the Hatch project. It provides a modern, user-friendly interface with sensible
-defaults and good performance.
-
-To use hatchling:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["hatchling"]
-    build-backend = "hatchling.build"
-
-hatchling works well for pure Python packages and has excellent plugin support for extending functionality. It
-emphasizes convention over configuration and includes built-in support for common patterns like src-layout and editable
-installs. The main limitation is that it's newer and may have less community documentation than setuptools.
-
-See the `hatchling documentation <https://hatch.pypa.io/latest/config/build/>`_ for details.
-
-flit-core
-=========
-
-flit-core is a minimalist build backend that focuses on simplicity for pure Python packages.
-
-To use flit-core:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["flit-core>=3.2"]
-    build-backend = "flit_core.buildapi"
-
-flit-core works best for simple, pure Python packages without complex build requirements. It has minimal configuration
-and fast build times. By default, it includes all files tracked by git in the source distribution. The trade-off is
-limited support for complex scenarios like C extensions or non-standard package layouts.
-
-See the `flit documentation <https://flit.pypa.io/>`_ for details.
-
-pdm-backend
-===========
-
-pdm-backend is the build backend from the PDM project, offering modern features and good integration with PEP 621
-metadata.
-
-To use pdm-backend:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["pdm-backend"]
-    build-backend = "pdm.backend"
-
-pdm-backend provides strong PEP 621 support, good handling of dynamic metadata, and support for both pure Python and
-extension modules. It's actively developed and includes features like SCM versioning and custom build hooks.
-
-See the `pdm-backend documentation <https://pdm-backend.fming.dev/>`_ for details.
-
-poetry-core
-===========
-
-poetry-core is the build backend extracted from Poetry. It's designed primarily for use with the Poetry tool but can be
-used standalone.
-
-To use poetry-core:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["poetry-core"]
-    build-backend = "poetry.core.masonry.api"
-
-poetry-core handles pure Python packages well and integrates tightly with Poetry's ecosystem. However, configuration is
-done through Poetry's custom ``[tool.poetry]`` section rather than standard ``[project]`` metadata, which can reduce
-interoperability with other tools.
-
-See the `poetry documentation <https://python-poetry.org/>`_ for details.
-
-scikit-build-core
-=================
-
-scikit-build-core is a build backend specifically designed for projects with CMake-based C/C++ extensions.
-
-To use scikit-build-core:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["scikit-build-core"]
-    build-backend = "scikit_build_core.build"
-
-scikit-build-core provides excellent CMake integration, cross-platform compilation support, and modern PEP 621 metadata
-support. It's the recommended backend for projects using CMake for extension modules, replacing the older scikit-build.
-
-See the `scikit-build-core documentation <https://scikit-build-core.readthedocs.io/>`_ for details.
-
-meson-python
-============
-
-meson-python is a build backend for projects using the Meson build system, particularly useful for compiled extensions.
-
-To use meson-python:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["meson-python"]
-    build-backend = "mesonpy"
-
-meson-python offers fast builds, excellent cross-platform support, and good integration with Meson's dependency
-management. It's especially strong for projects with complex compiled components and is increasingly popular in the
-scientific Python ecosystem.
-
-See the `meson-python documentation <https://meson-python.readthedocs.io/>`_ for details.
+    <span id="id1"></span>
+    <span id="id2"></span>
+    <span id="flit-core"></span>
+    <span id="meson-python"></span>
+    <span id="pdm-backend"></span>
+    <span id="poetry-core"></span>
+    <span id="scikit-build-core"></span>
 
 ********************
  Choosing a Backend
 ********************
 
-The right backend depends on your project's needs. For simple pure Python packages, flit-core or hatchling provide
-straightforward configuration and fast builds. Projects that need extensive customization or have complex requirements
-often benefit from setuptools' mature feature set and extensive documentation.
-
-If your project includes C or C++ extensions built with CMake, scikit-build-core is the natural choice. For projects
-using Meson for compilation, meson-python provides the best integration. Projects already using Poetry might prefer
-poetry-core for consistency, though this limits interoperability with other tools.
-
-New projects without special requirements should consider hatchling or flit-core for their modern approach and
-simplicity. Existing projects using setuptools can continue doing so, as it remains well-maintained and
-feature-complete.
+Follow `Choosing a build backend
+<https://packaging.python.org/en/latest/tutorials/packaging-projects/#choosing-a-build-backend>`_ in the Python
+Packaging User Guide. Backend capabilities and configuration belong to the backend's own documentation.
 
 **********************
  Configuring Backends
@@ -268,26 +137,7 @@ which files to include, where to find packages, how to handle version numbers, a
  Passing Options to Backends
 *****************************
 
-build allows passing configuration settings to backends via the ``--config-setting`` or ``-C`` flag. The syntax and
-available options depend entirely on the backend.
-
-For example, with setuptools you might pass build options:
-
-.. code-block:: console
-
-    $ python -m build -C--build-option=--build-number=123
-
-With scikit-build-core, you can configure CMake:
-
-.. code-block:: console
-
-    $ python -m build -Ccmake.define.BUILD_TESTING=OFF
-
-Each backend interprets these settings differently. See :doc:`../how-to/config-settings` for backend-specific examples.
-
-Config settings map keys to values, so every key needs a value. Drop the ``=VALUE`` and the key gets an empty value,
-which suits backends that act on a flag's presence alone. build accepts this shorthand but warns about it, because pip
-only takes the explicit ``KEY=VALUE`` form. Write ``KEY=`` for an empty value and your command runs under both tools.
+See :doc:`../how-to/config-settings` for the ``-C`` syntax, empty values, and backend-specific examples.
 
 ******************
  Dynamic Metadata
@@ -376,8 +226,8 @@ If you're migrating from ``setup.py``, you may be used to running commands like:
     $ python setup.py test
     $ python setup.py develop
 
-**These commands do not work with build**: build uses the PEP 517 interface, which only defines hooks for building
-distributions (``build_wheel`` and ``build_sdist``). It does not support arbitrary setuptools commands.
+**These commands do not work with build**: build invokes standardized backend hooks and does not accept arbitrary
+setuptools commands.
 
 **Modern alternatives**:
 

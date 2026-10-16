@@ -28,14 +28,41 @@ Before committing, run the test suite locally to verify your changes don't break
 uses `pytest <https://docs.pytest.org/>`_ for testing, and you can run tests using tox. After ensuring tests pass,
 commit your changes with a clear, descriptive commit message following the project's commit conventions.
 
-Each pull request should include a changelog fragment. Create a file in ``docs/changelog/`` named
-``<pr_number>.<type>.rst`` where type is ``feature``, ``bugfix``, ``doc``, ``removal``, or ``misc``. The file should
-contain a single line describing the change. For example, ``123.feature.rst`` might contain ``Add support for custom
-backends - by :user:`contributor```. See ``docs/changelog/README.rst`` for complete details.
+Each pull request should include a :ref:`changelog fragment <changelog-fragments>`.
 
 When your changes are ready, push your branch to your fork on GitHub and open a pull request against the main build
 repository. The pull request description should clearly explain what changes you've made and why. Reference any related
 issues using GitHub's issue linking syntax.
+
+.. _changelog-fragments:
+
+*********************
+ Changelog Fragments
+*********************
+
+Create ``docs/changelog/<pr_number>.<type>.rst`` with one line describing the change. Choose the type by its effect on
+users:
+
+- ``feature``: new functionality (minor release)
+- ``bugfix``: a bug fix (patch release)
+- ``doc``: documentation changes (patch release)
+- ``deprecation``: behavior still works but warns that it will be removed (minor release)
+- ``removal``: behavior callers relied on no longer works (major release)
+- ``misc``: internal changes (patch release)
+
+These types determine the automatic version bump described in :doc:`release`. For example, ``123.feature.rst`` might
+contain:
+
+.. code-block:: rst
+
+    Add support for custom build backends - by :user:`contributor`
+
+Use ``:issue:`123``` for issue references and ``:user:`name``` for attribution. Keep the fragment on one line; the
+release process wraps the assembled changelog. Preview it with:
+
+.. code-block:: console
+
+    $ towncrier build --draft --version X.Y.Z
 
 ***************
  Running Tests
@@ -44,11 +71,6 @@ issues using GitHub's issue linking syntax.
 Due to its nature, ``build`` has a somewhat complex test suite with two sets of tests: unit tests and integration tests.
 Unit tests verify the actual code implementation, while integration tests run build on real world projects as a sanity
 check. To run tests we use ``tox``.
-
-Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
-against Python 3.15 with ``tox run -e 3.15``, running both unit and integration tests with ``tox run --
---run-integration``, running only integration tests with ``tox run -- --only-integration``, or running only integration
-tests with parallel tasks using ``tox run -- -n auto --only-integration``.
 
 Tests run in parallel by default, but if you pass any arguments, you need to include ``-n auto`` if you want to keep
 parallel runs.
@@ -68,8 +90,6 @@ and with the module being invoked directly from path, sdist install, or wheel in
 .. code-block:: console
 
     tox -e 3.15
-
-and with the module being invoked directly from path, sdist install, or wheel install.
 
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
 minimum versions of dependencies. For type checking,
