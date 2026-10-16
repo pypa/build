@@ -442,10 +442,11 @@ Verify your ``pyproject.toml`` is valid:
 Run backend-specific diagnostics
 ================================
 
-PEP 517 defines build-backend hooks, not a standard command for running a backend module directly. Some backends provide
-their own command-line interface; others, including ``flit_core`` and ``poetry.core``, do not. Check the backend's
-documentation for a standalone command, if it provides one. To exercise a backend through its PEP 517 hooks, run
-``python -m build -vv`` and inspect the output.
+The ``build-backend`` value in ``pyproject.toml`` names a Python object, not necessarily a command-line program. Some
+backends are part of larger tools that provide a command-line interface. Check the backend's documentation for available
+diagnostic commands. To exercise the configured backend through the ``build`` frontend, run ``python -m build -vv`` and
+inspect the output. For an overview, see the `Choosing a build backend section of the Python Packaging User Guide
+<https://packaging.python.org/en/latest/tutorials/packaging-projects/#choosing-a-build-backend>`_.
 
 Inspect the build environment
 =============================
