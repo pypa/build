@@ -1,0 +1,1 @@
+Accept redundant dot components in sdist member paths when validating the archive - by :user:`AryanRG`

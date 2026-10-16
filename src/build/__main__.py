@@ -15,6 +15,7 @@ __lazy_modules__ = {
     'json',
     'packaging.utils',
     'packaging.version',
+    'pathlib',
     'platform',
     'pyproject_hooks',
     'shutil',
@@ -32,6 +33,7 @@ import contextvars
 import hashlib
 import json
 import os
+import pathlib
 import platform
 import shutil
 import subprocess
@@ -850,7 +852,8 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
     with tarfile.open(archive_path) as archive:
         safe_members = [tarfile.data_filter(m, extract_dir) for m in archive.getmembers()]
 
-        top_level_dirs = {m.name.split('/', 1)[0] for m in safe_members}
+        member_names = [str(pathlib.PurePosixPath(m.name)) for m in safe_members]
+        top_level_dirs = {name.split('/', 1)[0] for name in member_names}
         try:
             (top_level_dir,) = top_level_dirs
         except ValueError:
@@ -859,7 +862,9 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
             )
             raise BuildException(msg) from None
 
-        if not any(m.name == f'{top_level_dir}/PKG-INFO' and m.isfile() for m in safe_members):
+        if not any(
+            name == f'{top_level_dir}/PKG-INFO' and m.isfile() for name, m in zip(member_names, safe_members, strict=True)
+        ):
             msg = (
                 f'source distribution {archive_path} does not contain {top_level_dir}/PKG-INFO; '
                 'this does not appear to be a valid source distribution'

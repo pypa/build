@@ -1073,6 +1073,22 @@ def test_prepare_sdist_archive_happy(tmp_path: pathlib.Path, sdist: pathlib.Path
         assert top_level_dir == 'demo-1.0.0'
 
 
+@pytest.mark.parametrize('prefix', ['./', '././', ''])
+@pytest.mark.parametrize('fixed_dir', [False, True])
+def test_extract_sdist_dot_prefix(tmp_path: pathlib.Path, write_sdist: WriteSdist, prefix: str, fixed_dir: bool) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, f'{prefix}demo-1.0.0/.', extra={'demo-1.0.0/README': 'A project with mixed member paths'})
+    extract_dir = tmp_path / 'extract' if fixed_dir else None
+
+    with build.__main__._extract_sdist(archive, extract_dir=extract_dir) as extracted:
+        assert pathlib.Path(extracted).name == 'demo-1.0.0'
+        assert pathlib.Path(extracted, 'PKG-INFO').is_file()
+        assert pathlib.Path(extracted, 'pyproject.toml').is_file()
+        assert pathlib.Path(extracted, 'README').read_text(encoding='utf-8') == 'A project with mixed member paths'
+
+    assert pathlib.Path(extracted).exists() is fixed_dir
+
+
 def test_prepare_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
     archive = tmp_path / 'demo-1.0.0.tar.gz'
     write_sdist(archive, 'something-else-1.0')
