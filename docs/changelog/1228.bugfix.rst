@@ -1,0 +1,1 @@
+Ignore redundant ``.`` path components in sdist archive members when locating the project directory - by :user:`ekanshul` (:issue:`1228`)
