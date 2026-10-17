@@ -195,17 +195,13 @@ tool maintainers and contributors participate. You can also ask questions on the
  "AI" Policy
 *************
 
-We aim for build to remain a project which is maintained and remains maintainable by humans,
-and where humans interact with other humans.
-AI-generated content is generally unwelcome.
-Specifically:
+We aim for build to remain a project which is maintained and remains maintainable by humans, and where humans interact
+with other humans. AI-generated content is generally unwelcome. Specifically:
 
-- Do not submit AI-generated code to build.
-  If your changes do not pass the `duck test <https://en.wikipedia.org/wiki/Duck_test>`_,
-  they will be rejected.
-- Do not let AI speak on your behalf;
-  absolutely do not leave comments written by AI,
-  and do not submit AI-generated content in commit messages, changelog fragments or the documentation.
+- Do not submit AI-generated code to build. If your changes do not pass the `duck test
+  <https://en.wikipedia.org/wiki/Duck_test>`_, they will be rejected.
+- Do not let AI speak on your behalf; absolutely do not leave comments written by AI, and do not submit AI-generated
+  content in commit messages, changelog fragments or the documentation.
 
 **********
  See also
