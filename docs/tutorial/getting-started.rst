@@ -155,8 +155,19 @@ on your computer. It:
  Seeing which backend versions were used
 *****************************************
 
-When reporting a build failure, include the backend version from the output. See :ref:`backend-version` for how to find
-it.
+Run another wheel build and look for the installed backend version:
+
+.. code-block:: console
+
+    $ python -m build --wheel
+    ...
+    * Getting build dependencies for wheel...
+    * Installed build dependency versions:
+      - hatchling==1.30.1
+    * Building wheel...
+
+Your Hatchling version may differ. Include this version when reporting a build failure; see :ref:`backend-version` for
+details.
 
 **********************************
  Building a wheel from your sdist
