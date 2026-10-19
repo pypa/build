@@ -242,20 +242,8 @@ The backend interprets these settings. See :doc:`../how-to/config-settings` for 
  Metadata Extraction
 *********************
 
-build can extract package metadata without a full build:
-
-.. code-block:: console
-
-    $ python -m build --metadata
-
-This:
-
-1. Creates isolated environment
-2. Calls ``prepare_metadata_for_build_wheel()`` if available
-3. Otherwise, calls ``build_wheel()`` and extracts metadata
-4. Outputs metadata in JSON format to stdout
-
-Useful for tools that need package metadata without building the full package.
+Metadata can depend on backend configuration and generated files, so build asks the backend for it. See
+:ref:`read-wheel-metadata` for the metadata-hook fallback and for reading an existing wheel without invoking a backend.
 
 ***************************
  Diagnostics and Verbosity

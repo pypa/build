@@ -71,7 +71,10 @@ Disabling isolation:
     builder = ProjectBuilder(".", runner=lambda cmd, **kwargs: None)
     builder.build("wheel", "dist/")
 
-Getting package metadata without building:
+Getting package metadata:
+
+:meth:`~build.ProjectBuilder.metadata_path` may build a wheel if the backend has no metadata hook. See
+:ref:`read-wheel-metadata` for the fallback behavior and the equivalent CLI commands.
 
 .. code-block:: python
 
