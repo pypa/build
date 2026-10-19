@@ -89,25 +89,25 @@ so they reflect what was installed rather than the specifiers in ``pyproject.tom
 build reports this for isolated builds only; with ``--no-isolation`` build installs nothing, so inspect the active
 interpreter with your installer instead (for example ``pip list``).
 
+.. _build-report:
+
 **************
  Build Report
 **************
 
-``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
-names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
-refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
-standard output, because the build backend may write to ``stdout``/``stderr`` too.
+``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build.
 
 .. code-block:: console
 
     $ python -m build --report build-report.json
-    $ twine upload $(jq -r '.artifacts[].path' build-report.json)
 
 .. note::
 
-    Keep the report out of the output directory: tools commonly upload ``dist/*`` wholesale (``twine upload dist/*``),
-    and a stray non-distribution file there can break that. The write is atomic, so a reader never sees a partial file;
-    builds running in parallel still need a distinct ``PATH`` each to avoid overwriting one another's report.
+    The write is atomic. Builds running in parallel need a distinct ``PATH`` each to avoid overwriting one another's
+    report.
+
+See :ref:`discovering-built-artifacts` for using reports in CI and :ref:`build-report-design` for why reports use a
+separate file.
 
 The schema is:
 

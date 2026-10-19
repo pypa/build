@@ -483,6 +483,8 @@ Run the build environment:
 
     $ tox -e build
 
+.. _discovering-built-artifacts:
+
 *****************************
  Discovering Built Artifacts
 *****************************
@@ -505,7 +507,7 @@ The report also includes each artifact's size and SHA-256 hash, useful for emitt
 
     $ jq -r '.artifacts[] | "\(.hashes.sha256)  \(.name)"' build-report.json
 
-See :doc:`../reference/cli` for the full report schema.
+See :ref:`build-report` for the full report schema.
 
 ******************
  Verifying Builds
