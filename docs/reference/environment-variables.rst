@@ -9,13 +9,18 @@ package indexes, proxies, SSL certificates, and other settings.
  Variables Set by build
 ************************
 
+``PATH`` and ``PYTHONPATH``
+===========================
+
+For isolated backend subprocesses, build prepends the environment's scripts directory to ``PATH`` and sets
+``PYTHONPATH`` to an empty string so host import paths do not leak into the build.
+
 ``VIRTUAL_ENV``
 ===============
 
-build sets this variable when creating `isolated environments
-<https://packaging.python.org/en/latest/glossary/#term-Isolated-Build>`_. It contains the absolute path to the temporary
-`virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ that build creates for installing dependencies.
-Build backends can use this to detect they're running in an isolated environment.
+When using the uv installer, build sets ``VIRTUAL_ENV`` for the dependency-installation subprocess to identify the
+target environment. It does not set this variable for backend hooks, so backends should not rely on it to identify
+build's isolated environment.
 
 *****************************
  Package Index Configuration
