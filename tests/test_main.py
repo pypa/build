@@ -10,6 +10,7 @@ import json
 import os
 import pathlib
 import re
+import stat
 import subprocess
 import sys
 import unittest.mock
@@ -1415,6 +1416,32 @@ def test_report_written(
         assert artifact['kind'] == ('sdist' if name.endswith('.tar.gz') else 'wheel')
         assert artifact['size'] == path.stat().st_size
         assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+@pytest.fixture
+def pinned_umask() -> Generator[int, None, None]:
+    """Pin the process umask so file mode assertions do not depend on the machine running the tests."""
+    original = os.umask(0o022)
+    try:
+        yield 0o022
+    finally:
+        os.umask(original)
+
+
+def test_report_is_created_with_default_file_permissions(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+    pinned_umask: int,
+) -> None:
+    """The report must be as readable as any other file the user creates, not owner-only like mkstemp's default."""
+    outdir, names = built_dist
+    mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
+    report = tmp_path / 'report.json'
+
+    build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report)])
+
+    assert stat.S_IMODE(report.stat().st_mode) == 0o666 & ~pinned_umask
 
 
 def test_report_path_is_absolute_with_relative_outdir(

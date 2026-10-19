@@ -772,6 +772,11 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
             report_file.write(data)
+        # ``mkstemp`` forces 0600 regardless of the umask, but the report should be as readable as any other
+        # file in the directory it was requested in; ``os.umask`` can only be read by setting and restoring it.
+        umask = os.umask(0o022)
+        os.umask(umask)
+        os.chmod(tmp, 0o666 & ~umask)
         os.replace(tmp, path)
     except BaseException:
         with contextlib.suppress(OSError):
