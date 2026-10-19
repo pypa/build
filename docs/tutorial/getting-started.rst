@@ -8,7 +8,7 @@ This tutorial will guide you through installing build and creating your first Py
 
     New to Python packaging? Start with the `Python Packaging User Guide tutorial
     <https://packaging.python.org/en/latest/tutorials/packaging-projects/>`_ to learn how to structure a Python project.
-    This tutorial assumes you already have a project with a ``pyproject.toml`` file.
+    The example below uses a minimal project to demonstrate build's commands.
 
 ***************
  Prerequisites
@@ -25,19 +25,14 @@ You need Python 3.11 or later installed on your system. Check your Python versio
  Installation
 **************
 
-The recommended way to install build is using pip:
+For this tutorial, install build using pip:
 
 .. code-block:: console
 
     $ pip install build
 
-Or, if you prefer to install it in an isolated environment using pipx:
-
-.. code-block:: console
-
-    $ pipx install build
-
-For corporate environments or systems with restricted internet access, see :doc:`../how-to/corporate-environments`.
+See :doc:`../how-to/install` for other installation methods and :doc:`../how-to/corporate-environments` for restricted
+networks.
 
 ***************************
  Creating a simple package

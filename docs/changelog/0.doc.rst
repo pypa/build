@@ -1,0 +1,1 @@
+Clarify tutorial prerequisites and link to installation options.
