@@ -305,8 +305,9 @@ build supports pip and uv for installing build dependencies. See :ref:`using-uv`
 *****************************
 
 With the pip installer, build uses ``venv`` when a suitable outer pip is available. Otherwise, it uses a supported
-``virtualenv`` installation if available, falling back to ``venv`` with pip installed inside the environment. The uv
-installer uses uv to create the environment. See :ref:`optional-dependencies` for installing the optional tools.
+``virtualenv`` installation if available, falling back to ``venv`` with pip installed inside the environment. With the
+uv installer, build creates the environment with ``venv`` and uses uv to install dependencies. See
+:ref:`optional-dependencies` for installing the optional tools.
 
 ****************************
  Output Directory Structure
