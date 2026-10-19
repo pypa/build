@@ -171,9 +171,9 @@ This uses uv as the build frontend. To use uv only for build's dependency instal
 
 See `uv documentation <https://docs.astral.sh/uv/>`_ for complete details.
 
-**************************
+*********************
  Using Hatch or Flit
-**************************
+*********************
 
 ``hatch build`` integrates building into Hatch's project-management workflow. Use it when you manage your project with
 Hatch; see the `Hatch build documentation <https://hatch.pypa.io/latest/build/>`_ for its options. build provides a
