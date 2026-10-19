@@ -171,6 +171,19 @@ This uses uv as the build frontend. To use uv only for build's dependency instal
 
 See `uv documentation <https://docs.astral.sh/uv/>`_ for complete details.
 
+**************************
+ Using Hatch or Flit
+**************************
+
+``hatch build`` integrates building into Hatch's project-management workflow. Use it when you manage your project with
+Hatch; see the `Hatch build documentation <https://hatch.pypa.io/latest/build/>`_ for its options. build provides a
+standalone frontend that can invoke Hatchling or another configured backend.
+
+``flit build`` includes files tracked by Git or Mercurial in source distributions by default. When build invokes
+``flit_core``, the backend does not use that file list, so the source distributions can differ. See Flit's
+`file-inclusion rules <https://flit.pypa.io/en/stable/pyproject_toml.html#including-files-committed-in-git-hg>`_ when
+switching frontends.
+
 *****************
  When to use pip
 *****************
