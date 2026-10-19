@@ -1,1 +1,2 @@
-Write the ``--report`` file with the permissions a normal file would get instead of the owner-only mode that ``tempfile.mkstemp`` forces - by :user:`JingHao-Leon`
+Write the ``--report`` file with the permissions a normal file would get instead of the owner-only mode that
+``tempfile.mkstemp`` forces - by :user:`JingHao-Leon`
