@@ -22,6 +22,8 @@ archive, since the archive already is an sdist.
     :title: python -m build
     :usage_width: 97
 
+.. _build-isolation:
+
 ********************
  Isolation Behavior
 ********************

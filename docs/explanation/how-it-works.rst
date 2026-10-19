@@ -90,30 +90,19 @@ The process in detail:
 
 5. **Cleanup**
 
-   build removes the temporary isolated environment, leaving only the distribution files in ``dist/``.
+   build removes temporary working directories. Explicitly retained paths follow the rules in :ref:`build-isolation` and
+   :ref:`compiler-caching`.
 
 ************************
  Default Build Strategy
 ************************
 
-By default, ``python -m build`` creates both sdist and wheel following this strategy:
+By default, build creates the wheel from the sdist so missing build inputs in the sdist can be caught before release.
+See :doc:`../how-to/basic-usage` for building distributions separately or using an existing sdist.
 
-1. Build sdist from source directory
-2. Extract sdist to temporary directory
-3. Build wheel from the extracted sdist
-
-This "build wheel from sdist" strategy ensures your sdist is complete. If files are missing from the sdist, the wheel
-build will fail, alerting you to the problem.
-
-Step 2 defaults to a random temporary directory that build removes after the run. Build randomises the path on purpose:
-it surfaces backends that hard-code absolute paths and keeps successive builds independent. That same randomness defeats
-compiler caches keyed on the source path, so ``--sdist-extract-dir`` lets you opt into a stable, persistent location
-when cache hits matter more than isolation.
-
-If the positional argument is a ``.tar.gz`` rather than a directory, the default is **wheel-only**: build checks the
-archive, extracts it into a temporary directory, and runs the wheel build against the extracted source. There is no
-sdist step. The archive already is an sdist, and PEP 517 has no hook for turning one sdist into another, so ``--sdist``
-against an sdist errors out.
+The sdist is extracted to a random temporary directory that build removes after the run. This exposes backends that
+hard-code absolute paths and keeps successive builds independent. For the effect on compiler caches and how to choose a
+stable path, see :ref:`compiler-caching`.
 
 ***************************
  Build Isolation Explained
@@ -138,11 +127,8 @@ How isolation works
 The isolated environment has access to the Python standard library, the build backend and its dependencies, and nothing
 from your development environment except environment variables.
 
-build picks a temporary directory for this environment by default and deletes it after the build. Pass ``--env-dir`` to
-choose the location yourself. You might do this to keep a failed environment for inspection, to place the environment on
-a writable path inside a read-only container, or to give a fixed path to a compilation cache such as ccache or sccache.
-Those caches treat a changed build-environment path as a new file, so a path that changes every run never hits the
-cache.
+For environment lifetime and path controls, see :ref:`build-isolation`. To examine a failed environment, see
+:ref:`inspect-build-environment`.
 
 When to disable isolation
 =========================
@@ -347,11 +333,7 @@ By default, build places files in ``dist/`` within your source directory:
     │       └── __init__.py
     └── pyproject.toml
 
-Use ``--outdir`` to change the output location:
-
-.. code-block:: console
-
-    $ python -m build --outdir /tmp/build-output
+See :doc:`../how-to/basic-usage` for choosing the output directory.
 
 *******************************
  Environment Variable Handling

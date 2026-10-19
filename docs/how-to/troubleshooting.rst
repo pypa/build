@@ -448,6 +448,8 @@ diagnostic commands. To exercise the configured backend through the ``build`` fr
 inspect the output. For an overview, see the `Choosing a build backend section of the Python Packaging User Guide
 <https://packaging.python.org/en/latest/tutorials/packaging-projects/#choosing-a-build-backend>`_.
 
+.. _inspect-build-environment:
+
 Inspect the build environment
 =============================
 
@@ -508,14 +510,14 @@ Find the backend's own logs
 
 build cannot capture log *files* the backend writes inside its own working directory, because PEP 517 gives the frontend
 no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python`` and
-``scikit-build``, point its build directory at a path you control:
+``scikit-build-core``, point its build directory at a path you control:
 
 .. code-block:: console
 
-    $ python -m build -C build-dir=_build
+    $ python -m build --wheel -C build-dir=_build
 
-The backend then usually writes its build tree and logs under ``_build``. Check your backend's documentation for the
-equivalent setting.
+``--wheel`` builds directly from your source tree, so the relative ``_build`` directory stays in your project. Check
+your backend's documentation for log locations and the equivalent setting.
 
 **********************
  Still having issues?

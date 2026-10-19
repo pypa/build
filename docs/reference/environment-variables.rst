@@ -239,8 +239,8 @@ On Windows, use ``TEMP``:
     $ set TEMP=C:\path\to\custom\tmp
     $ python -m build
 
-These variables only change *where* build creates the temporary directory. build still removes its environment when the
-build ends. To pin the environment to a stable path, or to keep it for inspection, use the ``--env-dir`` option instead.
+These variables only change *where* build creates temporary directories. For retaining a failed build environment, see
+:ref:`inspect-build-environment`.
 
 **Common use cases**:
 
@@ -248,11 +248,7 @@ build ends. To pin the environment to a stable path, or to keep it for inspectio
 - **Performance**: Use faster storage (e.g., tmpfs on Linux)
 - **Restricted filesystems**: Point at the writable part of a read-only container
 
-``TMPDIR`` only relocates the base directory; build still appends a random suffix, so the extraction path differs on
-every run. For compiler caches such as ``ccache`` or ``sccache``, which key on the source path, that random suffix is a
-guaranteed cache miss - use ``--sdist-extract-dir`` to pin the path instead.
-
-See :doc:`../how-to/troubleshooting` for debugging examples.
+For stable paths that work with compiler caches, see :ref:`compiler-caching`.
 
 ****************************
  Backend-Specific Variables
