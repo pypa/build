@@ -65,10 +65,7 @@ and a private index simultaneously.
 Path to a custom CA certificate bundle for SSL/TLS verification. Use this when your organization uses self-signed
 certificates or a custom certificate authority. Defaults to system certificates.
 
-.. code-block:: console
-
-    $ export PIP_CERT=/path/to/company-ca-bundle.crt
-    $ python -m build
+See :ref:`corporate-certificates` for setup instructions.
 
 ``PIP_TRUSTED_HOST``
 ====================
@@ -76,14 +73,7 @@ certificates or a custom certificate authority. Defaults to system certificates.
 Disables SSL verification for the specified host. Only use this in secure development environments where SSL
 certificates aren't available.
 
-.. code-block:: console
-
-    $ export PIP_TRUSTED_HOST=pypi.company.com
-    $ python -m build
-
-.. warning::
-
-    Disabling SSL verification is insecure. Prefer using ``PIP_CERT`` with proper certificates.
+Prefer configuring a CA bundle as described in :ref:`corporate-certificates`.
 
 ***********************
  Network Configuration
@@ -172,10 +162,7 @@ certificates or custom certificate authorities.
 Path to custom CA certificate bundle. The `requests <https://requests.readthedocs.io/>`_ library (which `pip
 <https://pip.pypa.io/>`_ depends on) uses this variable. Alternative to ``PIP_CERT``.
 
-.. code-block:: console
-
-    $ export REQUESTS_CA_BUNDLE=/path/to/company-ca-bundle.crt
-    $ python -m build
+See :ref:`corporate-certificates` for an example.
 
 ``SSL_CERT_FILE``
 =================

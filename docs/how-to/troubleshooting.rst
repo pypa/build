@@ -116,28 +116,8 @@ read the version from the active interpreter instead (for example ``pip show set
 
 **Cause**: Your system doesn't trust the SSL certificate of the package index.
 
-**Solution 1**: Provide the CA certificate (recommended):
-
-.. code-block:: console
-
-    $ export PIP_CERT=/path/to/company-ca-bundle.crt
-    $ python -m build
-
-**Solution 2**: Use build with virtualenv for better SSL support:
-
-.. code-block:: console
-
-    $ pip install build[virtualenv]
-    $ python -m build
-
-**Solution 3**: For development only, disable verification (not recommended):
-
-.. code-block:: console
-
-    $ export PIP_TRUSTED_HOST=pypi.company.com
-    $ python -m build
-
-See :doc:`corporate-environments` for more details.
+**Solution**: Configure your installer to trust the certificate authority. See :ref:`corporate-certificates` for the
+setup instructions.
 
 **************************
  Permission denied errors

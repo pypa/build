@@ -133,6 +133,8 @@ Ensure the file has restricted permissions:
 
     $ chmod 600 ~/.netrc
 
+.. _corporate-certificates:
+
 **********************
  SSL/TLS certificates
 **********************
@@ -164,20 +166,10 @@ For development environments with self-signed certificates (not recommended for 
     $ export PIP_TRUSTED_HOST=pypi.company.com
     $ python -m build
 
-Using virtualenv for better SSL support
-=======================================
+.. _using-virtualenv-for-better-ssl-support:
 
-If you encounter SSL/TLS errors with Python's built-in venv, install virtualenv:
-
-.. code-block:: console
-
-    $ pip install build[virtualenv]
-
-This provides a more recent version of pip with better SSL support and truststore capabilities.
-
-.. note::
-
-    Python 3.11.8+ and 3.12.2+ have improved SSL support and may not need this workaround.
+Certificate handling depends on the installer version. See `pip's certificate documentation
+<https://pip.pypa.io/en/stable/topics/https-certificates/>`_ for how it uses system certificates and custom CA bundles.
 
 ***************
  Proxy servers
@@ -320,8 +312,7 @@ Authentication failed. Verify your credentials and ensure they have access to th
 SSL verification failed
 =======================
 
-Your system doesn't trust the certificate. Use ``REQUESTS_CA_BUNDLE`` or ``PIP_CERT`` to provide the CA certificate, or
-install ``build[virtualenv]`` for better SSL support.
+Your installer does not trust the certificate. Follow :ref:`corporate-certificates` to configure its trust settings.
 
 Conda environment conflicts
 ===========================
