@@ -45,11 +45,6 @@ Due to its nature, ``build`` has a somewhat complex test suite with two sets of 
 Unit tests verify the actual code implementation, while integration tests run build on real world projects as a sanity
 check. To run tests we use ``tox``.
 
-Some example commands for this project include running type checking with ``tox -e type``, running only unit tests
-against Python 3.15 with ``tox run -e 3.15``, running both unit and integration tests with ``tox run --
---run-integration``, running only integration tests with ``tox run -- --only-integration``, or running only integration
-tests with parallel tasks using ``tox run -- -n auto --only-integration``.
-
 Tests run in parallel by default, but if you pass any arguments, you need to include ``-n auto`` if you want to keep
 parallel runs.
 
@@ -68,8 +63,6 @@ and with the module being invoked directly from path, sdist install, or wheel in
 .. code-block:: console
 
     tox -e 3.15
-
-and with the module being invoked directly from path, sdist install, or wheel install.
 
 Additionally, there are environments for type checking and documentation building, plus extras like checking code with
 minimum versions of dependencies. For type checking,
