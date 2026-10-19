@@ -508,9 +508,8 @@ in, so any files the backend leaves next to your sources stay put.
 Find the backend's own logs
 ===========================
 
-build cannot capture log *files* the backend writes inside its own working directory, because PEP 517 gives the frontend
-no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python`` and
-``scikit-build-core``, point its build directory at a path you control:
+build does not collect backend log files. For example, ``meson-python`` and ``scikit-build-core`` accept a ``build-dir``
+setting to keep their build directories at a path you control:
 
 .. code-block:: console
 
