@@ -191,6 +191,8 @@ Another variable for specifying a custom CA certificate bundle. Recognized by va
  Python Runtime Configuration
 ******************************
 
+.. _python-warnings:
+
 ``PYTHONWARNINGS``
 ==================
 
