@@ -102,12 +102,25 @@ CMake options
         -Ccmake.define.BUILD_TESTING=OFF \
         -Ccmake.define.CMAKE_BUILD_TYPE=Release
 
+.. _scikit-build-core-logging:
+
 Logging
 =======
+
+For example, scikit-build-core uses ``logging.level`` to control its own logging:
 
 .. code-block:: console
 
     $ python -m build -Clogging.level=INFO
+
+To also show compiler commands, enable ``build.verbose``:
+
+.. code-block:: console
+
+    $ python -m build --wheel -Cbuild.verbose=true -Clogging.level=INFO
+
+For build's own output controls, see :ref:`build-verbosity`. See the `scikit-build-core verbosity documentation
+<https://scikit-build-core.readthedocs.io/en/stable/configuration/index.html#verbosity>`_ for details.
 
 Install target
 ==============

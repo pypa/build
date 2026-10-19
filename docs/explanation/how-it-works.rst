@@ -64,18 +64,8 @@ The process in detail:
 
 3. **Invoke build backend hooks**
 
-   build calls standardized hooks (functions) in your **build backend**:
-
-   - For source distributions: calls ``build_sdist(sdist_directory, config_settings=None)``
-   - For wheels: calls ``build_wheel(wheel_directory, config_settings=None, metadata_directory=None)``
-
-   These hooks are defined in :PEP:`517` (the build system interface standard).
-
-   build runs each hook in a subprocess and forwards its standard output and error straight through, so a failing
-   backend's messages reach your terminal regardless of verbosity (``-vv`` adds build's own diagnostics on top). build
-   cannot collect log *files* the backend writes inside its own working directory: :PEP:`517` exposes no way for a
-   frontend to learn where those live, so retrieving them depends on backend-specific settings. See
-   :ref:`debug-a-failed-build` for how to keep them.
+   build invokes the `Backend hooks`_ in subprocesses. See :ref:`build-verbosity` for output handling and
+   :ref:`debug-a-failed-build` for inspecting a failed build.
 
 4. **Build artifacts**
 
@@ -262,19 +252,9 @@ Useful for tools that need package metadata without building the full package.
 ***************************
 
 ``pyproject.toml`` declares build dependencies as *specifiers* (``setuptools >= 40.8.0``), not exact versions. The
-installer resolves each specifier to a concrete version at build time, and on an isolated build that version lives only
-in the temporary environment, which build deletes once it finishes. The installer's own output reports the versions, but
-only at ``-vv``, interleaved with the rest of its log.
-
-So once build has installed the dependencies it prints a concise summary of the resolved version of each, as
-``name==version``, the single piece a backend bug report usually asks for. build obtains these by reading the installed
-distribution metadata from the environment's ``site-packages`` through ``importlib.metadata`` rather than by spawning a
-process inside the environment, so the summary is cheap and works the same for the ``venv``/``virtualenv`` and ``uv``
-backends. Because it reads installed metadata, it reflects what build used, including any transitive resolution the
-specifier allowed.
-
-This is an isolated-build concern. Under ``--no-isolation`` build installs nothing - it builds against the interpreter
-that is already running it - so the versions are whatever that interpreter has, discoverable with your installer.
+installer resolves each specifier to a concrete version at build time. build reads the installed distribution metadata
+for declared build dependencies from the isolated environment to report the versions actually used. See
+:ref:`backend-version` for reading this output and :ref:`build-verbosity` for the other output controls.
 
 ****************
  Error Handling

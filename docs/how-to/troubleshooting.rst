@@ -59,6 +59,8 @@ not against a virtual environment or your system package manager. Read each entr
 
 See :doc:`basic-usage` for more on ``--skip-dependency-check``.
 
+.. _backend-version:
+
 *******************************************
  Find the backend version for a bug report
 *******************************************
@@ -421,14 +423,7 @@ The package metadata preserves your original name, only the filename is normaliz
 Verbose output
 ==============
 
-Use ``-v`` or ``-vv`` for detailed output:
-
-.. code-block:: console
-
-    $ python -m build -v      # Verbose
-    $ python -m build -vv     # Very verbose
-
-This shows what build is doing and can help identify where failures occur.
+See :ref:`build-verbosity` for the output added by ``-v`` and ``-vv``.
 
 Check your configuration
 ========================
@@ -439,14 +434,14 @@ Verify your ``pyproject.toml`` is valid:
 
     $ python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb')))"
 
+.. _backend-diagnostics:
+
 Run backend-specific diagnostics
 ================================
 
-The ``build-backend`` value in ``pyproject.toml`` names a Python object, not necessarily a command-line program. Some
-backends are part of larger tools that provide a command-line interface. Check the backend's documentation for available
-diagnostic commands. To exercise the configured backend through the ``build`` frontend, run ``python -m build -vv`` and
-inspect the output. For an overview, see the `Choosing a build backend section of the Python Packaging User Guide
-<https://packaging.python.org/en/latest/tutorials/packaging-projects/#choosing-a-build-backend>`_.
+Consult your backend's documentation for its diagnostic and logging settings. See :doc:`config-settings` for how to pass
+settings through build. For an example, see :ref:`scikit-build-core logging <scikit-build-core-logging>`. To keep build
+directories and find backend log files, see :ref:`debug-a-failed-build`.
 
 Inspect the build environment
 =============================
@@ -462,13 +457,6 @@ build removes that location after a successful build and keeps it after a failur
 environment in ``.build-env`` for you to examine. Setting ``TMPDIR`` (or ``TEMP`` on Windows) only moves the temporary
 directory; it does not keep the environment around.
 
-build forwards the backend's output to your terminal as it happens, so compilation logs and error messages are already
-visible. Raise the verbosity to add build's own diagnostics and stream the environment setup live:
-
-.. code-block:: console
-
-    $ python -m build -vv
-
 .. _debug-a-failed-build:
 
 **********************
@@ -481,14 +469,8 @@ need.
 Stream the backend output
 =========================
 
-build forwards everything the backend writes to standard output and error straight to your terminal, so compiler
-invocations and backend tracebacks already appear without any extra flag. Raise the verbosity to add build's own
-diagnostics and to stream the environment setup (installing the backend and its dependencies) live instead of only on
-failure:
-
-.. code-block:: console
-
-    $ python -m build -vv
+Check :ref:`build-verbosity` for build's output controls and :ref:`backend-diagnostics` for the backend's own logging
+settings.
 
 Keep the build environment and sources
 ======================================

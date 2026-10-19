@@ -155,8 +155,7 @@ on your computer. It:
  Seeing which backend versions were used
 *****************************************
 
-build deletes the isolated environment after each build, so it does not leave the installed versions behind. Instead it
-prints them as it goes:
+Run another wheel build and look for the installed backend version:
 
 .. code-block:: console
 
@@ -167,8 +166,8 @@ prints them as it goes:
       - hatchling==1.30.1
     * Building wheel...
 
-build prints each installed build dependency as ``name==version``. Keep this handy when reporting a problem to a
-backend's issue tracker, which usually asks for the exact version you built with. See :doc:`../how-to/troubleshooting`.
+Your Hatchling version may differ. Include this version when reporting a build failure; see :ref:`backend-version` for
+details.
 
 **********************************
  Building a wheel from your sdist

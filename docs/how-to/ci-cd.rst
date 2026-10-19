@@ -565,7 +565,7 @@ This builds on every push and PR, but only publishes when pushing a version tag.
 Enable verbose output
 =====================
 
-Add ``-vv`` flag for debugging:
+See :ref:`build-verbosity` for output levels. For example, in GitHub Actions:
 
 .. code-block:: yaml
 

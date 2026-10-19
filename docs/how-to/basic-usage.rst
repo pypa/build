@@ -128,17 +128,7 @@ remapping on top of this flag (e.g. ``-fdebug-prefix-map``, or sccache's ``base_
  Controlling verbosity
 ***********************
 
-Increase verbosity to see more details:
-
-.. code-block:: console
-
-    $ python -m build -v
-
-Or even more verbose:
-
-.. code-block:: console
-
-    $ python -m build -vv
+Use ``-v`` or ``-vv`` to increase output. See :ref:`build-verbosity` for what each level adds.
 
 Decrease verbosity for quieter output:
 

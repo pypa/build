@@ -61,6 +61,8 @@ interpreter checked and, for each requirement, the version specifier that was ``
 Transitive requirements are shown as a ``parent -> child`` chain; the ``wanted``/``found`` lines describe the unmet
 leaf. Pass ``--skip-dependency-check`` to skip this check (see :doc:`../how-to/basic-usage`).
 
+.. _build-verbosity:
+
 ****************
  Verbose Output
 ****************
@@ -70,24 +72,11 @@ Repeating ``-v`` raises the verbosity level. Each level adds to the previous one
 - ``-v`` streams the output of the environment-creation and dependency-installation subprocesses.
 - ``-vv`` additionally passes ``-v`` through to the installer.
 
-Regardless of verbosity, after installing the build dependencies of an isolated build, build prints a summary of the
-resolved versions, one ``name==version`` per line. build reads these from the isolated environment's installed metadata,
-so they reflect what was installed rather than the specifiers in ``pyproject.toml``:
+Backend output is visible by default. These flags do not change the backend's own logging settings; see
+:ref:`backend-diagnostics`.
 
-.. code-block:: console
-
-    $ python -m build --wheel
-    * Creating isolated environment: venv+pip...
-    * Installing packages in isolated environment:
-      - setuptools >= 42.0.0
-    * Getting build dependencies for wheel...
-    * Installed build dependency versions:
-      - setuptools==82.0.1
-    * Building wheel...
-    Successfully built mypackage-1.0.0-py3-none-any.whl
-
-build reports this for isolated builds only; with ``--no-isolation`` build installs nothing, so inspect the active
-interpreter with your installer instead (for example ``pip list``).
+At normal verbosity, isolated builds also print the installed versions of declared build dependencies. See
+:ref:`backend-version` for an example and instructions for builds without isolation.
 
 **************
  Build Report
