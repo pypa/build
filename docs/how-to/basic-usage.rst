@@ -283,6 +283,8 @@ Or to avoid stale artifacts, use a unique output directory:
 
     $ python -m build --outdir dist/v1.0.0
 
+.. _read-wheel-metadata:
+
 ************************
  Reading wheel metadata
 ************************
