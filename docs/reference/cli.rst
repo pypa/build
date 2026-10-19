@@ -103,6 +103,9 @@ interpreter with your installer instead (for example ``pip list``).
 
 .. note::
 
+    Keep the report outside the output directory: commands such as ``twine upload dist/*`` expect only distributions
+    there.
+
     The write is atomic. Builds running in parallel need a distinct ``PATH`` each to avoid overwriting one another's
     report.
 
