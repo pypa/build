@@ -140,7 +140,7 @@ Test building with multiple Python versions:
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+            python-version: ["3.11", "3.12", "3.13", "3.14"]
 
         steps:
           - uses: actions/checkout@v4
@@ -298,9 +298,9 @@ Matrix builds
       extends: .build_template
       image: python:3.11
 
-    build:py315:
+    build:py314:
       extends: .build_template
-      image: python:3.15
+      image: python:3.14
 
 **********
  CircleCI
@@ -348,7 +348,6 @@ Basic build
       - "3.12"
       - "3.13"
       - "3.14"
-      - "3.15"
 
     install:
       - pip install build
@@ -375,8 +374,8 @@ Basic build
       matrix:
         Python311:
           python.version: '3.11'
-        Python315:
-          python.version: '3.15'
+        Python314:
+          python.version: '3.14'
 
     steps:
     - task: UsePythonVersion@0
@@ -479,6 +478,17 @@ Using build within tox environments:
     commands = [
         ["python", "-m", "build"],
         ["twine", "check", "dist/*"],
+    ]
+
+    [env.lint]
+    description = "run linters and type checkers"
+    deps = [
+        "ruff",
+        "mypy",
+    ]
+    commands = [
+        ["ruff", "check", "."],
+        ["mypy", "src"],
     ]
 
 Run the build environment:

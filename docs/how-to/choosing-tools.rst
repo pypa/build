@@ -67,8 +67,8 @@ Use `tox <https://tox.wiki/>`_ when you need to:
 - Build documentation
 - Orchestrate multiple development tasks
 
-See :ref:`tox-integration` for calling build from tox and the `tox documentation <https://tox.wiki/>`_ for test and lint
-environments.
+See :ref:`tox-integration` for test, build, and lint environments and the `tox documentation <https://tox.wiki/>`_ for
+configuration details.
 
 *****************
  When to use nox
@@ -167,7 +167,44 @@ Development workflow
 CI/CD workflow
 ==============
 
-See :doc:`ci-cd` for workflows that combine testing, building, artifact storage, and publishing.
+This workflow runs tests with tox, builds an sdist and wheel with build, and builds native wheels with cibuildwheel:
+
+.. code-block:: yaml
+
+    name: CI
+
+    on: [push, pull_request]
+
+    jobs:
+      test:
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            python: ["3.11", "3.12", "3.13", "3.14"]
+        steps:
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v5
+            with:
+              python-version: ${{ matrix.python }}
+          - run: pip install tox
+          - run: tox -e py
+
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: hynek/build-and-inspect-python-package@v3
+
+      build_wheels:
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os: [ubuntu-latest, windows-latest, macos-latest]
+        steps:
+          - uses: actions/checkout@v4
+          - uses: pypa/cibuildwheel@v2.17
+
+See :doc:`ci-cd` for artifact storage and publishing examples.
 
 ***************
  Decision tree
