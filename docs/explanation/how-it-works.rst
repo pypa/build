@@ -19,7 +19,8 @@ When you run ``python -m build``, the following happens:
         C -->|Yes default| D[Create temporary venv]
         C -->|--no-isolation| E[Use current environment]
         D --> F[Install build dependencies]
-        E --> F
+        E --> Q[Check installed build dependencies]
+        Q --> G
         F --> G[Invoke build backend hooks]
         G --> H{Build what?}
         H -->|Default| I[Build sdist]
@@ -52,15 +53,8 @@ The process in detail:
 
 2. **Create isolated environment** (default behavior)
 
-   build creates a temporary `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ to ensure
-   reproducible builds:
-
-   - Creates a fresh virtualenv in a temporary directory
-   - Sets ``VIRTUAL_ENV`` `environment variable <https://docs.python.org/3/library/venv.html#how-venvs-work>`_
-   - Installs the build backend and its dependencies via `pip <https://pip.pypa.io/>`_
-
-   This isolation ensures your build doesn't depend on what's installed in your development environment, making builds
-   reproducible across different machines.
+   build creates a temporary environment for the backend and its dependencies. See `Build Isolation Explained`_ for why
+   this is separate from your development environment and :ref:`build-isolation` for the CLI controls.
 
 3. **Invoke build backend hooks**
 
@@ -130,8 +124,8 @@ environment for every build.
 How isolation works
 ===================
 
-1. build creates a temporary virtual environment using Python's ``venv`` module
-2. Installs only the packages listed in ``[build-system] requires``
+1. build creates a temporary virtual environment
+2. Installs ``[build-system] requires`` and any additional dependencies requested by the backend
 3. Runs the build backend in this isolated environment
 4. Deletes the environment after building
 
@@ -386,7 +380,7 @@ See :doc:`../reference/environment-variables` for details.
 
 build aims for reproducible builds by:
 
-1. **Isolated environments**: Same dependencies every time
+1. **Isolated environments**: Build dependencies are separated from the development environment
 2. **Declared dependencies**: ``[build-system] requires`` is explicit
 3. **Standardized interface**: PEP 517 hooks are well-defined
 4. **Minimal intervention**: build doesn't modify your code or backend behavior
