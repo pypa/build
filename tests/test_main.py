@@ -1428,7 +1428,6 @@ def pinned_umask() -> Generator[int, None, None]:
         os.umask(original)
 
 
-@pytest.mark.skipif(sys.platform.startswith('win'), reason='Windows does not apply the umask to new files')
 @pytest.mark.skipif(sys.platform.startswith('win'), reason="can't correctly set the permissions required for this")
 def test_report_is_created_with_default_file_permissions(
     mocker: pytest_mock.MockerFixture,
