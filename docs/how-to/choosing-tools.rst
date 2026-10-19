@@ -167,7 +167,7 @@ uv can also build packages:
 
     $ uv build
 
-This is equivalent to ``python -m build --installer=uv``.
+This uses uv as the build frontend. To use uv only for build's dependency installation, see :ref:`using-uv`.
 
 See `uv documentation <https://docs.astral.sh/uv/>`_ for complete details.
 
