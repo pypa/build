@@ -1428,13 +1428,12 @@ def pinned_umask() -> Generator[int, None, None]:
         os.umask(original)
 
 
-@pytest.mark.skipif(sys.platform.startswith('win'), reason="can't correctly set the permissions required for this")
 def test_report_is_created_with_default_file_permissions(
     mocker: pytest_mock.MockerFixture,
     tmp_path: pathlib.Path,
     built_dist: tuple[pathlib.Path, list[str]],
     pinned_umask: int,
-) -> None:  # pragma: win32 no cover
+) -> None:
     """The report must be as readable as any other file the user creates, not owner-only like mkstemp's default."""
     outdir, names = built_dist
     mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
@@ -1442,7 +1441,10 @@ def test_report_is_created_with_default_file_permissions(
 
     build.__main__.main([str(tmp_path), '-o', str(outdir), '--report', str(report)])
 
-    assert stat.S_IMODE(report.stat().st_mode) == 0o666 & ~pinned_umask
+    # Windows reports a fixed 0o666 for writable files rather than applying the umask, so only the
+    # POSIX platforms can be checked against the umask.
+    expected = 0o666 if os.name == 'nt' else 0o666 & ~pinned_umask
+    assert stat.S_IMODE(report.stat().st_mode) == expected
 
 
 def test_report_path_is_absolute_with_relative_outdir(
