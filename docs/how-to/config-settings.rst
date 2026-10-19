@@ -2,18 +2,12 @@
  Backend Configuration
 #######################
 
-The ``--config-setting`` (or ``-C``) flag allows you to pass options to your **build backend**. The syntax and available
-options depend entirely on which backend you're using (e.g., `setuptools <https://setuptools.pypa.io/>`_, hatchling,
-`flit <https://flit.pypa.io/>`_).
+The ``--config-setting`` (or ``-C``) flag passes options to your `build backend
+<https://packaging.python.org/en/latest/glossary/#term-Build-Backend>`_. Consult your backend's documentation for the
+settings it accepts; the examples below illustrate how to pass them through build.
 
 Settings also apply when generating metadata with ``--metadata``, including when the backend needs to build a wheel to
 obtain its metadata.
-
-.. important::
-
-    The ``--config-setting`` flag passes options to the **build backend** that actually builds your package, not to
-    build itself. Different backends accept different options. Check your backend's documentation for available
-    settings.
 
 **************
  Basic syntax
@@ -41,6 +35,10 @@ Multiple settings can be provided:
 .. code-block:: console
 
     $ python -m build -C KEY1=VALUE1 -C KEY2=VALUE2
+
+.. raw:: html
+
+    <span id="id1"></span>
 
 ************
  Setuptools
@@ -219,6 +217,8 @@ If your backend doesn't recognize an option:
 1. Check your backend's documentation for the correct syntax
 2. Verify you're using the latest version of the backend
 3. Some backends only support certain options in newer versions
+
+.. _backend-documentation:
 
 *******************************
  Finding backend documentation

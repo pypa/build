@@ -214,7 +214,7 @@ Use the ``include`` and ``exclude`` options:
 
 **For flit** (`flit documentation <https://flit.pypa.io/>`_):
 
-Flit includes all files tracked by `git <https://git-scm.com/>`_ by default. Ensure files are committed.
+Consult flit's documentation for its source-file inclusion rules.
 
 **Test your sdist**: Always verify the sdist contains all necessary files:
 
@@ -350,6 +350,8 @@ This fails the build if deprecated features are used, helping you catch issues e
 
        $ pip install hatchling
        $ python -m build --no-isolation
+
+.. _default-build-backend:
 
 *******************************************
  No build-system section in pyproject.toml

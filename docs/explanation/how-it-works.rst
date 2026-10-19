@@ -170,17 +170,7 @@ See :doc:`../how-to/basic-usage` for usage.
  Build Frontends vs Build Backends
 ***********************************
 
-build is a **build frontend** that reads ``pyproject.toml``, creates isolated environments, invokes build backends, and
-handles the command-line interface. It does NOT know how to build your specific package.
-
-Your **build backend** (setuptools, hatchling, flit, etc.) knows how to build your package by implementing PEP 517
-hooks. The backend handles package discovery, file inclusion, metadata generation, and creates the actual sdist and
-wheel files.
-
-This separation of concerns allows different backends for different project needs, ensures frontend improvements benefit
-all backends, and allows backend improvements to work with all frontends.
-
-See :doc:`build-backends` for more details.
+See :doc:`build-backends` for the responsibilities of the frontend and backend.
 
 *********************
  PEP 517 Integration
@@ -192,17 +182,9 @@ backends). The key concepts:
 Build system table
 ==================
 
-Your `pyproject.toml <https://packaging.python.org/en/latest/specifications/pyproject-toml/>`_ must have a
-``[build-system]`` section:
-
-.. code-block:: toml
-
-    [build-system]
-    requires = ["hatchling"]
-    build-backend = "hatchling.build"
-
-- ``requires``: Packages needed to build (installed in isolated environment)
-- ``build-backend``: Python import path to backend object
+The `build-system declaration
+<https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#declaring-the-build-backend>`_ selects the
+backend and its initial dependencies. For legacy projects without this declaration, see :ref:`default-build-backend`.
 
 Backend hooks
 =============
@@ -282,8 +264,7 @@ that is already running it - so the versions are whatever that interpreter has, 
 
 build performs minimal error handling:
 
-- Validates ``pyproject.toml`` exists and is valid TOML
-- Checks ``[build-system]`` section exists
+- Validates ``pyproject.toml`` and its ``[build-system]`` table when present
 - Verifies backend is importable
 - Checks hook return values are valid
 

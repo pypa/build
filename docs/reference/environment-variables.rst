@@ -258,15 +258,7 @@ See :doc:`../how-to/troubleshooting` for debugging examples.
  Backend-Specific Variables
 ****************************
 
-Each **build backend** may define its own environment variables for configuration. Check your backend's documentation:
-
-- `Setuptools <https://setuptools.pypa.io/en/latest/userguide/index.html>`_
-- `Hatchling <https://hatch.pypa.io/latest/config/build/>`_
-- `PDM-Backend <https://pdm-backend.fming.dev/>`_
-- `Flit <https://flit.pypa.io/en/stable/>`_
-- `Poetry-Core <https://python-poetry.org/docs/pyproject/>`_
-- `scikit-build-core <https://scikit-build-core.readthedocs.io/en/latest/configuration.html>`_
-- `meson-python <https://meson-python.readthedocs.io/en/latest/reference/config-settings.html>`_
+Each backend may define its own environment variables. See :ref:`backend-documentation` for links to backend guides.
 
 *********************
  Non-Isolated Builds
