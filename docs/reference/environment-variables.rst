@@ -46,7 +46,10 @@ See :doc:`../how-to/corporate-environments` for private-index setup.
 Adds additional package indexes to search beyond the primary index. This allows using both `PyPI <https://pypi.org/>`_
 and a private index simultaneously.
 
-See :doc:`../how-to/corporate-environments` for the security considerations when combining indexes.
+.. warning::
+
+    Combining indexes risks dependency confusion: a package on one index can shadow a package on another. Prefer a
+    single trusted index with ``PIP_INDEX_URL``. See :doc:`../how-to/corporate-environments` for private-index setup.
 
 ``PIP_CERT``
 ============
