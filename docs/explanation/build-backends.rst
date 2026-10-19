@@ -69,7 +69,8 @@ as the backend looks like this:
 
 The ``requires`` field lists the packages needed to perform a build, which build installs in an isolated environment.
 The ``build-backend`` field specifies the Python import path to the backend object that implements the PEP 517
-interface.
+interface. This object need not provide a command-line interface, so running ``python -m`` with that import path is not
+a general way to test a backend.
 
 When building, build creates an isolated environment, installs the required packages, imports the backend module, and
 calls standardized hook functions like ``build_wheel()`` or ``build_sdist()``. The backend then creates the distribution

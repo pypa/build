@@ -1,0 +1,1 @@
+Clarify backend logging and build verbosity, with scikit-build-core as an example.
