@@ -220,6 +220,8 @@ If your backend doesn't recognize an option:
 2. Verify you're using the latest version of the backend
 3. Some backends only support certain options in newer versions
 
+.. _backend-documentation:
+
 *******************************
  Finding backend documentation
 *******************************
