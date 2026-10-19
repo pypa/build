@@ -38,10 +38,7 @@ Sets the primary `package index <https://packaging.python.org/en/latest/glossary
 looks for packages. Use this to point to private package repositories or PyPI mirrors. Defaults to
 ``https://pypi.org/simple``.
 
-.. code-block:: console
-
-    $ export PIP_INDEX_URL=https://pypi.company.com/simple
-    $ python -m build
+See :doc:`../how-to/corporate-environments` for private-index setup.
 
 ``PIP_EXTRA_INDEX_URL``
 =======================
@@ -49,15 +46,7 @@ looks for packages. Use this to point to private package repositories or PyPI mi
 Adds additional package indexes to search beyond the primary index. This allows using both `PyPI <https://pypi.org/>`_
 and a private index simultaneously.
 
-.. code-block:: console
-
-    $ export PIP_EXTRA_INDEX_URL=https://pypi.company.com/simple
-    $ python -m build
-
-.. warning::
-
-    A malicious package on any extra index can shadow packages from other indexes. Use ``PIP_INDEX_URL`` exclusively
-    when possible for better security.
+See :doc:`../how-to/corporate-environments` for the security considerations when combining indexes.
 
 ``PIP_CERT``
 ============
@@ -128,36 +117,23 @@ completely clean builds, though this makes builds slower.
 If you're behind a corporate proxy, configure these variables to route pip's network requests through your proxy server.
 Both uppercase and lowercase versions are recognized.
 
+See :ref:`corporate-proxies` for examples, including authentication and bypassing the proxy for internal hosts.
+
 ``HTTP_PROXY`` / ``http_proxy``
 ===============================
 
 Proxy server for HTTP requests. Specify the proxy URL including protocol and port.
-
-.. code-block:: console
-
-    $ export HTTP_PROXY=http://proxy.company.com:8080
-    $ python -m build
 
 ``HTTPS_PROXY`` / ``https_proxy``
 =================================
 
 Proxy server for HTTPS requests. Even though the proxy URL uses ``http://``, this handles HTTPS traffic.
 
-.. code-block:: console
-
-    $ export HTTPS_PROXY=http://proxy.company.com:8080
-    $ python -m build
-
 ``NO_PROXY`` / ``no_proxy``
 ===========================
 
 Comma-separated list of hosts that should bypass the proxy. Use this for internal servers that don't require proxy
 access.
-
-.. code-block:: console
-
-    $ export NO_PROXY=localhost,127.0.0.1,.company.com
-    $ python -m build
 
 ***********************************
  SSL/TLS Certificate Configuration
@@ -287,24 +263,7 @@ build does not set ``VIRTUAL_ENV`` in this mode. You're responsible for installi
  Alternative: Configuration Files
 **********************************
 
-Instead of environment variables, you can configure `pip <https://pip.pypa.io/>`_ using persistent configuration files.
-This is convenient if you always use the same settings.
-
-**Linux/macOS**: ``~/.config/pip/pip.conf``
-
-**Windows**: ``%APPDATA%\pip\pip.ini``
-
-Example configuration:
-
-.. code-block:: ini
-
-    [global]
-    index-url = https://pypi.company.com/simple
-    trusted-host = pypi.company.com
-    cert = /path/to/company-ca-bundle.crt
-
-For more details and examples, see :doc:`../how-to/corporate-environments` and the `pip configuration documentation
-<https://pip.pypa.io/en/stable/topics/configuration/>`_.
+For persistent installer settings, see :ref:`pip-configuration`.
 
 **********
  See also
