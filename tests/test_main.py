@@ -1428,12 +1428,14 @@ def pinned_umask() -> Generator[int, None, None]:
         os.umask(original)
 
 
+@pytest.mark.skipif(sys.platform.startswith('win'), reason='Windows does not apply the umask to new files')
+@pytest.mark.skipif(sys.platform.startswith('win'), reason="can't correctly set the permissions required for this")
 def test_report_is_created_with_default_file_permissions(
     mocker: pytest_mock.MockerFixture,
     tmp_path: pathlib.Path,
     built_dist: tuple[pathlib.Path, list[str]],
     pinned_umask: int,
-) -> None:
+) -> None:  # pragma: win32 no cover
     """The report must be as readable as any other file the user creates, not owner-only like mkstemp's default."""
     outdir, names = built_dist
     mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=names)
