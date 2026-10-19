@@ -150,39 +150,33 @@ Example ``noxfile.py``:
 
 See `nox documentation <https://nox.thea.codes/>`_ for complete details.
 
-****************
- When to use uv
-****************
+.. _when-to-use-uv:
 
-Use `uv <https://docs.astral.sh/uv/>`_ when you want:
+**************************************
+ Building workspaces with Hatch or uv
+**************************************
 
-- Fast package installation (faster than pip)
-- Workspace management (monorepos with multiple packages)
-- Combined dependency resolution and installation
-- Modern Python packaging workflows
-
-uv can also build packages:
+Hatch and uv can build multiple projects from their respective workspace configurations:
 
 .. code-block:: console
 
-    $ uv build
+    $ hatch build --all
+    $ uv build --all-packages
 
-This uses uv as the build frontend. To use uv only for build's dependency installation, see :ref:`using-uv`.
+build accepts a single project directory or sdist per invocation. Use Hatch or uv when you need to build workspace
+members together. See the `Hatch build options <https://hatch.pypa.io/latest/cli/reference/#hatch-build>`_ and `uv build
+options <https://docs.astral.sh/uv/reference/cli/#uv-build>`_ for selecting projects.
 
-See `uv documentation <https://docs.astral.sh/uv/>`_ for complete details.
+``uv build`` uses uv as the build frontend. To use uv only for build's dependency installation, see :ref:`using-uv`.
 
-*********************
- Using Hatch or Flit
-*********************
+************
+ Using Flit
+************
 
-``hatch build`` integrates building into Hatch's project-management workflow. Use it when you manage your project with
-Hatch; see the `Hatch build documentation <https://hatch.pypa.io/latest/build/>`_ for its options. build provides a
-standalone frontend that can invoke Hatchling or another configured backend.
-
-``flit build`` includes files tracked by Git or Mercurial in source distributions by default. When build invokes
-``flit_core``, the backend does not use that file list, so the source distributions can differ. See Flit's
-`file-inclusion rules <https://flit.pypa.io/en/stable/pyproject_toml.html#including-files-committed-in-git-hg>`_ when
-switching frontends.
+``flit build --use-vcs`` selects files tracked by Git or Mercurial for the source distribution. This is opt-in from Flit
+4 onward. When build invokes ``flit_core``, file selection follows the backend's `distribution-content rules
+<https://flit.pypa.io/en/stable/pyproject_toml.html#contents-of-distribution-files>`_ without consulting version
+control.
 
 *****************
  When to use pip
