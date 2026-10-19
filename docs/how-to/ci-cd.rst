@@ -140,7 +140,7 @@ Test building with multiple Python versions:
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python-version: ["3.11", "3.12", "3.13", "3.14"]
+            python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
 
         steps:
           - uses: actions/checkout@v4
@@ -302,6 +302,10 @@ Matrix builds
       extends: .build_template
       image: python:3.14
 
+    build:py315:
+      extends: .build_template
+      image: python:3.15
+
 **********
  CircleCI
 **********
@@ -348,6 +352,7 @@ Basic build
       - "3.12"
       - "3.13"
       - "3.14"
+      - "3.15"
 
     install:
       - pip install build
@@ -376,6 +381,8 @@ Basic build
           python.version: '3.11'
         Python314:
           python.version: '3.14'
+        Python315:
+          python.version: '3.15'
 
     steps:
     - task: UsePythonVersion@0

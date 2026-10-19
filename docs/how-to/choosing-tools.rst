@@ -180,7 +180,7 @@ This workflow runs tests with tox, builds an sdist and wheel with build, and bui
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python: ["3.11", "3.12", "3.13", "3.14"]
+            python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         steps:
           - uses: actions/checkout@v4
           - uses: actions/setup-python@v5
