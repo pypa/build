@@ -193,11 +193,7 @@ This workflow runs tests with tox, builds an sdist and wheel with build, and bui
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - uses: actions/setup-python@v5
-            with:
-              python-version: '3.15'
-          - run: python -m pip install build
-          - run: python -m build
+          - run: pipx run build
 
       build_wheels:
         runs-on: ${{ matrix.os }}
