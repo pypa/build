@@ -184,11 +184,8 @@ earlier compilations; see :doc:`../how-to/basic-usage`.
  Building without isolation
 ****************************
 
-If you install the build dependencies yourself and build with ``--no-isolation``, build first checks that every declared
-dependency is present in the interpreter you are running. When something is missing it stops with an ``Unmet
-dependencies`` error that names the interpreter it checked and, for each requirement, the version it ``wanted`` against
-the version it ``found`` - so you can tell "not installed" apart from "installed, but the wrong version". See
-:doc:`../how-to/troubleshooting` for how to read it.
+If you manage build dependencies yourself, see :ref:`building-without-isolation`. For dependency errors in that mode,
+see :ref:`unmet-dependencies`.
 
 *******************************
  Recording what build produced

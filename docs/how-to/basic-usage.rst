@@ -155,6 +155,8 @@ This requires uv to be installed:
 
     $ pip install uv
 
+.. _building-without-isolation:
+
 ****************************
  Building without isolation
 ****************************

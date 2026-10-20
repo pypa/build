@@ -39,27 +39,15 @@ the cache. You cannot combine ``--env-dir`` with ``--no-isolation``.
 When a build fails, ``--env-dir`` and ``--sdist-extract-dir`` keep the environment and the extracted sources for
 inspection; see :ref:`debug-a-failed-build`.
 
+.. _dependency-check:
+
 ******************
  Dependency Check
 ******************
 
 With ``--no-isolation``, build does not install anything; it checks that the build dependencies are already present in
-the interpreter running build. When a requirement is unmet it exits with an ``Unmet dependencies`` error that names the
-interpreter checked and, for each requirement, the version specifier that was ``wanted`` and the version that was
-``found`` (``not installed`` when absent):
-
-.. code-block:: text
-
-    ERROR Unmet dependencies (checked against /usr/local/bin/python3.9):
-        anndata>=0.7.4
-            wanted: >=0.7.4
-            found: not installed
-        matplotlib>=3.4 -> kiwisolver>=1.0.1
-            wanted: >=1.0.1
-            found: 1.0.0
-
-Transitive requirements are shown as a ``parent -> child`` chain; the ``wanted``/``found`` lines describe the unmet
-leaf. Pass ``--skip-dependency-check`` to skip this check (see :doc:`../how-to/basic-usage`).
+the interpreter running build. An unmet requirement stops the build. Pass ``--skip-dependency-check`` to skip this
+check. See :ref:`unmet-dependencies` for how to interpret and resolve the error.
 
 .. _build-verbosity:
 

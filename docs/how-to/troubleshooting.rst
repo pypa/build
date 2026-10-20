@@ -18,14 +18,14 @@ This guide helps you resolve common issues when using build.
 
     $ python -m build
 
-Build will read your ``pyproject.toml`` and install all required dependencies.
+Build reads your ``pyproject.toml`` and installs declared build dependencies. If the backend needs a package that is not
+declared, update the project's `build requirements
+<https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#declaring-the-build-backend>`_.
 
-**Solution 2**: If using ``--no-isolation``, manually install dependencies:
+**Solution 2**: If using ``--no-isolation``, follow :ref:`building-without-isolation` to manage build dependencies in
+the active environment.
 
-.. code-block:: console
-
-    $ pip install setuptools your-build-backend
-    $ python -m build --no-isolation
+.. _unmet-dependencies:
 
 **********************************************
  "Unmet dependencies" with ``--no-isolation``
@@ -39,6 +39,9 @@ Build will read your ``pyproject.toml`` and install all required dependencies.
         anndata>=0.7.4
             wanted: >=0.7.4
             found: not installed
+        matplotlib>=3.4 -> kiwisolver>=1.0.1
+            wanted: >=1.0.1
+            found: 1.0.0
 
 **Cause**: build checks the declared requirements against the interpreter named in the header (the one running build),
 not against a virtual environment or your system package manager. Read each entry as:
@@ -50,6 +53,9 @@ not against a virtual environment or your system package manager. Read each entr
   to match.
 
 **Solution 1**: Install or fix the offending dependency for the interpreter shown in the header.
+
+Transitive requirements appear as a ``parent -> child`` chain. The ``wanted`` and ``found`` lines describe the unmet
+requirement at the end of the chain.
 
 **Solution 2**: If you manage build dependencies externally (distribution packaging), skip the check entirely:
 
@@ -235,28 +241,14 @@ Consult flit's documentation for its source-file inclusion rules.
 
 **Cause**: Build dependencies have incompatible version requirements.
 
-**Solution 1**: Update your build backend and its dependencies:
+**Solution 1**: For an isolated build, reconcile the conflicting requirements in ``[build-system].requires`` and any
+additional requirements reported by the backend. Updating a backend in your development environment does not change what
+the isolated build installs. Consult :ref:`backend-documentation` for backend configuration.
 
-.. code-block:: console
+**Solution 2**: If using ``--no-isolation``, install compatible build dependencies in the active environment as
+described in :ref:`building-without-isolation`.
 
-    $ pip install --upgrade pip setuptools
-
-Then try building again:
-
-.. code-block:: console
-
-    $ python -m build
-
-**Solution 2**: If using ``--no-isolation``, create a fresh virtual environment:
-
-.. code-block:: console
-
-    $ python -m venv fresh-env
-    $ source fresh-env/bin/activate  # On Windows: fresh-env\\Scripts\\activate
-    $ pip install build
-    $ python -m build
-
-The isolated build (without ``--no-isolation``) avoids this issue by creating a clean environment each time.
+Isolation avoids dependencies leaking from the development environment; it cannot resolve incompatible requirements.
 
 *************************************
  Build works locally but fails in CI
