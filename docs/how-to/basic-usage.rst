@@ -136,6 +136,8 @@ Decrease verbosity for quieter output:
 
     $ python -m build -q
 
+.. _using-uv:
+
 **************************
  Using a faster installer
 **************************
