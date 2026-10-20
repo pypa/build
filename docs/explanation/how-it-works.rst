@@ -100,8 +100,9 @@ The process in detail:
 By default, build creates the wheel from the sdist so missing build inputs in the sdist can be caught before release.
 See :doc:`../how-to/basic-usage` for building distributions separately or using an existing sdist.
 
-The sdist is extracted to a temporary directory that build removes after the run. For the effect of changing paths on
-compiler caches and how to choose a stable path, see :ref:`compiler-caching`.
+The sdist is extracted to a temporary directory that build removes after the run. To choose its parent directory, see
+:ref:`TMPDIR and related variables <temporary-directories>`. For a stable extraction path across builds, see
+:ref:`compiler-caching`.
 
 ***************************
  Build Isolation Explained
