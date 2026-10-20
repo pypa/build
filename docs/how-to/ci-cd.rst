@@ -140,7 +140,7 @@ Test building with multiple Python versions:
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+            python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
 
         steps:
           - uses: actions/checkout@v4
@@ -154,6 +154,8 @@ Test building with multiple Python versions:
 
           - name: Build package
             run: python -m build
+
+.. _ci-platform-wheels:
 
 Building wheels for multiple platforms
 ======================================
@@ -292,13 +294,17 @@ Matrix builds
         paths:
           - dist/
 
-    build:py310:
+    build:py311:
       extends: .build_template
-      image: python:3.10
+      image: python:3.11
 
     build:py314:
       extends: .build_template
       image: python:3.14
+
+    build:py315:
+      extends: .build_template
+      image: python:3.15
 
 **********
  CircleCI
@@ -342,11 +348,11 @@ Basic build
 
     language: python
     python:
-      - "3.10"
       - "3.11"
       - "3.12"
       - "3.13"
       - "3.14"
+      - "3.15"
 
     install:
       - pip install build
@@ -371,10 +377,12 @@ Basic build
 
     strategy:
       matrix:
-        Python310:
-          python.version: '3.10'
+        Python311:
+          python.version: '3.11'
         Python314:
           python.version: '3.14'
+        Python315:
+          python.version: '3.15'
 
     steps:
     - task: UsePythonVersion@0
@@ -448,6 +456,8 @@ Build packages in a Docker container:
 
     CMD ["python"]
 
+.. _tox-integration:
+
 *****************
  tox Integration
 *****************
@@ -475,6 +485,17 @@ Using build within tox environments:
     commands = [
         ["python", "-m", "build"],
         ["twine", "check", "dist/*"],
+    ]
+
+    [env.lint]
+    description = "run linters and type checkers"
+    deps = [
+        "ruff",
+        "mypy",
+    ]
+    commands = [
+        ["ruff", "check", "."],
+        ["mypy", "src"],
     ]
 
 Run the build environment:

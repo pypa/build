@@ -51,31 +51,8 @@ cibuildwheel uses build under the hood but handles all the complexity of:
 - Handling platform-specific quirks
 - Proper `ABI tagging <https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/>`_
 
-Example ``.github/workflows/build.yml``:
-
-.. code-block:: yaml
-
-    name: Build
-
-    on: [push, pull_request]
-
-    jobs:
-      build_wheels:
-        name: Build wheels on ${{ matrix.os }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-          matrix:
-            os: [ubuntu-latest, windows-latest, macos-latest]
-
-        steps:
-          - uses: actions/checkout@v4
-          - uses: pypa/cibuildwheel@v2.17
-          - uses: actions/upload-artifact@v4
-            with:
-              name: wheels
-              path: ./wheelhouse/*.whl
-
-See `cibuildwheel documentation <https://cibuildwheel.readthedocs.io/>`_ for complete details.
+See :ref:`ci-platform-wheels` for a workflow example and the `cibuildwheel documentation
+<https://cibuildwheel.readthedocs.io/>`_ for configuration details.
 
 *****************
  When to use tox
@@ -90,39 +67,8 @@ Use `tox <https://tox.wiki/>`_ when you need to:
 - Build documentation
 - Orchestrate multiple development tasks
 
-Example ``tox.toml``:
-
-.. code-block:: toml
-
-    [env_run_base]
-    description = "run test suite with {basepython}"
-    deps = [
-        "pytest",
-        "pytest-cov",
-    ]
-    commands = [
-        ["pytest", "tests"],
-    ]
-
-    [env.build]
-    description = "build the package"
-    deps = ["build"]
-    commands = [["python", "-m", "build"]]
-
-    [env.lint]
-    description = "run linters and type checkers"
-    deps = [
-        "ruff",
-        "mypy",
-    ]
-    commands = [
-        ["ruff", "check", "."],
-        ["mypy", "src"],
-    ]
-
-Tox can call build to create distributions, but its main purpose is test automation.
-
-See `tox documentation <https://tox.wiki/>`_ for complete details.
+See :ref:`tox-integration` for test, build, and lint environments and the `tox documentation <https://tox.wiki/>`_ for
+configuration details.
 
 *****************
  When to use nox
@@ -228,6 +174,8 @@ Development workflow
 CI/CD workflow
 ==============
 
+This workflow runs tests with tox, builds an sdist and wheel with build, and builds native wheels with cibuildwheel:
+
 .. code-block:: yaml
 
     name: CI
@@ -239,7 +187,7 @@ CI/CD workflow
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+            python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         steps:
           - uses: actions/checkout@v4
           - uses: actions/setup-python@v5
@@ -252,7 +200,7 @@ CI/CD workflow
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-          - uses: hynek/build-and-inspect-python-package@v2
+          - run: pipx run build
 
       build_wheels:
         runs-on: ${{ matrix.os }}
@@ -263,11 +211,7 @@ CI/CD workflow
           - uses: actions/checkout@v4
           - uses: pypa/cibuildwheel@v2.17
 
-This workflow:
-
-1. Uses **tox** to test across Python versions
-2. Uses **build** (via hynek's action) to create sdist
-3. Uses **cibuildwheel** to create wheels for all platforms
+See :doc:`ci-cd` for artifact storage and publishing examples.
 
 ***************
  Decision tree
