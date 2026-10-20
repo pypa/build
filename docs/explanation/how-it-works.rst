@@ -11,6 +11,7 @@ This document explains how build works internally and the build process flow.
 When you run ``python -m build``, the following happens:
 
 .. mermaid::
+    :name: build-process-flowchart
 
     %%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#4051b5','primaryTextColor':'#fff','primaryBorderColor':'#2c3e8f','lineColor':'#5468c4','secondaryColor':'#7c8fd6','tertiaryColor':'#e8eaf6'}}}%%
     flowchart TD
