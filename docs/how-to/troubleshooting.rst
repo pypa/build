@@ -405,6 +405,8 @@ Consult your backend's documentation for its diagnostic and logging settings. Se
 settings through build. For an example, see :ref:`scikit-build-core logging <scikit-build-core-logging>`. To keep build
 directories and find backend log files, see :ref:`debug-a-failed-build`.
 
+.. _inspect-build-environment:
+
 Inspect the build environment
 =============================
 
@@ -450,16 +452,15 @@ in, so any files the backend leaves next to your sources stay put.
 Find the backend's own logs
 ===========================
 
-build cannot capture log *files* the backend writes inside its own working directory, because PEP 517 gives the frontend
-no way to discover them. Each backend exposes its own setting for keeping them. For ``meson-python`` and
-``scikit-build``, point its build directory at a path you control:
+build does not collect backend log files. For example, ``meson-python`` and ``scikit-build-core`` accept a ``build-dir``
+setting to keep their build directories at a path you control:
 
 .. code-block:: console
 
-    $ python -m build -C build-dir=_build
+    $ python -m build --wheel -C build-dir=_build
 
-The backend then usually writes its build tree and logs under ``_build``. Check your backend's documentation for the
-equivalent setting.
+``--wheel`` builds directly from your source tree, so the relative ``_build`` directory stays in your project. Check
+your backend's documentation for log locations and the equivalent setting.
 
 **********************
  Still having issues?

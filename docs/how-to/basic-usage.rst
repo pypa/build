@@ -102,6 +102,8 @@ Or the short form:
 
     $ python -m build -o /path/to/output
 
+.. _compiler-caching:
+
 *******************************************
  Speeding up rebuilds of compiled packages
 *******************************************

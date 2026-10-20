@@ -193,11 +193,13 @@ with non-ASCII characters in filenames or file content on Windows systems.
     $ set PYTHONUTF8=1
     $ python -m build
 
+.. _temporary-directories:
+
 ``TMPDIR`` / ``TEMP`` / ``TMP``
 ===============================
 
-Controls where build creates the temporary isolated build environment. Useful for debugging or when you need the
-temporary directory on a specific filesystem (e.g., for ccache or compilation caching).
+These variables select the parent directory for temporary build environments and extracted sdists. Use them to place
+temporary files on a filesystem with enough space or write permissions.
 
 On Unix-like systems, use ``TMPDIR``:
 
@@ -212,8 +214,8 @@ On Windows, use ``TEMP``:
     $ set TEMP=C:\path\to\custom\tmp
     $ python -m build
 
-These variables only change *where* build creates the temporary directory. build still removes its environment when the
-build ends. To pin the environment to a stable path, or to keep it for inspection, use the ``--env-dir`` option instead.
+build still creates a new subdirectory for each temporary environment or sdist extraction and removes it afterwards. For
+retaining a failed build environment, see :ref:`inspect-build-environment`.
 
 **Common use cases**:
 
@@ -221,11 +223,7 @@ build ends. To pin the environment to a stable path, or to keep it for inspectio
 - **Performance**: Use faster storage (e.g., tmpfs on Linux)
 - **Restricted filesystems**: Point at the writable part of a read-only container
 
-``TMPDIR`` only relocates the base directory; build still appends a random suffix, so the extraction path differs on
-every run. For compiler caches such as ``ccache`` or ``sccache``, which key on the source path, that random suffix is a
-guaranteed cache miss - use ``--sdist-extract-dir`` to pin the path instead.
-
-See :doc:`../how-to/troubleshooting` for debugging examples.
+For stable paths that work with compiler caches, see :ref:`compiler-caching`.
 
 ****************************
  Backend-Specific Variables
