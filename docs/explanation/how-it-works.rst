@@ -344,6 +344,8 @@ However, full reproducibility also requires pinned backend versions in ``require
 (some backends support ``SOURCE_DATE_EPOCH``), consistent Python version, and consistent platform for platform-specific
 wheels.
 
+.. _build-report-design:
+
 ***************
  Build Reports
 ***************
@@ -356,7 +358,7 @@ learn what was built.
 runs as a subprocess that inherits build's streams and may print to them, so a consumer could not separate the report
 from backend chatter on ``stdout``. A file build controls keeps the machine-readable output apart from the human- and
 backend-facing log. Build writes the report only after the build succeeds and replaces it atomically, so a consumer
-never reads a half-written file. See :doc:`../reference/cli` for the schema.
+never reads a half-written file. See :ref:`build-report` for the schema.
 
 ****************************
  Performance Considerations

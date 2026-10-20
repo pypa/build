@@ -78,25 +78,28 @@ Backend output is visible by default. These flags do not change the backend's ow
 At normal verbosity, isolated builds also print the installed versions of declared build dependencies. See
 :ref:`backend-version` for an example and instructions for builds without isolation.
 
+.. _build-report:
+
 **************
  Build Report
 **************
 
-``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build. The artifact
-names are dynamic (they encode version, Python, ABI and platform tags), so this gives scripts and CI a stable way to
-refer to the produced files instead of globbing ``dist/``. Build writes the report to a file it controls, not to
-standard output, because the build backend may write to ``stdout``/``stderr`` too.
+``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build.
 
 .. code-block:: console
 
     $ python -m build --report build-report.json
-    $ twine upload $(jq -r '.artifacts[].path' build-report.json)
 
 .. note::
 
-    Keep the report out of the output directory: tools commonly upload ``dist/*`` wholesale (``twine upload dist/*``),
-    and a stray non-distribution file there can break that. The write is atomic, so a reader never sees a partial file;
-    builds running in parallel still need a distinct ``PATH`` each to avoid overwriting one another's report.
+    Keep the report outside the output directory: commands such as ``twine upload dist/*`` expect only distributions
+    there.
+
+    The write is atomic. Builds running in parallel need a distinct ``PATH`` each to avoid overwriting one another's
+    report.
+
+See :ref:`discovering-built-artifacts` for using reports in CI and :ref:`build-report-design` for why reports use a
+separate file.
 
 The schema is:
 
