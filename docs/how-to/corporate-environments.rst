@@ -5,6 +5,9 @@
 This guide covers common scenarios when using build behind corporate firewalls, with private package indexes (custom
 package repositories), or in restricted network environments.
 
+The pip settings below apply to the default installer. With ``--installer=uv``, use uv's `environment variables
+<https://docs.astral.sh/uv/configuration/environment/>`_.
+
 *************************
  Private package indexes
 *************************
@@ -171,6 +174,8 @@ For development environments with self-signed certificates (not recommended for 
 Certificate handling depends on the installer version. See `pip's certificate documentation
 <https://pip.pypa.io/en/stable/topics/https-certificates/>`_ for how it uses system certificates and custom CA bundles.
 
+.. _corporate-proxies:
+
 ***************
  Proxy servers
 ***************
@@ -201,6 +206,8 @@ No proxy for certain hosts
     $ export NO_PROXY=localhost,127.0.0.1,.company.com
     $ python -m build
 
+.. _pip-configuration:
+
 *************************
  pip configuration files
 *************************
@@ -208,30 +215,21 @@ No proxy for certain hosts
 Global configuration
 ====================
 
-Instead of environment variables, you can create a pip configuration file.
-
-On Linux/macOS (``~/.config/pip/pip.conf``):
+Instead of environment variables, you can create a pip configuration file. Use `pip's configuration file locations
+<https://pip.pypa.io/en/stable/topics/configuration/#location>`_ to find the appropriate file for your system. For
+example:
 
 .. code-block:: ini
 
     [global]
     index-url = https://pypi.company.com/simple
-    trusted-host = pypi.company.com
     cert = /path/to/company-ca-bundle.crt
-
-On Windows (``%APPDATA%\pip\pip.ini``):
-
-.. code-block:: ini
-
-    [global]
-    index-url = https://pypi.company.com/simple
-    trusted-host = pypi.company.com
-    cert = C:\\path\\to\\company-ca-bundle.crt
 
 Per-project configuration
 =========================
 
-Create a ``pip.conf`` file in your project directory. This is useful for team settings.
+pip does not automatically load ``pip.conf`` from the project directory. Set `PIP_CONFIG_FILE
+<https://pip.pypa.io/en/stable/topics/configuration/#pip-config-file>`_ to its absolute path to select it explicitly.
 
 *************************
  Air-gapped environments
