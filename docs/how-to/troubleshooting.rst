@@ -294,19 +294,7 @@ See :doc:`ci-cd` for CI-specific guidance.
  Catching deprecation warnings
 *******************************
 
-To catch warnings from your build backend in CI:
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error::DeprecationWarning python -m build
-
-Or for setuptools specifically:
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error:::setuptools.config.setupcfg python -m build
-
-This fails the build if deprecated features are used, helping you catch issues early.
+Use :ref:`python-warnings` to turn backend deprecation warnings into errors in CI.
 
 *************************
  Build backend not found

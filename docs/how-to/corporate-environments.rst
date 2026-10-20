@@ -277,19 +277,7 @@ GitLab CI
  Catching backend warnings
 ***************************
 
-To catch deprecation warnings from your build backend (useful in CI):
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error::DeprecationWarning python -m build
-
-Or for setuptools specifically:
-
-.. code-block:: console
-
-    $ PYTHONWARNINGS=error:::setuptools.config.setupcfg python -m build
-
-See :doc:`troubleshooting` for more details on warnings.
+See :ref:`python-warnings` for turning backend deprecation warnings into errors in CI.
 
 ***************
  Common issues
