@@ -28,14 +28,41 @@ Before committing, run the test suite locally to verify your changes don't break
 uses `pytest <https://docs.pytest.org/>`_ for testing, and you can run tests using tox. After ensuring tests pass,
 commit your changes with a clear, descriptive commit message following the project's commit conventions.
 
-Each pull request should include a changelog fragment. Create a file in ``docs/changelog/`` named
-``<pr_number>.<type>.rst`` where type is ``feature``, ``bugfix``, ``doc``, ``removal``, or ``misc``. The file should
-contain a single line describing the change. For example, ``123.feature.rst`` might contain ``Add support for custom
-backends - by :user:`contributor```. See ``docs/changelog/README.rst`` for complete details.
+Each pull request should include a :ref:`changelog fragment <changelog-fragments>`.
 
 When your changes are ready, push your branch to your fork on GitHub and open a pull request against the main build
 repository. The pull request description should clearly explain what changes you've made and why. Reference any related
 issues using GitHub's issue linking syntax.
+
+.. _changelog-fragments:
+
+*********************
+ Changelog Fragments
+*********************
+
+Create ``docs/changelog/<pr_number>.<type>.rst`` with one line describing the change. Choose the type by its effect on
+users:
+
+- ``feature``: new functionality (minor release)
+- ``bugfix``: a bug fix (patch release)
+- ``doc``: documentation changes (patch release)
+- ``deprecation``: behavior still works but warns that it will be removed (minor release)
+- ``removal``: behavior callers relied on no longer works (major release)
+- ``misc``: internal changes (patch release)
+
+These types determine the automatic version bump described in :doc:`release`. For example, ``123.feature.rst`` might
+contain:
+
+.. code-block:: rst
+
+    Add support for custom build backends - by :user:`contributor`
+
+Use ``:issue:`123``` for issue references and ``:user:`name``` for attribution. Keep the fragment on one line; the
+release process wraps the assembled changelog. Preview it with:
+
+.. code-block:: console
+
+    $ towncrier build --draft --version X.Y.Z
 
 ***************
  Running Tests
