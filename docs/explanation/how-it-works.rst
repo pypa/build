@@ -244,40 +244,19 @@ This keeps build simple and focused on its role as a frontend.
  Installer Selection
 *********************
 
-By default, build uses pip to install dependencies in isolated environments. You can use a different installer:
+build supports pip and uv for installing build dependencies. See :ref:`using-uv` for selecting uv and
+:doc:`../reference/environment-variables` for installer configuration.
 
-.. code-block:: console
-
-    $ python -m build --installer=uv
-
-Requirements for custom installers:
-
-- Must accept ``install`` command
-- Must accept package specifications as arguments
-- Must support ``--no-deps`` flag
-
-Currently, pip and uv are the primary supported installers.
+.. _virtual-environment-backend:
 
 *****************************
  Virtual Environment Backend
 *****************************
 
-build can use different virtual environment implementations:
-
-- ``venv`` (default): Python's built-in venv module
-- ``virtualenv``: Third-party virtualenv package
-
-To use virtualenv:
-
-.. code-block:: console
-
-    $ pip install build[virtualenv]
-    $ python -m build
-
-virtualenv provides better SSL support on older Python versions, faster environment creation, and more features (though
-build uses only basic functionality).
-
-See :doc:`../how-to/corporate-environments` for when this matters.
+With the pip installer, build uses ``venv`` when a suitable outer pip is available. Otherwise, it uses a supported
+``virtualenv`` installation if available, falling back to ``venv`` with pip installed inside the environment. With the
+uv installer, build creates the environment with ``venv`` and uses uv to install dependencies. See
+:ref:`optional-dependencies` for installing the optional tools.
 
 ****************************
  Output Directory Structure
@@ -306,28 +285,8 @@ Use ``--outdir`` to change the output location:
  Environment Variable Handling
 *******************************
 
-build passes most environment variables to the build backend:
-
-**Always passed**:
-
-- ``PATH`` - For finding executables
-- ``PYTHONPATH`` - For Python module discovery
-- HTTP/HTTPS proxy variables
-- SSL certificate variables
-- Custom pip variables (``PIP_*``)
-
-**Set by build**:
-
-- ``VIRTUAL_ENV`` - Points to isolated environment (when using isolation)
-
-**When using ``--no-isolation``**:
-
-- All environment variables from your shell are passed through unchanged
-
-This behavior allows corporate environments to configure pip via environment variables, build backends to use custom
-environment variables, and proxy and SSL configuration to work transparently.
-
-See :doc:`../reference/environment-variables` for details.
+See :doc:`../reference/environment-variables` for inherited settings and the variables build overrides for isolated
+subprocesses.
 
 *********************
  Reproducible Builds
