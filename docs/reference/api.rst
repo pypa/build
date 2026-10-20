@@ -55,8 +55,7 @@ build dependencies before invoking the backend:
 Pass ``path=".build-env"`` to ``DefaultIsolatedEnv`` to use a fixed location. The directory must be empty; it is removed
 on a clean exit and kept when the block raises.
 
-``ProjectBuilder`` on its own uses the current environment. The ``runner`` argument customizes subprocess execution; it
-does not control isolation.
+``ProjectBuilder`` on its own uses the current environment. The ``runner`` argument customizes subprocess execution.
 
 Getting package metadata without building:
 
