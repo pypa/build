@@ -52,8 +52,8 @@ build dependencies before invoking the backend:
         env.install(builder.get_requires_for_build("wheel"))
         builder.build("wheel", "dist/")
 
-Pass ``path=".build-env"`` to ``DefaultIsolatedEnv`` to use a fixed location. The directory must be empty; it is removed
-on a clean exit and kept when the block raises.
+Pass ``path`` to ``DefaultIsolatedEnv`` to use a fixed location. The directory must be empty; it is removed when the
+``with`` block exits cleanly and kept when the ``with`` block raises.
 
 ``ProjectBuilder`` on its own uses the current environment. The ``runner`` argument customizes subprocess execution.
 
