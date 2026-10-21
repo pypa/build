@@ -7,8 +7,8 @@ A simple, correct `Python packaging <https://packaging.python.org/>`_ **build fr
 build reads your project's `pyproject.toml configuration file
 <https://packaging.python.org/en/latest/specifications/pyproject-toml/>`_ and invokes **build backends** to create
 `distribution packages <https://packaging.python.org/en/latest/glossary/#term-Distribution-Package>`_ (the files you
-upload to PyPI_ or install with pip_). It focuses solely on building packages and does not manage dependencies or
-virtual environments.
+upload to PyPI_ or install with pip_). It manages temporary build dependencies and environments, leaving application
+dependency management to other tools.
 
 *******************
  Mission Statement

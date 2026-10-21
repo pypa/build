@@ -235,18 +235,9 @@ pip does not automatically load ``pip.conf`` from the project directory. Set `PI
  Air-gapped environments
 *************************
 
-For completely offline builds, you must manually install dependencies first:
-
-.. code-block:: console
-
-    $ pip install setuptools wheel your-build-backend
-    $ python -m build --no-isolation
-
-The ``--no-isolation`` flag tells build to use your current environment instead of creating an isolated one.
-
-.. warning::
-
-    When using ``--no-isolation``, ensure all build dependencies are installed and compatible.
+If build dependencies are already installed in the active environment, follow :ref:`building-without-isolation`.
+Alternatively, configure the installer to use a local package index or wheel directory containing all required
+dependencies.
 
 ********************
  CI/CD environments

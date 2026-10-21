@@ -12,3 +12,7 @@
 .sidebar-brand {
   gap: 0;
 }
+
+#build-process-flowchart > svg {
+  height: auto;
+}

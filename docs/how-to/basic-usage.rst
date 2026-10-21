@@ -165,8 +165,7 @@ This requires uv to be installed:
 
 By default, build creates an `isolated environment
 <https://packaging.python.org/en/latest/glossary/#term-Isolated-Build>`_ (a clean temporary `virtual environment
-<https://docs.python.org/3/tutorial/venv.html>`_) to ensure reproducible builds. To skip this and use your current
-environment:
+<https://docs.python.org/3/tutorial/venv.html>`_) for build dependencies. To skip this and use your current environment:
 
 .. code-block:: console
 
