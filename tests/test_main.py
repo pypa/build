@@ -1463,6 +1463,19 @@ def test_write_report_cleans_tmp_on_failure(
     with pytest.raises(OSError, match='boom'):
         build.__main__._write_report(tmp_path / 'report.json', str(outdir), names)
 
+
+@pytest.mark.skipif(not hasattr(os, 'umask'), reason='os.umask required')
+def test_write_report_honors_umask(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'report.json'
+
+    build.__main__._write_report(report, str(outdir), names)
+
+    umask = os.umask(0)
+    os.umask(umask)
+    expected_mode = 0o666 & ~umask
+    assert (report.stat().st_mode & 0o777) == expected_mode
+
     assert not list(tmp_path.glob('*.tmp'))
 
 
