@@ -96,7 +96,7 @@ lint = [
   "prek",
 ]
 pyrefly = [
-  "pyrefly>=1.2,<1.4",
+  "pyrefly>=1.4",
   { include-group = "typing" },
 ]
 release = [
@@ -194,7 +194,11 @@ errors.implicit-bool = false
 # `@override` needs typing_extensions before 3.12; build takes no runtime deps for typing
 errors.missing-override-decorator = false
 errors.unused-call-result = false
+# Attributes declared on the class are set later, in `__enter__`, `create`, or by argparse.
+errors.uninitialized-instance-variable = false
 preset = "all"
+# Mock attributes are dynamic.
+sub-config = [ { matches = "tests/**", errors.unknown-attribute-access = false } ]
 
 [tool.pytest]
 ini_options.minversion = "6.0"

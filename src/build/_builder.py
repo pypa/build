@@ -57,7 +57,10 @@ _DEFAULT_BACKEND: BuildSystemTable = {
 
 
 def _is_list_of_str(value: object) -> TypeGuard[list[str]]:
-    return isinstance(value, list) and all(isinstance(item, str) for item in value)
+    if not isinstance(value, list):
+        return False
+    items: list[object] = value
+    return all(isinstance(item, str) for item in items)
 
 
 def _find_typo(dictionary: Iterable[str], expected: str) -> None:
