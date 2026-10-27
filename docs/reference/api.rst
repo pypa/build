@@ -129,3 +129,10 @@ Handling errors:
     :members:
     :undoc-members:
     :show-inheritance:
+
+*******
+ Types
+*******
+
+.. autoclass:: build._types.SubprocessRunner()
+    :special-members: __call__
