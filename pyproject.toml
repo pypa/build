@@ -96,7 +96,7 @@ lint = [
   "prek",
 ]
 pyrefly = [
-  "pyrefly>=1.2",
+  "pyrefly>=1.2,<1.4",
   { include-group = "typing" },
 ]
 release = [
