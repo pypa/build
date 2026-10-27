@@ -86,8 +86,6 @@ autoclass_content = 'both'
 
 nitpick_ignore = [
     ('py:data', 'typing.Union'),
-    # Not documented upstream
-    ('py:class', 'pyproject_hooks._impl.SubprocessRunner'),
 ]
 
 

@@ -33,11 +33,11 @@ TOMLValue: typing.TypeAlias = (
     | collections.abc.Mapping[str, 'TOMLValue']
 )
 
-TYPE_CHECKING = False
 
-if TYPE_CHECKING:
-    from pyproject_hooks import SubprocessRunner
-else:
-    SubprocessRunner = collections.abc.Callable[
-        [collections.abc.Sequence[str], str | None, collections.abc.Mapping[str, str] | None], None
-    ]
+class SubprocessRunner(typing.Protocol):
+    def __call__(
+        self,
+        cmd: collections.abc.Sequence[str],
+        cwd: str | None = None,
+        extra_environ: collections.abc.Mapping[str, str] | None = None,
+    ) -> None: ...
