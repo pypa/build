@@ -1073,6 +1073,57 @@ def test_prepare_sdist_archive_happy(tmp_path: pathlib.Path, sdist: pathlib.Path
         assert top_level_dir == 'demo-1.0.0'
 
 
+def test_prepare_sdist_archive_dot_prefixed_top_level(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, './demo-1.0.0')
+
+    with build.__main__._prepare_sdist_archive(str(archive), extract_dir=tmp_path) as (_, top_level_dir):
+        assert top_level_dir == 'demo-1.0.0'
+
+
+def test_prepare_sdist_archive_inner_dot_components(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    pkg_info = b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n'
+    pyproject = b'[build-system]\nrequires = []\nbuild-backend = "noop"\n'
+    with tarfile.open(archive, 'w:gz') as tar:
+        for name, body in (
+            ('demo-1.0.0/./PKG-INFO', pkg_info),
+            ('demo-1.0.0/./pyproject.toml', pyproject),
+        ):
+            info = tarfile.TarInfo(name=name)
+            info.size = len(body)
+            tar.addfile(info, io.BytesIO(body))
+
+    with build.__main__._prepare_sdist_archive(str(archive), extract_dir=tmp_path) as (_, top_level_dir):
+        assert top_level_dir == 'demo-1.0.0'
+
+
+def test_prepare_sdist_archive_mixed_dot_prefix(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    pkg_info = b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n'
+    pyproject = b'[build-system]\nrequires = []\nbuild-backend = "noop"\n'
+    with tarfile.open(archive, 'w:gz') as tar:
+        for name, body in (
+            ('./demo-1.0.0/PKG-INFO', pkg_info),
+            ('demo-1.0.0/pyproject.toml', pyproject),
+        ):
+            info = tarfile.TarInfo(name=name)
+            info.size = len(body)
+            tar.addfile(info, io.BytesIO(body))
+
+    with build.__main__._prepare_sdist_archive(str(archive), extract_dir=tmp_path) as (_, top_level_dir):
+        assert top_level_dir == 'demo-1.0.0'
+
+
+def test_extract_sdist_dot_prefixed_top_level(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    write_sdist(archive, './demo-1.0.0')
+
+    with build.__main__._extract_sdist(str(archive)) as extracted:
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+        assert os.path.basename(extracted) == 'demo-1.0.0'
+
+
 def test_prepare_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
     archive = tmp_path / 'demo-1.0.0.tar.gz'
     write_sdist(archive, 'something-else-1.0')
