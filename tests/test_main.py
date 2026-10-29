@@ -1505,6 +1505,22 @@ def test_metadata_read_from_wheel(wheel: pathlib.Path, capsys: pytest.CaptureFix
     assert metadata['version'] == '1.0.0'
 
 
+def test_metadata_written_as_utf8_to_non_utf8_stdout(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / 'demo-1.0.0-py3-none-any.whl'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr(
+            'demo-1.0.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0.0\nSummary: café 日本\n\n'
+        )
+    # redirected stdout on Windows uses the locale encoding, commonly cp1252
+    raw = io.BytesIO()
+    monkeypatch.setattr(sys, 'stdout', io.TextIOWrapper(raw, encoding='cp1252'))
+
+    build.__main__.main([str(path), '--metadata'])
+
+    metadata = json.loads(raw.getvalue().decode('utf-8'))
+    assert metadata['summary'] == 'café 日本'
+
+
 def test_wheel_input_requires_metadata(wheel: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main([str(wheel)])

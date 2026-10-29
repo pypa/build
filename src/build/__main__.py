@@ -478,9 +478,10 @@ def _print_metadata(raw_metadata: bytes) -> None:
     import packaging.metadata
 
     valid_metadata, _ = packaging.metadata.parse_email(raw_metadata)
-    print(  # noqa: T201
-        json.dumps(valid_metadata, ensure_ascii=False, indent=2),
-    )
+    # JSON is UTF-8, but stdout may not be (e.g. cp1252 when redirected on Windows)
+    sys.stdout.flush()
+    sys.stdout.buffer.write(f'{json.dumps(valid_metadata, ensure_ascii=False, indent=2)}\n'.encode())
+    sys.stdout.buffer.flush()
 
 
 def main_parser() -> argparse.ArgumentParser:
