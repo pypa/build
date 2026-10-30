@@ -1073,6 +1073,34 @@ def test_prepare_sdist_archive_happy(tmp_path: pathlib.Path, sdist: pathlib.Path
         assert top_level_dir == 'demo-1.0.0'
 
 
+@pytest.mark.parametrize(
+    ('pkg_info_name', 'pyproject_name'),
+    [
+        pytest.param('./demo-1.0.0/PKG-INFO', './demo-1.0.0/pyproject.toml', id='leading-dot'),
+        pytest.param('demo-1.0.0/./PKG-INFO', 'demo-1.0.0/./pyproject.toml', id='interior-dot'),
+        pytest.param('./demo-1.0.0/PKG-INFO', 'demo-1.0.0/pyproject.toml', id='mixed-prefix'),
+    ],
+)
+def test_extract_sdist_accepts_redundant_dot_components(
+    tmp_path: pathlib.Path, pkg_info_name: str, pyproject_name: str
+) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    files = {
+        pkg_info_name: b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n',
+        pyproject_name: b'[build-system]\nrequires = []\nbuild-backend = "noop"\n',
+    }
+    with tarfile.open(archive, 'w:gz') as tar:
+        for name, data in files.items():
+            info = tarfile.TarInfo(name=name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+
+    with build.__main__._extract_sdist(str(archive)) as extracted:
+        assert os.path.basename(extracted) == 'demo-1.0.0'
+        assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+        assert os.path.isfile(os.path.join(extracted, 'pyproject.toml'))
+
+
 def test_prepare_sdist_archive_top_level_name_mismatch(tmp_path: pathlib.Path, write_sdist: WriteSdist) -> None:
     archive = tmp_path / 'demo-1.0.0.tar.gz'
     write_sdist(archive, 'something-else-1.0')
@@ -1171,6 +1199,41 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
     cm = build.__main__._extract_sdist(str(archive))
     with pytest.raises(tarfile.TarError):
         cm.__enter__()
+
+
+@pytest.mark.parametrize('symlink', [False, True], ids=['parent-component', 'symlink-parent-component'])
+def test_extract_sdist_preserves_parent_component_validation(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch, symlink: bool
+) -> None:
+    # Some Python versions preserve parent components in data-filtered member names.
+    data_filter = tarfile.data_filter
+
+    def filter_preserving_names(member: tarfile.TarInfo, destination: str) -> tarfile.TarInfo:
+        return data_filter(member, destination).replace(name=member.name)
+
+    monkeypatch.setattr(tarfile, 'data_filter', filter_preserving_names)
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    with tarfile.open(archive, 'w:gz') as tar:
+        if symlink:
+            info = tarfile.TarInfo(name='demo-1.0.0/link')
+            info.type = tarfile.SYMTYPE
+            info.linkname = '.'
+            tar.addfile(info)
+        for name, data in {
+            'demo-1.0.0/link/../PKG-INFO': b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n',
+            'demo-1.0.0/pyproject.toml': b'[build-system]\nrequires = []\nbuild-backend = "noop"\n',
+        }.items():
+            info = tarfile.TarInfo(name=name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+
+    extract_dir = tmp_path / 'extract'
+    with (
+        pytest.raises(build.BuildException, match=re.escape('does not contain demo-1.0.0/PKG-INFO')),
+        build.__main__._extract_sdist(str(archive), extract_dir=str(extract_dir)),
+    ):
+        raise AssertionError
+    assert not (extract_dir / 'PKG-INFO').exists()
 
 
 def test_extract_sdist_fixed_dir_is_deterministic_and_kept(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
