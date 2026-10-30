@@ -15,6 +15,7 @@ __lazy_modules__ = {
     'json',
     'packaging.utils',
     'packaging.version',
+    'pathlib',
     'platform',
     'pyproject_hooks',
     'shutil',
@@ -33,7 +34,6 @@ import hashlib
 import json
 import os
 import platform
-import posixpath
 import shutil
 import subprocess
 import sys
@@ -44,6 +44,7 @@ import warnings
 import zipfile
 
 from functools import partial
+from pathlib import PurePosixPath
 from typing import NoReturn, TextIO, TypedDict
 
 import pyproject_hooks
@@ -851,8 +852,8 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
     with tarfile.open(archive_path) as archive:
         safe_members = [tarfile.data_filter(m, extract_dir) for m in archive.getmembers()]
 
-        # Normalize POSIX paths for validation only; keep the data-filtered members for extraction.
-        normalized_members = [(posixpath.normpath(m.name), m) for m in safe_members]
+        # Remove redundant dots for validation only; do not collapse '..' across symlinks.
+        normalized_members = [(PurePosixPath(m.name).as_posix(), m) for m in safe_members]
         top_level_dirs = {name.split('/', 1)[0] for name, _ in normalized_members if name != '.'}
         try:
             (top_level_dir,) = top_level_dirs
