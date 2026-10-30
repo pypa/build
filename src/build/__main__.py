@@ -33,6 +33,7 @@ import hashlib
 import json
 import os
 import platform
+import posixpath
 import shutil
 import subprocess
 import sys
@@ -850,7 +851,9 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
     with tarfile.open(archive_path) as archive:
         safe_members = [tarfile.data_filter(m, extract_dir) for m in archive.getmembers()]
 
-        top_level_dirs = {m.name.split('/', 1)[0] for m in safe_members}
+        # Normalize POSIX paths for validation only; keep the data-filtered members for extraction.
+        normalized_members = [(posixpath.normpath(m.name), m) for m in safe_members]
+        top_level_dirs = {name.split('/', 1)[0] for name, _ in normalized_members if name != '.'}
         try:
             (top_level_dir,) = top_level_dirs
         except ValueError:
@@ -859,7 +862,7 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
             )
             raise BuildException(msg) from None
 
-        if not any(m.name == f'{top_level_dir}/PKG-INFO' and m.isfile() for m in safe_members):
+        if not any(name == f'{top_level_dir}/PKG-INFO' and member.isfile() for name, member in normalized_members):
             msg = (
                 f'source distribution {archive_path} does not contain {top_level_dir}/PKG-INFO; '
                 'this does not appear to be a valid source distribution'
