@@ -1521,6 +1521,21 @@ def test_metadata_written_as_utf8_to_non_utf8_stdout(tmp_path: pathlib.Path, mon
     assert metadata['summary'] == 'café 日本'
 
 
+def test_metadata_written_to_text_only_stdout(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / 'demo-1.0.0-py3-none-any.whl'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr(
+            'demo-1.0.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0.0\nSummary: café 日本\n\n'
+        )
+    # an in-process caller may redirect stdout to a stream with no binary buffer
+    out = io.StringIO()
+    monkeypatch.setattr(sys, 'stdout', out)
+
+    build.__main__.main([str(path), '--metadata'])
+
+    assert json.loads(out.getvalue())['summary'] == 'café 日本'
+
+
 def test_wheel_input_requires_metadata(wheel: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main([str(wheel)])
