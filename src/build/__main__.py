@@ -835,6 +835,16 @@ def _select_build(
     return partial(build_package_via_sdist, distributions=['wheel'], sdist_extract_dir=args.sdist_extract_dir)
 
 
+def _sdist_member_layout_path(name: str) -> str:
+    """POSIX archive member path with redundant ``.`` components removed.
+
+    ``tar -czf archive.tar.gz -C dir ./proj-1.0.0`` stores members as
+    ``./proj-1.0.0/...``. The sdist format still has one project directory;
+    only the extra dots should be ignored when locating it.
+    """
+    return '/'.join(part for part in name.split('/') if part != '.')
+
+
 @contextlib.contextmanager
 def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Generator[tuple[Callable[[StrPath], None], str]]:
 
@@ -850,7 +860,8 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
     with tarfile.open(archive_path) as archive:
         safe_members = [tarfile.data_filter(m, extract_dir) for m in archive.getmembers()]
 
-        top_level_dirs = {m.name.split('/', 1)[0] for m in safe_members}
+        layout_paths = [_sdist_member_layout_path(m.name) for m in safe_members]
+        top_level_dirs = {path.split('/', 1)[0] for path in layout_paths if path}
         try:
             (top_level_dir,) = top_level_dirs
         except ValueError:
@@ -859,7 +870,8 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
             )
             raise BuildException(msg) from None
 
-        if not any(m.name == f'{top_level_dir}/PKG-INFO' and m.isfile() for m in safe_members):
+        pkg_info_name = f'{top_level_dir}/PKG-INFO'
+        if not any(_sdist_member_layout_path(m.name) == pkg_info_name and m.isfile() for m in safe_members):
             msg = (
                 f'source distribution {archive_path} does not contain {top_level_dir}/PKG-INFO; '
                 'this does not appear to be a valid source distribution'
