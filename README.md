@@ -7,6 +7,8 @@
 [![Documentation Status](https://readthedocs.org/projects/pypa-build/badge/?version=latest)](https://build.pypa.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/build.svg)](https://pypi.org/project/build/)
 [![Discord](https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23build)](https://discord.gg/pypa)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pypa/build/badge)](https://scorecard.dev/viewer/?uri=github.com/pypa/build)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16272/badge)](https://www.bestpractices.dev/projects/16272)
 
 A simple, correct Python build frontend.
 
