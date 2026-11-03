@@ -1,0 +1,2 @@
+Write ``--metadata`` JSON as UTF-8 so it no longer fails with ``UnicodeEncodeError`` when stdout uses a non-UTF-8
+encoding, such as cp1252 when redirected on Windows - by :user:`jaeminbird`
