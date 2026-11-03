@@ -772,6 +772,10 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
             report_file.write(data)
+        with contextlib.suppress(OSError, AttributeError):
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(tmp, 0o666 & ~umask)
         os.replace(tmp, path)
     except BaseException:
         with contextlib.suppress(OSError):
