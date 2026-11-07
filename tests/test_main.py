@@ -1417,6 +1417,36 @@ def test_report_written(
         assert artifact['hashes'] == {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def test_report_rejects_nested_hook_result(tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / 'pyproject.toml').write_text(
+        '[build-system]\nrequires = []\nbuild-backend = "backend"\nbackend-path = ["."]\n', encoding='utf-8'
+    )
+    (tmp_path / 'backend.py').write_text(
+        'from pathlib import Path\n'
+        'def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):\n'
+        '    path = Path(wheel_directory) / "fresh" / "demo-1.0-py3-none-any.whl"\n'
+        '    path.parent.mkdir(exist_ok=True)\n'
+        '    path.write_bytes(b"fresh wheel")\n'
+        '    return "fresh/" + path.name\n',
+        encoding='utf-8',
+    )
+    outdir = tmp_path / 'dist'
+    outdir.mkdir()
+    stale = outdir / 'demo-1.0-py3-none-any.whl'
+    stale.write_bytes(b'stale wheel')
+    report = tmp_path / 'report.json'
+
+    with pytest.raises(SystemExit) as exc:
+        build.__main__.main([str(tmp_path), '--wheel', '--no-isolation', '-o', str(outdir), '--report', str(report)])
+
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert 'invalid basename' in captured.err
+    assert 'Successfully built' not in captured.out
+    assert not report.exists()
+    assert stale.read_bytes() == b'stale wheel'
+
+
 def test_report_path_is_absolute_with_relative_outdir(
     mocker: pytest_mock.MockerFixture,
     tmp_path: pathlib.Path,

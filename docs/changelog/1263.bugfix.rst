@@ -1,0 +1,1 @@
+Reject backend hook results containing a directory instead of reporting a different artifact.
