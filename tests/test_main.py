@@ -598,9 +598,6 @@ def test_logging_output_backend_versions(
             'ERROR ',
             [
                 '* Creating isolated environment: venv+pip...',
-                '* Installing packages in isolated environment:',
-                '  - setuptools >= 42.0.0',
-                '  - this is invalid',
             ],
         ),
         (
@@ -608,16 +605,13 @@ def test_logging_output_backend_versions(
             '\33[91mERROR\33[0m ',
             [
                 '\33[1m* Creating isolated environment: venv+pip...\33[0m',
-                '\33[1m* Installing packages in isolated environment:\33[0m',
-                '  - setuptools >= 42.0.0',
-                '  - this is invalid',
             ],
         ),
     ],
     ids=['no-color', 'color'],
 )
 @pytest.mark.usefixtures('local_pip')
-def test_logging_output_env_subprocess_error(
+def test_logging_output_invalid_requirement(
     mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
     package_test_invalid_requirements: str,
@@ -627,6 +621,7 @@ def test_logging_output_env_subprocess_error(
     stderr_body: list[str],
     stderr_error: str,
 ) -> None:
+    mocker.patch('build.env._PipBackend._has_valid_outer_pip', True)
     with contextlib.suppress(ModuleNotFoundError):  # colorama might not be available
         # do not inject hook to have clear output on capsys
         mocker.patch('colorama.init')
@@ -639,11 +634,37 @@ def test_logging_output_env_subprocess_error(
     outerr = capsys.readouterr()
     stderr = outerr.err.splitlines()
 
-    assert stderr[:4] == stderr_body
+    assert stderr[:-1] == stderr_body
     assert stderr[-1].startswith(stderr_error)
+    assert "Invalid build requirement: 'this is invalid'" in stderr[-1]
+    assert 'Traceback' not in outerr.out + outerr.err
+    assert 'Installing packages' not in outerr.err
 
-    # Newer versions of pip also color stderr - strip them if present
-    assert any(ANSI_STRIP.sub('', e).strip().startswith('< ERROR: Invalid requirement: ') for e in stderr)
+
+@pytest.mark.parametrize('source', ['pyproject', 'backend'])
+def test_invalid_requirement_never_reaches_installer(
+    tmp_path: pathlib.Path,
+    mocker: pytest_mock.MockerFixture,
+    capsys: pytest.CaptureFixture[str],
+    source: str,
+) -> None:
+    mocker.patch('build.env._PipBackend._has_valid_outer_pip', True)
+    requirement = '--index-url=https://example.invalid/simple'
+    requires = [requirement] if source == 'pyproject' else []
+    (tmp_path / 'pyproject.toml').write_text(
+        f'[build-system]\nrequires = {json.dumps(requires)}\nbuild-backend = "backend"\n', encoding='utf-8'
+    )
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
+    hook.get_requires_for_build_wheel.return_value = [requirement] if source == 'backend' else []
+    hook.build_wheel.return_value = 'demo.whl'
+    install = mocker.patch('build.env._PipBackend.install_dependencies')
+
+    with pytest.raises(SystemExit) as exc:
+        build.__main__.main([str(tmp_path), '--wheel'])
+
+    assert exc.value.code == 1
+    assert 'Invalid build requirement' in capsys.readouterr().err
+    install.assert_not_called()
 
 
 @pytest.mark.parametrize(

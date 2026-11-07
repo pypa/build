@@ -513,7 +513,7 @@ def test_build_with_dep_on_console_script(
     (tmp_path / 'pyproject.toml').write_text(toml, encoding='UTF-8')
     (tmp_path / 'build.py').write_text(code, encoding='utf-8')
 
-    deps = {str(demo_pkg_inline)}  # we patch the requires demo_pkg_inline to refer to the wheel -> we don't need index
+    deps = {f'demo_pkg_inline @ {demo_pkg_inline.as_uri()}'}
     mocker.patch('build.ProjectBuilder.build_system_requires', new_callable=mocker.PropertyMock, return_value=deps)
     from build.__main__ import main
 
