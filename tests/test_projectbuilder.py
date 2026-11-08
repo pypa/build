@@ -404,7 +404,7 @@ def test_build(mocker: pytest_mock.MockerFixture, package_test_flit: str, tmp_di
 
 
 @pytest.mark.parametrize('distribution', ['sdist', 'wheel', 'editable'])
-@pytest.mark.parametrize('filename', ['fresh/dist.whl', '../dist.whl', '/dist.whl', '.', '..'])
+@pytest.mark.parametrize('filename', ['', 'fresh/dist.whl', '../dist.whl', '/dist.whl', '.', '..'])
 def test_build_rejects_non_basename(
     mocker: pytest_mock.MockerFixture,
     package_test_flit: str,
@@ -604,7 +604,7 @@ def test_no_outdir_single(mocker: pytest_mock.MockerFixture, tmp_dir: str, packa
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'out')
-    builder.prepare('wheel', out)
+    assert builder.prepare('wheel', out) == os.path.join(out, '')
 
     assert os.path.isdir(out)
 
@@ -615,7 +615,7 @@ def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, pac
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'does', 'not', 'exist')
-    builder.prepare('wheel', out)
+    assert builder.prepare('wheel', out) == os.path.join(out, '')
 
     assert os.path.isdir(out)
 

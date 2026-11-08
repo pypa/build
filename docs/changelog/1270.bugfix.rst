@@ -1,1 +1,1 @@
-Reject backend hook results containing a directory instead of reporting a different artifact.
+Reject backend hook results containing a directory and empty build results instead of reporting a different artifact.
