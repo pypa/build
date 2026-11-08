@@ -814,11 +814,21 @@ def _backend_path_as_file(tmp_path: pathlib.Path) -> None:
     (tmp_path / 'bad').write_text('', encoding='utf-8')
 
 
+def _backend_path_symlink_outside(tmp_path: pathlib.Path) -> None:
+    outside = tmp_path.parent / f'{tmp_path.name}-outside'
+    outside.mkdir()
+    try:
+        (tmp_path / 'bad').symlink_to(outside, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f'creating directory symlinks is not supported: {exc}')
+
+
 @pytest.mark.parametrize(
     'setup',
     [
         pytest.param(_no_backend_path, id='nonexistent'),
         pytest.param(_backend_path_as_file, id='file-not-dir'),
+        pytest.param(_backend_path_symlink_outside, id='symlink-outside'),
     ],
 )
 def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[[pathlib.Path], None]) -> None:
@@ -832,5 +842,5 @@ def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[
         encoding='utf-8',
     )
     setup(tmp_path)
-    with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
+    with pytest.raises(build.BuildSystemTableValidationError):
         build.ProjectBuilder(tmp_path)

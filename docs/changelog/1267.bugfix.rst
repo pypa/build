@@ -1,0 +1,1 @@
+Reject ``backend-path`` entries that resolve outside the source tree - :issue:`1267`

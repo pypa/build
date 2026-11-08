@@ -156,8 +156,17 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
 
 
 def _validate_backend_path(source_dir: str, backend_paths: Sequence[str]) -> None:
+    source_dir = os.path.realpath(source_dir)
     for path in backend_paths:
         resolved = os.path.join(source_dir, path)
+        resolved = os.path.realpath(resolved)
+        try:
+            inside_source = os.path.commonpath((source_dir, resolved)) == source_dir
+        except ValueError:
+            inside_source = False
+        if not inside_source:
+            msg = f'`backend-path` entry {path!r} is outside the source directory'
+            raise BuildSystemTableValidationError(msg)
         if not os.path.isdir(resolved):
             msg = f'`backend-path` entry {path!r} does not exist or is not a directory'
             raise BuildSystemTableValidationError(msg)
