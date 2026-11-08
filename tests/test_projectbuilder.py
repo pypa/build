@@ -799,6 +799,10 @@ def test_parse_default_build_system_table_not_shared() -> None:
             {'build-system': {'requires': ['foo'], 'unknown-prop': False}},
             'Unknown properties: unknown-prop',
         ),
+        (
+            {'build-system': {'requires': ['foo'], '\x1b[2K\rcontrol-prop': False}},
+            r'Unknown properties: \\x1b\[2K\\rcontrol-prop',
+        ),
     ],
 )
 def test_parse_invalid_build_system_table_type(pyproject_toml: Mapping[str, TOMLValue], error_message: str) -> None:

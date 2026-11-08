@@ -147,9 +147,13 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         case _:
             pass
 
-    unknown_props = build_system.keys() - {'requires', 'build-backend', 'backend-path'}
+    unknown_props = sorted(build_system.keys() - {'requires', 'build-backend', 'backend-path'})
     if unknown_props:
-        msg = f'Unknown properties: {", ".join(unknown_props)}'
+        escaped_props = [
+            ''.join(c if c.isprintable() else c.encode('unicode_escape').decode('ascii') for c in prop)
+            for prop in unknown_props
+        ]
+        msg = f'Unknown properties: {", ".join(escaped_props)}'
         raise BuildSystemTableValidationError(msg)
 
     return table
