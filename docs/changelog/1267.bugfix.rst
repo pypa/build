@@ -1,0 +1,1 @@
+Reject ``backend-path`` entries that resolve outside the source directory. - by :user:`yashpatadiya1724-cmyk`
