@@ -95,6 +95,12 @@ build-frontend = "build[uv]"
 
 On conda-forge, this package is called [python-build].
 
+## Contributing to build
+
+Contribution guidelines can be found in the
+[documentation](https://build.pypa.io/en/stable/development/contributing.html). Please pay special attention to our AI
+policy.
+
 ### Code of Conduct
 
 Everyone interacting with build's codebase, issue trackers, chat rooms, and mailing lists is expected to follow the
