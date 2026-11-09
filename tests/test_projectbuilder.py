@@ -862,7 +862,7 @@ def test_backend_path_symlink_outside_source_dir(tmp_path: pathlib.Path) -> None
     vendored = project / 'vendored'
     try:
         vendored.symlink_to(outside, target_is_directory=True)
-    except OSError:
+    except OSError:  # pragma: no cover
         pytest.skip('Symlink creation not supported')
 
     (project / 'pyproject.toml').write_text(
@@ -886,7 +886,7 @@ def test_backend_path_symlink_inside_source_dir(tmp_path: pathlib.Path) -> None:
     vendored = project / 'vendored'
     try:
         vendored.symlink_to(internal, target_is_directory=True)
-    except OSError:
+    except OSError:  # pragma: no cover
         pytest.skip('Symlink creation not supported')
 
     (project / 'pyproject.toml').write_text(
