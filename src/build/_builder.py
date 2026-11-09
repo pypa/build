@@ -5,6 +5,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'difflib',
+    'pathlib',
     'subprocess',
     'tomllib',
     'warnings',
@@ -17,6 +18,7 @@ __lazy_modules__ = {
 import contextlib
 import difflib
 import os
+import pathlib
 import subprocess
 import sys
 import tomllib
@@ -156,18 +158,14 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
 
 
 def _validate_backend_path(source_dir: str, backend_paths: Sequence[str]) -> None:
-    source_dir_resolved = os.path.realpath(source_dir)
+    source_dir_resolved = pathlib.Path(source_dir).resolve()
     for path in backend_paths:
         full_path = os.path.join(source_dir, path)
         if not os.path.isdir(full_path):
             msg = f'`backend-path` entry {path!r} does not exist or is not a directory'
             raise BuildSystemTableValidationError(msg)
-        resolved = os.path.realpath(full_path)
-        try:
-            is_inside = os.path.commonpath([source_dir_resolved, resolved]) == source_dir_resolved
-        except ValueError:
-            is_inside = False
-        if not is_inside:
+        resolved = pathlib.Path(full_path).resolve()
+        if not resolved.is_relative_to(source_dir_resolved):
             msg = f'`backend-path` entry {path!r} is outside the source directory'
             raise BuildSystemTableValidationError(msg)
 

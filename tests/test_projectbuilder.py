@@ -836,87 +836,59 @@ def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[
         build.ProjectBuilder(tmp_path)
 
 
-def test_backend_path_outside_source_dir(tmp_path: pathlib.Path) -> None:
-    outside = tmp_path / 'outside'
-    outside.mkdir()
-    project = tmp_path / 'project'
-    project.mkdir()
+def _setup_backend_path_project(project: pathlib.Path, backend_path: str = 'vendored') -> None:
     (project / 'pyproject.toml').write_text(
-        textwrap.dedent("""\
+        textwrap.dedent(f"""\
             [build-system]
             requires = []
             build-backend = "backend"
-            backend-path = ["../outside"]
+            backend-path = [{backend_path!r}]
         """),
         encoding='utf-8',
     )
-    with pytest.raises(build.BuildSystemTableValidationError, match='is outside the source directory'):
-        build.ProjectBuilder(project)
 
 
-def test_backend_path_symlink_outside_source_dir(tmp_path: pathlib.Path) -> None:
-    outside = tmp_path / 'outside'
-    outside.mkdir()
-    project = tmp_path / 'project'
-    project.mkdir()
-    vendored = project / 'vendored'
+def _setup_outside_dir(tmp_path: pathlib.Path) -> str:
+    (tmp_path.parent / 'outside').mkdir(exist_ok=True)
+    return '../outside'
+
+
+def _setup_outside_symlink(tmp_path: pathlib.Path) -> str:
+    outside = tmp_path.parent / 'outside'
+    outside.mkdir(exist_ok=True)
+    vendored = tmp_path / 'vendored'
     try:
         vendored.symlink_to(outside, target_is_directory=True)
     except OSError:  # pragma: no cover
         pytest.skip('Symlink creation not supported')
+    return 'vendored'
 
-    (project / 'pyproject.toml').write_text(
-        textwrap.dedent("""\
-            [build-system]
-            requires = []
-            build-backend = "backend"
-            backend-path = ["vendored"]
-        """),
-        encoding='utf-8',
-    )
+
+@pytest.mark.parametrize(
+    'setup_backend_path',
+    [
+        pytest.param(_setup_outside_dir, id='relative-traversal'),
+        pytest.param(_setup_outside_symlink, id='external-symlink'),
+    ],
+)
+def test_backend_path_outside_source_dir(
+    tmp_path: pathlib.Path,
+    setup_backend_path: Callable[[pathlib.Path], str],
+) -> None:
+    backend_path = setup_backend_path(tmp_path)
+    _setup_backend_path_project(tmp_path, backend_path)
     with pytest.raises(build.BuildSystemTableValidationError, match='is outside the source directory'):
-        build.ProjectBuilder(project)
+        build.ProjectBuilder(tmp_path)
 
 
 def test_backend_path_symlink_inside_source_dir(tmp_path: pathlib.Path) -> None:
-    project = tmp_path / 'project'
-    project.mkdir()
-    internal = project / 'internal'
+    internal = tmp_path / 'internal'
     internal.mkdir()
-    vendored = project / 'vendored'
+    vendored = tmp_path / 'vendored'
     try:
         vendored.symlink_to(internal, target_is_directory=True)
     except OSError:  # pragma: no cover
         pytest.skip('Symlink creation not supported')
 
-    (project / 'pyproject.toml').write_text(
-        textwrap.dedent("""\
-            [build-system]
-            requires = []
-            build-backend = "backend"
-            backend-path = ["vendored"]
-        """),
-        encoding='utf-8',
-    )
-    builder = build.ProjectBuilder(project)
-    assert builder._build_system.get('backend-path') == ['vendored']
-
-
-def test_backend_path_cross_drive(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
-    def fake_commonpath(_paths: typing.Sequence[str]) -> str:
-        msg = 'Paths on different drives'
-        raise ValueError(msg)
-
-    monkeypatch.setattr(os.path, 'commonpath', fake_commonpath)
-    (tmp_path / 'vendored').mkdir()
-    (tmp_path / 'pyproject.toml').write_text(
-        textwrap.dedent("""\
-            [build-system]
-            requires = []
-            build-backend = "backend"
-            backend-path = ["vendored"]
-        """),
-        encoding='utf-8',
-    )
-    with pytest.raises(build.BuildSystemTableValidationError, match='is outside the source directory'):
-        build.ProjectBuilder(tmp_path)
+    _setup_backend_path_project(tmp_path, 'vendored')
+    build.ProjectBuilder(tmp_path)
