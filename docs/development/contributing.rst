@@ -217,15 +217,18 @@ tool maintainers and contributors participate. You can also ask questions on the
 
 We aim for build to remain a project which is maintained and remains maintainable by humans,
 and where humans interact with other humans.
-AI-generated content is generally unwelcome.
-Specifically:
 
-- Do not submit AI-generated code to build.
-  If your changes do not pass the `duck test <https://en.wikipedia.org/wiki/Duck_test>`_,
-  they will be rejected.
-- Do not let AI speak on your behalf;
-  absolutely do not leave comments written by AI,
-  and do not submit AI-generated content in commit messages, changelog fragments or the documentation.
+Purely AI-generated content is generally unwelcome.
+If your only contribution is to feed an issue into a model without other intellectual input,
+please don't.
+
+Moreover:
+
+- Do not let AI speak on your behalf. Issues, PR descriptions, and review comments should not come from an AI.
+- You should not have comments or documentation that looks like it was not written by a human.
+- You should be able to explain your changes.
+- Keep changes small and focused.  Excessive tests, redundant comments, and unrelated changes may get your PR rejected.
+- If an AI tool finds a security issue, please report it to us privately (via GitHub's private vulnerability reporting) with a reproducer.
 
 **********
  See also
