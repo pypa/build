@@ -1173,6 +1173,41 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
         cm.__enter__()
 
 
+@pytest.mark.skipif(os.name == 'nt', reason='symlink extraction semantics differ on Windows')
+def test_extract_sdist_rechecks_members_after_symlink_creation(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    outside = tmp_path / 'outside.txt'
+    outside.write_text('original\n', encoding='utf-8')
+
+    with tarfile.open(archive, 'w:gz') as tar:
+        info = tarfile.TarInfo(name='demo-1.0.0/PKG-INFO')
+        metadata = b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n'
+        info.size = len(metadata)
+        tar.addfile(info, io.BytesIO(metadata))
+
+        info = tarfile.TarInfo(name='demo-1.0.0/self')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '.'
+        tar.addfile(info)
+
+        info = tarfile.TarInfo(name='demo-1.0.0/' + 'self/' * 30 + 'fsroot')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '/'.join(['..'] * 31)
+        tar.addfile(info)
+
+        payload = b'written by archive\n'
+        info = tarfile.TarInfo(name='demo-1.0.0/fsroot' + str(outside))
+        info.size = len(payload)
+        tar.addfile(info, io.BytesIO(payload))
+
+    with pytest.raises(tarfile.TarError), build.__main__._extract_sdist(
+        str(archive), extract_dir=str(tmp_path / 'extract')
+    ):
+        pass
+
+    assert outside.read_text(encoding='utf-8') == 'original\n'
+
+
 def test_extract_sdist_fixed_dir_is_deterministic_and_kept(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
     extract_dir = tmp_path / 'extract'
     with build.__main__._extract_sdist(str(sdist), extract_dir=str(extract_dir)) as extracted:
