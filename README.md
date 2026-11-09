@@ -12,7 +12,7 @@ A simple, correct Python build frontend.
 
 See the [documentation](https://build.pypa.io) for more information.
 
-### Installation
+## Installation
 
 `build` can be installed via `pip` or an equivalent via:
 
@@ -20,7 +20,9 @@ See the [documentation](https://build.pypa.io) for more information.
 $ pip install build
 ```
 
-### Usage
+## Usage
+
+### Command-line interface
 
 ```console
 $ python -m build
@@ -30,7 +32,7 @@ This will build the package in an isolated environment, generating a source-dist
 `dist/`. See the [documentation](https://build.pypa.io) for full information. Build is also available via the command
 line as `pyproject-build` once installed.
 
-### Common arguments
+#### Common arguments
 
 - `--sdist` (`-s`): Produce just an SDist
 - `--wheel` (`-w`): Produce just a wheel
