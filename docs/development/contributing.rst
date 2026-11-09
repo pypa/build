@@ -215,20 +215,20 @@ tool maintainers and contributors participate. You can also ask questions on the
  "AI" Policy
 *************
 
-We aim for build to remain a project which is maintained and remains maintainable by humans,
-and where humans interact with other humans.
+We aim for build to remain a project which is maintained and remains maintainable by humans, and where humans interact
+with other humans.
 
-Purely AI-generated content is generally unwelcome.
-If your only contribution is to feed an issue into a model without other intellectual input,
-please don't.
+Purely AI-generated content is generally unwelcome. If your only contribution is to feed an issue into a model without
+other intellectual input, please don't.
 
 Moreover:
 
 - Do not let AI speak on your behalf. Issues, PR descriptions, and review comments should not come from an AI.
 - You should not have comments or documentation that looks like it was not written by a human.
 - You should be able to explain your changes.
-- Keep changes small and focused.  Excessive tests, redundant comments, and unrelated changes may get your PR rejected.
-- If an AI tool finds a security issue, please report it to us privately (via GitHub's private vulnerability reporting) with a reproducer.
+- Keep changes small and focused. Excessive tests, redundant comments, and unrelated changes may get your PR rejected.
+- If an AI tool finds a security issue, please report it to us privately (via GitHub's private vulnerability reporting)
+  with a reproducer.
 
 **********
  See also
