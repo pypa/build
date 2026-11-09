@@ -1,0 +1,1 @@
+Reject sdist symlink chains that redirect extracted files outside the destination directory.
