@@ -288,7 +288,7 @@ def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | Non
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _cprint('{yellow}TIP{reset} {}', hint, file=sys.stderr)
         _error(str(e))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CLI reports arbitrary build failures
         tb = traceback.format_exc().strip('\n')
         _cprint('\n{dim}{}{reset}\n', tb)
         _error(str(e))
@@ -494,7 +494,7 @@ def main_parser() -> argparse.ArgumentParser:
             option_strings: Sequence[str],
             dest: str,
             default: int | None = None,
-            help: str | None = None,
+            help: str | None = None,  # noqa: A002 - argparse passes this keyword to actions
         ) -> None:
             super().__init__(
                 option_strings=option_strings,

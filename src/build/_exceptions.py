@@ -7,13 +7,13 @@ if TYPE_CHECKING:
     import subprocess
 
 
-class BuildException(Exception):
+class BuildException(Exception):  # noqa: N818 - exported API name
     """
     Exception raised by ``build`` when a build cannot proceed.
     """
 
 
-class BuildBackendException(Exception):
+class BuildBackendException(Exception):  # noqa: N818 - exported API name
     """
     Exception raised when a backend operation fails.
     """

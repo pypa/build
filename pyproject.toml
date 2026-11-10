@@ -161,16 +161,9 @@ lint.per-file-ignores."docs/**.py" = [ "A001", "INP" ]
 lint.per-file-ignores."tasks/**.py" = [ "INP", "S607", "T20" ]
 lint.per-file-ignores."tests/**.py" = [ "INP", "S", "T20", "TC", "TID251" ]
 lint.per-file-ignores."tests/packages/**.py" = [ "ANN", "ARG001", "INP" ]
-lint.per-file-ignores."src/build/__main__.py" = [ "A002", "BLE001" ]
-lint.per-file-ignores."src/build/_builder.py" = [ "BLE001" ]
-lint.per-file-ignores."src/build/_ctx.py" = [ "S101" ]
-lint.per-file-ignores."src/build/_exceptions.py" = [ "N818" ]
-lint.per-file-ignores."src/build/util.py" = [ "S101" ]
 lint.per-file-ignores."tests/conftest.py" = [ "SLF001" ]
-lint.per-file-ignores."tests/test_ctx.py" = [ "SLF001" ]
 lint.per-file-ignores."tests/test_env.py" = [ "SLF001" ]
 lint.per-file-ignores."tests/test_main.py" = [ "SLF001" ]
-lint.per-file-ignores."tests/test_builder.py" = [ "SLF001" ]
 lint.flake8-tidy-imports.banned-api."os.path.commonprefix".msg = """\
   Use os.path.commonpath or manually implement string manip\
   """

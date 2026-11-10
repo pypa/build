@@ -871,10 +871,14 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
         )
 
 
-def test_handle_build_error_unexpected_exception(capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_reports_unexpected_exception(
+    mocker: pytest_mock.MockerFixture, capsys: pytest.CaptureFixture[str], package_test_flit: str
+) -> None:
     msg = 'unexpected failure'
-    with pytest.raises(SystemExit), build.__main__._handle_build_error(env_dir=None, sdist_extract_dir=None):
-        raise RuntimeError(msg)
+    mocker.patch('build.__main__.build_package', side_effect=RuntimeError(msg))
+
+    with pytest.raises(SystemExit):
+        build.__main__.main([package_test_flit, '--wheel'])
 
     captured = capsys.readouterr()
     assert 'RuntimeError: unexpected failure' in ANSI_STRIP.sub('', captured.out)
@@ -919,13 +923,18 @@ def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
     log('message', kind=('unknown',))
 
 
-def test_log_terminal_width_fallback(mocker: pytest_mock.MockerFixture) -> None:
+def test_log_terminal_width_fallback(mocker: pytest_mock.MockerFixture, capsys: pytest.CaptureFixture[str]) -> None:
     mocker.patch('build.__main__.shutil.get_terminal_size', return_value=os.terminal_size((1, 24)))
-    cprint = mocker.patch('build.__main__._cprint')
 
-    build.__main__._make_logger()('one two three')
+    def log_build(*_args: object, **_kwargs: object) -> list[str]:
+        build._ctx.log('one two three')
+        return []
 
-    cprint.assert_called_once_with('{}', '  one two three', file=sys.stderr)
+    mocker.patch('build.__main__.build_package', side_effect=log_build)
+
+    build.__main__.main(['--wheel'])
+
+    assert capsys.readouterr().err == '  one two three\n'
 
 
 def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:

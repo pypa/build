@@ -416,5 +416,5 @@ class ProjectBuilder:
             raise BuildBackendException(exception, f"Backend '{self._backend}' is not available.") from None
         except subprocess.CalledProcessError as exception:
             raise BuildBackendException(exception, f'Backend subprocess exited when trying to invoke {hook}') from None
-        except Exception as exception:
+        except Exception as exception:  # noqa: BLE001 - backend hooks may raise arbitrary exceptions
             raise BuildBackendException(exception) from None

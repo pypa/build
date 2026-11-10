@@ -20,15 +20,11 @@ import pytest
 import pytest_mock
 
 import build
-import build._builder
 
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Never
-
-    from build._builder import BuildSystemTable
-    from build._types import TOMLValue
 
 
 build_open_owner = 'builtins'
@@ -271,9 +267,13 @@ def test_init(
     mock_buildcaller = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     # correct flit pyproject.toml
-    builder = build.ProjectBuilder(package_test_flit)
+    build.ProjectBuilder(package_test_flit)
     mock_buildcaller.assert_called_with(
-        package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable, runner=builder._runner
+        package_test_flit,
+        'flit_core.buildapi',
+        backend_path=None,
+        python_executable=sys.executable,
+        runner=pyproject_hooks.default_subprocess_runner,
     )
     mock_buildcaller.reset_mock()
 
@@ -281,18 +281,22 @@ def test_init(
     builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
     assert builder.python_executable == 'some-python'
     mock_buildcaller.assert_called_with(
-        package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
+        package_test_flit,
+        'flit_core.buildapi',
+        backend_path=None,
+        python_executable='some-python',
+        runner=pyproject_hooks.default_subprocess_runner,
     )
     mock_buildcaller.reset_mock()
 
     # FileNotFoundError
-    builder = build.ProjectBuilder(package_legacy)
+    build.ProjectBuilder(package_legacy)
     mock_buildcaller.assert_called_with(
         package_legacy,
         'setuptools.build_meta:__legacy__',
         backend_path=None,
         python_executable=sys.executable,
-        runner=builder._runner,
+        runner=pyproject_hooks.default_subprocess_runner,
     )
 
     # TomlDecodeError
@@ -401,19 +405,21 @@ def test_build(mocker: pytest_mock.MockerFixture, package_test_flit: str, tmp_di
 
 
 def test_default_backend(mocker: pytest_mock.MockerFixture, package_legacy: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_legacy)
 
-    assert builder._build_system == DEFAULT_BACKEND
+    assert builder.build_system_requires == set(DEFAULT_BACKEND['requires'])
+    assert hook.call_args.args[1] == DEFAULT_BACKEND['build-backend']
 
 
 def test_missing_backend(mocker: pytest_mock.MockerFixture, package_test_no_backend: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
     builder = build.ProjectBuilder(package_test_no_backend)
 
-    assert builder._build_system == {'requires': [], 'build-backend': DEFAULT_BACKEND['build-backend']}
+    assert builder.build_system_requires == set()
+    assert hook.call_args.args[1] == DEFAULT_BACKEND['build-backend']
 
 
 def test_missing_requires(mocker: pytest_mock.MockerFixture, package_test_no_requires: str) -> None:
@@ -732,75 +738,73 @@ def test_log(mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
 
 
 @pytest.mark.parametrize(
-    ('pyproject_toml', 'parse_output'),
+    ('pyproject_toml', 'backend', 'backend_path'),
     [
-        (
-            {'build-system': {'requires': ['foo']}},
-            {'requires': ['foo'], 'build-backend': 'setuptools.build_meta:__legacy__'},
-        ),
-        (
-            {'build-system': {'requires': ['foo'], 'build-backend': 'bar'}},
-            {'requires': ['foo'], 'build-backend': 'bar'},
-        ),
-        (
-            {'build-system': {'requires': ['foo'], 'build-backend': 'bar', 'backend-path': ['baz']}},
-            {'requires': ['foo'], 'build-backend': 'bar', 'backend-path': ['baz']},
-        ),
+        ('[build-system]\nrequires = ["foo"]\n', 'setuptools.build_meta:__legacy__', None),
+        ('[build-system]\nrequires = ["foo"]\nbuild-backend = "bar"\n', 'bar', None),
+        ('[build-system]\nrequires = ["foo"]\nbuild-backend = "bar"\nbackend-path = ["baz"]\n', 'bar', ['baz']),
     ],
 )
-def test_parse_valid_build_system_table_type(pyproject_toml: Mapping[str, TOMLValue], parse_output: BuildSystemTable) -> None:
-    assert build._builder._parse_build_system_table(pyproject_toml) == parse_output
+def test_parse_valid_build_system_table_type(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    pyproject_toml: str,
+    backend: str,
+    backend_path: list[str] | None,
+) -> None:
+    tmp_path.joinpath('pyproject.toml').write_text(pyproject_toml, encoding='utf-8')
+    tmp_path.joinpath('baz').mkdir()
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
+    builder = build.ProjectBuilder(tmp_path)
 
-def test_parse_default_build_system_table_not_shared() -> None:
-    # A caller mutating the returned default table must not affect later callers.
-    first = build._builder._parse_build_system_table({})
-    first['requires'].append('mutated')
-
-    second = build._builder._parse_build_system_table({})
-    assert second['requires'] == ['setuptools >= 40.8.0']
+    assert builder.build_system_requires == {'foo'}
+    assert hook.call_args.args[1] == backend
+    assert hook.call_args.kwargs['backend_path'] == backend_path
 
 
 @pytest.mark.parametrize(
     ('pyproject_toml', 'error_message'),
     [
         (
-            {'build-system': 'not a table'},
+            'build-system = "not a table"\n',
             '`build-system` must be a table',
         ),
         (
-            {'build-system': {}},
+            '[build-system]\n',
             '`requires` is a required property',
         ),
         (
-            {'build-system': {'requires': 'not an array'}},
+            '[build-system]\nrequires = "not an array"\n',
             '`requires` must be an array of strings',
         ),
         (
-            {'build-system': {'requires': [1]}},
+            '[build-system]\nrequires = [1]\n',
             '`requires` must be an array of strings',
         ),
         (
-            {'build-system': {'requires': ['foo'], 'build-backend': ['not a string']}},
+            '[build-system]\nrequires = ["foo"]\nbuild-backend = ["not a string"]\n',
             '`build-backend` must be a string',
         ),
         (
-            {'build-system': {'requires': ['foo'], 'backend-path': 'not an array'}},
+            '[build-system]\nrequires = ["foo"]\nbackend-path = "not an array"\n',
             '`backend-path` must be an array of strings',
         ),
         (
-            {'build-system': {'requires': ['foo'], 'backend-path': [1]}},
+            '[build-system]\nrequires = ["foo"]\nbackend-path = [1]\n',
             '`backend-path` must be an array of strings',
         ),
         (
-            {'build-system': {'requires': ['foo'], 'unknown-prop': False}},
+            '[build-system]\nrequires = ["foo"]\nunknown-prop = false\n',
             'Unknown properties: unknown-prop',
         ),
     ],
 )
-def test_parse_invalid_build_system_table_type(pyproject_toml: Mapping[str, TOMLValue], error_message: str) -> None:
+def test_parse_invalid_build_system_table_type(tmp_path: pathlib.Path, pyproject_toml: str, error_message: str) -> None:
+    tmp_path.joinpath('pyproject.toml').write_text(pyproject_toml, encoding='utf-8')
+
     with pytest.raises(build.BuildSystemTableValidationError, match=error_message):
-        build._builder._parse_build_system_table(pyproject_toml)
+        build.ProjectBuilder(tmp_path)
 
 
 def _no_backend_path(_tmp_path: pathlib.Path) -> None:

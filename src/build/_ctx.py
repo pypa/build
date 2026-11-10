@@ -64,8 +64,7 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
         ) as process:
             log(subprocess.list2cmdline(cmd), kind=('subprocess', 'cmd'))
 
-            assert process.stdout
-            for line in process.stdout:
+            for line in typing.cast('typing.TextIO', process.stdout):
                 log(line, kind=('subprocess', 'stdout'))
 
             code = process.wait()
