@@ -147,27 +147,30 @@ show-fixes = true
 format.quote-style = "single"
 lint.select = [ "ALL" ]
 lint.ignore = [
-  "A002",    # Arguments can shadow builtins
-  "ANN401",  # Disallow Any
-  "BLE001",  # Blind exceptions are fine if re-raised or passed on
   "COM812",  # Trailing commas teach the formatter
   "CPY001",  # No copyright notice at top of file
-  "D",       # Too many doc requests
-  "ERA",     # Commented out code
-  "FBT",     # Boolean trap hard to fix on existing API
-  "N818",    # Using Exception suffix
-  "PLC0415", # Import should be at top of file
-  "PLR09",   # Too many ...
-  "PLR2004", # Magic values
-  "PTH",     # Too many change for now
+  "D",       # Public APIs use reST docs; tests do not need docstrings
+  "FBT",     # Existing build APIs accept positional booleans
+  "PLC0415", # Optional backends load only when selected
+  "PLR09",   # Build APIs and test fixtures have fixed signatures
+  "PLR2004", # Version thresholds and expected values are explicit
+  "PTH",     # Public APIs preserve string paths and non-resolving absolute paths
   "Q",       # Using formatter for quotes
-  "S101",    # Assert is used by the type checker and pytest
-  "SLF001",  # Private members are okay to access
 ]
 lint.per-file-ignores."docs/**.py" = [ "A001", "INP" ]
 lint.per-file-ignores."tasks/**.py" = [ "INP", "S607", "T20" ]
 lint.per-file-ignores."tests/**.py" = [ "INP", "S", "T20", "TC", "TID251" ]
 lint.per-file-ignores."tests/packages/**.py" = [ "ANN", "ARG001", "INP" ]
+lint.per-file-ignores."src/build/__main__.py" = [ "A002", "BLE001" ]
+lint.per-file-ignores."src/build/_builder.py" = [ "BLE001" ]
+lint.per-file-ignores."src/build/_ctx.py" = [ "S101" ]
+lint.per-file-ignores."src/build/_exceptions.py" = [ "N818" ]
+lint.per-file-ignores."src/build/util.py" = [ "S101" ]
+lint.per-file-ignores."tests/conftest.py" = [ "SLF001" ]
+lint.per-file-ignores."tests/test_ctx.py" = [ "SLF001" ]
+lint.per-file-ignores."tests/test_env.py" = [ "SLF001" ]
+lint.per-file-ignores."tests/test_main.py" = [ "SLF001" ]
+lint.per-file-ignores."tests/test_builder.py" = [ "SLF001" ]
 lint.flake8-tidy-imports.banned-api."os.path.commonprefix".msg = """\
   Use os.path.commonpath or manually implement string manip\
   """

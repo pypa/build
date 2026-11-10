@@ -140,7 +140,7 @@ def _showwarning(
 
 def _make_logger() -> _ctx.Logger:
     max_terminal_width = shutil.get_terminal_size().columns - 2
-    if max_terminal_width <= 0:  # pragma: no cover
+    if max_terminal_width <= 0:
         max_terminal_width = 78
 
     fill = partial(textwrap.fill, subsequent_indent='  ', width=max_terminal_width)
@@ -185,7 +185,7 @@ def _setup_cli(*, verbosity: int) -> None:
     _ctx.VERBOSITY.set(verbosity)
 
 
-def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
+def _error(msg: str, code: int = 1) -> NoReturn:
     """
     Print an error message and exit. Will color the output when writing to a TTY.
 
@@ -288,7 +288,7 @@ def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | Non
         _cprint('\n{dim}{}{reset}\n', tb.strip('\n'))
         _cprint('{yellow}TIP{reset} {}', hint, file=sys.stderr)
         _error(str(e))
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         tb = traceback.format_exc().strip('\n')
         _cprint('\n{dim}{}{reset}\n', tb)
         _error(str(e))

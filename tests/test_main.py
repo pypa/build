@@ -17,7 +17,7 @@ import venv
 import zipfile
 
 from collections.abc import Callable, Generator
-from typing import TYPE_CHECKING, Protocol, TypedDict, cast
+from typing import TYPE_CHECKING, Literal, Protocol, TypedDict, cast
 
 import pyproject_hooks
 import pytest
@@ -172,20 +172,18 @@ def test_parse_args(
     cli_args: list[str],
     build_args: tuple[str, str],
     build_kwargs: BuildKwargs,
-    hook: str,
+    hook: Literal['build_package', 'build_package_via_sdist'],
 ) -> None:
     build_package = mocker.patch('build.__main__.build_package', autospec=True, return_value=['something'])
     build_package_via_sdist = mocker.patch('build.__main__.build_package_via_sdist', autospec=True, return_value=['something'])
 
     build.__main__.main(cli_args)
 
-    if hook == 'build_package':
-        build_package.assert_called_with(*build_args, **build_kwargs)
-    elif hook == 'build_package_via_sdist':
-        build_package_via_sdist.assert_called_with(*build_args, **build_kwargs, sdist_extract_dir=None)
-    else:  # pragma: no cover
-        msg = f'Unknown hook {hook}'
-        raise ValueError(msg)
+    called, kwargs = {
+        'build_package': (build_package, build_kwargs),
+        'build_package_via_sdist': (build_package_via_sdist, {**build_kwargs, 'sdist_extract_dir': None}),
+    }[hook]
+    called.assert_called_with(*build_args, **kwargs)
 
 
 def test_env_dir_flag_forwarded(mocker: pytest_mock.MockerFixture) -> None:
@@ -242,7 +240,6 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
 
 
 def test_build_no_isolation_check_deps_empty(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
-    # check_dependencies = []
     build_cmd = mocker.patch('build.ProjectBuilder.build', return_value='something')
     mocker.patch('build.ProjectBuilder.check_dependencies', return_value=[])
 
@@ -875,6 +872,16 @@ def test_handle_build_error_build_backend_exception(mocker: pytest_mock.MockerFi
         )
 
 
+def test_handle_build_error_unexpected_exception(capsys: pytest.CaptureFixture[str]) -> None:
+    msg = 'unexpected failure'
+    with pytest.raises(SystemExit), build.__main__._handle_build_error(env_dir=None, sdist_extract_dir=None):
+        raise RuntimeError(msg)
+
+    captured = capsys.readouterr()
+    assert 'RuntimeError: unexpected failure' in ANSI_STRIP.sub('', captured.out)
+    assert 'ERROR unexpected failure' in ANSI_STRIP.sub('', captured.err)
+
+
 def test_handle_build_error_prints_debug_tip_on_subprocess_failure(
     mocker: pytest_mock.MockerFixture,
     capsys: pytest.CaptureFixture[str],
@@ -911,6 +918,15 @@ def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch('build.__main__._cprint')
     log = build.__main__._make_logger()
     log('message', kind=('unknown',))
+
+
+def test_log_terminal_width_fallback(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('build.__main__.shutil.get_terminal_size', return_value=os.terminal_size((1, 24)))
+    cprint = mocker.patch('build.__main__._cprint')
+
+    build.__main__._make_logger()('one two three')
+
+    cprint.assert_called_once_with('{}', '  one two three', file=sys.stderr)
 
 
 def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:

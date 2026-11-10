@@ -276,7 +276,7 @@ class _PipBackend(_EnvBackend):
 
         # Version to have added the `--python` option.
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
+        if dist := _has_dependency('pip', '22.3'):
             files = dist.files
             if files:
                 return any(str(f).startswith('pip/_vendor') for f in files)
@@ -291,7 +291,7 @@ class _PipBackend(_EnvBackend):
                         return True
             return False
 
-        return None  # pragma: no cover
+        return None
 
     @functools.cached_property
     def _has_virtualenv(self) -> bool:
@@ -494,7 +494,7 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
         # The distributors are encouraged to set a "venv" scheme to be used for this.
         # See https://bugs.python.org/issue45413
         # and https://github.com/pypa/virtualenv/issues/2208
-        paths = sysconfig.get_paths(scheme='venv', vars=config_vars)  # pragma: no cover
+        paths = sysconfig.get_paths(scheme='venv', vars=config_vars)
     elif 'posix_local' in scheme_names:
         # The Python that ships on Debian/Ubuntu varies the default scheme to
         # install to /usr/local

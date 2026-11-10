@@ -367,15 +367,12 @@ def test_check_dependencies(
     get_requires_sdist.side_effect = copy.copy(side_effects)
     get_requires_wheel.side_effect = copy.copy(side_effects)
 
-    # requires = []
     assert builder.check_dependencies('sdist') == {('flit_core<4,>=2',)}
     assert builder.check_dependencies('wheel') == {('flit_core<4,>=2',)}
 
-    # requires = ['something']
     assert builder.check_dependencies('sdist') == {('flit_core<4,>=2',), ('something',)}
     assert builder.check_dependencies('wheel') == {('flit_core<4,>=2',), ('something',)}
 
-    # BackendUnavailable
     with pytest.raises(build.BuildBackendException):
         builder.check_dependencies('sdist')
     with pytest.raises(build.BuildBackendException):

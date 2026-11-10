@@ -69,7 +69,7 @@ def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, env: Mapping[
                 log(line, kind=('subprocess', 'stdout'))
 
             code = process.wait()
-            if code:  # pragma: no cover
+            if code:
                 raise subprocess.CalledProcessError(code, process.args)
 
     else:
@@ -91,7 +91,7 @@ else:
             return LOGGER.get()
         if name == 'verbosity':
             return VERBOSITY.get()
-        raise AttributeError(name)  # pragma: no cover
+        raise AttributeError(name)
 
 
 __all__ = [

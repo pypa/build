@@ -13,6 +13,12 @@ import build._ctx
 pytestmark = pytest.mark.contextvars
 
 
+def test_unknown_context_attribute() -> None:
+    name = 'missing'
+    with pytest.raises(AttributeError, match='missing'):
+        getattr(build._ctx, name)
+
+
 def test_default_ctx_logger(caplog: pytest.LogCaptureFixture) -> None:
     build._ctx.log('foo')
 

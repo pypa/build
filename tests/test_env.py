@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib.machinery
 import importlib.metadata
 import importlib.util
 import logging
@@ -453,6 +454,39 @@ def test_get_minimum_pip_version_darwin_release_parsing(
     mocker.patch('platform.system', return_value='Darwin')
     mocker.patch('platform.mac_ver', return_value=(release, ('', '', ''), machine))
     assert build.env._PipBackend._get_minimum_pip_version_str() == expected
+
+
+@pytest.mark.parametrize(
+    ('python_version', 'vendor_available', 'expected'),
+    [
+        pytest.param((3, 11), True, False, id='python-3.11'),
+        pytest.param((3, 12), True, True, id='vendor-present'),
+        pytest.param((3, 12), False, False, id='vendor-missing'),
+    ],
+)
+def test_pip_backend_without_distribution_record(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+    python_version: tuple[int, int],
+    vendor_available: bool,
+    expected: bool,
+) -> None:
+    mocker.patch('build.env._has_dependency', return_value=importlib.metadata.PathDistribution(tmp_path))
+    mocker.patch(
+        'build.env.importlib.util.find_spec',
+        return_value=importlib.machinery.ModuleSpec('pip._vendor', None) if vendor_available else None,
+    )
+    mocker.patch.object(build.env._PipBackend, '_has_virtualenv', False)
+    mocker.patch.object(build.env.sys, 'version_info', python_version)
+
+    assert build.env._PipBackend()._has_valid_outer_pip is expected
+
+
+def test_pip_backend_without_outer_pip(mocker: pytest_mock.MockerFixture) -> None:
+    mocker.patch('build.env._has_dependency', return_value=None)
+    mocker.patch.object(build.env._PipBackend, '_has_virtualenv', False)
+
+    assert build.env._PipBackend()._has_valid_outer_pip is None
 
 
 def test_isolated_env_enter_failure_before_path_set(
