@@ -413,6 +413,16 @@ def test_default_backend(mocker: pytest_mock.MockerFixture, package_legacy: str)
     assert hook.call_args.args[1] == DEFAULT_BACKEND['build-backend']
 
 
+def test_default_requirements_are_isolated(package_legacy: str) -> None:
+    builder = build.ProjectBuilder(package_legacy)
+    builder.build_system_requires.add('mutated')
+
+    assert (builder.build_system_requires, build.ProjectBuilder(package_legacy).build_system_requires) == (
+        {'setuptools >= 40.8.0'},
+        {'setuptools >= 40.8.0'},
+    )
+
+
 def test_missing_backend(mocker: pytest_mock.MockerFixture, package_test_no_backend: str) -> None:
     hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
