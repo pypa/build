@@ -1173,7 +1173,7 @@ def test_main_rejects_path_traversal(tmp_path: pathlib.Path, capsys: pytest.Capt
         build.__main__.main([str(archive), '--wheel'])
 
     assert caught.value.code == 1
-    assert 'OutsideDestinationError' in capsys.readouterr().out
+    assert "ERROR '../evil.txt'" in capsys.readouterr().err
     assert not (tmp_path / 'evil.txt').exists()
 
 
@@ -1189,7 +1189,7 @@ def test_main_rejects_absolute_symlink(tmp_path: pathlib.Path, capsys: pytest.Ca
         build.__main__.main([str(archive), '--wheel'])
 
     assert caught.value.code == 1
-    assert 'AbsoluteLinkError' in capsys.readouterr().out
+    assert "ERROR 'demo-1.0.0/evil'" in capsys.readouterr().err
 
 
 def test_extract_sdist_fixed_dir_is_deterministic_and_kept(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
