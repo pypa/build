@@ -847,7 +847,14 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
 
     extract_dir = os.fspath(extract_dir)
 
-    with tarfile.open(archive_path) as archive:
+    try:
+        archive = tarfile.open(archive_path)
+    except tarfile.TarError as exc:
+        detail = str(exc).splitlines()[0] if str(exc) else exc
+        msg = f'{name!r} does not appear to be a valid tar archive: {detail}'
+        raise BuildException(msg) from exc
+
+    with archive:
         safe_members = [tarfile.data_filter(m, extract_dir) for m in archive.getmembers()]
 
         top_level_dirs = {m.name.split('/', 1)[0] for m in safe_members}

@@ -390,6 +390,20 @@ def test_config_json_errors(cli_args: list[str], err_msg: str, capsys: pytest.Ca
     assert err_msg in outerr.out or err_msg in outerr.err
 
 
+def test_build_from_corrupt_sdist_reports_clean_error(
+    tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    corrupt_sdist = tmp_path / 'corrupt-1.0.tar.gz'
+    corrupt_sdist.write_bytes(b'not a tarball')
+    with pytest.raises(SystemExit):
+        build.__main__.main([os.fspath(corrupt_sdist), '--no-isolation', '--wheel'])
+
+    outerr = capsys.readouterr()
+    assert "'corrupt-1.0.tar.gz' does not appear to be a valid tar archive" in outerr.err
+    assert 'Traceback' not in outerr.out
+    assert 'Traceback' not in outerr.err
+
+
 @pytest.mark.isolated
 def test_build_raises_build_exception(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
     mocker.patch('build.ProjectBuilder.get_requires_for_build', side_effect=build.BuildException)
