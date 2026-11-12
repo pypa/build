@@ -6,9 +6,6 @@ from __future__ import annotations
 __lazy_modules__ = {
     'argparse',
     'build',
-    'build._compat.tarfile',
-    'build._exceptions',
-    'build._util',
     'build.env',
     'functools',
     'hashlib',
@@ -24,6 +21,10 @@ __lazy_modules__ = {
     'traceback',
     'warnings',
     'zipfile',
+    f'{__spec__.parent}._compat',
+    f'{__spec__.parent}._ctx',
+    f'{__spec__.parent}._exceptions',
+    f'{__spec__.parent}._util',
 }
 
 import argparse
@@ -53,11 +54,14 @@ from packaging.version import InvalidVersion
 import build
 import build.env as _env
 
-from build import ProjectBuilder, _ctx
-from build._compat.tarfile import tarfile
-from build._exceptions import BuildBackendException, BuildException, FailedProcessError
-from build._util import format_unmet_dependencies
+from build import ProjectBuilder
 from build.env import DefaultIsolatedEnv
+
+from ._compat import archive_tarfile as tarfile
+from ._ctx import LOGGER, VERBOSITY, Logger
+from ._ctx import run_subprocess as _run_subprocess
+from ._exceptions import BuildBackendException, BuildException, FailedProcessError
+from ._util import format_unmet_dependencies
 
 
 TYPE_CHECKING = False
@@ -65,7 +69,7 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Mapping, Sequence
 
-    from build._types import ConfigSettings, Distribution, JSONValue, StrPath, SubprocessRunner
+    from ._types import ConfigSettings, Distribution, JSONValue, StrPath, SubprocessRunner
 
 
 class _CliArgs:
@@ -138,7 +142,7 @@ def _showwarning(
     _cprint('{yellow}WARNING{reset} {}', str(message), file if file is not None else sys.stderr)
 
 
-def _make_logger() -> _ctx.Logger:
+def _make_logger() -> Logger:
     max_terminal_width = shutil.get_terminal_size().columns - 2
     if max_terminal_width <= 0:  # pragma: no cover
         max_terminal_width = 78
@@ -151,7 +155,7 @@ def _make_logger() -> _ctx.Logger:
 
     # Nested so it cannot be called directly, bypassing the logger setup above.
     def log(message: str, *, kind: tuple[str, ...] | None = None) -> None:
-        if _ctx.verbosity < -1:
+        if VERBOSITY.get() < -1:
             return
         match kind:
             case ('step', *_):
@@ -181,8 +185,8 @@ def _setup_cli(*, verbosity: int) -> None:
 
     _init_colors()
 
-    _ctx.LOGGER.set(_make_logger())
-    _ctx.VERBOSITY.set(verbosity)
+    LOGGER.set(_make_logger())
+    VERBOSITY.set(verbosity)
 
 
 def _error(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
@@ -237,7 +241,7 @@ def _bootstrap_build_env(
 
 def _log_dependency_versions(env: DefaultIsolatedEnv, requirements: set[str]) -> None:
     if versions := env.installed_versions(requirements):
-        _ctx.log(
+        LOGGER.get()(
             'Installed build dependency versions:\n'
             + '\n'.join(f'- {name}=={version}' for name, version in sorted(versions.items())),
             kind=('step',),
@@ -264,7 +268,7 @@ def _build(
         dependency_constraints_txt,
         installer,
         env_dir,
-        pyproject_hooks.quiet_subprocess_runner if _ctx.verbosity < 0 else None,
+        pyproject_hooks.quiet_subprocess_runner if VERBOSITY.get() < 0 else None,
     ) as builder:
         return builder.build(distribution, outdir, config_settings)
 
@@ -404,7 +408,7 @@ def build_package_via_sdist(
     built: list[str] = []
     if distributions:
         with _extract_sdist(sdist, extract_dir=sdist_extract_dir) as extracted_srcdir:
-            _ctx.log(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
+            LOGGER.get()(f'Building {_natural_language_list(distributions)} from sdist', kind=('step',))
             for distribution in distributions:
                 out = _build(
                     isolation,
@@ -440,7 +444,7 @@ def _build_metadata(
         env = os.environ.copy()
         if extra_environ:
             env.update(extra_environ)
-        _ctx.run_subprocess(cmd, cwd, env)
+        _run_subprocess(cmd, cwd, env)
 
     with (
         _bootstrap_build_env(
@@ -739,7 +743,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
             built = run_build(args.srcdir, outdir)
         if args.report is not None:
             _write_report(args.report, outdir, built)
-        if _ctx.verbosity >= -1 and built:
+        if VERBOSITY.get() >= -1 and built:
             artifact_list = _natural_language_list(
                 ['{underline}{}{reset}{bold}{green}'.format(artifact, **_styles.get()['stdout']) for artifact in built]
             )

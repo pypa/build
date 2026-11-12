@@ -13,7 +13,6 @@ __lazy_modules__ = {
     'sysconfig',
     'tempfile',
     'warnings',
-    f'{__spec__.parent}',
     f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
@@ -37,8 +36,7 @@ import warnings
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 
-from . import _ctx
-from ._ctx import run_subprocess
+from ._ctx import LOGGER, VERBOSITY, log_subprocess_error, run_subprocess
 from ._exceptions import BuildException, FailedProcessError
 from ._util import check_dependency
 
@@ -49,7 +47,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection, Mapping
     from typing import Self
 
-    from . import _types
+    from ._types import StrPath
 
 
 Installer = typing.Literal['pip', 'uv']
@@ -146,7 +144,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             else:
                 self._env_backend = _PipBackend()
 
-            _ctx.log(f'Creating isolated environment: {self._env_backend.display_name}...', kind=('step',))
+            LOGGER.get()(f'Creating isolated environment: {self._env_backend.display_name}...', kind=('step',))
             self._env_backend.create(self._path)
 
         except BaseException:  # cleanup folder if creation fails or is interrupted
@@ -204,7 +202,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
     def install(
         self,
         requirements: Collection[str],
-        constraints_txt_path: _types.StrPath | None = None,
+        constraints_txt_path: StrPath | None = None,
         *,
         _fresh: bool = False,  # Used internally by CLI to support preset PYTHONPATH
     ) -> None:
@@ -219,7 +217,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
-        _ctx.log(
+        LOGGER.get()(
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
             kind=('step',),
         )
@@ -243,7 +241,7 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
     def install_dependencies(
         self,
         requirements: Collection[str],
-        constraints_txt_path: _types.StrPath | None,
+        constraints_txt_path: StrPath | None,
         *,
         _fresh: bool = False,
     ) -> None: ...
@@ -354,7 +352,7 @@ class _PipBackend(_EnvBackend):
             try:
                 venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=with_pip).create(path)
             except subprocess.CalledProcessError as exc:
-                _ctx.log_subprocess_error(exc)
+                log_subprocess_error(exc)
                 raise FailedProcessError(exc, 'Failed to create venv. Maybe try installing virtualenv.') from None
 
             self.python_executable, self.scripts_dir, purelib = _find_executable_and_scripts(path)
@@ -386,7 +384,7 @@ class _PipBackend(_EnvBackend):
     def install_dependencies(
         self,
         requirements: Collection[str],
-        constraints_txt_path: _types.StrPath | None,
+        constraints_txt_path: StrPath | None,
         *,
         _fresh: bool = False,
     ) -> None:
@@ -396,7 +394,7 @@ class _PipBackend(_EnvBackend):
             else:
                 cmd = [self.python_executable, '-Im', 'pip']
 
-            if (verbosity := _ctx.verbosity) > 1:
+            if (verbosity := VERBOSITY.get()) > 1:
                 cmd += [f'-{"v" * (verbosity - 1)}']
 
             cmd += ['install']
@@ -443,7 +441,7 @@ class _UvBackend(_EnvBackend):
                 msg = 'uv executable not found'
                 raise RuntimeError(msg) from None
 
-            _ctx.log(f'Using external uv from {uv_bin}')
+            LOGGER.get()(f'Using external uv from {uv_bin}')
             self._uv_bin = uv_bin
 
         venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=False).create(self._env_path)
@@ -452,13 +450,13 @@ class _UvBackend(_EnvBackend):
     def install_dependencies(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
         self,
         requirements: Collection[str],
-        constraints_txt_path: _types.StrPath | None,
+        constraints_txt_path: StrPath | None,
         *,
         _fresh: bool = False,
     ) -> None:
         cmd = [self._uv_bin, 'pip']
 
-        if (verbosity := _ctx.verbosity) > 1:
+        if (verbosity := VERBOSITY.get()) > 1:
             cmd += [f'-{"v" * min(2, verbosity - 1)}']
 
         cmd += ['install', *requirements, '--python', self.python_executable]

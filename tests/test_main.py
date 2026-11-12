@@ -916,9 +916,12 @@ def test_log_unknown_kind(mocker: pytest_mock.MockerFixture) -> None:
 def test_log_dependency_versions(mocker: pytest_mock.MockerFixture) -> None:
     env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
     env.installed_versions.return_value = {'wheel': '0.45.1', 'setuptools': '80.9.0'}
-    log = mocker.patch('build.__main__._ctx.log')
-
-    build.__main__._log_dependency_versions(env, {'setuptools', 'wheel'})
+    log = mocker.create_autospec(build.__main__._make_logger())
+    token = build.__main__.LOGGER.set(log)
+    try:
+        build.__main__._log_dependency_versions(env, {'setuptools', 'wheel'})
+    finally:
+        build.__main__.LOGGER.reset(token)
 
     log.assert_called_once_with(
         'Installed build dependency versions:\n- setuptools==80.9.0\n- wheel==0.45.1',
@@ -930,9 +933,12 @@ def test_log_dependency_versions_none(mocker: pytest_mock.MockerFixture) -> None
     env = mocker.create_autospec(build.env.DefaultIsolatedEnv, instance=True)
     installed: dict[str, str] = {}
     env.installed_versions.return_value = installed
-    log = mocker.patch('build.__main__._ctx.log')
-
-    build.__main__._log_dependency_versions(env, set())
+    log = mocker.create_autospec(build.__main__._make_logger())
+    token = build.__main__.LOGGER.set(log)
+    try:
+        build.__main__._log_dependency_versions(env, set())
+    finally:
+        build.__main__.LOGGER.reset(token)
 
     log.assert_not_called()
 
@@ -1018,7 +1024,7 @@ def test_build_metadata_runner_without_extra_environ(
         yield builder
 
     mocker.patch('build.__main__._bootstrap_build_env', side_effect=fake_bootstrap)
-    ctx_run = mocker.patch('build.__main__._ctx.run_subprocess')
+    ctx_run = mocker.patch.object(build.__main__, '_run_subprocess', autospec=True)
 
     build.__main__._build_metadata(package_test_setuptools, '.', ['wheel'], isolation=False, skip_dependency_check=True)
 

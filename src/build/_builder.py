@@ -9,7 +9,7 @@ __lazy_modules__ = {
     'tomllib',
     'warnings',
     'zipfile',
-    f'{__spec__.parent}',
+    f'{__spec__.parent}._ctx',
     f'{__spec__.parent}._exceptions',
     f'{__spec__.parent}._util',
 }
@@ -25,7 +25,7 @@ import zipfile
 
 import pyproject_hooks
 
-from . import _ctx, env
+from ._ctx import LOGGER
 from ._exceptions import (
     BuildBackendException,
     BuildException,
@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
     from typing import NotRequired, Self, TypedDict, TypeGuard
 
+    from . import env
     from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner, TOMLValue
 
     # The validated ``[build-system]`` table.
@@ -269,7 +270,7 @@ class ProjectBuilder:
             (``sdist`` or ``wheel``)
         :param config_settings: Config settings for the build backend
         """
-        _ctx.log(f'Getting build dependencies for {distribution}...', kind=('step',))
+        LOGGER.get()(f'Getting build dependencies for {distribution}...', kind=('step',))
         hook_name = f'get_requires_for_build_{distribution}'
 
         with self._handle_backend(hook_name):
@@ -312,7 +313,7 @@ class ProjectBuilder:
         :param config_settings: Config settings for the build backend
         :returns: The full path to the prepared metadata directory
         """
-        _ctx.log(f'Getting metadata for {distribution}...', kind=('step',))
+        LOGGER.get()(f'Getting metadata for {distribution}...', kind=('step',))
         try:
             return self._call_backend(
                 f'prepare_metadata_for_build_{distribution}',
@@ -342,7 +343,7 @@ class ProjectBuilder:
             previous ``prepare`` call on the same ``distribution`` kind
         :returns: The full path to the built distribution
         """
-        _ctx.log(f'Building {distribution}...', kind=('step',))
+        LOGGER.get()(f'Building {distribution}...', kind=('step',))
 
         kwargs = {} if metadata_directory is None else {'metadata_directory': metadata_directory}
         return self._call_backend(f'build_{distribution}', output_directory, config_settings, **kwargs)

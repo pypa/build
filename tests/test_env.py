@@ -233,11 +233,13 @@ def test_install_short_circuits(
 def test_default_impl_install_cmd_well_formed(
     tmp_path: Path,
     mocker: pytest_mock.MockerFixture,
+    request: pytest.FixtureRequest,
     verbosity: int,
     constraints_txt: str,
     fresh: bool,
 ) -> None:
-    mocker.patch.object(_ctx, 'verbosity', verbosity)
+    token = _ctx.VERBOSITY.set(verbosity)
+    request.addfinalizer(lambda: _ctx.VERBOSITY.reset(token))
 
     constraints_txt_path = None
     if constraints_txt:
@@ -276,11 +278,13 @@ def test_default_impl_install_cmd_well_formed(
 def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
     tmp_path: Path,
     mocker: pytest_mock.MockerFixture,
+    request: pytest.FixtureRequest,
     verbosity: int,
     constraints_txt: str,
     fresh: bool,
 ) -> None:
-    mocker.patch.object(_ctx, 'verbosity', verbosity)
+    token = _ctx.VERBOSITY.set(verbosity)
+    request.addfinalizer(lambda: _ctx.VERBOSITY.reset(token))
 
     constraints_txt_path = None
     if constraints_txt:
