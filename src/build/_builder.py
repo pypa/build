@@ -67,7 +67,7 @@ def _find_typo(dictionary: Iterable[str], expected: str) -> None:
     for obj in dictionary:
         if difflib.SequenceMatcher(None, expected, obj).ratio() >= 0.8:
             warnings.warn(
-                f"Found '{obj}' in pyproject.toml, did you mean '{expected}'?",
+                f'Found {obj!r} in pyproject.toml, did you mean {expected!r}?',
                 TypoWarning,
                 stacklevel=2,
             )
@@ -147,9 +147,9 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
         case _:
             pass
 
-    unknown_props = build_system.keys() - {'requires', 'build-backend', 'backend-path'}
+    unknown_props = sorted(build_system.keys() - {'requires', 'build-backend', 'backend-path'})
     if unknown_props:
-        msg = f'Unknown properties: {", ".join(unknown_props)}'
+        msg = f'Unknown properties: {", ".join(map(repr, unknown_props))}'
         raise BuildSystemTableValidationError(msg)
 
     return table
