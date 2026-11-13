@@ -1,1 +1,1 @@
-Fixed the package dir creation command in the getting started tutorial. tutorial - by :user:`Chanuth412-pixel`
+Fixed the package dir creation command in the getting started tutorial. - by :user:`Chanuth412-pixel`
