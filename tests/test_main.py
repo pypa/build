@@ -236,7 +236,7 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
     install.assert_any_call({'flit_core >=2,<4'}, constraints_txt_path=None, _fresh=True)
 
     required_cmd.assert_called_with('sdist', None)
-    install.assert_any_call({'dep1', 'dep2'}, constraints_txt_path=None)
+    install.assert_any_call({'dep1', 'dep2'}, constraints_txt_path=None, _fresh=True)
 
     build_cmd.assert_called_with('sdist', '.', None)
 
