@@ -174,7 +174,7 @@ For packages with C extensions or platform-specific code, use cibuildwheel:
         runs-on: ${{ matrix.os }}
         strategy:
           matrix:
-            os: [ubuntu-latest, windows-latest, macos-15-intel, macos-15]
+            os: [ubuntu-latest, windows-latest, macos-latest]
 
         steps:
           - uses: actions/checkout@v4
