@@ -1,0 +1,1 @@
+Reject invalid build requirements before passing them to pip or uv as installer options.

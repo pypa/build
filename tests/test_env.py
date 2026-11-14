@@ -212,6 +212,46 @@ def test_pip_needs_upgrade_mac_os_11(
             )
 
 
+@pytest.mark.parametrize('installer', ['pip', 'uv'])
+@pytest.mark.parametrize(
+    'requirement',
+    [
+        '--index-url=https://example.invalid/simple',
+        'demo @ https://example.invalid/demo.whl --hash=sha256:1234',
+        'demo\n--index-url=https://example.invalid/simple',
+        'demo @ https://example.invalid/demo.whl\n--index-url=https://example.invalid/simple',
+        'demo @ https://example.invalid/demo.whl\r--index-url=https://example.invalid/simple',
+        'demo @ https://example.invalid/demo.whl\r\n--index-url=https://example.invalid/simple',
+        *[
+            f'demo @ https://example.invalid/demo.whl{separator}--index-url=https://example.invalid/simple'
+            for separator in '\v\f\x1c\x1d\x1e\x85\u2028\u2029'
+        ],
+        'not a valid req !!',
+    ],
+)
+def test_install_rejects_invalid_requirement(
+    mocker: pytest_mock.MockerFixture, installer: build.env.Installer, requirement: str
+) -> None:
+    env = build.env.DefaultIsolatedEnv(installer=installer)
+    backend = mocker.patch.object(env, '_env_backend', create=True)
+
+    with pytest.raises(build.BuildException, match='Invalid build requirement'):
+        env.install(['valid-package', requirement])
+
+    backend.install_dependencies.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'requirement',
+    ['demo[extra]>=1; python_version < "4"', 'demo @ https://example.invalid/demo.whl#sha256=1234'],
+)
+def test_install_preserves_valid_requirement(mocker: pytest_mock.MockerFixture, requirement: str) -> None:
+    env = build.env.DefaultIsolatedEnv()
+    backend = mocker.patch.object(env, '_env_backend', create=True)
+    env.install([requirement])
+    backend.install_dependencies.assert_called_once_with([requirement], None, _fresh=False)
+
+
 def test_install_short_circuits(
     mocker: pytest_mock.MockerFixture,
 ) -> None:

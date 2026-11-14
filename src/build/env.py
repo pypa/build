@@ -219,6 +219,16 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if not requirements:
             return
 
+        for requirement in requirements:
+            if requirement.splitlines() != [requirement]:
+                msg = f'Invalid build requirement: {requirement!r}'
+                raise BuildException(msg)
+            try:
+                Requirement(requirement)
+            except InvalidRequirement as exception:
+                msg = f'Invalid build requirement: {requirement!r}'
+                raise BuildException(msg) from exception
+
         _ctx.log(
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
             kind=('step',),
