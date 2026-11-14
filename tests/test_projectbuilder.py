@@ -834,3 +834,68 @@ def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[
     setup(tmp_path)
     with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
         build.ProjectBuilder(tmp_path)
+
+
+def test_backend_path_outside_source_tree(tmp_path: pathlib.Path) -> None:
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    project = tmp_path / 'project'
+    project.mkdir()
+
+    (project / 'pyproject.toml').write_text(
+        textwrap.dedent("""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["../outside"]
+        """),
+        encoding='utf-8',
+    )
+    with pytest.raises(build.BuildSystemTableValidationError, match='is not inside the source tree'):
+        build.ProjectBuilder(project)
+
+
+def test_backend_path_symlink_outside_source_tree(tmp_path: pathlib.Path) -> None:
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    project = tmp_path / 'project'
+    project.mkdir()
+    try:
+        (project / 'vendored').symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip('symlinks not supported')
+
+    (project / 'pyproject.toml').write_text(
+        textwrap.dedent("""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["vendored"]
+        """),
+        encoding='utf-8',
+    )
+    with pytest.raises(build.BuildSystemTableValidationError, match='is not inside the source tree'):
+        build.ProjectBuilder(project)
+
+
+def test_backend_path_symlink_inside_source_tree(tmp_path: pathlib.Path) -> None:
+    project = tmp_path / 'project'
+    project.mkdir()
+    pkg = project / 'pkg'
+    pkg.mkdir()
+    try:
+        (project / 'in_tree').symlink_to(pkg, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip('symlinks not supported')
+
+    (project / 'pyproject.toml').write_text(
+        textwrap.dedent("""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["in_tree"]
+        """),
+        encoding='utf-8',
+    )
+    builder = build.ProjectBuilder(project)
+    assert builder._build_system.get('backend-path') == ['in_tree']
