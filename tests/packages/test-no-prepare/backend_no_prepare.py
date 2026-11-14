@@ -21,4 +21,4 @@ Summary: {metadata['project']['description']}
 """,
         )
 
-    return wheel.filename
+    return os.path.basename(wheel.filename)

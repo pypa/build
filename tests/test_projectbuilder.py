@@ -403,6 +403,23 @@ def test_build(mocker: pytest_mock.MockerFixture, package_test_flit: str, tmp_di
         builder.build('wheel', tmp_dir)
 
 
+@pytest.mark.parametrize('distribution', ['sdist', 'wheel', 'editable'])
+@pytest.mark.parametrize('filename', ['', 'fresh/dist.whl', '../dist.whl', '/dist.whl', '.', '..'])
+def test_build_rejects_non_basename(
+    mocker: pytest_mock.MockerFixture,
+    package_test_flit: str,
+    tmp_dir: str,
+    distribution: typing.Literal['sdist', 'wheel', 'editable'],
+    filename: str,
+) -> None:
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
+    getattr(hook, f'build_{distribution}').return_value = filename
+    builder = build.ProjectBuilder(package_test_flit)
+
+    with pytest.raises(build.BuildException, match='invalid basename'):
+        builder.build(distribution, tmp_dir)
+
+
 def test_default_backend(mocker: pytest_mock.MockerFixture, package_legacy: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 
@@ -587,7 +604,7 @@ def test_no_outdir_single(mocker: pytest_mock.MockerFixture, tmp_dir: str, packa
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'out')
-    builder.prepare('wheel', out)
+    assert builder.prepare('wheel', out) == os.path.join(out, '')
 
     assert os.path.isdir(out)
 
@@ -598,7 +615,7 @@ def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, pac
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'does', 'not', 'exist')
-    builder.prepare('wheel', out)
+    assert builder.prepare('wheel', out) == os.path.join(out, '')
 
     assert os.path.isdir(out)
 

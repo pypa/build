@@ -406,6 +406,14 @@ class ProjectBuilder:
         with self._handle_backend(hook_name):
             basename: str = callback(outdir, config_settings, **kwargs)
 
+        if (
+            (not basename and hook_name.startswith('build_'))
+            or basename in {'.', '..'}
+            or os.path.basename(basename) != basename
+        ):
+            msg = f'Backend returned an invalid basename for {hook_name}: {basename!r}'
+            raise BuildException(msg)
+
         return os.path.join(outdir, basename)
 
     @contextlib.contextmanager
