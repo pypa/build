@@ -1454,6 +1454,42 @@ def test_write_report_is_atomic(tmp_path: pathlib.Path, built_dist: tuple[pathli
     assert not list(outdir.glob('*.tmp'))
 
 
+@pytest.mark.skipif(os.name == 'nt', reason='POSIX umask semantics are required')
+@pytest.mark.parametrize(('umask', 'expected_mode'), [(0o022, 0o644), (0o077, 0o600)])
+def test_report_permissions_honor_umask(
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+    umask: int,
+    expected_mode: int,
+) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'report.json'
+    previous_umask = os.umask(umask)
+    try:
+        build.__main__._write_report(report, str(outdir), names)
+    finally:
+        os.umask(previous_umask)
+
+    assert report.stat().st_mode & 0o777 == expected_mode
+
+
+def test_write_report_retries_colliding_temporary_name(
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+    built_dist: tuple[pathlib.Path, list[str]],
+) -> None:
+    outdir, names = built_dist
+    collision = tmp_path / 'tmpcollision.tmp'
+    collision.write_text('keep', encoding='utf-8')
+    mocker.patch('build.__main__.secrets.token_hex', side_effect=['collision', 'unique'])
+
+    report = tmp_path / 'report.json'
+    build.__main__._write_report(report, str(outdir), names)
+
+    assert report.is_file()
+    assert collision.read_text(encoding='utf-8') == 'keep'
+
+
 def test_write_report_cleans_tmp_on_failure(
     mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]
 ) -> None:

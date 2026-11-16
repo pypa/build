@@ -17,6 +17,7 @@ __lazy_modules__ = {
     'packaging.version',
     'platform',
     'pyproject_hooks',
+    'secrets',
     'shutil',
     'subprocess',
     'tempfile',
@@ -33,6 +34,7 @@ import hashlib
 import json
 import os
 import platform
+import secrets
 import shutil
 import subprocess
 import sys
@@ -768,7 +770,14 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
 
     report_dir = os.path.dirname(os.path.abspath(path))
     os.makedirs(report_dir, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=report_dir, suffix='.tmp')
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, 'O_BINARY', 0)
+    while True:
+        tmp = os.path.join(report_dir, f'tmp{secrets.token_hex(16)}.tmp')
+        try:
+            fd = os.open(tmp, flags, 0o666)
+        except FileExistsError:
+            continue
+        break
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
             report_file.write(data)
