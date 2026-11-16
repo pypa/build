@@ -1,0 +1,1 @@
+Make ``--report`` output permissions honor the process umask.
