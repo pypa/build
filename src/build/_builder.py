@@ -165,7 +165,7 @@ def _validate_backend_path(source_dir: str, backend_paths: Sequence[str]) -> Non
         resolved_real = os.path.normcase(os.path.realpath(resolved))
         try:
             is_inside = os.path.commonpath([source_dir_real, resolved_real]) == source_dir_real
-        except ValueError:
+        except ValueError:  # pragma: no cover -- commonpath raises only for paths on different Windows drives
             is_inside = False
         if not is_inside:
             msg = f'`backend-path` entry {path!r} is not inside the source tree'

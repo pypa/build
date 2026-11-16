@@ -862,7 +862,7 @@ def test_backend_path_symlink_outside_source_tree(tmp_path: pathlib.Path) -> Non
     project.mkdir()
     try:
         (project / 'vendored').symlink_to(outside, target_is_directory=True)
-    except (OSError, NotImplementedError):
+    except (OSError, NotImplementedError):  # pragma: no cover -- Windows without symlink support
         pytest.skip('symlinks not supported')
 
     (project / 'pyproject.toml').write_text(
@@ -885,7 +885,7 @@ def test_backend_path_symlink_inside_source_tree(tmp_path: pathlib.Path) -> None
     pkg.mkdir()
     try:
         (project / 'in_tree').symlink_to(pkg, target_is_directory=True)
-    except (OSError, NotImplementedError):
+    except (OSError, NotImplementedError):  # pragma: no cover -- Windows without symlink support
         pytest.skip('symlinks not supported')
 
     (project / 'pyproject.toml').write_text(
