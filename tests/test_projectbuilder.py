@@ -554,6 +554,23 @@ def test_prepare(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_f
     hook.prepare_metadata_for_build_wheel.assert_called_with(tmp_dir, None, _allow_fallback=False)
 
 
+@pytest.mark.parametrize('distribution', ['wheel', 'editable'])
+@pytest.mark.parametrize('filename', ['', 'nested/dist.dist-info', '../dist.dist-info', '/dist.dist-info', '.', '..'])
+def test_prepare_rejects_non_basename(
+    mocker: pytest_mock.MockerFixture,
+    package_test_flit: str,
+    tmp_dir: str,
+    distribution: typing.Literal['wheel', 'editable'],
+    filename: str,
+) -> None:
+    hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
+    getattr(hook, f'prepare_metadata_for_build_{distribution}').return_value = filename
+    builder = build.ProjectBuilder(package_test_flit)
+
+    with pytest.raises(build.BuildException, match='invalid basename'):
+        builder.prepare(distribution, tmp_dir)
+
+
 def test_prepare_no_hook(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
     hook = mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True).return_value
 
@@ -599,23 +616,23 @@ def test_prepare_not_dir_parent_outdir(mocker: pytest_mock.MockerFixture, tmp_di
 
 
 def test_no_outdir_single(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='dist-1.0.dist-info')
 
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'out')
-    assert builder.prepare('wheel', out) == os.path.join(out, '')
+    assert builder.prepare('wheel', out) == os.path.join(out, 'dist-1.0.dist-info')
 
     assert os.path.isdir(out)
 
 
 def test_no_outdir_multiple(mocker: pytest_mock.MockerFixture, tmp_dir: str, package_test_flit: str) -> None:
-    mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='')
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller.prepare_metadata_for_build_wheel', return_value='dist-1.0.dist-info')
 
     builder = build.ProjectBuilder(package_test_flit)
 
     out = os.path.join(tmp_dir, 'does', 'not', 'exist')
-    assert builder.prepare('wheel', out) == os.path.join(out, '')
+    assert builder.prepare('wheel', out) == os.path.join(out, 'dist-1.0.dist-info')
 
     assert os.path.isdir(out)
 
