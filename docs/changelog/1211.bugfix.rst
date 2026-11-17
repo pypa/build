@@ -1,0 +1,1 @@
+Running ``--help`` on Python 3.15 can be up to 40% faster, more imports are lazy.

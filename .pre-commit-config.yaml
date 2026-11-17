@@ -1,0 +1,90 @@
+ci:
+  autofix_prs: false
+  autoupdate_commit_msg: "pre-commit: bump repositories"
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    hooks:
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+        exclude: tests/packages/test-(bad-syntax|no-permission)/pyproject.toml
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: "82d21874c3242e4dc27bb47641c996902ef64eef" # frozen: v0.27
+    hooks:
+      - id: validate-pyproject
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: "dda8db18cfc68df532abf33b185ecd12d5b7b326" # frozen: 1.20.0
+    hooks:
+      - id: blacken-docs
+        additional_dependencies: [black==25.*]
+  - repo: https://github.com/google/yamlfmt
+    rev: "b5ca1890231d5e1e5181fef75a1be609d1e25029" # frozen: v0.21.0
+    hooks:
+      - id: yamlfmt
+  - repo: local
+    hooks:
+      - id: mdformat
+        name: mdformat
+        entry: mdformat --wrap 120
+        language: python
+        types: [markdown]
+        additional_dependencies:
+          - mdformat-gfm>=1
+          - mdformat-ruff>=0.1.3
+  - repo: https://github.com/LilSpazJoekp/docstrfmt
+    rev: c1813841673cdcd6cf602dde1edb78a5d5e45235 # frozen: v2.2.1
+    hooks:
+      - id: docstrfmt
+        args: ["-l", "120"]
+        additional_dependencies: ["sphinx>=9.1"]
+        # title must outrank the included CHANGELOG.rst headings
+        exclude: ^docs/changelog\.rst$
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: ef6cf06c079dd6b299dfc720b0f14400c9d168e1 # frozen: v0.17.5
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/henryiii/flake8-lazy
+    rev: 7f268b3b3aaf7feca756ca610e37971382976365 # frozen: v0.11.0
+    hooks:
+      - id: flake8-lazy
+        files: ^src/
+        args: [--apply=set]
+  - repo: https://github.com/codespell-project/codespell
+    rev: "57b21406f092110c18776e39b0bda50d37c945c8" # frozen: v2.4.3
+    hooks:
+      - id: codespell
+        args: ["-L", "sur"]
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: "3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316" # frozen: v1.10.0
+    hooks:
+      - id: rst-backticks
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7 # frozen: v1.32.0
+    hooks:
+      - id: zizmor
+        files: "^\\.github"
+        args: [--persona=pedantic]
+  - repo: local
+    hooks:
+      - id: changelog-filenames
+        name: Enforce towncrier fragment filenames
+        files: ^docs/changelog/(?!([0-9]+\.(feature|bugfix|doc|removal|deprecation|misc)\.rst|template\.jinja2|README\.rst)$).*
+        entry: files in changelog must be valid (N.type.rst)
+        language: fail
+  - repo: https://github.com/henryiii/check-sdist
+    rev: 5230295f53448dcfc8cc4a9eb00cc776ca92f964 # frozen: v1.6.0
+    hooks:
+      - id: check-sdist
+        args: [--inject-junk]
+        additional_dependencies: [flit-core]

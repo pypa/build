@@ -1,0 +1,1 @@
+Correct frontend equivalence claims and consolidate tool comparisons.

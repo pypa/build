@@ -1,0 +1,1 @@
+Consolidate changelog instructions and distinguish deprecations from removals.

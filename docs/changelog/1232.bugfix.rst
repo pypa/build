@@ -1,0 +1,2 @@
+``--report`` now writes the report with the same permissions the process umask gives the
+built artifacts, instead of leaving it at the ``0600`` that ``tempfile.mkstemp`` creates.

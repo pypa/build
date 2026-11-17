@@ -1,0 +1,3 @@
+[build-system]
+requires = []
+build-backend = "nonsense_package"

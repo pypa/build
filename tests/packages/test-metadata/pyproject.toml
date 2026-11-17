@@ -1,0 +1,13 @@
+[build-system]
+requires = []
+build-backend = 'backend'
+backend-path = ['.']
+
+[project]
+name = 'test-metadata'
+version = '1.0.0'
+description = 'hello!'
+
+[tool.black]
+line-length = 127
+skip-string-normalization = true

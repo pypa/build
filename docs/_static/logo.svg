@@ -1,0 +1,24 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="200" cy="200" r="190" fill="#fcfcfc" />
+
+  <g stroke="#1a3650" stroke-width="10" stroke-linejoin="round">
+    <path d="M200 60 L330 135 L200 210 L70 135 Z" fill="#ffd43b" />
+    <path d="M70 135 L200 210 L200 350 L70 275 Z" fill="#2b5b84" />
+    <path d="M200 210 L330 135 L330 275 L200 350 Z" fill="#3776ab" />
+  </g>
+
+  <g transform="translate(200, 148) rotate(-35) scale(-1.58, 1.58) translate(-2.5, -17.5)" fill="white">
+    <path d="M-4 10 L4 10 L6 45 L-6 45 Z" rx="1" />
+
+    <g>
+      <rect x="-22" y="-12" width="44" height="24" rx="2" />
+
+      <rect x="18" y="-12" width="4" height="24" rx="1" fill="#eeeeee" />
+      <rect x="-22" y="-12" width="4" height="24" rx="1" fill="#eeeeee" />
+
+      <rect x="-6" y="-12" width="12" height="24" fill="white" stroke="#1a3650" stroke-width="1" opacity="0.1" />
+    </g>
+  </g>
+
+  <text x="200" y="275" font-family="Arial Black, sans-serif" font-size="76" fill="#ffd43b" text-anchor="middle" letter-spacing="-4">BUILD</text>
+</svg>

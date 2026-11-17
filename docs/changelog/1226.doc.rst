@@ -1,0 +1,1 @@
+Clarify that PEP 517 standardizes backend hooks, not backend command-line interfaces.

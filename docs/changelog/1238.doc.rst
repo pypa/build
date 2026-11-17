@@ -1,0 +1,1 @@
+Clarify that metadata extraction can require building a wheel.

@@ -1,0 +1,1 @@
+Preserve all unmet dependency chains when dependency graphs contain cycles - by :user:`harbinresearcher`

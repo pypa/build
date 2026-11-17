@@ -1,0 +1,317 @@
+########################
+ Corporate Environments
+########################
+
+This guide covers common scenarios when using build behind corporate firewalls, with private package indexes (custom
+package repositories), or in restricted network environments.
+
+The pip settings below apply to the default installer. With ``--installer=uv``, use uv's `environment variables
+<https://docs.astral.sh/uv/configuration/environment/>`_.
+
+*************************
+ Private package indexes
+*************************
+
+Using a private PyPI mirror
+===========================
+
+Set the ``PIP_INDEX_URL`` `environment variable
+<https://pip.pypa.io/en/stable/topics/configuration/#environment-variables>`_ to point to your private `package index
+<https://packaging.python.org/en/latest/glossary/#term-Package-Index>`_ (an alternative to `PyPI <https://pypi.org/>`_):
+
+.. code-block:: console
+
+    $ export PIP_INDEX_URL=https://pypi.company.com/simple
+    $ python -m build
+
+Or for a single command:
+
+.. code-block:: console
+
+    $ PIP_INDEX_URL=https://pypi.company.com/simple python -m build
+
+Additional indexes
+==================
+
+To use both PyPI and a private index:
+
+.. code-block:: console
+
+    $ export PIP_INDEX_URL=https://pypi.org/simple
+    $ export PIP_EXTRA_INDEX_URL=https://pypi.company.com/simple
+    $ python -m build
+
+.. warning::
+
+    Using ``PIP_EXTRA_INDEX_URL`` has security implications. A malicious package on any index can shadow packages from
+    other indexes. Use ``PIP_INDEX_URL`` exclusively when possible.
+
+****************
+ Authentication
+****************
+
+Embedded credentials
+====================
+
+You can embed credentials directly in the index URL:
+
+.. code-block:: console
+
+    $ PIP_INDEX_URL=https://username:password@pypi.company.com/simple python -m build
+
+.. warning::
+
+    Be careful with embedded credentials in shell history and CI logs. Use environment variable substitution when
+    possible:
+
+.. code-block:: console
+
+    $ PIP_INDEX_URL=https://${PYPI_USER}:${PYPI_TOKEN}@pypi.company.com/simple python -m build
+
+Using keyring
+=============
+
+Build passes ``--no-input`` to pip, preventing hidden credential prompts that cause the process to appear stuck. When
+the ``keyring`` CLI is available on ``PATH``, build automatically sets ``PIP_KEYRING_PROVIDER=subprocess`` (or
+``UV_KEYRING_PROVIDER=subprocess`` when using the uv installer) so the installer delegates credential lookups to the
+system keyring without needing keyring installed inside the isolated build environment.
+
+Install keyring system-wide so it is available on ``PATH``:
+
+.. code-block:: console
+
+    $ pipx install keyring
+
+Or install build with the keyring extra:
+
+.. code-block:: console
+
+    $ pip install build[keyring]
+
+Then store your credentials:
+
+.. code-block:: console
+
+    $ keyring set https://pypi.company.com username
+
+For specialized backends (e.g., Google Artifact Registry, Azure Artifacts), install the corresponding keyring plugin
+alongside keyring:
+
+.. code-block:: console
+
+    $ pipx install keyring
+    $ pipx inject keyring keyrings.google-artifactregistry-auth
+
+You can also set the keyring provider explicitly via environment variable, which is useful in CI or when keyring is
+installed in a non-standard location:
+
+.. code-block:: console
+
+    $ export PIP_KEYRING_PROVIDER=subprocess  # for pip installer
+    $ export UV_KEYRING_PROVIDER=subprocess   # for uv installer
+    $ python -m build
+
+To disable keyring entirely:
+
+.. code-block:: console
+
+    $ export PIP_KEYRING_PROVIDER=disabled
+    $ export UV_KEYRING_PROVIDER=disabled
+    $ python -m build
+
+Using .netrc
+============
+
+Create a ``~/.netrc`` file (``~/_netrc`` on Windows) with your credentials:
+
+.. code-block:: text
+
+    machine pypi.company.com
+    login username
+    password your-password
+
+Ensure the file has restricted permissions:
+
+.. code-block:: console
+
+    $ chmod 600 ~/.netrc
+
+.. _corporate-certificates:
+
+**********************
+ SSL/TLS certificates
+**********************
+
+Custom CA certificates
+======================
+
+If your company uses a custom CA certificate:
+
+.. code-block:: console
+
+    $ export REQUESTS_CA_BUNDLE=/path/to/company-ca-bundle.crt
+    $ python -m build
+
+Or use pip's certificate option:
+
+.. code-block:: console
+
+    $ export PIP_CERT=/path/to/company-ca-bundle.crt
+    $ python -m build
+
+Self-signed certificates
+========================
+
+For development environments with self-signed certificates (not recommended for production):
+
+.. code-block:: console
+
+    $ export PIP_TRUSTED_HOST=pypi.company.com
+    $ python -m build
+
+.. _using-virtualenv-for-better-ssl-support:
+
+Certificate handling depends on the installer version. See `pip's certificate documentation
+<https://pip.pypa.io/en/stable/topics/https-certificates/>`_ for how it uses system certificates and custom CA bundles.
+
+.. _corporate-proxies:
+
+***************
+ Proxy servers
+***************
+
+HTTP/HTTPS proxies
+==================
+
+Configure proxy environment variables:
+
+.. code-block:: console
+
+    $ export HTTP_PROXY=http://proxy.company.com:8080
+    $ export HTTPS_PROXY=http://proxy.company.com:8080
+    $ python -m build
+
+With authentication:
+
+.. code-block:: console
+
+    $ export HTTP_PROXY=http://user:pass@proxy.company.com:8080
+    $ export HTTPS_PROXY=http://user:pass@proxy.company.com:8080
+
+No proxy for certain hosts
+==========================
+
+.. code-block:: console
+
+    $ export NO_PROXY=localhost,127.0.0.1,.company.com
+    $ python -m build
+
+.. _pip-configuration:
+
+*************************
+ pip configuration files
+*************************
+
+Global configuration
+====================
+
+Instead of environment variables, you can create a pip configuration file. Use `pip's configuration file locations
+<https://pip.pypa.io/en/stable/topics/configuration/#location>`_ to find the appropriate file for your system. For
+example:
+
+.. code-block:: ini
+
+    [global]
+    index-url = https://pypi.company.com/simple
+    cert = /path/to/company-ca-bundle.crt
+
+Per-project configuration
+=========================
+
+pip does not automatically load ``pip.conf`` from the project directory. Set `PIP_CONFIG_FILE
+<https://pip.pypa.io/en/stable/topics/configuration/#pip-config-file>`_ to its absolute path to select it explicitly.
+
+*************************
+ Air-gapped environments
+*************************
+
+If build dependencies are already installed in the active environment, follow :ref:`building-without-isolation`.
+Alternatively, configure the installer to use a local package index or wheel directory containing all required
+dependencies.
+
+********************
+ CI/CD environments
+********************
+
+GitHub Actions
+==============
+
+.. code-block:: yaml
+
+    - name: Build package
+      run: python -m build
+      env:
+        PIP_INDEX_URL: ${{ secrets.PYPI_INDEX_URL }}
+        PIP_CERT: /path/to/cert.crt
+
+GitLab CI
+=========
+
+.. code-block:: yaml
+
+    build:
+      script:
+        - export PIP_INDEX_URL=$PYPI_INDEX_URL
+        - python -m build
+
+***************************
+ Catching backend warnings
+***************************
+
+See :ref:`python-warnings` for turning backend deprecation warnings into errors in CI.
+
+***************
+ Common issues
+***************
+
+Build fails with authentication errors
+======================================
+
+Build passes ``--no-input`` to pip to prevent hidden credential prompts. If your private index requires authentication,
+pip will fail instead of hanging. Configure one of the authentication methods above (embedded credentials, keyring, or
+``.netrc``) to provide credentials non-interactively.
+
+401/403 errors
+==============
+
+Authentication failed. Verify your credentials and ensure they have access to the required packages.
+
+SSL verification failed
+=======================
+
+Your installer does not trust the certificate. Follow :ref:`corporate-certificates` to configure its trust settings.
+
+Conda environment conflicts
+===========================
+
+If you're in a conda environment and experiencing venv creation issues:
+
+.. code-block:: console
+
+    $ conda deactivate
+    $ python -m build
+
+Or use virtualenv:
+
+.. code-block:: console
+
+    $ pip install build[virtualenv]
+    $ python -m build
+
+**********
+ See also
+**********
+
+- :doc:`troubleshooting` for more problem-solving tips
+- :doc:`../reference/environment-variables` for a complete list of environment variables
+- `pip documentation <https://pip.pypa.io/>`_ for more pip configuration options

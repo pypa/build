@@ -1,0 +1,1 @@
+Remove repeated test commands from the contribution guide.

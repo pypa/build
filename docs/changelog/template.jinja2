@@ -1,0 +1,27 @@
+{% if versiondata.version %}
+{% set version_title = versiondata.version + " (" + versiondata.date + ")" %}
+{{ top_underline * (version_title|length + 2) }}
+ {{ version_title }}
+{{ top_underline * (version_title|length + 2) }}
+{% endif %}
+
+{% for section, _ in sections.items() %}
+{% set section_entries = sections[section] %}
+{% if section_entries %}
+{% for category in definitions.keys() if section_entries.get(category) %}
+{% set entries = section_entries[category] %}
+{{ underlines[0] * (definitions[category]['name']|length + 2) }}
+ {{ definitions[category]['name'] }}
+{{ underlines[0] * (definitions[category]['name']|length + 2) }}
+
+{% if definitions[category]['showcontent'] %}
+{% for text, values in entries.items() %}
+- {{ text }} ({{ values|join(', ') }})
+{% endfor %}
+{% else %}
+- {{ entries['']|join(', ') }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}

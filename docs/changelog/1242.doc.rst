@@ -1,0 +1,1 @@
+Consolidate certificate setup and remove incorrect virtualenv SSL advice.

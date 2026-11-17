@@ -1,0 +1,211 @@
+# SPDX-License-Identifier: MIT
+
+from __future__ import annotations
+
+import contextlib
+import contextvars
+import importlib.metadata
+import os
+import os.path
+import shutil
+import stat
+import sysconfig
+import tempfile
+import tomllib
+
+from collections.abc import Callable, Generator
+from functools import partial, update_wrapper
+from pathlib import Path
+from typing import Protocol, cast
+
+import pytest
+
+import build.env
+
+
+class SubTests(Protocol):
+    def test(self, msg: str | None = ..., **kwargs: object) -> contextlib.AbstractContextManager[None]: ...
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    os.environ['PYTHONWARNINGS'] = 'ignore:DEPRECATION::pip._internal.cli.base_command'  # for when not run within tox
+    os.environ['PIP_DISABLE_PIP_VERSION_CHECK'] = '1'  # do not pollute stderr with upgrade advisory
+    parser.addoption('--run-integration', action='store_true', help='run the integration tests')
+    parser.addoption('--only-integration', action='store_true', help='only run the integration tests')
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    skip_int = pytest.mark.skip(reason='integration tests not run (no --run-integration flag)')
+    skip_other = pytest.mark.skip(reason='only integration tests are run (got --only-integration flag)')
+
+    if config.getoption('--run-integration') and config.getoption('--only-integration'):  # pragma: no cover
+        msg = "--run-integration and --only-integration can't be used together, choose one"
+        raise pytest.UsageError(msg)
+
+    if len(items) == 1:  # do not require flags if called directly
+        return
+    for item in items:
+        is_integration_file = is_integration(item)
+        if is_integration_file:  # pragma: no cover
+            if not config.getoption('--run-integration') and not config.getoption('--only-integration'):
+                item.add_marker(skip_int)
+        elif config.getoption('--only-integration'):  # pragma: no cover
+            item.add_marker(skip_other)
+    # run integration tests after unit tests
+    items.sort(key=is_integration)
+
+
+def _xfail_isolated_strict(item: pytest.Item, *, is_integration_file: bool) -> bool:
+    if isinstance(item, pytest.Function) and hasattr(item, 'callspec'):
+        args = item.callspec.params.get('args', [])
+        if isinstance(args, (list, tuple)) and '--no-isolation' not in args:
+            return True
+    is_test_build = is_integration_file and isinstance(item, pytest.Function) and item.originalname == 'test_build'
+    return not is_test_build
+
+
+def is_integration(item: pytest.Item) -> bool:
+    # item.location is typically a (path, lineno) tuple; cast to str for typing
+    return os.path.basename(item.location[0]) == 'test_integration.py'
+
+
+def pytest_runtest_call(item: pytest.Item) -> None:
+    if item.get_closest_marker('contextvars'):
+        if isinstance(item, pytest.Function):
+            wrapped_function = partial(contextvars.copy_context().run, item.obj)
+            item.obj = update_wrapper(wrapped_function, item.obj)
+        else:
+            msg = 'cannot rewrap non-function item'
+            raise RuntimeError(msg)
+
+
+@pytest.fixture
+def local_pip(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(build.env._PipBackend, '_has_valid_outer_pip', None)
+
+
+@pytest.fixture(autouse=True)
+def avoid_constraints(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv('PIP_CONSTRAINT', raising=False)
+    monkeypatch.delenv('PIP_KEYRING_PROVIDER', raising=False)
+    monkeypatch.delenv('UV_CONSTRAINT', raising=False)
+    monkeypatch.delenv('UV_KEYRING_PROVIDER', raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _clear_keyring_cache() -> Generator[None]:
+    build.env._has_keyring_cli.cache_clear()
+    yield
+    build.env._has_keyring_cli.cache_clear()
+
+
+@pytest.fixture(autouse=True, params=[False])
+def has_virtualenv(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    if request.param is not None:
+        monkeypatch.setattr(build.env._PipBackend, '_has_virtualenv', request.param)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def ensure_syconfig_vars_created() -> None:
+    # the config vars are globally cached and may use get_path, make sure they are created
+    sysconfig.get_config_vars()
+
+
+@pytest.fixture
+def packages_path() -> str:
+    return os.path.realpath(os.path.join(__file__, '..', 'packages'))
+
+
+def is_setuptools(package_path: Path) -> bool:
+    if package_path.joinpath('setup.py').is_file():
+        return True
+    pyproject = package_path / 'pyproject.toml'
+    try:
+        with pyproject.open('rb') as f:
+            pp = cast(dict[str, dict[str, str]], tomllib.load(f))
+    except (FileNotFoundError, ValueError):
+        return True
+    return 'setuptools' in pp.get('build-system', {}).get('build-backend', 'setuptools')
+
+
+def generate_package_path_fixture(package_name: str) -> Callable[[str, Path], str]:
+    @pytest.fixture
+    def fixture(packages_path: str, tmp_path: Path) -> str:
+        package_path = Path(packages_path) / package_name
+        if not is_setuptools(package_path):
+            return str(package_path)
+
+        new_path = tmp_path / package_name
+        shutil.copytree(package_path, new_path)
+        return str(new_path)
+
+    return fixture
+
+
+# Generate path fixtures dynamically.
+package_names = os.listdir(os.path.join(os.path.dirname(__file__), 'packages'))
+for package_name in package_names:
+    normalized_name = package_name.replace('-', '_')
+    fixture_name = f'package_{normalized_name}'
+    globals()[fixture_name] = generate_package_path_fixture(package_name)
+
+
+@pytest.fixture
+def test_no_permission(packages_path: str) -> Generator[str]:
+    path = os.path.join(packages_path, 'test-no-permission')
+    file = os.path.join(path, 'pyproject.toml')
+    orig_stat = os.stat(file).st_mode
+
+    os.chmod(file, ~stat.S_IRWXU)
+
+    yield os.path.join(packages_path, 'test-no-permission')
+
+    os.chmod(file, orig_stat)
+
+
+@pytest.fixture
+def tmp_dir() -> Generator[str]:
+    path = tempfile.mkdtemp(prefix='python-build-test-')
+
+    yield path
+
+    shutil.rmtree(path)
+
+
+def pytest_report_header() -> str:
+    interesting_packages = [
+        'build',
+        'colorama',
+        'coverage',
+        'filelock',
+        'packaging',
+        'pip',
+        'pyproject_hooks',
+        'setuptools',
+        'tomli',
+        'virtualenv',
+        'wheel',
+    ]
+    valid = []
+    for package in interesting_packages:
+        # Old versions of importlib_metadata made this FileNotFoundError
+        with contextlib.suppress(ModuleNotFoundError, FileNotFoundError):
+            valid.append(f'{package}=={importlib.metadata.version(package)}')
+    reqs = ' '.join(valid)
+    return f'installed packages of interest: {reqs}'
+
+
+@pytest.fixture
+def subtests(request: pytest.FixtureRequest) -> SubTests:
+    try:
+        existing: SubTests = request.getfixturevalue('subtests')
+    except pytest.FixtureLookupError:
+
+        class Subtests:
+            @staticmethod
+            @contextlib.contextmanager
+            def test(msg: str | None = None, **_kwargs: object) -> Generator[None]:  # noqa: ARG004
+                yield
+
+        return Subtests()
+    return existing

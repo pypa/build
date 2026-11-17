@@ -1,0 +1,367 @@
+#############
+ Basic Usage
+#############
+
+This guide covers the most common build commands and workflows.
+
+********************************************************
+ Building both source and wheel distributions (default)
+********************************************************
+
+By default, build creates both a `source distribution
+<https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ (often called "sdist") and a
+`wheel <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_:
+
+.. code-block:: console
+
+    $ python -m build
+
+The process:
+
+1. Builds the source distribution from your source code
+2. Extracts the source distribution to a temporary directory
+3. Builds the wheel from the extracted source distribution
+
+This two-step process ensures your source distribution contains all necessary files to build your package. If files are
+missing, the wheel build will fail, alerting you to the problem.
+
+This is different from ``python -m build --sdist --wheel``, which builds both directly from source. The default behavior
+is preferable because it verifies your sdist is complete.
+
+***********************
+ Building only a wheel
+***********************
+
+.. code-block:: console
+
+    $ python -m build --wheel
+
+Or the short form:
+
+.. code-block:: console
+
+    $ python -m build -w
+
+This builds the `wheel <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_
+(installable package) directly from your source directory, skipping the source distribution step. This is faster but
+doesn't verify your source distribution is complete.
+
+*************************************
+ Building only a source distribution
+*************************************
+
+.. code-block:: console
+
+    $ python -m build --sdist
+
+Or the short form:
+
+.. code-block:: console
+
+    $ python -m build -s
+
+*********************************
+ Specifying the source directory
+*********************************
+
+Build defaults to the current directory. To build from a different location:
+
+.. code-block:: console
+
+    $ python -m build path/to/project
+
+*************************************
+ Building from a source distribution
+*************************************
+
+The positional argument also accepts a ``.tar.gz`` `source distribution
+<https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_. Build checks the filename and the
+presence of ``PKG-INFO``, extracts the archive into a temporary directory, and runs the wheel build against the
+extracted source. The wheel lands next to the input archive.
+
+.. code-block:: console
+
+    $ python -m build dist/mypackage-1.0.0.tar.gz
+
+No flag means the same as ``--wheel``. ``--metadata`` works the same way. ``--sdist`` errors out, since the archive
+already is an sdist.
+
+*********************************
+ Specifying the output directory
+*********************************
+
+By default, distributions are placed in ``dist/`` within the source directory. To use a different location:
+
+.. code-block:: console
+
+    $ python -m build --outdir /path/to/output
+
+Or the short form:
+
+.. code-block:: console
+
+    $ python -m build -o /path/to/output
+
+.. _compiler-caching:
+
+*******************************************
+ Speeding up rebuilds of compiled packages
+*******************************************
+
+When the default build extracts the intermediate sdist, it uses a random temporary directory. Compiler caches such as
+`ccache <https://ccache.dev/>`_ and `sccache <https://github.com/mozilla/sccache>`_ fold the absolute source path into
+their cache key, so a fresh path on every run means every C/C++ file is recompiled from scratch.
+
+Pin the extraction path with ``--sdist-extract-dir`` so the cache can recognise unchanged files across rebuilds:
+
+.. code-block:: console
+
+    $ python -m build --sdist-extract-dir build/sdist
+
+Build creates the directory if missing, clears and repopulates it each run so the contents stay fresh, and keeps it
+after the build. The path stays stable while the project version is unchanged, as it is during iteration on the
+extension sources. The same flag applies when building a wheel from a ``.tar.gz``.
+
+Build still runs in a fresh isolated environment whose path is *not* pinned, so include directories from that
+environment (Python headers, dependency headers) keep changing. Caching those compile units needs toolchain-side path
+remapping on top of this flag (e.g. ``-fdebug-prefix-map``, or sccache's ``base_dir``).
+
+***********************
+ Controlling verbosity
+***********************
+
+Use ``-v`` or ``-vv`` to increase output. See :ref:`build-verbosity` for what each level adds.
+
+Decrease verbosity for quieter output:
+
+.. code-block:: console
+
+    $ python -m build -q
+
+.. _using-uv:
+
+**************************
+ Using a faster installer
+**************************
+
+By default, build uses `pip <https://pip.pypa.io/>`_ to install build dependencies. For faster builds, use `uv
+<https://docs.astral.sh/uv/>`_ (a faster alternative to pip):
+
+.. code-block:: console
+
+    $ python -m build --installer=uv
+
+This requires uv to be installed:
+
+.. code-block:: console
+
+    $ pip install uv
+
+.. _building-without-isolation:
+
+****************************
+ Building without isolation
+****************************
+
+By default, build creates an `isolated environment
+<https://packaging.python.org/en/latest/glossary/#term-Isolated-Build>`_ (a clean temporary `virtual environment
+<https://docs.python.org/3/tutorial/venv.html>`_) for build dependencies. To skip this and use your current environment:
+
+.. code-block:: console
+
+    $ python -m build --no-isolation
+
+Or the short form:
+
+.. code-block:: console
+
+    $ python -m build -n
+
+.. warning::
+
+    When using ``--no-isolation``, you must manually install all build dependencies. This is mainly useful for:
+
+    - Offline or air-gapped environments (no internet access)
+    - Debugging build issues
+    - Linux distribution packaging where dependencies are provided externally
+
+****************************
+ Skipping dependency checks
+****************************
+
+To skip checking if build dependencies are installed (requires ``--no-isolation``):
+
+.. code-block:: console
+
+    $ python -m build --no-isolation --skip-dependency-check
+
+Or:
+
+.. code-block:: console
+
+    $ python -m build -nx
+
+******************
+ Common workflows
+******************
+
+Development build
+=================
+
+Quick build during development:
+
+.. code-block:: console
+
+    $ python -m build --wheel --installer=uv
+
+Fast CI build
+=============
+
+In CI where dependencies are pre-installed:
+
+.. code-block:: console
+
+    $ pip install build build-backend-here
+    $ python -m build --no-isolation
+
+Release build
+=============
+
+For uploading to `PyPI <https://pypi.org/>`_, build both sdist and wheel:
+
+.. tab:: uv
+
+    .. code-block:: console
+
+        $ python -m build
+        $ uv publish
+
+    `uv publish <https://docs.astral.sh/uv/guides/publish/>`_ is a modern option that handles uploading to PyPI with built-in support for trusted publishing.
+
+.. tab:: twine
+
+    .. code-block:: console
+
+        $ python -m build
+        $ twine check dist/*
+        $ twine upload dist/*
+
+    See the `twine documentation <https://twine.readthedocs.io/>`_ for upload options.
+
+.. tip::
+
+    Use the ``hynek/build-and-inspect-python-package`` GitHub Action which handles this workflow including verification.
+    See :doc:`ci-cd`.
+
+Testing the sdist
+=================
+
+Build from the sdist to ensure it's complete:
+
+.. code-block:: console
+
+    $ python -m build --sdist
+    $ python -m build dist/mypackage-1.0.0.tar.gz
+
+Or test installation:
+
+.. code-block:: console
+
+    $ python -m build
+    $ python -m pip install dist/mypackage-1.0.0.tar.gz
+    $ python -c "import mypackage; print(mypackage.__version__)"
+
+***********************
+ Cleaning before build
+***********************
+
+There's no built-in clean command. To ensure a fresh build, manually remove the dist directory:
+
+.. code-block:: console
+
+    $ rm -rf dist/
+    $ python -m build
+
+Or to avoid stale artifacts, use a unique output directory:
+
+.. code-block:: console
+
+    $ python -m build --outdir dist/v1.0.0
+
+.. _read-wheel-metadata:
+
+************************
+ Reading wheel metadata
+************************
+
+To print a project's wheel metadata as JSON:
+
+.. code-block:: console
+
+    $ python -m build --metadata
+
+For a source directory, build uses the backend's ``prepare_metadata_for_build_wheel`` hook when available. If the
+backend does not provide that hook, build builds a wheel in a temporary directory and reads its metadata. This fallback
+can require compiling the project, so ``--metadata`` does not guarantee that no wheel is built.
+
+If you already have a wheel, pass its path to read the metadata without invoking a build backend or installing build
+dependencies:
+
+.. code-block:: console
+
+    $ python -m build --metadata dist/mypackage-1.0.0-py3-none-any.whl
+
+Both forms output the wheel metadata in JSON format to stdout.
+
+****************************
+ Checking the build version
+****************************
+
+To see which version of build you're using:
+
+.. code-block:: console
+
+    $ python -m build --version
+
+************************************
+ Installing build dependencies only
+************************************
+
+For specialized workflows like static analysis or linting, you may want to install just the build dependencies without
+actually building:
+
+.. code-block:: python
+
+    import subprocess
+    import sys
+
+    from build import ProjectBuilder
+
+    builder = ProjectBuilder(".")
+
+    # Install the backend before asking it for additional build dependencies
+    requires = builder.build_system_requires
+    if requires:
+        subprocess.run([sys.executable, "-m", "pip", "install", *requires], check=True)
+
+    # Collect the dependencies required for both distribution formats
+    for dist in ["sdist", "wheel"]:
+        requires.update(builder.get_requires_for_build(dist))
+
+    # Install them into the same Python environment
+    if requires:
+        subprocess.run([sys.executable, "-m", "pip", "install", *requires], check=True)
+
+This is useful when you need the same environment that build would create, but want to run other tools (like mypy, ruff,
+or custom linters) instead of building the package.
+
+See :doc:`../reference/api` for more programmatic usage examples.
+
+**********
+ See also
+**********
+
+- :doc:`config-settings` for passing options to your build backend
+- :doc:`corporate-environments` for using build with private indexes
+- :doc:`troubleshooting` for common problems
+- :doc:`../reference/cli` for all command-line options

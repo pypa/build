@@ -1,0 +1,9 @@
+[build-system]
+build-backend = 'backend_no_prepare'
+backend-path = ['.']
+requires = []
+
+[project]
+name = "test-no-prepare"
+version = "1.0.0"
+description = "Test extracting metadata from a backend w/out `prepare_metadata_for_build_wheel` hook"

@@ -1,0 +1,13 @@
+[build-system]
+requires = ['flit_core >=2,<4']
+build-backend = 'flit_core.buildapi'
+
+[tool.flit.metadata]
+module = 'test_flit'
+author = 'Filipe Laíns'
+author-email = 'lains@archlinux.org'
+classifiers = [
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+]

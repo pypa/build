@@ -1,0 +1,2 @@
+Forward backend config settings when generating metadata with ``--metadata``, including the wheel-building fallback, and
+accept ``config_settings`` in ``ProjectBuilder.metadata_path`` - by :user:`kokotatan`.

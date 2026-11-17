@@ -1,0 +1,147 @@
+# SPDX-License-Identifier: MIT
+
+from __future__ import annotations
+
+import importlib.util
+import os
+import os.path
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+
+from pathlib import Path
+
+import filelock
+import pytest
+import pytest_mock
+
+from integration_sources import STORE_DIR, download_archive
+
+import build.__main__
+
+
+IS_WINDOWS = sys.platform.startswith('win')
+IS_PYPY = sys.implementation.name == 'pypy'
+MISSING_UV = not shutil.which('uv')
+
+
+_SDIST = re.compile('.*.tar.gz')
+_WHEEL = re.compile('.*.whl')
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+EXCL = frozenset(['.tox', 'dist', '.git', '__pycache__', '.integration-sources', '.github', 'tests', 'docs'])
+
+
+def get_project(name: str, tmp_path: Path) -> Path:
+    dest = tmp_path / name
+    if name == 'build':
+        # our own project is available in-source, just ignore development files
+
+        def _ignore_folder(base: str, filenames: list[str]) -> list[str]:
+            ignore = [
+                n for n in filenames if n in EXCL or n.endswith(('_cache', '.egg-info', '.pyc')) or n.startswith('.coverage')
+            ]
+            if os.path.basename(base) == ROOT and 'build' in filenames:  # ignore build only at root (our module is build too)
+                ignore.append('build')
+            return ignore
+
+        shutil.copytree(ROOT, str(dest), ignore=_ignore_folder)
+        return dest
+
+    # for other projects download from github and cache it
+    with filelock.FileLock(str(STORE_DIR / f'{name}.lock')):
+        tarball, version = download_archive(name)
+    with tarfile.open(tarball, 'r:gz') as tar_handler:
+        tar_handler.extractall(str(dest))
+    return dest / f'{name}-{version}'
+
+
+# These pinned third-party sources emit backend deprecations that are not
+# controlled by build; keep other warnings as errors. Match messages rather
+# than BuildBackendWarning, which is absent in the minimum pyproject-hooks.
+@pytest.mark.network
+@pytest.mark.filterwarnings(r'ignore:`project\.license` as a TOML table is deprecated')
+@pytest.mark.filterwarnings('ignore:License classifiers are deprecated')
+@pytest.mark.filterwarnings('ignore:The test command is disabled and references to it are deprecated')
+@pytest.mark.filterwarnings(r'ignore:bdist_wheel\.universal is deprecated')
+@pytest.mark.parametrize(
+    'call',
+    [
+        None,  # via code
+        [sys.executable, '-m', 'build'],  # module
+        ['pyproject-build'],  # entrypoint
+    ],
+    ids=['code', 'module', 'entrypoint'],
+)
+@pytest.mark.parametrize(
+    'args',
+    [
+        [],
+        pytest.param(
+            ['--installer', 'uv'],
+            marks=pytest.mark.skipif(MISSING_UV, reason='uv executable not found'),
+        ),
+        ['-x', '--no-isolation'],
+    ],
+    ids=['isolated_pip', 'isolated_uv', 'no_isolation'],
+)
+@pytest.mark.parametrize(
+    'project',
+    [
+        'build',
+        'pip',
+        'dateutil',
+        'Solaar',
+        'flit',
+    ],
+)
+@pytest.mark.isolated
+def test_build(
+    request: pytest.FixtureRequest,  # noqa: ARG001
+    monkeypatch: pytest.MonkeyPatch,
+    project: str,
+    args: list[str],
+    call: list[str] | None,
+    tmp_path: Path,
+) -> None:
+    if args == ['--installer', 'uv'] and IS_WINDOWS and IS_PYPY:
+        pytest.xfail('uv cannot find PyPy executable')
+    if project in {'build', 'flit'} and '--no-isolation' in args:
+        pytest.xfail(f"can't build {project} without isolation due to missing dependencies")
+    if project == 'Solaar' and IS_WINDOWS and IS_PYPY:
+        pytest.xfail('Solaar fails building wheels via sdists on Windows on PyPy 3')
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv('SETUPTOOLS_SCM_PRETEND_VERSION', '0+dummy')  # for the projects that use setuptools_scm
+
+    if call and call[0] == 'pyproject-build':
+        exe_name = f'pyproject-build{".exe" if sys.platform.startswith("win") else ""}'
+        exe = os.path.join(os.path.dirname(sys.executable), exe_name)
+        if os.path.exists(exe):
+            call[0] = exe
+        else:
+            pytest.skip('Running via PYTHONPATH, so the pyproject-build entrypoint is not available')
+    path = get_project(project, tmp_path)
+    pkgs = tmp_path / 'pkgs'
+    args = [str(path), '-o', str(pkgs), *args]
+
+    if call is None:
+        build.__main__.main(args)
+    else:
+        subprocess.check_call(call + args)
+
+    pkg_names = os.listdir(str(pkgs))
+    assert list(filter(_SDIST.match, pkg_names))
+    assert list(filter(_WHEEL.match, pkg_names))
+
+
+def test_isolation(tmp_dir: str, package_test_flit: str, mocker: pytest_mock.MockerFixture) -> None:
+    if importlib.util.find_spec('flit_core'):
+        pytest.xfail('flit_core is available -- we want it missing!')  # pragma: no cover
+
+    error = mocker.patch('build.__main__._error')
+
+    build.__main__.main([package_test_flit, '-o', tmp_dir, '--no-isolation'])
+    error.assert_called_with("Backend 'flit_core.buildapi' is not available.")

@@ -1,0 +1,4 @@
+[build-system]
+build-backend = 'backend_bad_sdist'
+backend-path = ['.']
+requires = []

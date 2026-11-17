@@ -1,0 +1,2 @@
+Keep the legacy package test fixture compatible with forwarded backend warnings by replacing its deprecated license
+classifier with license metadata. - by :user:`Gonghan-Princess`

@@ -1,0 +1,1 @@
+Fix directory traversal when removing an existing sdist dir while building a wheel from sdist. – by :user:`layday`

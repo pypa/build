@@ -1,0 +1,305 @@
+##############
+ How it Works
+##############
+
+This document explains how build works internally and the build process flow.
+
+*******************
+ The Build Process
+*******************
+
+When you run ``python -m build``, the following happens:
+
+.. mermaid::
+    :name: build-process-flowchart
+
+    %%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#4051b5','primaryTextColor':'#fff','primaryBorderColor':'#2c3e8f','lineColor':'#5468c4','secondaryColor':'#7c8fd6','tertiaryColor':'#e8eaf6'}}}%%
+    flowchart TD
+        A[Run python -m build] --> B[Read pyproject.toml]
+        B --> C{Isolated build?}
+        C -->|Yes default| D[Create temporary venv]
+        C -->|--no-isolation| E[Use current environment]
+        D --> F[Install build dependencies]
+        E --> Q[Check installed build dependencies]
+        Q --> G
+        F --> G[Invoke build backend hooks]
+        G --> H{Build what?}
+        H -->|Default| I[Build sdist]
+        I --> J[Extract sdist to temp dir]
+        J --> K[Build wheel from sdist]
+        H -->|--sdist| L[Build sdist only]
+        H -->|--wheel| M[Build wheel from source]
+        K --> N[Output to dist/]
+        L --> N
+        M --> N
+        N --> O[Cleanup temporary environment]
+        O --> P[Done]
+
+        style A fill:#4051b5,stroke:#2c3e8f,color:#fff
+        style P fill:#2e7d32,stroke:#1b5e20,color:#fff
+        style N fill:#f57c00,stroke:#e65100,color:#fff
+        style D fill:#7c8fd6,stroke:#5468c4,color:#fff
+        style G fill:#7c8fd6,stroke:#5468c4,color:#fff
+
+The process in detail:
+
+1. **Read pyproject.toml**
+
+   build reads your project's `pyproject.toml <https://packaging.python.org/en/latest/specifications/pyproject-toml/>`_
+   to determine:
+
+   - Which **build backend** to use (from ``[build-system]`` section)
+   - What dependencies the backend needs (``requires`` list)
+   - Build backend configuration (``backend-path`` if specified)
+
+2. **Create isolated environment** (default behavior)
+
+   build creates a temporary environment for the backend and its dependencies. See `Build Isolation Explained`_ for why
+   this is separate from your development environment and :ref:`build-isolation` for the CLI controls.
+
+3. **Invoke build backend hooks**
+
+   build invokes the `Backend hooks`_ in subprocesses. See :ref:`build-verbosity` for output handling and
+   :ref:`debug-a-failed-build` for inspecting a failed build.
+
+4. **Build artifacts**
+
+   The backend creates `distribution files
+   <https://packaging.python.org/en/latest/glossary/#term-Distribution-Package>`_:
+
+   - **Source distribution (sdist)**: A `tarball
+     <https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ (``package-version.tar.gz``)
+     containing your source code
+   - **Wheel**: A `zip file <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_
+     (``package-version-py3-none-any.whl``) that can be installed directly
+
+5. **Cleanup**
+
+   build removes temporary working directories. Explicitly retained paths follow the rules in :ref:`build-isolation` and
+   :ref:`compiler-caching`.
+
+************************
+ Default Build Strategy
+************************
+
+By default, build creates the wheel from the sdist so missing build inputs in the sdist can be caught before release.
+See :doc:`../how-to/basic-usage` for building distributions separately or using an existing sdist.
+
+The sdist is extracted to a temporary directory that build removes after the run. To choose its parent directory, see
+:ref:`TMPDIR and related variables <temporary-directories>`. For a stable extraction path across builds, see
+:ref:`compiler-caching`.
+
+***************************
+ Build Isolation Explained
+***************************
+
+Why isolation matters
+=====================
+
+Without isolation, builds can be non-reproducible. Different developers have different packages installed, and CI
+environments may have different packages than local development. Upgrading a package in your dev environment could break
+builds, and you might accidentally depend on a package that's not declared. Isolation solves this by creating a clean
+environment for every build.
+
+How isolation works
+===================
+
+1. build creates a temporary virtual environment
+2. Installs ``[build-system] requires`` and any additional dependencies requested by the backend
+3. Runs the build backend in this isolated environment
+4. Deletes the environment after building
+
+The isolated environment has access to the Python standard library, the build backend and its dependencies, and nothing
+from your development environment except environment variables.
+
+For environment lifetime and path controls, see :ref:`build-isolation`. To examine a failed environment, see
+:ref:`inspect-build-environment`.
+
+When to disable isolation
+=========================
+
+Disabling isolation transfers responsibility for build dependencies to the caller. See :ref:`building-without-isolation`
+for use cases and :ref:`dependency-check` for the checks build performs in that mode.
+
+***********************************
+ Build Frontends vs Build Backends
+***********************************
+
+See :doc:`build-backends` for the responsibilities of the frontend and backend.
+
+*********************
+ PEP 517 Integration
+*********************
+
+build implements :PEP:`517` (the standardized build system interface that defines how build tools communicate with
+backends). The key concepts:
+
+Build system table
+==================
+
+The `build-system declaration
+<https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#declaring-the-build-backend>`_ selects the
+backend and its initial dependencies. For legacy projects without this declaration, see :ref:`default-build-backend`.
+
+Backend hooks
+=============
+
+build calls these standardized hooks in your backend:
+
+- ``get_requires_for_build_sdist(config_settings)`` - Returns additional dependencies needed for sdist
+- ``build_sdist(sdist_directory, config_settings)`` - Creates sdist, returns filename
+- ``get_requires_for_build_wheel(config_settings)`` - Returns additional dependencies needed for wheel
+- ``build_wheel(wheel_directory, config_settings, metadata_directory)`` - Creates wheel, returns filename
+
+Optional hooks:
+
+- ``prepare_metadata_for_build_wheel(metadata_directory, config_settings)`` - Generates wheel metadata without full
+  build
+
+Config settings
+===============
+
+The ``config_settings`` parameter in hooks receives settings from ``--config-setting`` / ``-C`` flags.
+
+build converts:
+
+.. code-block:: console
+
+    $ python -m build -C key=value
+
+Into:
+
+.. code-block:: python
+
+    config_settings = {"key": "value"}
+
+The backend interprets these settings. See :doc:`../how-to/config-settings` for examples.
+
+*********************
+ Metadata Extraction
+*********************
+
+Metadata can depend on backend configuration and generated files, so build asks the backend for it. See
+:ref:`read-wheel-metadata` for the metadata-hook fallback and for reading an existing wheel without invoking a backend.
+
+***************************
+ Diagnostics and Verbosity
+***************************
+
+``pyproject.toml`` declares build dependencies as *specifiers* (``setuptools >= 40.8.0``), not exact versions. The
+installer resolves each specifier to a concrete version at build time. build reads the installed distribution metadata
+for declared build dependencies from the isolated environment to report the versions actually used. See
+:ref:`backend-version` for reading this output and :ref:`build-verbosity` for the other output controls.
+
+****************
+ Error Handling
+****************
+
+build performs minimal error handling:
+
+- Validates ``pyproject.toml`` and its ``[build-system]`` table when present
+- Verifies backend is importable
+- Checks hook return values are valid
+
+Most error handling is delegated to the backend. If the backend fails, build reports the error and exits.
+
+This keeps build simple and focused on its role as a frontend.
+
+*********************
+ Installer Selection
+*********************
+
+build supports pip and uv for installing build dependencies. See :ref:`using-uv` for selecting uv and
+:doc:`../reference/environment-variables` for installer configuration.
+
+.. _virtual-environment-backend:
+
+*****************************
+ Virtual Environment Backend
+*****************************
+
+With the pip installer, build uses ``venv`` when a suitable outer pip is available. Otherwise, it uses a supported
+``virtualenv`` installation if available, falling back to ``venv`` with pip installed inside the environment. With the
+uv installer, build creates the environment with ``venv`` and uses uv to install dependencies. See
+:ref:`optional-dependencies` for installing the optional tools.
+
+****************************
+ Output Directory Structure
+****************************
+
+By default, build places files in ``dist/`` within your source directory:
+
+.. code-block:: text
+
+    myproject/
+    ├── dist/
+    │   ├── myproject-1.0.0.tar.gz      # sdist
+    │   └── myproject-1.0.0-py3-none-any.whl  # wheel
+    ├── src/
+    │   └── myproject/
+    │       └── __init__.py
+    └── pyproject.toml
+
+See :doc:`../how-to/basic-usage` for choosing the output directory.
+
+*******************************
+ Environment Variable Handling
+*******************************
+
+See :doc:`../reference/environment-variables` for inherited settings and the variables build overrides for isolated
+subprocesses.
+
+*********************
+ Reproducible Builds
+*********************
+
+build aims for reproducible builds by:
+
+1. **Isolated environments**: Build dependencies are separated from the development environment
+2. **Declared dependencies**: ``[build-system] requires`` is explicit
+3. **Standardized interface**: PEP 517 hooks are well-defined
+4. **Minimal intervention**: build doesn't modify your code or backend behavior
+
+However, full reproducibility also requires pinned backend versions in ``requires``, reproducible builds in your backend
+(some backends support ``SOURCE_DATE_EPOCH``), consistent Python version, and consistent platform for platform-specific
+wheels.
+
+.. _build-report-design:
+
+***************
+ Build Reports
+***************
+
+The names of the distribution files build produces are not known ahead of time. They encode the version and, for wheels,
+the Python, ABI and platform tags. Downstream steps such as uploading, signing, or recording checksums need a way to
+learn what was built.
+
+``--report`` writes this information to a JSON file. It uses a file rather than ``stdout`` because the build backend
+runs as a subprocess that inherits build's streams and may print to them, so a consumer could not separate the report
+from backend chatter on ``stdout``. A file build controls keeps the machine-readable output apart from the human- and
+backend-facing log. Build writes the report only after the build succeeds and replaces it atomically, so a consumer
+never reads a half-written file. See :ref:`build-report` for the schema.
+
+****************************
+ Performance Considerations
+****************************
+
+Build time is dominated by:
+
+1. **Environment creation**: Creating virtualenv (1-2 seconds)
+2. **Dependency installation**: Installing backend and dependencies (varies)
+3. **Backend build**: Actual package building (varies greatly)
+
+Ways to speed up builds include using ``--installer=uv`` for faster dependency installation, using ``--no-isolation`` if
+dependencies are pre-installed (loses reproducibility), installing ``build[virtualenv]`` for faster environment
+creation, and using ``--wheel`` to skip sdist when not needed.
+
+The default (isolation with pip) prioritizes reproducibility over speed.
+
+**********
+ See also
+**********
+
+- :doc:`build-backends` for choosing and configuring backends
+- `PEP 517 <https://peps.python.org/pep-0517/>`_ for the build system specification
+- `PEP 518 <https://peps.python.org/pep-0518/>`_ for the ``pyproject.toml`` specification

@@ -1,0 +1,161 @@
+########################
+ Command-Line Interface
+########################
+
+A simple, correct Python build frontend.
+
+By default, a `source distribution (sdist)
+<https://packaging.python.org/en/latest/specifications/source-distribution-format/>`_ is built from the project root and
+a `binary distribution (wheel) <https://packaging.python.org/en/latest/specifications/binary-distribution-format/>`_ is
+built from the sdist. If this is undesirable, you can pass ``--sdist`` and/or ``--wheel`` to build distributions
+independently of each other.
+
+The positional ``srcdir`` argument also accepts a ``.tar.gz`` source distribution. Build checks the filename and the
+presence of ``PKG-INFO``, extracts the archive into a temporary directory, and runs the wheel build against the
+extracted source. The default ``--outdir`` is the directory containing the archive. ``--sdist`` errors against an
+archive, since the archive already is an sdist.
+
+.. sphinx_argparse_cli::
+    :module: build.__main__
+    :func: main_parser
+    :prog: python -m build
+    :title: python -m build
+    :usage_width: 97
+
+.. _build-isolation:
+
+********************
+ Isolation Behavior
+********************
+
+By default build will build the package in an isolated environment, but this behavior can be disabled with
+``--no-isolation``. When using isolation, build creates a temporary virtual environment, installs the build dependencies
+specified in your ``pyproject.toml`` and requested by the backend, runs the build, and then cleans up the environment.
+
+Pass ``--env-dir PATH`` to put the environment at a fixed location instead of a temporary directory. The location must
+be empty. build removes it after a successful build and keeps it after a failure so you can inspect it. A fixed path
+helps compilation caches like ccache and sccache, which treat a changed build-environment path as a new file and miss
+the cache. You cannot combine ``--env-dir`` with ``--no-isolation``.
+
+When a build fails, ``--env-dir`` and ``--sdist-extract-dir`` keep the environment and the extracted sources for
+inspection; see :ref:`debug-a-failed-build`.
+
+.. _dependency-check:
+
+******************
+ Dependency Check
+******************
+
+With ``--no-isolation``, build does not install anything; it checks that the build dependencies are already present in
+the interpreter running build. An unmet requirement stops the build. Pass ``--skip-dependency-check`` to skip this
+check. See :ref:`unmet-dependencies` for how to interpret and resolve the error.
+
+.. _build-verbosity:
+
+****************
+ Verbose Output
+****************
+
+Repeating ``-v`` raises the verbosity level. Each level adds to the previous one:
+
+- ``-v`` streams the output of the environment-creation and dependency-installation subprocesses.
+- ``-vv`` additionally passes ``-v`` through to the installer.
+
+Backend output is visible by default. These flags do not change the backend's own logging settings; see
+:ref:`backend-diagnostics`.
+
+At normal verbosity, isolated builds also print the installed versions of declared build dependencies. See
+:ref:`backend-version` for an example and instructions for builds without isolation.
+
+.. _build-report:
+
+**************
+ Build Report
+**************
+
+``--report PATH`` writes a JSON description of the built artifacts to ``PATH`` after a successful build.
+
+.. code-block:: console
+
+    $ python -m build --report build-report.json
+
+.. note::
+
+    Keep the report outside the output directory: commands such as ``twine upload dist/*`` expect only distributions
+    there.
+
+    The write is atomic. Builds running in parallel need a distinct ``PATH`` each to avoid overwriting one another's
+    report.
+
+See :ref:`discovering-built-artifacts` for using reports in CI and :ref:`build-report-design` for why reports use a
+separate file.
+
+The schema is:
+
+.. code-block:: json
+
+    {
+      "version": "1.0",
+      "artifacts": [
+        {
+          "name": "mypackage-1.0.0.tar.gz",
+          "path": "/path/to/example/dist/mypackage-1.0.0.tar.gz",
+          "kind": "sdist",
+          "size": 852,
+          "hashes": {
+            "sha256": "dbd5486e6e893663263caf84a4b87d67cc28f6963b6650f69eaa54b78e42ece4"
+          }
+        },
+        {
+          "name": "mypackage-1.0.0-py3-none-any.whl",
+          "path": "/path/to/example/dist/mypackage-1.0.0-py3-none-any.whl",
+          "kind": "wheel",
+          "size": 1121,
+          "hashes": {
+            "sha256": "ef460897fdce998634efc3385aa4261b4280a2fe2ab0e08ddcacc8496658465d"
+          }
+        }
+      ]
+    }
+
+``version`` is the schema version. Each artifact lists its ``name`` (basename), ``path`` (absolute, so the report reads
+the same wherever it is saved), ``kind`` (``sdist`` or ``wheel``), ``size`` in bytes, and ``hashes`` keyed by algorithm.
+``--report`` cannot be combined with ``--metadata``.
+
+To inspect a wheel listed in the report, pass its path straight to ``--metadata``: when the source argument is a
+``.whl`` file, build reads ``METADATA`` from the archive and prints it as JSON instead of building anything.
+
+.. code-block:: console
+
+    $ python -m build --report build-report.json
+    $ python -m build --metadata "$(jq -r '.artifacts[] | select(.kind=="wheel") | .path' build-report.json)"
+
+************************
+ Alternative CLI Script
+************************
+
+A ``pyproject-build`` CLI script is also available, which is functionally identical to ``python -m build``. This is
+useful for tools like pipx_ that prefer direct script entry points.
+
+.. code-block:: console
+
+    $ pyproject-build
+    $ pyproject-build --help
+
+Both commands accept the same options and behave identically.
+
+*****************
+ Common Patterns
+*****************
+
+For practical usage examples and workflows, see :doc:`../how-to/basic-usage`.
+
+**********
+ See Also
+**********
+
+- :doc:`../how-to/basic-usage` for common workflows
+- :doc:`../how-to/config-settings` for passing options to backends
+- :doc:`environment-variables` for environment variables that affect build
+
+.. _pipx: https://github.com/pipxproject/pipx
