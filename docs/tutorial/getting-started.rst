@@ -74,7 +74,7 @@ Let's create a minimal Python package to demonstrate how build works.
 
 .. code-block:: console
 
-    $ mkdir src/mypackage
+    $ mkdir -p src/mypackage
     $ touch src/mypackage/__init__.py
 
 5. Add some code to ``src/mypackage/__init__.py``:
