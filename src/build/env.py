@@ -121,8 +121,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             path = tempfile.mkdtemp(prefix='build-env-')
             self._status = os.lstat(path)
         else:
-            # Resolve once and use only the resolved path afterwards: a symbolic link checked now and resolved again
-            # later can point somewhere else by then.
+            # Resolved once: a symbolic link checked here and resolved again later can point elsewhere by then.
             path = os.path.realpath(self._requested_path)
             try:
                 os.makedirs(path, exist_ok=True)
@@ -130,7 +129,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
                 msg = f'Build environment location is not a directory: {path}'
                 raise BuildException(msg) from None
             self._status = os.lstat(path)
-            # Whoever owns the directory can swap what build installs into it for their own files.
+            # The directory's owner can swap what build installs into it.
             if not stat.S_ISDIR(self._status.st_mode) or (sys.platform != 'win32' and self._status.st_uid != os.geteuid()):
                 msg = f'Build environment location is not a directory owned by the current user: {path}'
                 raise BuildException(msg)
@@ -169,7 +168,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         # A temporary location is always cleaned up. A caller-specified location is kept when the build fails so
         # its environment can be inspected, but removed on success so the same location can be reused.
         if self._requested_path is None or args[0] is None:
-            # Remove only the directory checked on entry, never one another account put at its path since.
+            # Another account may have put a different directory at this path since entry.
             with contextlib.suppress(OSError):
                 if os.path.samestat(os.lstat(self._path), self._status):
                     shutil.rmtree(self._path, ignore_errors=True)
