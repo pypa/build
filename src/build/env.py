@@ -27,7 +27,6 @@ import importlib.util
 import os
 import platform
 import shutil
-import stat
 import subprocess
 import sys
 import sysconfig
@@ -105,7 +104,6 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
     _env_backend: _EnvBackend
     _path: str
-    _status: os.stat_result
 
     def __init__(
         self,
@@ -119,35 +117,32 @@ class DefaultIsolatedEnv(IsolatedEnv):
     def __enter__(self) -> Self:
         if self._requested_path is None:
             path = tempfile.mkdtemp(prefix='build-env-')
-            self._status = os.lstat(path)
         else:
-            # Resolved once: a symbolic link checked here and resolved again later can point elsewhere by then.
+            # Resolved before the checks: a symbolic link checked first and resolved later can point elsewhere by then.
             path = os.path.realpath(self._requested_path)
-            try:
-                os.makedirs(path, exist_ok=True)
-            except FileExistsError:
+            if os.path.exists(path) and not os.path.isdir(path):
                 msg = f'Build environment location is not a directory: {path}'
-                raise BuildException(msg) from None
-            self._status = os.lstat(path)
-            # The directory's owner can swap what build installs into it.
-            if not stat.S_ISDIR(self._status.st_mode) or (sys.platform != 'win32' and self._status.st_uid != os.geteuid()):
-                msg = f'Build environment location is not a directory owned by the current user: {path}'
                 raise BuildException(msg)
-            with os.scandir(path) as entries:
-                if next(entries, None) is not None:
-                    msg = f'Build environment location is not empty: {path}'
-                    raise BuildException(msg)
+            if os.path.isdir(path):
+                with os.scandir(path) as entries:
+                    if next(entries, None) is not None:
+                        msg = f'Build environment location is not empty: {path}'
+                        raise BuildException(msg)
+                # Recreated below so it is ours: the owner of an existing directory can swap what build installs.
+                os.rmdir(path)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            os.mkdir(path, 0o700)
 
         # Set early so ``__exit__`` can clean up even if the calls below fail.
         self._path = path
         try:
-            if self._requested_path is None:
-                # Call ``realpath`` to prevent spurious warning from being emitted
-                # that the venv location has changed on Windows for the venv impl.
-                # The username is DOS-encoded in the output of tempfile - the location is the same
-                # but the representation of it is different, which confuses venv.
-                # Ref: https://bugs.python.org/issue46171
-                self._path = os.path.realpath(path)
+            # Call ``realpath`` to prevent spurious warning from being emitted
+            # that the venv location has changed on Windows for the venv impl.
+            # The username is DOS-encoded in the output of tempfile - the location is the same
+            # but the representation of it is different, which confuses venv.
+            # Ref: https://bugs.python.org/issue46171
+            path = os.path.realpath(path)
+            self._path = path
 
             # uv is opt-in only.
             if self.installer == 'uv':
@@ -168,10 +163,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         # A temporary location is always cleaned up. A caller-specified location is kept when the build fails so
         # its environment can be inspected, but removed on success so the same location can be reused.
         if self._requested_path is None or args[0] is None:
-            # Another account may have put a different directory at this path since entry.
-            with contextlib.suppress(OSError):
-                if os.path.samestat(os.lstat(self._path), self._status):
-                    shutil.rmtree(self._path, ignore_errors=True)
+            shutil.rmtree(self._path, ignore_errors=True)
 
     @property
     def path(self) -> str:

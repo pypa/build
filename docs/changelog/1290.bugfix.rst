@@ -1,2 +1,2 @@
-Reject an ``--env-dir`` location owned by another user, resolve its symbolic links once, and remove only the directory
-checked at the start - by :user:`gaborbernat`
+Resolve symbolic links in ``--env-dir`` before checking it, and recreate the location with access by the running user
+only - by :user:`gaborbernat`

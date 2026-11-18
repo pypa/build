@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 import shutil
+import stat
 import subprocess
 import sys
 import sysconfig
@@ -749,48 +750,43 @@ def test_env_dir_rejects_non_empty_location(tmp_path: pathlib.Path) -> None:
     assert tmp_path.joinpath('sentinel').exists()
 
 
-@pytest.mark.skipif(IS_WINDOWS, reason='ownership is only checked on POSIX')
-def test_env_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cover
-    tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
-) -> None:
-    mocker.patch('build.env.os.geteuid', autospec=True, return_value=os.geteuid() + 1)
-
-    with (
-        pytest.raises(build.BuildException, match='is not a directory owned by the current user'),
-        build.env.DefaultIsolatedEnv(path=str(tmp_path)),
-    ):
-        raise AssertionError
-
-    assert os.listdir(tmp_path) == []
-
-
-def test_env_dir_rejects_location_replaced_after_creating(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
-    target = tmp_path / 'build-env'
-
-    def replace_with_file(path: str, **_: bool) -> None:
-        pathlib.Path(path).touch()
-
-    mocker.patch('build.env.os.makedirs', autospec=True, side_effect=replace_with_file)
-
-    with (
-        pytest.raises(build.BuildException, match='is not a directory owned by the current user'),
-        build.env.DefaultIsolatedEnv(path=str(target)),
-    ):
-        raise AssertionError
-
-    assert target.is_file()
-
-
 @pytest.mark.usefixtures('mock_env_create')
-def test_env_dir_keeps_location_replaced_during_build(tmp_path: pathlib.Path) -> None:
+@pytest.mark.skipif(IS_WINDOWS, reason='Windows has no permission bits')
+def test_env_dir_recreates_existing_location_privately(tmp_path: pathlib.Path) -> None:  # pragma: win32 no cover
     target = tmp_path / 'build-env'
+    target.mkdir()
+    target.chmod(0o777)
 
     with build.env.DefaultIsolatedEnv(path=str(target)):
-        target.rename(tmp_path / 'moved')
-        target.mkdir()
-        target.joinpath('important.txt').touch()
+        assert stat.S_IMODE(target.stat().st_mode) == 0o700
 
-    assert os.listdir(target) == ['important.txt']
+
+@pytest.mark.skipif(IS_WINDOWS, reason='creating a symbolic link needs a privilege on Windows')
+def test_env_dir_checks_the_location_its_link_resolves_to(  # pragma: win32 no cover
+    tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    important = tmp_path / 'occupied' / 'important.txt'
+    important.parent.mkdir()
+    important.touch()
+    (tmp_path / 'empty').mkdir()
+    link = tmp_path / 'build-env'
+    link.symlink_to(tmp_path / 'empty')
+    realpath = os.path.realpath
+
+    def repoint_then_resolve(path: str) -> str:
+        link.unlink()
+        link.symlink_to(important.parent)
+        return realpath(path)
+
+    mocker.patch('build.env.os.path.realpath', autospec=True, side_effect=repoint_then_resolve)
+
+    with (
+        pytest.raises(build.BuildException, match='Build environment location is not empty'),
+        build.env.DefaultIsolatedEnv(path=str(link)),
+    ):
+        raise AssertionError
+
+    assert important.exists()
 
 
 def test_env_dir_rejects_file_at_location(tmp_path: pathlib.Path) -> None:
