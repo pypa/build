@@ -872,3 +872,52 @@ def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[
     setup(tmp_path)
     with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
         build.ProjectBuilder(tmp_path)
+
+
+def _backend_path_project(directory: pathlib.Path, backend_path: str) -> pathlib.Path:
+    project = directory / 'project'
+    project.mkdir()
+    project.joinpath('pyproject.toml').write_text(
+        textwrap.dedent(f"""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["{backend_path}"]
+        """),
+        encoding='utf-8',
+    )
+    return project
+
+
+@pytest.mark.parametrize('backend_path', ['..', '../outside', 'sub/../../outside'])
+def test_backend_path_outside_source_tree(tmp_path: pathlib.Path, backend_path: str) -> None:
+    project = _backend_path_project(tmp_path, backend_path)
+    # The entries have to exist, otherwise the directory check rejects them first.
+    (tmp_path / 'outside').mkdir()
+    (project / 'sub').mkdir()
+    with pytest.raises(build.BuildSystemTableValidationError, match='must be inside the source tree'):
+        build.ProjectBuilder(project)
+
+
+def test_backend_path_absolute(tmp_path: pathlib.Path) -> None:
+    project = _backend_path_project(tmp_path, tmp_path.as_posix())
+    with pytest.raises(build.BuildSystemTableValidationError, match='must be a relative path'):
+        build.ProjectBuilder(project)
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='creating a symlink needs extra privileges on Windows')
+def test_backend_path_symlink_outside_source_tree(tmp_path: pathlib.Path) -> None:  # pragma: win32 no cover
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    project = _backend_path_project(tmp_path, 'vendored')
+    (project / 'vendored').symlink_to(outside, target_is_directory=True)
+    with pytest.raises(build.BuildSystemTableValidationError, match='must be inside the source tree'):
+        build.ProjectBuilder(project)
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='creating a symlink needs extra privileges on Windows')
+def test_backend_path_symlink_inside_source_tree(tmp_path: pathlib.Path) -> None:  # pragma: win32 no cover
+    project = _backend_path_project(tmp_path, 'vendored')
+    (project / 'target').mkdir()
+    (project / 'vendored').symlink_to(project / 'target', target_is_directory=True)
+    build.ProjectBuilder(project)
