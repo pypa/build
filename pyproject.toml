@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "python_sbom.backend"
-requires = [ "flit-core>=3.12", "python-sbom>=0.3" ]
+build-backend = "flit_core.buildapi"
+requires = [ "flit-core>=3.11" ]
 
 [project]
 name = "build"
@@ -134,11 +134,7 @@ sdist.exclude = [
 ]
 
 [tool.python-sbom]
-build-backend = "flit_core.buildapi"
 supplier = { name = "Python Packaging Authority", url = [ "https://www.pypa.io" ] }
-
-[tool.check-sdist]
-build-backend = "flit_core.buildapi"
 
 [tool.uv]
 exclude-newer = "7 days"
