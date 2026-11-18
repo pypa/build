@@ -58,7 +58,7 @@ import build.env as _env
 from build import ProjectBuilder, _ctx
 from build._compat.tarfile import tarfile
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
-from build._util import format_unmet_dependencies
+from build._util import format_unmet_dependencies, owned_by_another_user
 from build.env import DefaultIsolatedEnv
 
 
@@ -901,9 +901,7 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
             msg = f'Sdist extract location is not a directory: {extract_dir}'
             raise BuildException(msg)
         os.makedirs(extract_dir, exist_ok=True)
-        # A directory's owner can replace its entries even under the sticky bit. Root can do so anywhere, so its
-        # directories pass.
-        if sys.platform != 'win32' and os.stat(extract_dir).st_uid not in {0, os.geteuid()}:  # pragma: win32 no cover
+        if owned_by_another_user(extract_dir):  # pragma: win32 no cover
             msg = f'Sdist extract location is owned by another user: {extract_dir}'
             raise BuildException(msg)
 
@@ -914,13 +912,9 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
             with _prepare_sdist_archive(archive_path, extract_dir=staging_dir) as (extractall, top_level_dir):
                 extractall(staging_dir)
             sdist_dir = os.path.join(extract_dir, top_level_dir)
-            try:
-                if os.path.lexists(sdist_dir):
-                    shutil.rmtree(sdist_dir)
-                os.rename(os.path.join(staging_dir, top_level_dir), sdist_dir)
-            except OSError as exc:
-                msg = f'Failed to replace sdist extract location {sdist_dir}: {exc}'
-                raise BuildException(msg) from exc
+            if os.path.lexists(sdist_dir):
+                shutil.rmtree(sdist_dir)
+            os.rename(os.path.join(staging_dir, top_level_dir), sdist_dir)
         finally:
             shutil.rmtree(staging_dir, ignore_errors=True)
 

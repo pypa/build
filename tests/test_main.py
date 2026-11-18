@@ -1282,7 +1282,7 @@ def test_sdist_extract_dir_rejects_stale_it_cannot_clear(  # pragma: win32 no co
     locked.joinpath('tarfile.py').touch()
     locked.chmod(0o500)
 
-    assert 'Failed to replace sdist extract location' in run_wheel_from_sdist(extract_dir)
+    assert str(locked) in run_wheel_from_sdist(extract_dir)
 
     locked.chmod(0o700)
     assert sorted(x.relative_to(extract_dir).as_posix() for x in extract_dir.rglob('*')) == [
@@ -1307,7 +1307,7 @@ def test_sdist_extract_dir_rejects_location_recreated_after_clear(
 
     mocker.patch('build.__main__.shutil.rmtree', autospec=True, side_effect=clear_then_plant)
 
-    assert 'Failed to replace sdist extract location' in run_wheel_from_sdist(extract_dir)
+    assert str(planted.parent) in run_wheel_from_sdist(extract_dir)
 
     assert sorted(x.relative_to(extract_dir).as_posix() for x in extract_dir.rglob('*')) == [
         'demo-1.0.0',
@@ -1319,7 +1319,7 @@ def test_sdist_extract_dir_rejects_location_recreated_after_clear(
 def test_sdist_extract_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cover
     run_wheel_from_sdist: Callable[[pathlib.Path], str], tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
 ) -> None:
-    mocker.patch('build.__main__.os.geteuid', autospec=True, return_value=os.geteuid() + 1)
+    mocker.patch('build._util.os.geteuid', autospec=True, return_value=os.geteuid() + 1)
 
     assert 'Sdist extract location is owned by another user' in run_wheel_from_sdist(tmp_path / 'extract')
 
