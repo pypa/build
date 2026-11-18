@@ -1,0 +1,2 @@
+Run the outer pip with ``-P`` so a ``pip.py`` in the working directory is not imported in its place - by
+:user:`gaborbernat`

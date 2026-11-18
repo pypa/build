@@ -13,6 +13,7 @@ import sys
 import sysconfig
 import typing
 import unittest.mock
+import zipfile
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -514,7 +515,30 @@ def test_install_dependencies_with_outer_pip(
         env.install(['some-package'])
 
     cmd = typing.cast(list[str], run_subprocess.call_args_list[-1].args[0])
-    assert cmd[:4] == [sys.executable, '-m', 'pip', '--python']
+    assert cmd[:5] == [sys.executable, '-P', '-m', 'pip', '--python']
+
+
+@pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
+def test_outer_pip_ignores_pip_module_in_cwd(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    wheel = tmp_path / 'demo-1.0-py3-none-any.whl'
+    with zipfile.ZipFile(wheel, 'w') as archive:
+        archive.writestr('demo-1.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n')
+        archive.writestr('demo-1.0.dist-info/WHEEL', 'Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n')
+        archive.writestr('demo-1.0.dist-info/RECORD', '')
+    cwd = tmp_path / 'cwd'
+    cwd.mkdir()
+    cwd.joinpath('pip.py').write_text("import pathlib\n\npathlib.Path('planted-pip-ran').touch()\n", encoding='utf-8')
+    monkeypatch.chdir(cwd)
+    monkeypatch.setenv('PIP_NO_INDEX', '1')
+
+    with build.env.DefaultIsolatedEnv() as env:
+        env.install([f'demo @ {wheel.as_uri()}'])
+
+        assert env.installed_versions(['demo']) == {'demo': '1.0'}
+    assert os.listdir(cwd) == ['pip.py']
 
 
 def test_find_executable_osx_framework_scheme(
