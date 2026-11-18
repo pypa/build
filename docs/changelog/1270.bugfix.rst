@@ -1,0 +1,1 @@
+Reject empty backend hook results and results containing a directory instead of reporting a different artifact.
