@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "flit_core.buildapi"
-requires = [ "flit-core>=3.11" ]
+build-backend = "python_sbom.backend"
+requires = [ "flit-core>=3.12", "python-sbom>=0.3" ]
 
 [project]
 name = "build"
@@ -132,6 +132,13 @@ sdist.exclude = [
   "docs/changelog/template.jinja2",
   "tasks/*",
 ]
+
+[tool.python-sbom]
+build-backend = "flit_core.buildapi"
+supplier = { name = "Python Packaging Authority", url = [ "https://www.pypa.io" ] }
+
+[tool.check-sdist]
+build-backend = "flit_core.buildapi"
 
 [tool.uv]
 exclude-newer = "7 days"

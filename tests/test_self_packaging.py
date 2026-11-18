@@ -66,6 +66,7 @@ wheel_files = {
     'dist-info/RECORD',
     'dist-info/WHEEL',
     'dist-info/entry_points.txt',
+    'dist-info/sboms/build.cdx.json',
 }
 
 
