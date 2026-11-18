@@ -1,0 +1,2 @@
+Resolve symbolic links in ``--env-dir`` before checking it, and recreate the location with access by the running user
+only - by :user:`gaborbernat`

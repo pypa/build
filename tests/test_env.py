@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 import shutil
+import stat
 import subprocess
 import sys
 import sysconfig
@@ -771,6 +772,45 @@ def test_env_dir_rejects_non_empty_location(tmp_path: pathlib.Path) -> None:
         raise AssertionError
 
     assert tmp_path.joinpath('sentinel').exists()
+
+
+@pytest.mark.usefixtures('mock_env_create')
+@pytest.mark.skipif(IS_WINDOWS, reason='Windows has no permission bits')
+def test_env_dir_recreates_existing_location_privately(tmp_path: pathlib.Path) -> None:  # pragma: win32 no cover
+    target = tmp_path / 'build-env'
+    target.mkdir()
+    target.chmod(0o777)
+
+    with build.env.DefaultIsolatedEnv(path=str(target)):
+        assert stat.S_IMODE(target.stat().st_mode) == 0o700
+
+
+@pytest.mark.skipif(IS_WINDOWS, reason='creating a symbolic link needs a privilege on Windows')
+def test_env_dir_checks_the_location_its_link_resolves_to(  # pragma: win32 no cover
+    tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    important = tmp_path / 'occupied' / 'important.txt'
+    important.parent.mkdir()
+    important.touch()
+    (tmp_path / 'empty').mkdir()
+    link = tmp_path / 'build-env'
+    link.symlink_to(tmp_path / 'empty')
+    realpath = os.path.realpath
+
+    def repoint_then_resolve(path: str) -> str:
+        link.unlink()
+        link.symlink_to(important.parent)
+        return realpath(path)
+
+    mocker.patch('build.env.os.path.realpath', autospec=True, side_effect=repoint_then_resolve)
+
+    with (
+        pytest.raises(build.BuildException, match='Build environment location is not empty'),
+        build.env.DefaultIsolatedEnv(path=str(link)),
+    ):
+        raise AssertionError
+
+    assert important.exists()
 
 
 def test_env_dir_rejects_file_at_location(tmp_path: pathlib.Path) -> None:

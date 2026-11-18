@@ -118,7 +118,8 @@ class DefaultIsolatedEnv(IsolatedEnv):
         if self._requested_path is None:
             path = tempfile.mkdtemp(prefix='build-env-')
         else:
-            path = self._requested_path
+            # Resolved before the checks: a symbolic link checked first and resolved later can point elsewhere by then.
+            path = os.path.realpath(self._requested_path)
             if os.path.exists(path) and not os.path.isdir(path):
                 msg = f'Build environment location is not a directory: {path}'
                 raise BuildException(msg)
@@ -127,7 +128,10 @@ class DefaultIsolatedEnv(IsolatedEnv):
                     if next(entries, None) is not None:
                         msg = f'Build environment location is not empty: {path}'
                         raise BuildException(msg)
-            os.makedirs(path, exist_ok=True)
+                # Recreated below so it is ours: the owner of an existing directory can swap what build installs.
+                os.rmdir(path)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            os.mkdir(path, 0o700)
 
         # Set early so ``__exit__`` can clean up even if the calls below fail.
         self._path = path
