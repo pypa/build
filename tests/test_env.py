@@ -750,7 +750,9 @@ def test_env_dir_rejects_non_empty_location(tmp_path: pathlib.Path) -> None:
 
 
 @pytest.mark.skipif(IS_WINDOWS, reason='ownership is only checked on POSIX')
-def test_env_dir_rejects_location_owned_by_another_user(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+def test_env_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cover
+    tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
     mocker.patch('build.env.os.geteuid', autospec=True, return_value=os.geteuid() + 1)
 
     with (
@@ -762,21 +764,21 @@ def test_env_dir_rejects_location_owned_by_another_user(tmp_path: pathlib.Path, 
     assert os.listdir(tmp_path) == []
 
 
-@pytest.mark.skipif(IS_WINDOWS, reason='creating a symbolic link needs a privilege on Windows')
-def test_env_dir_rejects_link_placed_after_resolving(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
-    target = tmp_path / 'target'
-    target.mkdir()
-    link = tmp_path / 'build-env'
-    link.symlink_to(target)
-    mocker.patch('build.env.os.path.realpath', autospec=True, return_value=str(link))
+def test_env_dir_rejects_location_replaced_after_creating(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
+    target = tmp_path / 'build-env'
+
+    def replace_with_file(path: str, *, exist_ok: bool) -> None:
+        pathlib.Path(path).write_text(str(exist_ok), encoding='utf-8')
+
+    mocker.patch('build.env.os.makedirs', autospec=True, side_effect=replace_with_file)
 
     with (
         pytest.raises(build.BuildException, match='is not a directory owned by the current user'),
-        build.env.DefaultIsolatedEnv(path=str(link)),
+        build.env.DefaultIsolatedEnv(path=str(target)),
     ):
         raise AssertionError
 
-    assert os.listdir(target) == []
+    assert target.read_text(encoding='utf-8') == 'True'
 
 
 @pytest.mark.usefixtures('mock_env_create')
