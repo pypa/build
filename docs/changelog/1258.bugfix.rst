@@ -1,0 +1,1 @@
+Accept redundant ``.`` components in sdist archive paths (:issue:`1228`) - by :user:`Zhuyuyangyy`
