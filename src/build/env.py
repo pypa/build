@@ -219,6 +219,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             return
 
         for requirement in requirements:
+            # Single line check not needed for packaging 26.4+
             if requirement.splitlines() != [requirement]:
                 msg = f'Invalid build requirement: {requirement!r}'
                 raise BuildException(msg)
