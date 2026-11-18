@@ -22,4 +22,4 @@
 - [ ] I looked at the contributing guide (`docs/development/contributing.rst`)
 - [ ] Tests pass locally (some combination of `tox`, `tox -e fix`, `tox -e type`, `tox -e docs`, depending on the
   change)
-- [ ] The PR description is not signifincantly longer than the change (use `<details>` tags if you really need more)
+- [ ] The PR description is not significantly longer than the change (use `<details>` tags if you really need more)
