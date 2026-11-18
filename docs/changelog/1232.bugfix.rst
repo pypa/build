@@ -1,0 +1,1 @@
+Match umask permissions on ``--report`` JSON output - by :user:`henryiii`

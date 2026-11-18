@@ -1638,6 +1638,23 @@ def test_write_report_creates_parent_directory(tmp_path: pathlib.Path, built_dis
     assert report.is_file()
 
 
+@pytest.mark.skipif(sys.platform == 'win32', reason='POSIX permissions')
+@pytest.mark.parametrize(('umask', 'mode'), [(0o022, 0o644), (0o077, 0o600)])
+def test_write_report_honors_umask(  # pragma: win32 no cover
+    tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]], umask: int, mode: int
+) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'report.json'
+
+    old = os.umask(umask)
+    try:
+        build.__main__._write_report(report, str(outdir), names)
+    finally:
+        os.umask(old)
+
+    assert stat.S_IMODE(report.stat().st_mode) == mode
+
+
 def test_report_not_allowed_with_metadata(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         build.__main__.main(['--report', 'r.json', '--metadata'])

@@ -772,9 +772,10 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
 
     report_dir = os.path.dirname(os.path.abspath(path))
     os.makedirs(report_dir, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=report_dir, suffix='.tmp')
+    # mkstemp forces mode 0600, so using the target directory
+    tmp = os.path.join(report_dir, f'{os.path.basename(path)}.{os.urandom(8).hex()}.tmp')
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
+        with open(tmp, 'x', encoding='utf-8') as report_file:
             report_file.write(data)
         os.replace(tmp, path)
     except BaseException:
