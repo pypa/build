@@ -392,7 +392,9 @@ class _PipBackend(_EnvBackend):
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             if self._has_valid_outer_pip:
-                cmd = [sys.executable, '-m', 'pip', '--python', self.python_executable]
+                # -P keeps the working directory off sys.path, where a pip.py would shadow the installed pip; unlike
+                # -I it leaves the user site enabled, which is where the outer pip may live.
+                cmd = [sys.executable, '-P', '-m', 'pip', '--python', self.python_executable]
             else:
                 cmd = [self.python_executable, '-Im', 'pip']
 
