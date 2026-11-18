@@ -10,6 +10,7 @@ import json
 import os
 import pathlib
 import re
+import stat
 import subprocess
 import sys
 import unittest.mock
@@ -1516,6 +1517,19 @@ def test_write_report_is_atomic(tmp_path: pathlib.Path, built_dist: tuple[pathli
 
     assert not list(tmp_path.glob('*.tmp'))
     assert not list(outdir.glob('*.tmp'))
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='file modes are not meaningful on Windows')
+def test_write_report_honors_umask(tmp_path: pathlib.Path, built_dist: tuple[pathlib.Path, list[str]]) -> None:
+    outdir, names = built_dist
+    report = tmp_path / 'report.json'
+    previous_umask = os.umask(0o022)
+    try:
+        build.__main__._write_report(report, str(outdir), names)
+    finally:
+        os.umask(previous_umask)
+
+    assert stat.S_IMODE(report.stat().st_mode) == 0o644
 
 
 def test_write_report_cleans_tmp_on_failure(

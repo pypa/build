@@ -776,6 +776,11 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
             report_file.write(data)
+        # mkstemp() always creates the file with mode 0600. Apply the process
+        # umask so the report matches the permissions of the other artifacts.
+        umask = os.umask(0)
+        os.umask(umask)
+        os.chmod(tmp, 0o666 & ~umask)
         os.replace(tmp, path)
     except BaseException:
         with contextlib.suppress(OSError):
