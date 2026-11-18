@@ -1257,6 +1257,41 @@ def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
 
 
+@pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs a directory the user cannot empty')
+def test_extract_sdist_fixed_dir_rejects_stale_it_cannot_clear(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    locked = tmp_path / 'extract' / 'demo-1.0.0' / 'locked'
+    locked.mkdir(parents=True)
+    locked.joinpath('tarfile.py').touch()
+    locked.chmod(0o500)
+
+    with (
+        pytest.raises(build.BuildException, match='Failed to replace sdist extract location'),
+        build.__main__._extract_sdist(str(sdist), extract_dir=str(tmp_path / 'extract')),
+    ):
+        raise AssertionError
+
+    locked.chmod(0o700)
+    assert os.listdir(tmp_path / 'extract') == ['demo-1.0.0']
+    assert os.listdir(tmp_path / 'extract' / 'demo-1.0.0') == ['locked']
+
+
+def test_extract_sdist_fixed_dir_rejects_location_recreated_after_clear(
+    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    planted = tmp_path / 'extract' / 'demo-1.0.0' / 'tarfile.py'
+    planted.parent.mkdir(parents=True)
+    mocker.patch('build.__main__.os.path.lexists', autospec=True, return_value=False)
+    planted.touch()
+
+    with (
+        pytest.raises(build.BuildException, match='Failed to replace sdist extract location'),
+        build.__main__._extract_sdist(str(sdist), extract_dir=str(tmp_path / 'extract')),
+    ):
+        raise AssertionError
+
+    assert os.listdir(planted.parent) == ['tarfile.py']
+
+
 def test_extract_sdist_rejects_file_at_location(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
     file_path = tmp_path / 'not-a-dir'
     file_path.write_text('x', encoding='utf-8')
