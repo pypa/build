@@ -10,6 +10,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import unittest.mock
@@ -1258,7 +1259,9 @@ def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path
 
 
 @pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs a directory the user cannot empty')
-def test_extract_sdist_fixed_dir_rejects_stale_it_cannot_clear(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
+def test_extract_sdist_fixed_dir_rejects_stale_it_cannot_clear(  # pragma: win32 no cover
+    sdist: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
     locked = tmp_path / 'extract' / 'demo-1.0.0' / 'locked'
     locked.mkdir(parents=True)
     locked.joinpath('tarfile.py').touch()
@@ -1280,8 +1283,14 @@ def test_extract_sdist_fixed_dir_rejects_location_recreated_after_clear(
 ) -> None:
     planted = tmp_path / 'extract' / 'demo-1.0.0' / 'tarfile.py'
     planted.parent.mkdir(parents=True)
-    mocker.patch('build.__main__.os.path.lexists', autospec=True, return_value=False)
-    planted.touch()
+    rmtree = shutil.rmtree
+
+    def clear_then_plant(path: str, *, ignore_errors: bool = False) -> None:
+        rmtree(path, ignore_errors=ignore_errors)
+        planted.parent.mkdir(exist_ok=True)
+        planted.touch()
+
+    mocker.patch('build.__main__.shutil.rmtree', autospec=True, side_effect=clear_then_plant)
 
     with (
         pytest.raises(build.BuildException, match='Failed to replace sdist extract location'),
@@ -1289,7 +1298,23 @@ def test_extract_sdist_fixed_dir_rejects_location_recreated_after_clear(
     ):
         raise AssertionError
 
+    assert os.listdir(tmp_path / 'extract') == ['demo-1.0.0']
     assert os.listdir(planted.parent) == ['tarfile.py']
+
+
+@pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs POSIX and a non-root owner')
+def test_extract_sdist_fixed_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cover
+    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    mocker.patch('build.__main__.os.geteuid', autospec=True, return_value=os.geteuid() + 1)
+
+    with (
+        pytest.raises(build.BuildException, match='Sdist extract location is owned by another user'),
+        build.__main__._extract_sdist(str(sdist), extract_dir=str(tmp_path / 'extract')),
+    ):
+        raise AssertionError
+
+    assert os.listdir(tmp_path / 'extract') == []
 
 
 def test_extract_sdist_rejects_file_at_location(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:
