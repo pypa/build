@@ -10,7 +10,6 @@ import json
 import os
 import pathlib
 import re
-import shutil
 import subprocess
 import sys
 import unittest.mock
@@ -1297,15 +1296,14 @@ def test_sdist_extract_dir_rejects_location_recreated_after_clear(
 ) -> None:
     extract_dir = tmp_path / 'extract'
     planted = extract_dir / 'demo-1.0.0' / 'tarfile.py'
-    planted.parent.mkdir(parents=True)
-    rmtree = shutil.rmtree
+    rename = os.rename
 
-    def clear_then_plant(path: str, *, ignore_errors: bool = False) -> None:
-        rmtree(path, ignore_errors=ignore_errors)
-        planted.parent.mkdir(exist_ok=True)
+    def recreate_then_rename(src: str, dst: str) -> None:
+        planted.parent.mkdir()
         planted.touch()
+        rename(src, dst)
 
-    mocker.patch('build.__main__.shutil.rmtree', autospec=True, side_effect=clear_then_plant)
+    mocker.patch('build.__main__.os.rename', autospec=True, side_effect=recreate_then_rename)
 
     run_wheel_from_sdist(extract_dir)
 

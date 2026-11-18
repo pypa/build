@@ -122,11 +122,11 @@ Build creates the directory if missing, clears and repopulates it each run so th
 after the build. The path stays stable while the project version is unchanged, as it is during iteration on the
 extension sources. The same flag applies when building a wheel from a ``.tar.gz``.
 
-Build extracts into a private directory under that path and then moves the result into place. It stops with an error
-when it cannot remove the previous tree, for example when another account owns files in it. Outside Windows it also
-refuses a path that another user owns, because that user could replace the sources. Build does not check the directories
-above the path or who else may write to it, so choose a path only your account can write to. In a shared directory such
-as ``/tmp``, another account can create the tree first and block your builds.
+.. note::
+
+    Build extracts into a private directory under that path and then moves the result into place. Choose a path only
+    your account can write to: in a shared directory such as ``/tmp``, another account can create the tree first and
+    block your builds.
 
 Build still runs in a fresh isolated environment whose path is *not* pinned, so include directories from that
 environment (Python headers, dependency headers) keep changing. Caching those compile units needs toolchain-side path

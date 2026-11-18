@@ -907,16 +907,15 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
 
         # Staged privately so files another account left at the final location stay out of the sources the backend
         # runs from.
-        staging_dir = tempfile.mkdtemp(prefix='.build-via-sdist-', dir=extract_dir)
-        try:
+        with tempfile.TemporaryDirectory(
+            prefix='.build-via-sdist-', dir=extract_dir, ignore_cleanup_errors=True
+        ) as staging_dir:
             with _prepare_sdist_archive(archive_path, extract_dir=staging_dir) as (extractall, top_level_dir):
                 extractall(staging_dir)
             sdist_dir = os.path.join(extract_dir, top_level_dir)
             if os.path.lexists(sdist_dir):
                 shutil.rmtree(sdist_dir)
             os.rename(os.path.join(staging_dir, top_level_dir), sdist_dir)
-        finally:
-            shutil.rmtree(staging_dir, ignore_errors=True)
 
         yield sdist_dir
 
