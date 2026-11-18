@@ -133,6 +133,9 @@ sdist.exclude = [
   "tasks/*",
 ]
 
+[tool.python-sbom]
+supplier = { name = "Python Packaging Authority", url = [ "https://www.pypa.io" ] }
+
 [tool.uv]
 exclude-newer = "7 days"
 exclude-newer-package = { docstrfmt = "2026-08-28T18:00:18Z" }
