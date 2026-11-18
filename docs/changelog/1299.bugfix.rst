@@ -1,0 +1,2 @@
+Reject ``backend-path`` entries that leave the source tree, also through a symlink, with
+``BuildSystemTableValidationError`` - by :user:`v01dst`
