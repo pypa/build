@@ -10,6 +10,8 @@ import json
 import os
 import pathlib
 import re
+import shutil
+import stat
 import subprocess
 import sys
 import unittest.mock
@@ -1255,6 +1257,73 @@ def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path
         assert extracted == str(extract_dir / 'demo-1.0.0')
         assert not stale.exists()
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
+
+
+@pytest.fixture
+def fail_wheel_from_sdist(
+    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> Callable[[pathlib.Path], None]:
+    mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    def run(extract_dir: pathlib.Path) -> None:
+        with pytest.raises(SystemExit):
+            build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', str(extract_dir)])
+
+    return run
+
+
+@pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs a directory the user cannot empty')
+def test_sdist_extract_dir_rejects_stale_it_cannot_clear(  # pragma: win32 no cover
+    fail_wheel_from_sdist: Callable[[pathlib.Path], None], tmp_path: pathlib.Path
+) -> None:
+    extract_dir = tmp_path / 'extract'
+    locked = extract_dir / 'demo-1.0.0' / 'locked'
+    locked.mkdir(parents=True)
+    locked.joinpath('tarfile.py').touch()
+    locked.chmod(0o500)
+
+    fail_wheel_from_sdist(extract_dir)
+
+    locked.chmod(0o700)
+    assert sorted(x.relative_to(extract_dir).as_posix() for x in extract_dir.rglob('*')) == [
+        'demo-1.0.0',
+        'demo-1.0.0/locked',
+        'demo-1.0.0/locked/tarfile.py',
+    ]
+
+
+def test_sdist_extract_dir_rejects_location_recreated_after_clear(
+    fail_wheel_from_sdist: Callable[[pathlib.Path], None], tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    extract_dir = tmp_path / 'extract'
+    planted = extract_dir / 'demo-1.0.0' / 'tarfile.py'
+    planted.parent.mkdir(parents=True)
+    rmtree = shutil.rmtree
+
+    def clear_then_recreate(path: str) -> None:
+        rmtree(path)
+        planted.parent.mkdir()
+        planted.touch()
+
+    mocker.patch('build.__main__.shutil.rmtree', autospec=True, side_effect=clear_then_recreate)
+
+    fail_wheel_from_sdist(extract_dir)
+
+    assert sorted(x.relative_to(extract_dir).as_posix() for x in extract_dir.rglob('*')) == [
+        'demo-1.0.0',
+        'demo-1.0.0/tarfile.py',
+    ]
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='Windows has no permission bits')
+def test_sdist_extract_dir_tree_is_private(  # pragma: win32 no cover
+    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', str(tmp_path / 'extract')])
+
+    assert stat.S_IMODE((tmp_path / 'extract' / 'demo-1.0.0').stat().st_mode) == 0o700
 
 
 def test_extract_sdist_rejects_file_at_location(sdist: pathlib.Path, tmp_path: pathlib.Path) -> None:

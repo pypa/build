@@ -904,7 +904,10 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
 
         with _prepare_sdist_archive(archive_path, extract_dir=extract_dir) as (extractall, top_level_dir):
             sdist_dir = os.path.join(extract_dir, top_level_dir)
-            shutil.rmtree(sdist_dir, ignore_errors=True)
+            if os.path.lexists(sdist_dir):
+                shutil.rmtree(sdist_dir)
+            # Fails if another account recreated the tree since, and keeps it from adding files while the backend runs.
+            os.mkdir(sdist_dir, 0o700)
             extractall(extract_dir)
 
         yield sdist_dir

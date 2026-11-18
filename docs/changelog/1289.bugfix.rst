@@ -1,0 +1,2 @@
+Fail when the previous tree under ``--sdist-extract-dir`` cannot be removed instead of extracting over it - by
+:user:`gaborbernat`
