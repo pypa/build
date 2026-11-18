@@ -124,9 +124,9 @@ extension sources. The same flag applies when building a wheel from a ``.tar.gz`
 
 .. note::
 
-    Build extracts into a private directory under that path and then moves the result into place. Choose a path only
-    your account can write to: build refuses one another user owns, and in a shared directory such as ``/tmp`` another
-    account can create the tree first and block your builds.
+    Build recreates the extracted tree on each run, with access for your account only. Choose a path only your account
+    can write to: build refuses one another user owns but does not check who else may write to it, and in a shared
+    directory such as ``/tmp`` another account can create the tree first and block your builds.
 
 Build still runs in a fresh isolated environment whose path is *not* pinned, so include directories from that
 environment (Python headers, dependency headers) keep changing. Caching those compile units needs toolchain-side path

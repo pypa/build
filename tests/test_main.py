@@ -10,6 +10,8 @@ import json
 import os
 import pathlib
 import re
+import shutil
+import stat
 import subprocess
 import sys
 import unittest.mock
@@ -1296,14 +1298,15 @@ def test_sdist_extract_dir_rejects_location_recreated_after_clear(
 ) -> None:
     extract_dir = tmp_path / 'extract'
     planted = extract_dir / 'demo-1.0.0' / 'tarfile.py'
-    rename = os.rename
+    planted.parent.mkdir(parents=True)
+    rmtree = shutil.rmtree
 
-    def recreate_then_rename(src: str, dst: str) -> None:
+    def clear_then_recreate(path: str) -> None:
+        rmtree(path)
         planted.parent.mkdir()
         planted.touch()
-        rename(src, dst)
 
-    mocker.patch('build.__main__.os.rename', autospec=True, side_effect=recreate_then_rename)
+    mocker.patch('build.__main__.shutil.rmtree', autospec=True, side_effect=clear_then_recreate)
 
     run_wheel_from_sdist(extract_dir)
 
@@ -1311,6 +1314,17 @@ def test_sdist_extract_dir_rejects_location_recreated_after_clear(
         'demo-1.0.0',
         'demo-1.0.0/tarfile.py',
     ]
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='Windows has no permission bits')
+def test_sdist_extract_dir_tree_is_private(  # pragma: win32 no cover
+    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+) -> None:
+    mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', str(tmp_path / 'extract')])
+
+    assert stat.S_IMODE((tmp_path / 'extract' / 'demo-1.0.0').stat().st_mode) == 0o700
 
 
 @pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs POSIX and a non-root owner')

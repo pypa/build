@@ -905,17 +905,13 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
             msg = f'Sdist extract location is owned by another user: {extract_dir}'
             raise BuildException(msg)
 
-        # Staged privately so files another account left at the final location stay out of the sources the backend
-        # runs from.
-        with tempfile.TemporaryDirectory(
-            prefix='.build-via-sdist-', dir=extract_dir, ignore_cleanup_errors=True
-        ) as staging_dir:
-            with _prepare_sdist_archive(archive_path, extract_dir=staging_dir) as (extractall, top_level_dir):
-                extractall(staging_dir)
+        with _prepare_sdist_archive(archive_path, extract_dir=extract_dir) as (extractall, top_level_dir):
             sdist_dir = os.path.join(extract_dir, top_level_dir)
             if os.path.lexists(sdist_dir):
                 shutil.rmtree(sdist_dir)
-            os.rename(os.path.join(staging_dir, top_level_dir), sdist_dir)
+            # Fails if another account recreated the tree since, and keeps it from adding files while the backend runs.
+            os.mkdir(sdist_dir, 0o700)
+            extractall(extract_dir)
 
         yield sdist_dir
 
