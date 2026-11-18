@@ -1,0 +1,2 @@
+Reject an ``--env-dir`` location owned by another user, resolve its symbolic links once, and remove only the directory
+checked at the start - by :user:`gaborbernat`
