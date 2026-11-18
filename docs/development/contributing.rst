@@ -231,6 +231,7 @@ Moreover:
 - Keep changes small and focused. Excessive tests, redundant comments, and unrelated changes may get your PR rejected.
 - If an AI tool finds a security issue, please report it to us privately (via GitHub's private vulnerability reporting)
   with a reproducer.
+- We are more likely to reject a change if you do not follow the PR template.
 
 **********
  See also
