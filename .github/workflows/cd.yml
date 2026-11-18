@@ -29,8 +29,8 @@ jobs:
       - uses: hynek/build-and-inspect-python-package@67230f7b8410ae0052b39c1efc89d89fff43ff10 # v3.0.2
       - name: Embed wheel SBOM
         run: |
-          uvx --from 'python-sbom[validate]==0.3.1' python-sbom embed /tmp/baipp/dist/*.whl
-          uvx --from 'python-sbom[validate]==0.3.1' python-sbom validate /tmp/baipp/dist
+          uvx --refresh --from 'python-sbom[validate]>=0.3.1' python-sbom embed /tmp/baipp/dist/*.whl
+          uvx --from 'python-sbom[validate]>=0.3.1' python-sbom validate /tmp/baipp/dist
           /tmp/baipp/bin/check-wheel-contents /tmp/baipp/dist/*.whl
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
