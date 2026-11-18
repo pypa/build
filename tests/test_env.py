@@ -520,11 +520,9 @@ def test_install_dependencies_with_outer_pip(
 
 @pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
 def test_outer_pip_ignores_pip_module_in_cwd(
-    mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
-    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', True)
     wheel = tmp_path / 'demo-1.0-py3-none-any.whl'
     with zipfile.ZipFile(wheel, 'w') as archive:
         archive.writestr('demo-1.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n')
