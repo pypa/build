@@ -488,7 +488,7 @@ def test_virtualenv_no_wheel_flag(
     version: str,
     has_no_wheel: bool,
 ) -> None:
-    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', None)
+    mocker.patch.object(build.env._PipBackend, '_outer_pip', None)
     mocker.patch.object(build.env._PipBackend, '_has_virtualenv', True)
 
     mocker.patch('importlib.metadata.version', return_value=version)
@@ -507,7 +507,8 @@ def test_virtualenv_no_wheel_flag(
 def test_install_dependencies_with_outer_pip(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
-    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', True)
+    pip = importlib.metadata.distribution('pip')
+    mocker.patch.object(build.env._PipBackend, '_outer_pip', pip)
 
     run_subprocess = mocker.patch('build.env.run_subprocess')
 
@@ -515,11 +516,11 @@ def test_install_dependencies_with_outer_pip(
         env.install(['some-package'])
 
     cmd = typing.cast(list[str], run_subprocess.call_args_list[-1].args[0])
-    assert cmd[:5] == [sys.executable, '-P', '-m', 'pip', '--python']
+    assert cmd[:3] == [sys.executable, str(pip.locate_file('pip/__pip-runner__.py')), '--python']
 
 
 @pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
-def test_outer_pip_ignores_pip_module_in_cwd(
+def test_outer_pip_ignores_pip_module_in_cwd_and_pythonpath(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -532,6 +533,7 @@ def test_outer_pip_ignores_pip_module_in_cwd(
     cwd.mkdir()
     cwd.joinpath('pip.py').write_text("import pathlib\n\npathlib.Path('planted-pip-ran').touch()\n", encoding='utf-8')
     monkeypatch.chdir(cwd)
+    monkeypatch.setenv('PYTHONPATH', str(cwd))
     monkeypatch.setenv('PIP_NO_INDEX', '1')
 
     with build.env.DefaultIsolatedEnv() as env:

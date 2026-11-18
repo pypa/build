@@ -265,13 +265,13 @@ def _pip_env() -> dict[str, str] | None:
 
 class _PipBackend(_EnvBackend):
     def __init__(self) -> None:
-        self._create_with_virtualenv = not self._has_valid_outer_pip and self._has_virtualenv
+        self._create_with_virtualenv = not self._outer_pip and self._has_virtualenv
 
     @functools.cached_property
-    def _has_valid_outer_pip(self) -> bool | None:
+    def _outer_pip(self) -> importlib.metadata.Distribution | None:
         """
-        This checks for a valid global pip. Returns None if pip is missing, False
-        if pip is too old or debundled, and True if it can be used.
+        The pip installed next to build when it can install into another environment, None when pip is missing, too
+        old or debundled.
         """
 
         # Version to have added the `--python` option.
@@ -279,7 +279,7 @@ class _PipBackend(_EnvBackend):
         if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
             files = dist.files
             if files:
-                return any(str(f).startswith('pip/_vendor') for f in files)
+                return dist if any(str(f).startswith('pip/_vendor') for f in files) else None
             # The distribution package manager deleted the RECORD file,
             # generally to force pip to be unable to uninstall itself
             # Only try this on 3.12+ since it can have side effects before 3.12
@@ -288,8 +288,7 @@ class _PipBackend(_EnvBackend):
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
                     if importlib.util.find_spec('pip._vendor') is not None:
-                        return True
-            return False
+                        return dist
 
         return None  # pragma: no cover
 
@@ -349,7 +348,7 @@ class _PipBackend(_EnvBackend):
         else:
             import venv
 
-            with_pip = not self._has_valid_outer_pip
+            with_pip = not self._outer_pip
 
             try:
                 venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=with_pip).create(path)
@@ -391,10 +390,11 @@ class _PipBackend(_EnvBackend):
         _fresh: bool = False,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
-            if self._has_valid_outer_pip:
-                # -P stops a pip.py in the working directory from shadowing the installed pip. -I would also drop the
-                # user site, where the outer pip may live.
-                cmd = [sys.executable, '-P', '-m', 'pip', '--python', self.python_executable]
+            if self._outer_pip:
+                # pip's runner executes the copy of pip it ships with. ``-m pip`` would import whichever pip comes
+                # first on the child's path, which the working directory or PYTHONPATH can supply.
+                runner = str(self._outer_pip.locate_file('pip/__pip-runner__.py'))
+                cmd = [sys.executable, runner, '--python', self.python_executable]
             else:
                 cmd = [self.python_executable, '-Im', 'pip']
 
