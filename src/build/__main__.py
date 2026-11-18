@@ -270,13 +270,13 @@ def _build(
 
 
 @contextlib.contextmanager
-def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | None) -> Generator[None]:
+def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | None, isolation: bool) -> Generator[None]:
     try:
         yield
     except (BuildException, FailedProcessError) as e:
         _error(str(e))
     except BuildBackendException as e:
-        hint = _build_failure_hint(env_dir, sdist_extract_dir)
+        hint = _build_failure_hint(env_dir, sdist_extract_dir, isolation=isolation)
         if isinstance(e.exception, subprocess.CalledProcessError):
             _cprint()
             _cprint('{yellow}TIP{reset} {}', hint, file=sys.stderr)
@@ -294,7 +294,7 @@ def _handle_build_error(*, env_dir: str | None, sdist_extract_dir: StrPath | Non
         _error(str(e))
 
 
-def _build_failure_hint(env_dir: str | None, sdist_extract_dir: StrPath | None) -> str:
+def _build_failure_hint(env_dir: str | None, sdist_extract_dir: StrPath | None, *, isolation: bool) -> str:
     kept = [
         f'{label} at {os.fspath(path)}'
         for path, label in ((env_dir, 'the build environment'), (sdist_extract_dir, 'the extracted sources'))
@@ -302,8 +302,10 @@ def _build_failure_hint(env_dir: str | None, sdist_extract_dir: StrPath | None) 
     ]
     if kept:
         action = f'inspect {" and ".join(kept)}'
-    else:
+    elif isolation:
         action = 'pass --env-dir and --sdist-extract-dir to keep the build environment and sources'
+    else:
+        action = 'pass --sdist-extract-dir to keep the extracted sources'
     docs = 'https://build.pypa.io/en/stable/how-to/troubleshooting.html#debug-a-failed-build'
     return f'{action}, then see {docs} for help debugging a failed build'
 
@@ -731,7 +733,7 @@ def main(cli_args: Sequence[str], prog: str | None = None) -> None:
     else:
         outdir = os.path.join(args.srcdir, 'dist')
 
-    with _handle_build_error(env_dir=args.env_dir, sdist_extract_dir=args.sdist_extract_dir):
+    with _handle_build_error(env_dir=args.env_dir, sdist_extract_dir=args.sdist_extract_dir, isolation=not args.no_isolation):
         if sdist_input:
             with _extract_sdist(args.srcdir, extract_dir=args.sdist_extract_dir) as extracted_srcdir:
                 built = run_build(extracted_srcdir, outdir)
