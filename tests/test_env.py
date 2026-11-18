@@ -766,7 +766,11 @@ def test_env_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cov
 
 def test_env_dir_rejects_location_replaced_after_creating(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture) -> None:
     target = tmp_path / 'build-env'
-    mocker.patch('build.env.os.makedirs', autospec=True, side_effect=lambda path, **_: pathlib.Path(path).touch())
+
+    def replace_with_file(path: str, **_: bool) -> None:
+        pathlib.Path(path).touch()
+
+    mocker.patch('build.env.os.makedirs', autospec=True, side_effect=replace_with_file)
 
     with (
         pytest.raises(build.BuildException, match='is not a directory owned by the current user'),
