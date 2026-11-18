@@ -28,7 +28,7 @@ classifiers = [
 # Version read from __version__ field in __init__.py by Flit
 dynamic = [ "version" ]
 dependencies = [
-  "backports-tarfile>=1.2; python_version=='3.11' and python_full_version<'3.11.5'",
+  "backports-tarfile>=1.2; python_full_version<'3.11.5'",
   # not actually a runtime dependency, only supplied as there is not "recommended dependency" support
   "colorama; os_name=='nt'",
   "packaging>=24",
