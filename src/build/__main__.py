@@ -901,14 +901,14 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
             msg = f'Sdist extract location is not a directory: {extract_dir}'
             raise BuildException(msg)
         os.makedirs(extract_dir, exist_ok=True)
-        # The owner of a directory can replace the entries build puts in it, even under the sticky bit. A directory
-        # root owns is exempt: root can do that anywhere.
+        # A directory's owner can replace its entries even under the sticky bit. Root can do so anywhere, so its
+        # directories pass.
         if sys.platform != 'win32' and os.stat(extract_dir).st_uid not in {0, os.geteuid()}:  # pragma: win32 no cover
             msg = f'Sdist extract location is owned by another user: {extract_dir}'
             raise BuildException(msg)
 
-        # Extract into a private directory and move the result into place: files another account left at the final
-        # location must never end up next to the sources the backend runs from.
+        # Staged privately so files another account left at the final location stay out of the sources the backend
+        # runs from.
         staging_dir = tempfile.mkdtemp(prefix='.build-via-sdist-', dir=extract_dir)
         try:
             with _prepare_sdist_archive(archive_path, extract_dir=staging_dir) as (extractall, top_level_dir):

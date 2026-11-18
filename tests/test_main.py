@@ -1258,30 +1258,45 @@ def test_extract_sdist_fixed_dir_clears_stale_before_extract(sdist: pathlib.Path
         assert os.path.isfile(os.path.join(extracted, 'PKG-INFO'))
 
 
+@pytest.fixture
+def run_wheel_from_sdist(
+    sdist: pathlib.Path, tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str], mocker: pytest_mock.MockerFixture
+) -> Callable[[pathlib.Path], str]:
+    mocker.patch('build.__main__.build_package', autospec=True, return_value=['demo-1.0.0-py3-none-any.whl'])
+
+    def run(extract_dir: pathlib.Path) -> str:
+        with pytest.raises(SystemExit):
+            build.__main__.main([str(sdist), '--wheel', '-o', str(tmp_path), '--sdist-extract-dir', str(extract_dir)])
+        return capsys.readouterr().err
+
+    return run
+
+
 @pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs a directory the user cannot empty')
-def test_extract_sdist_fixed_dir_rejects_stale_it_cannot_clear(  # pragma: win32 no cover
-    sdist: pathlib.Path, tmp_path: pathlib.Path
+def test_sdist_extract_dir_rejects_stale_it_cannot_clear(  # pragma: win32 no cover
+    run_wheel_from_sdist: Callable[[pathlib.Path], str], tmp_path: pathlib.Path
 ) -> None:
-    locked = tmp_path / 'extract' / 'demo-1.0.0' / 'locked'
+    extract_dir = tmp_path / 'extract'
+    locked = extract_dir / 'demo-1.0.0' / 'locked'
     locked.mkdir(parents=True)
     locked.joinpath('tarfile.py').touch()
     locked.chmod(0o500)
 
-    with (
-        pytest.raises(build.BuildException, match='Failed to replace sdist extract location'),
-        build.__main__._extract_sdist(str(sdist), extract_dir=str(tmp_path / 'extract')),
-    ):
-        raise AssertionError
+    assert 'Failed to replace sdist extract location' in run_wheel_from_sdist(extract_dir)
 
     locked.chmod(0o700)
-    assert os.listdir(tmp_path / 'extract') == ['demo-1.0.0']
-    assert os.listdir(tmp_path / 'extract' / 'demo-1.0.0') == ['locked']
+    assert sorted(x.relative_to(extract_dir).as_posix() for x in extract_dir.rglob('*')) == [
+        'demo-1.0.0',
+        'demo-1.0.0/locked',
+        'demo-1.0.0/locked/tarfile.py',
+    ]
 
 
-def test_extract_sdist_fixed_dir_rejects_location_recreated_after_clear(
-    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+def test_sdist_extract_dir_rejects_location_recreated_after_clear(
+    run_wheel_from_sdist: Callable[[pathlib.Path], str], tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
 ) -> None:
-    planted = tmp_path / 'extract' / 'demo-1.0.0' / 'tarfile.py'
+    extract_dir = tmp_path / 'extract'
+    planted = extract_dir / 'demo-1.0.0' / 'tarfile.py'
     planted.parent.mkdir(parents=True)
     rmtree = shutil.rmtree
 
@@ -1292,27 +1307,21 @@ def test_extract_sdist_fixed_dir_rejects_location_recreated_after_clear(
 
     mocker.patch('build.__main__.shutil.rmtree', autospec=True, side_effect=clear_then_plant)
 
-    with (
-        pytest.raises(build.BuildException, match='Failed to replace sdist extract location'),
-        build.__main__._extract_sdist(str(sdist), extract_dir=str(tmp_path / 'extract')),
-    ):
-        raise AssertionError
+    assert 'Failed to replace sdist extract location' in run_wheel_from_sdist(extract_dir)
 
-    assert os.listdir(tmp_path / 'extract') == ['demo-1.0.0']
-    assert os.listdir(planted.parent) == ['tarfile.py']
+    assert sorted(x.relative_to(extract_dir).as_posix() for x in extract_dir.rglob('*')) == [
+        'demo-1.0.0',
+        'demo-1.0.0/tarfile.py',
+    ]
 
 
 @pytest.mark.skipif(sys.platform == 'win32' or os.geteuid() == 0, reason='needs POSIX and a non-root owner')
-def test_extract_sdist_fixed_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cover
-    sdist: pathlib.Path, tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
+def test_sdist_extract_dir_rejects_location_owned_by_another_user(  # pragma: win32 no cover
+    run_wheel_from_sdist: Callable[[pathlib.Path], str], tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture
 ) -> None:
     mocker.patch('build.__main__.os.geteuid', autospec=True, return_value=os.geteuid() + 1)
 
-    with (
-        pytest.raises(build.BuildException, match='Sdist extract location is owned by another user'),
-        build.__main__._extract_sdist(str(sdist), extract_dir=str(tmp_path / 'extract')),
-    ):
-        raise AssertionError
+    assert 'Sdist extract location is owned by another user' in run_wheel_from_sdist(tmp_path / 'extract')
 
     assert os.listdir(tmp_path / 'extract') == []
 
