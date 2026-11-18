@@ -58,7 +58,7 @@ import build.env as _env
 from build import ProjectBuilder, _ctx
 from build._compat.tarfile import tarfile
 from build._exceptions import BuildBackendException, BuildException, FailedProcessError
-from build._util import format_unmet_dependencies, owned_by_another_user
+from build._util import format_unmet_dependencies
 from build.env import DefaultIsolatedEnv
 
 
@@ -901,9 +901,6 @@ def _extract_sdist(archive_path: StrPath, *, extract_dir: StrPath | None = None)
             msg = f'Sdist extract location is not a directory: {extract_dir}'
             raise BuildException(msg)
         os.makedirs(extract_dir, exist_ok=True)
-        if owned_by_another_user(extract_dir):  # pragma: win32 no cover
-            msg = f'Sdist extract location is owned by another user: {extract_dir}'
-            raise BuildException(msg)
 
         with _prepare_sdist_archive(archive_path, extract_dir=extract_dir) as (extractall, top_level_dir):
             sdist_dir = os.path.join(extract_dir, top_level_dir)

@@ -4,7 +4,6 @@ from __future__ import annotations
 __lazy_modules__ = {'importlib.metadata', 'packaging.requirements'}
 
 import importlib.metadata
-import os
 import sys
 
 import packaging.requirements
@@ -15,8 +14,6 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
     from collections.abc import Set as AbstractSet
-
-    from ._types import StrPath
 
 
 def check_dependency(
@@ -83,12 +80,6 @@ def _check_dependency(
     if satisfied:
         seen.add(normalised_req_string)
     return satisfied
-
-
-def owned_by_another_user(path: StrPath) -> bool:
-    # A directory's owner can remove or rename its entries even under the sticky bit. Root can do so anywhere, so
-    # what root owns counts as ours. Platforms without user ids, such as Windows and WASI, have no owner to compare.
-    return hasattr(os, 'geteuid') and os.stat(path).st_uid not in {0, os.geteuid()}
 
 
 def format_unmet_dependencies(unmet: AbstractSet[tuple[str, ...]]) -> str:
