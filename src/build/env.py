@@ -391,10 +391,10 @@ class _PipBackend(_EnvBackend):
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
             if self._outer_pip:
-                # pip's runner executes the copy of pip it ships with. ``-m pip`` would import whichever pip comes
-                # first on the child's path, which the working directory or PYTHONPATH can supply.
-                runner = str(self._outer_pip.locate_file('pip/__pip-runner__.py'))
-                cmd = [sys.executable, runner, '--python', self.python_executable]
+                # Run the pip package that was checked, by its location: ``-m pip`` would import whichever pip comes
+                # first on the child's path, which the working directory or PYTHONPATH can supply. Works from a
+                # directory and from an archive such as a wheel, unlike pip's ``__pip-runner__.py``.
+                cmd = [sys.executable, str(self._outer_pip.locate_file('pip')), '--python', self.python_executable]
             else:
                 cmd = [self.python_executable, '-Im', 'pip']
 

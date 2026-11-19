@@ -1,2 +1,2 @@
-Run the outer pip through its own runner script so a ``pip.py`` on ``PYTHONPATH`` is not imported in its place - by
-:user:`gaborbernat`
+Run the outer pip from the location of the distribution build checked, so a ``pip.py`` on ``PYTHONPATH`` is not imported
+in its place - by :user:`gaborbernat`

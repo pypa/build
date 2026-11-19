@@ -516,7 +516,7 @@ def test_install_dependencies_with_outer_pip(
         env.install(['some-package'])
 
     cmd = typing.cast(list[str], run_subprocess.call_args_list[-1].args[0])
-    assert cmd[:3] == [sys.executable, str(pip.locate_file('pip/__pip-runner__.py')), '--python']
+    assert cmd[:3] == [sys.executable, str(pip.locate_file('pip')), '--python']
 
 
 @pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
