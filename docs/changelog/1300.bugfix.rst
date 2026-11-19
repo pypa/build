@@ -1,0 +1,2 @@
+Do not let a package on the caller's ``PYTHONPATH`` count as already installed when the build requirements are
+installed - by :user:`v01dst`
