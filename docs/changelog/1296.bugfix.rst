@@ -1,0 +1,2 @@
+Run the outer pip from the location of the distribution build checked, so a ``pip.py`` on ``PYTHONPATH`` is not imported
+in its place - by :user:`gaborbernat`
