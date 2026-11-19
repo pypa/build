@@ -772,15 +772,12 @@ def _write_report(path: StrPath, outdir: StrPath, artifacts: Sequence[str]) -> N
 
     report_dir = os.path.dirname(os.path.abspath(path))
     os.makedirs(report_dir, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=report_dir, suffix='.tmp')
-    try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as report_file:
+    # A file made by mkstemp has mode 0600; a file in a temporary directory obeys the umask.
+    with tempfile.TemporaryDirectory(dir=report_dir) as tmp_dir:
+        tmp = os.path.join(tmp_dir, os.path.basename(path))
+        with open(tmp, 'w', encoding='utf-8') as report_file:
             report_file.write(data)
         os.replace(tmp, path)
-    except BaseException:
-        with contextlib.suppress(OSError):
-            os.unlink(tmp)
-        raise
 
 
 def _describe_artifact(path: str, name: str) -> _ArtifactReport:
