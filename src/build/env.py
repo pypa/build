@@ -261,10 +261,40 @@ def _has_keyring_cli() -> bool:
     return shutil.which('keyring') is not None
 
 
-def _pip_env() -> dict[str, str] | None:
-    if 'PIP_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
-        return {**os.environ, 'PIP_KEYRING_PROVIDER': 'subprocess'}
-    return None
+def _path_without_pythonpath() -> list[str]:
+    """
+    The ``sys.path`` entries that do not come from the caller's ``PYTHONPATH``.
+
+    The interpreter puts the ``PYTHONPATH`` entries at the front of ``sys.path``
+    as absolute paths, and it does so at startup. A relative entry is resolved
+    against the directory the interpreter started in, so it is resolved against
+    the current directory here as well. Only the first match is dropped: a
+    directory that is on ``PYTHONPATH`` and in the normal ``sys.path`` is in
+    the normal ``sys.path`` too, and that entry has to stay.
+    """
+    path = list(sys.path)
+    for entry in os.environ.get('PYTHONPATH', '').split(os.pathsep):
+        if not entry:
+            continue
+        absolute = os.path.normcase(os.path.abspath(entry))
+        for index, item in enumerate(path):
+            if os.path.normcase(item) == absolute:
+                del path[index]
+                break
+    return path
+
+
+def _pip_env() -> dict[str, str]:
+    env = os.environ.copy()
+    # The isolated environment must not see the caller's PYTHONPATH. pip decides
+    # whether a requirement is already installed from the sys.path of the
+    # interpreter it runs under, and PYTHONPATH puts the caller's packages
+    # there. A package on the caller's PYTHONPATH is then reported as already
+    # satisfied and left out of the isolated environment.
+    env['PYTHONPATH'] = ''
+    if 'PIP_KEYRING_PROVIDER' not in env and _has_keyring_cli():
+        env['PIP_KEYRING_PROVIDER'] = 'subprocess'
+    return env
 
 
 class _PipBackend(_EnvBackend):
@@ -280,7 +310,9 @@ class _PipBackend(_EnvBackend):
 
         # Version to have added the `--python` option.
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
-        if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
+        # The outer pip runs without the caller's PYTHONPATH (see `_pip_env`),
+        # so it has to be importable without it.
+        if dist := _has_dependency('pip', '22.3', path=_path_without_pythonpath()):  # pragma: no cover
             files = dist.files
             if files:
                 return any(str(f).startswith('pip/_vendor') for f in files)
