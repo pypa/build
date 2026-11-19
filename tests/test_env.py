@@ -542,6 +542,40 @@ def test_outer_pip_ignores_pip_module_in_cwd(
     assert os.listdir(cwd) == ['pip.py']
 
 
+@pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
+def test_install_ignores_package_on_pythonpath(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    wheel = tmp_path / 'demo-1.0-py3-none-any.whl'
+    with zipfile.ZipFile(wheel, 'w') as archive:
+        archive.writestr('demo/__init__.py', '')
+        archive.writestr('demo-1.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n')
+        archive.writestr('demo-1.0.dist-info/WHEEL', 'Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n')
+        archive.writestr('demo-1.0.dist-info/RECORD', '')
+    # A copy of the package on the caller's PYTHONPATH. pip looks for the
+    # requirement in the sys.path of the interpreter it runs under, so it finds
+    # this copy and reports the requirement as already satisfied.
+    host_site = tmp_path / 'host-site'
+    with zipfile.ZipFile(wheel) as archive:
+        archive.extractall(host_site)
+    monkeypatch.setenv('PYTHONPATH', str(host_site))
+
+    with build.env.DefaultIsolatedEnv() as env:
+        env.install([f'demo @ {wheel.as_uri()}'])
+
+        assert env.installed_versions(['demo']) == {'demo': '1.0'}
+        # The package is importable from the isolated environment, not only
+        # from the copy on the caller's PYTHONPATH.
+        result = subprocess.run(
+            [env.python_executable, '-c', 'import demo'],
+            env={**os.environ, 'PYTHONPATH': ''},
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+
+
 def test_find_executable_osx_framework_scheme(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
@@ -644,7 +678,9 @@ def test_pip_env_with_keyring(mocker: pytest_mock.MockerFixture) -> None:
 
 def test_pip_env_without_keyring(mocker: pytest_mock.MockerFixture) -> None:
     mocker.patch('shutil.which', return_value=None)
-    assert build.env._pip_env() is None
+    result = build.env._pip_env()
+    assert result is not None
+    assert 'PIP_KEYRING_PROVIDER' not in result
 
 
 def test_pip_env_respects_existing_env_var(
@@ -653,7 +689,46 @@ def test_pip_env_respects_existing_env_var(
 ) -> None:
     mocker.patch('shutil.which', return_value='/usr/bin/keyring')
     monkeypatch.setenv('PIP_KEYRING_PROVIDER', 'import')
-    assert build.env._pip_env() is None
+    result = build.env._pip_env()
+    assert result is not None
+    assert result['PIP_KEYRING_PROVIDER'] == 'import'
+
+
+def test_pip_env_strips_pythonpath(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv('PYTHONPATH', '/some/leaky/path')
+
+    result = build.env._pip_env()
+
+    assert result is not None
+    assert result['PYTHONPATH'] == ''
+
+
+def test_path_without_pythonpath(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, 'path', ['script-dir', 'other'])
+    monkeypatch.setenv('PYTHONPATH', os.path.abspath('leaky'))
+
+    path = build.env._path_without_pythonpath()
+
+    assert path == ['script-dir', 'other']
+
+
+def test_path_without_pythonpath_keeps_other_entries(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A directory that is on PYTHONPATH and in the normal sys.path is only
+    # removed once: the normal entry keeps the package importable.
+    site = os.path.abspath('site')
+    monkeypatch.setattr(sys, 'path', ['script-dir', site, site, 'other'])
+    monkeypatch.setenv('PYTHONPATH', site)
+
+    path = build.env._path_without_pythonpath()
+
+    assert path == ['script-dir', site, 'other']
+
+
+def test_path_without_pythonpath_ignores_missing_entries(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, 'path', ['script-dir', 'other'])
+    monkeypatch.delenv('PYTHONPATH', raising=False)
+
+    assert build.env._path_without_pythonpath() == ['script-dir', 'other']
 
 
 @pytest.mark.usefixtures('local_pip')
