@@ -195,7 +195,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
         directly from the environment's ``purelib`` so no subprocess is spawned in the isolated environment.
 
         :param requirements: PEP 508 requirement specifications to look up; non-PEP 508 entries (such as local
-            paths or URLs accepted by :meth:`install`) are skipped since their installed name cannot be derived
+            paths or bare URLs) are skipped since their installed name cannot be derived
         """
         wanted = {name for requirement in requirements if (name := _canonical_requirement_name(requirement)) is not None}
         distributions = importlib.metadata.distributions(path=[self._env_backend.purelib])
@@ -217,11 +217,21 @@ class DefaultIsolatedEnv(IsolatedEnv):
 
         :param requirements: PEP 508 requirement specification to install
 
-        :note: Passing non-PEP 508 strings will result in undefined behavior, you *should not* rely on it. It is
-               merely an implementation detail, it may change any time without warning.
+        :raises build.BuildException: If a requirement is not a single-line PEP 508 requirement specification
         """
         if not requirements:
             return
+
+        for requirement in requirements:
+            # Single line check not needed for packaging 26.4+
+            if requirement.splitlines() != [requirement]:
+                msg = f'Invalid build requirement: {requirement!r}'
+                raise BuildException(msg)
+            try:
+                Requirement(requirement)
+            except InvalidRequirement as exception:
+                msg = f'Invalid build requirement: {requirement!r}'
+                raise BuildException(msg) from exception
 
         _ctx.log(
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
