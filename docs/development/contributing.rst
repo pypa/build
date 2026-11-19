@@ -140,6 +140,9 @@ The CI system runs the full test suite across all supported Python versions, ver
 documentation, and performs other checks. All CI checks must pass before a pull request can be merged. If CI fails,
 review the output to understand what went wrong and push fixes to your branch.
 
+Make sure you are not duplicating an existing PR (open or closed); explain why yours is better and link to the
+duplicate(s) if yours is better.
+
 *****************************
  Workflow Security Practices
 *****************************
