@@ -519,28 +519,56 @@ def test_install_dependencies_with_outer_pip(
     assert cmd[:3] == [sys.executable, str(pip.locate_file('pip')), '--python']
 
 
-@pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
-def test_outer_pip_ignores_pip_module_in_cwd_and_pythonpath(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: pathlib.Path,
-) -> None:
+@pytest.fixture
+def demo_requirement(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> str:
     wheel = tmp_path / 'demo-1.0-py3-none-any.whl'
     with zipfile.ZipFile(wheel, 'w') as archive:
         archive.writestr('demo-1.0.dist-info/METADATA', 'Metadata-Version: 2.1\nName: demo\nVersion: 1.0\n')
         archive.writestr('demo-1.0.dist-info/WHEEL', 'Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n')
         archive.writestr('demo-1.0.dist-info/RECORD', '')
+    monkeypatch.setenv('PIP_NO_INDEX', '1')
+    return f'demo @ {wheel.as_uri()}'
+
+
+@pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
+def test_outer_pip_ignores_pip_module_in_cwd_and_pythonpath(
+    demo_requirement: str,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
     cwd = tmp_path / 'cwd'
     cwd.mkdir()
     cwd.joinpath('pip.py').write_text("import pathlib\n\npathlib.Path('planted-pip-ran').touch()\n", encoding='utf-8')
     monkeypatch.chdir(cwd)
     monkeypatch.setenv('PYTHONPATH', str(cwd))
-    monkeypatch.setenv('PIP_NO_INDEX', '1')
 
     with build.env.DefaultIsolatedEnv() as env:
-        env.install([f'demo @ {wheel.as_uri()}'])
+        env.install([demo_requirement])
 
         assert env.installed_versions(['demo']) == {'demo': '1.0'}
     assert os.listdir(cwd) == ['pip.py']
+
+
+@pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
+def test_outer_pip_runs_from_an_archive(
+    demo_requirement: str,
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: pathlib.Path,
+) -> None:
+    installed = importlib.metadata.distribution('pip')
+    metadata = f'pip-{installed.version}.dist-info'
+    shutil.copytree(
+        str(installed.locate_file('pip')), tmp_path / 'stage' / 'pip', ignore=shutil.ignore_patterns('__pycache__')
+    )
+    shutil.copytree(str(installed.locate_file(metadata)), tmp_path / 'stage' / metadata)
+    archive = shutil.make_archive(str(tmp_path / 'pip'), 'zip', tmp_path / 'stage')
+    (archived,) = importlib.metadata.distributions(name='pip', path=[archive])
+    mocker.patch.object(build.env._PipBackend, '_outer_pip', archived)
+
+    with build.env.DefaultIsolatedEnv() as env:
+        env.install([demo_requirement])
+
+        assert env.installed_versions(['demo']) == {'demo': '1.0'}
 
 
 def test_find_executable_osx_framework_scheme(
