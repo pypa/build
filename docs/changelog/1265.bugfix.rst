@@ -1,0 +1,2 @@
+Extract source distributions with the ``data`` filter during extraction to prevent symlink traversal outside destination
+- by :user:`feiiiiii5`.
