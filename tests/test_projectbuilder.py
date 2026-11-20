@@ -844,36 +844,6 @@ def test_parse_invalid_build_system_table_type(pyproject_toml: Mapping[str, TOML
         build._builder._parse_build_system_table(pyproject_toml)
 
 
-def _no_backend_path(_tmp_path: pathlib.Path) -> None:
-    return None
-
-
-def _backend_path_as_file(tmp_path: pathlib.Path) -> None:
-    (tmp_path / 'bad').write_text('', encoding='utf-8')
-
-
-@pytest.mark.parametrize(
-    'setup',
-    [
-        pytest.param(_no_backend_path, id='nonexistent'),
-        pytest.param(_backend_path_as_file, id='file-not-dir'),
-    ],
-)
-def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[[pathlib.Path], None]) -> None:
-    (tmp_path / 'pyproject.toml').write_text(
-        textwrap.dedent("""\
-            [build-system]
-            requires = []
-            build-backend = "backend"
-            backend-path = ["bad"]
-        """),
-        encoding='utf-8',
-    )
-    setup(tmp_path)
-    with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
-        build.ProjectBuilder(tmp_path)
-
-
 def _backend_path_project(directory: pathlib.Path, backend_path: str) -> pathlib.Path:
     project = directory / 'project'
     project.mkdir()
@@ -889,6 +859,28 @@ def _backend_path_project(directory: pathlib.Path, backend_path: str) -> pathlib
     return project
 
 
+def _no_backend_path(_project: pathlib.Path) -> None:
+    return None
+
+
+def _backend_path_as_file(project: pathlib.Path) -> None:
+    (project / 'bad').write_text('', encoding='utf-8')
+
+
+@pytest.mark.parametrize(
+    'setup',
+    [
+        pytest.param(_no_backend_path, id='nonexistent'),
+        pytest.param(_backend_path_as_file, id='file-not-dir'),
+    ],
+)
+def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[[pathlib.Path], None]) -> None:
+    project = _backend_path_project(tmp_path, 'bad')
+    setup(project)
+    with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
+        build.ProjectBuilder(project)
+
+
 @pytest.mark.parametrize('backend_path', ['..', '../outside', 'sub/../../outside'])
 def test_backend_path_outside_source_tree(tmp_path: pathlib.Path, backend_path: str) -> None:
     project = _backend_path_project(tmp_path, backend_path)
@@ -900,7 +892,8 @@ def test_backend_path_outside_source_tree(tmp_path: pathlib.Path, backend_path: 
 
 
 def test_backend_path_absolute(tmp_path: pathlib.Path) -> None:
-    project = _backend_path_project(tmp_path, tmp_path.as_posix())
+    # Inside the source tree, so only the relative path check can reject it.
+    project = _backend_path_project(tmp_path, (tmp_path / 'project').as_posix())
     with pytest.raises(build.BuildSystemTableValidationError, match='must be a relative path'):
         build.ProjectBuilder(project)
 
