@@ -5,6 +5,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     'difflib',
+    'pathlib',
     'subprocess',
     'tomllib',
     'warnings',
@@ -17,6 +18,7 @@ __lazy_modules__ = {
 import contextlib
 import difflib
 import os
+import pathlib
 import subprocess
 import sys
 import tomllib
@@ -156,10 +158,19 @@ def _parse_build_system_table(pyproject_toml: Mapping[str, TOMLValue]) -> BuildS
 
 
 def _validate_backend_path(source_dir: str, backend_paths: Sequence[str]) -> None:
+    source_dir_real = pathlib.Path(os.path.realpath(source_dir))
     for path in backend_paths:
+        if os.path.isabs(path):
+            msg = f'`backend-path` entry {path!r} must be a relative path'
+            raise BuildSystemTableValidationError(msg)
         resolved = os.path.join(source_dir, path)
         if not os.path.isdir(resolved):
             msg = f'`backend-path` entry {path!r} does not exist or is not a directory'
+            raise BuildSystemTableValidationError(msg)
+        # PEP 517 requires the entries to stay inside the source tree, also
+        # after symlinks are resolved.
+        if not pathlib.Path(os.path.realpath(resolved)).is_relative_to(source_dir_real):
+            msg = f'`backend-path` entry {path!r} must be inside the source tree'
             raise BuildSystemTableValidationError(msg)
 
 

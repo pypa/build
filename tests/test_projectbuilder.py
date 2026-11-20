@@ -844,12 +844,27 @@ def test_parse_invalid_build_system_table_type(pyproject_toml: Mapping[str, TOML
         build._builder._parse_build_system_table(pyproject_toml)
 
 
-def _no_backend_path(_tmp_path: pathlib.Path) -> None:
+def _backend_path_project(directory: pathlib.Path, backend_path: str) -> pathlib.Path:
+    project = directory / 'project'
+    project.mkdir()
+    project.joinpath('pyproject.toml').write_text(
+        textwrap.dedent(f"""\
+            [build-system]
+            requires = []
+            build-backend = "backend"
+            backend-path = ["{backend_path}"]
+        """),
+        encoding='utf-8',
+    )
+    return project
+
+
+def _no_backend_path(_project: pathlib.Path) -> None:
     return None
 
 
-def _backend_path_as_file(tmp_path: pathlib.Path) -> None:
-    (tmp_path / 'bad').write_text('', encoding='utf-8')
+def _backend_path_as_file(project: pathlib.Path) -> None:
+    (project / 'bad').write_text('', encoding='utf-8')
 
 
 @pytest.mark.parametrize(
@@ -860,15 +875,42 @@ def _backend_path_as_file(tmp_path: pathlib.Path) -> None:
     ],
 )
 def test_backend_path_invalid_directory(tmp_path: pathlib.Path, setup: Callable[[pathlib.Path], None]) -> None:
-    (tmp_path / 'pyproject.toml').write_text(
-        textwrap.dedent("""\
-            [build-system]
-            requires = []
-            build-backend = "backend"
-            backend-path = ["bad"]
-        """),
-        encoding='utf-8',
-    )
-    setup(tmp_path)
+    project = _backend_path_project(tmp_path, 'bad')
+    setup(project)
     with pytest.raises(build.BuildSystemTableValidationError, match='does not exist or is not a directory'):
-        build.ProjectBuilder(tmp_path)
+        build.ProjectBuilder(project)
+
+
+@pytest.mark.parametrize('backend_path', ['..', '../outside', 'sub/../../outside'])
+def test_backend_path_outside_source_tree(tmp_path: pathlib.Path, backend_path: str) -> None:
+    project = _backend_path_project(tmp_path, backend_path)
+    # The entries have to exist, otherwise the directory check rejects them first.
+    (tmp_path / 'outside').mkdir()
+    (project / 'sub').mkdir()
+    with pytest.raises(build.BuildSystemTableValidationError, match='must be inside the source tree'):
+        build.ProjectBuilder(project)
+
+
+def test_backend_path_absolute(tmp_path: pathlib.Path) -> None:
+    # Inside the source tree, so only the relative path check can reject it.
+    project = _backend_path_project(tmp_path, (tmp_path / 'project').as_posix())
+    with pytest.raises(build.BuildSystemTableValidationError, match='must be a relative path'):
+        build.ProjectBuilder(project)
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='creating a symlink needs extra privileges on Windows')
+def test_backend_path_symlink_outside_source_tree(tmp_path: pathlib.Path) -> None:  # pragma: win32 no cover
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    project = _backend_path_project(tmp_path, 'vendored')
+    (project / 'vendored').symlink_to(outside, target_is_directory=True)
+    with pytest.raises(build.BuildSystemTableValidationError, match='must be inside the source tree'):
+        build.ProjectBuilder(project)
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='creating a symlink needs extra privileges on Windows')
+def test_backend_path_symlink_inside_source_tree(tmp_path: pathlib.Path) -> None:  # pragma: win32 no cover
+    project = _backend_path_project(tmp_path, 'vendored')
+    (project / 'target').mkdir()
+    (project / 'vendored').symlink_to(project / 'target', target_is_directory=True)
+    build.ProjectBuilder(project)
