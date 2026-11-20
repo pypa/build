@@ -1,0 +1,1 @@
+Reject sdist archives with symlink path traversal or members under symlinked directories - by :user:`Abdur-Rafay-AR`

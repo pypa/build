@@ -1225,6 +1225,29 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
         cm.__enter__()
 
 
+def test_extract_sdist_rejects_symlink_chaining(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    with tarfile.open(archive, 'w:gz') as tar:
+        info = tarfile.TarInfo(name='demo-1.0.0/PKG-INFO')
+        meta = b'Metadata-Version: 2.4\nName: demo\nVersion: 1.0.0\n'
+        info.size = len(meta)
+        tar.addfile(info, io.BytesIO(meta))
+
+        info = tarfile.TarInfo(name='demo-1.0.0/self')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '.'
+        tar.addfile(info)
+
+        info = tarfile.TarInfo(name='demo-1.0.0/self/fsroot')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '..'
+        tar.addfile(info)
+
+    cm = build.__main__._extract_sdist(str(archive))
+    with pytest.raises(build.BuildException, match=r'invalid symlink|under a symlinked directory'):
+        cm.__enter__()
+
+
 @pytest.mark.parametrize('symlink', [False, True], ids=['parent-component', 'symlink-parent-component'])
 def test_extract_sdist_preserves_parent_component_validation(
     tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch, symlink: bool

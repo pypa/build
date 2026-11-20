@@ -869,11 +869,24 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
             )
             raise BuildException(msg)
 
+        symlink_names = {name for name, m in normalized_members if m.issym() or m.islnk()}
+        for name, member in normalized_members:
+            if (member.issym() or member.islnk()) and member.linkname in ('.', './'):
+                msg = f'source distribution {archive_path} contains invalid symlink {name!r} pointing to {member.linkname!r}'
+                raise BuildException(msg)
+            for parent in PurePosixPath(name).parents:
+                if parent.as_posix() in symlink_names:
+                    parent_name = parent.as_posix()
+                    msg = (
+                        f'source distribution {archive_path} contains member {name!r} '
+                        f'under a symlinked directory {parent_name!r}'
+                    )
+                    raise BuildException(msg)
+
         yield (
             partial(
                 archive.extractall,
-                # We filtered the member list further up so we don't need to do it again.
-                filter='fully_trusted',
+                filter='data',
                 members=safe_members,
             ),
             top_level_dir,
