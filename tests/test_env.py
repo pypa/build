@@ -74,6 +74,18 @@ def test_uv_install_strips_pythonpath(
     assert 'PYTHONPATH' not in install_call.kwargs['env']
 
 
+def test_pip_install_strips_pythonpath(
+    mocker: pytest_mock.MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv('PYTHONPATH', '/some/leaky/path')
+    with build.env.DefaultIsolatedEnv(installer='pip') as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+    (install_call,) = run_subprocess.call_args_list
+    assert 'PYTHONPATH' not in install_call.kwargs['env']
+
+
 @pytest.mark.isolated
 def test_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
     subprocess.check_call([sys.executable, '-c', 'import build.env'])

@@ -433,7 +433,13 @@ class _PipBackend(_EnvBackend):
             if constraints_txt_path:
                 cmd += ['-c', str(constraints_txt_path)]
 
-            run_subprocess(cmd, env=_pip_env())
+            # Strip PYTHONPATH so the outer pip does not mistake packages
+            # visible on the caller's path for installed packages and skip
+            # installing them into the isolated environment (see #1268). The
+            # uv installer already strips it for its install subprocess.
+            env = _pip_env() or dict(os.environ)
+            env.pop('PYTHONPATH', None)
+            run_subprocess(cmd, env=env)
 
     @property
     def display_name(self) -> str:
