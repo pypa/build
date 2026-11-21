@@ -271,10 +271,16 @@ def _has_keyring_cli() -> bool:
     return shutil.which('keyring') is not None
 
 
-def _pip_env() -> dict[str, str] | None:
-    if 'PIP_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
-        return {**os.environ, 'PIP_KEYRING_PROVIDER': 'subprocess'}
-    return None
+def _pip_env() -> dict[str, str]:
+    # Strip PYTHONPATH so pip does not mistake packages visible on the
+    # caller's path for installed packages and skip installing them into
+    # the isolated environment (see #1268). Kept here so every pip
+    # invocation using this helper is covered, matching the uv installer,
+    # instead of mutating the environment at each call site.
+    env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
+    if 'PIP_KEYRING_PROVIDER' not in env and _has_keyring_cli():
+        env['PIP_KEYRING_PROVIDER'] = 'subprocess'
+    return env
 
 
 class _PipBackend(_EnvBackend):
@@ -433,13 +439,7 @@ class _PipBackend(_EnvBackend):
             if constraints_txt_path:
                 cmd += ['-c', str(constraints_txt_path)]
 
-            # Strip PYTHONPATH so the outer pip does not mistake packages
-            # visible on the caller's path for installed packages and skip
-            # installing them into the isolated environment (see #1268). The
-            # uv installer already strips it for its install subprocess.
-            env = _pip_env() or dict(os.environ)
-            env.pop('PYTHONPATH', None)
-            run_subprocess(cmd, env=env)
+            run_subprocess(cmd, env=_pip_env())
 
     @property
     def display_name(self) -> str:
