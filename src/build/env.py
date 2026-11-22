@@ -518,13 +518,6 @@ def _find_executable_and_scripts(path: str) -> tuple[str, str, str]:
         # If we're the Debian "posix_local" scheme is available, but "venv"
         # is not, we use "posix_prefix" instead which is venv-compatible there.
         paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
-    elif 'osx_framework_library' in scheme_names:
-        # The Python that ships with the macOS developer tools varies the
-        # default scheme depending on whether the ``sys.prefix`` is part of a framework.
-        # But it does not (yet) set the "venv" scheme.
-        # If the Apple-custom "osx_framework_library" scheme is available but "venv"
-        # is not, we use "posix_prefix" instead which is venv-compatible there.
-        paths = sysconfig.get_paths(scheme='posix_prefix', vars=config_vars)
     else:
         paths = sysconfig.get_paths(vars=config_vars)
 
