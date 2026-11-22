@@ -737,7 +737,7 @@ def test_pip_path_extracted_from_dist_record_with_outer_pip(
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='fallback not available under Python 3.11')
 def test_pip_path_extracted_from_module_spec_with_outer_pip(
     mocker: pytest_mock.MockerFixture,
-) -> None:
+) -> None:  # pragma: no cover
     mocker.patch('build.env._has_dependency', autospec=True)
     find_spec = mocker.spy(importlib.util, 'find_spec')
     run_subprocess = mocker.patch('build.env.run_subprocess')
