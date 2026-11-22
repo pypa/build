@@ -60,7 +60,7 @@ def project_wheel_metadata(
                 source_dir,
                 runner=runner,
             )
-            env.install(builder.build_system_requires, _fresh=True)
+            env.install(builder.build_system_requires)
             env.install(builder.get_requires_for_build('wheel'))
             return _project_wheel_metadata(builder)
     else:

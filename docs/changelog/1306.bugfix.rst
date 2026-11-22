@@ -1,0 +1,1 @@
+Fix ``PYTHONPATH`` interfering with outer pip installs - by :user:`layday`

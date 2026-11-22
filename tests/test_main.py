@@ -235,7 +235,7 @@ def test_build_isolated(mocker: pytest_mock.MockerFixture, package_test_flit: st
 
     build.__main__.build_package(package_test_flit, '.', ['sdist'])
 
-    install.assert_any_call({'flit_core >=2,<4'}, constraints_txt_path=None, _fresh=True)
+    install.assert_any_call({'flit_core >=2,<4'}, constraints_txt_path=None)
 
     required_cmd.assert_called_with('sdist', None)
     install.assert_any_call({'dep1', 'dep2'}, constraints_txt_path=None)
@@ -461,7 +461,7 @@ foo==wot
     with pytest.raises(build.BuildBackendException, match=re.escape("Backend 'flit_core.buildapi' is not available.")):
         build.__main__.build_package(package_test_flit, tmp_path, ['wheel'], dependency_constraints_txt=constraints_txt_path)
 
-    install.assert_any_call({'flit_core >=2,<4'}, constraints_txt_path=constraints_txt_path, _fresh=True)
+    install.assert_any_call({'flit_core >=2,<4'}, constraints_txt_path=constraints_txt_path)
 
 
 @pytest.mark.parametrize(
@@ -623,7 +623,6 @@ def test_logging_output_invalid_requirement(
     stderr_body: list[str],
     stderr_error: str,
 ) -> None:
-    mocker.patch('build.env._PipBackend._has_valid_outer_pip', True)
     with contextlib.suppress(ModuleNotFoundError):  # colorama might not be available
         # do not inject hook to have clear output on capsys
         mocker.patch('colorama.init')
@@ -650,7 +649,6 @@ def test_invalid_requirement_never_reaches_installer(
     capsys: pytest.CaptureFixture[str],
     source: str,
 ) -> None:
-    mocker.patch('build.env._PipBackend._has_valid_outer_pip', True)
     requirement = '--index-url=https://example.invalid/simple'
     requires = [requirement] if source == 'pyproject' else []
     (tmp_path / 'pyproject.toml').write_text(
@@ -982,7 +980,7 @@ def test_bootstrap_build_env_logs_versions(mocker: pytest_mock.MockerFixture) ->
     ) as result:
         assert result is builder
 
-    env.install.assert_any_call({'setuptools'}, constraints_txt_path=None, _fresh=True)
+    env.install.assert_any_call({'setuptools'}, constraints_txt_path=None)
     env.install.assert_any_call({'wheel'}, constraints_txt_path=None)
     log_versions.assert_called_once_with(env, {'setuptools', 'wheel'})
 

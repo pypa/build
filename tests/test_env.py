@@ -61,17 +61,22 @@ def test_installed_versions(mocker: pytest_mock.MockerFixture) -> None:
     distributions.assert_called_once_with(path=['/purelib'])
 
 
-@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
-def test_uv_install_strips_pythonpath(
+@pytest.mark.parametrize('installer', build.env.INSTALLERS)
+def test_env_install_strips_pythonpath(
     mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
+    installer: build.env.Installer,
 ) -> None:
+
+    if installer == 'uv' and MISSING_UV:  # pragma: no cover
+        pytest.skip('uv executable not found')
+
     monkeypatch.setenv('PYTHONPATH', '/some/leaky/path')
     run_subprocess = mocker.patch('build.env.run_subprocess')
-    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+    with build.env.DefaultIsolatedEnv(installer=installer) as env:
         env.install(['some-package'])
     (install_call,) = run_subprocess.call_args_list
-    assert 'PYTHONPATH' not in install_call.kwargs['env']
+    assert install_call.kwargs['env']['PYTHONPATH'] == ''
 
 
 @pytest.mark.isolated
@@ -241,7 +246,7 @@ def test_install_preserves_valid_requirement(mocker: pytest_mock.MockerFixture, 
     env = build.env.DefaultIsolatedEnv()
     backend = mocker.patch.object(env, '_env_backend', create=True)
     env.install([requirement])
-    backend.install_dependencies.assert_called_once_with([requirement], None, _fresh=False)
+    backend.install_dependencies.assert_called_once_with([requirement], None)
 
 
 def test_install_short_circuits(
@@ -260,14 +265,12 @@ def test_install_short_circuits(
 
 @pytest.mark.parametrize('verbosity', range(3))
 @pytest.mark.parametrize('constraints_txt', ['', 'foo'])
-@pytest.mark.parametrize('fresh', [False, True])
 @pytest.mark.usefixtures('local_pip')
 def test_default_impl_install_cmd_well_formed(
     tmp_path: Path,
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
     constraints_txt: str,
-    fresh: bool,
 ) -> None:
     mocker.patch.object(_ctx, 'verbosity', verbosity)
 
@@ -279,7 +282,7 @@ def test_default_impl_install_cmd_well_formed(
     with build.env.DefaultIsolatedEnv() as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints_txt_path, _fresh=fresh)
+        env.install(['some', 'requirements'], constraints_txt_path)
 
         run_subprocess.assert_called_once_with(
             [
@@ -288,7 +291,6 @@ def test_default_impl_install_cmd_well_formed(
                 'pip',
                 *([f'-{"v" * (verbosity - 1)}'] if verbosity > 1 else []),
                 'install',
-                *(['--ignore-installed'] if fresh else []),
                 '--use-pep517',
                 '--no-warn-script-location',
                 '--no-compile',
@@ -303,14 +305,12 @@ def test_default_impl_install_cmd_well_formed(
 
 @pytest.mark.parametrize('verbosity', range(3))
 @pytest.mark.parametrize('constraints_txt', ['', 'foo'])
-@pytest.mark.parametrize('fresh', [False, True])
 @pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
 def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are skipped on PyPy, covered on CPython
     tmp_path: Path,
     mocker: pytest_mock.MockerFixture,
     verbosity: int,
     constraints_txt: str,
-    fresh: bool,
 ) -> None:
     mocker.patch.object(_ctx, 'verbosity', verbosity)
 
@@ -322,7 +322,7 @@ def test_uv_impl_install_cmd_well_formed(  # pragma: no cover -- uv tests are sk
     with build.env.DefaultIsolatedEnv(installer='uv') as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
 
-        env.install(['some', 'requirements'], constraints_txt_path, _fresh=fresh)
+        env.install(['some', 'requirements'], constraints_txt_path)
 
         run_subprocess.assert_called_once_with(
             [
@@ -519,7 +519,7 @@ def test_virtualenv_no_wheel_flag(
     version: str,
     has_no_wheel: bool,
 ) -> None:
-    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', None)
+    mocker.patch.object(build.env._PipBackend, '_outer_pip', None)
     mocker.patch.object(build.env._PipBackend, '_has_virtualenv', True)
 
     mocker.patch('importlib.metadata.version', return_value=version)
@@ -538,15 +538,17 @@ def test_virtualenv_no_wheel_flag(
 def test_install_dependencies_with_outer_pip(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
-    mocker.patch.object(build.env._PipBackend, '_has_valid_outer_pip', True)
 
     run_subprocess = mocker.patch('build.env.run_subprocess')
 
     with build.env.DefaultIsolatedEnv() as env:
+        outer_pip = env._env_backend._outer_pip  # pyrefly: ignore[missing-attribute]
+        assert outer_pip
+
         env.install(['some-package'])
 
     cmd = typing.cast(list[str], run_subprocess.call_args_list[-1].args[0])
-    assert cmd[:5] == [sys.executable, '-P', '-m', 'pip', '--python']
+    assert cmd[:4] == [sys.executable, '-I', outer_pip, '--python']
 
 
 @pytest.mark.skipif(importlib.util.find_spec('pip') is None, reason='needs pip installed next to build')
@@ -644,71 +646,62 @@ def test_has_keyring_cli_missing(mocker: pytest_mock.MockerFixture) -> None:
     assert build.env._has_keyring_cli() is False
 
 
-def test_pip_env_with_keyring(mocker: pytest_mock.MockerFixture) -> None:
-    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
-
-    result = build.env._pip_env()
-
-    assert result is not None
-    assert result['PIP_KEYRING_PROVIDER'] == 'subprocess'
-
-
-def test_pip_env_without_keyring(mocker: pytest_mock.MockerFixture) -> None:
-    mocker.patch('shutil.which', return_value=None)
-    assert build.env._pip_env() is None
-
-
-def test_pip_env_respects_existing_env_var(
+@pytest.mark.usefixtures('local_pip')
+@pytest.mark.parametrize('installer', build.env.INSTALLERS)
+def test_env_install_passes_keyring_env_var(
     mocker: pytest_mock.MockerFixture,
-    monkeypatch: pytest.MonkeyPatch,
+    installer: build.env.Installer,
 ) -> None:
+
+    if installer == 'uv' and MISSING_UV:  # pragma: no cover
+        pytest.skip('uv executable not found')
+
     mocker.patch('shutil.which', return_value='/usr/bin/keyring')
-    monkeypatch.setenv('PIP_KEYRING_PROVIDER', 'import')
-    assert build.env._pip_env() is None
+
+    with build.env.DefaultIsolatedEnv(installer=installer) as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.kwargs['env'][f'{installer.upper()}_KEYRING_PROVIDER'] == 'subprocess'
 
 
 @pytest.mark.usefixtures('local_pip')
-def test_install_dependencies_passes_keyring_env(
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
-
-    with build.env.DefaultIsolatedEnv() as env:
-        run_subprocess = mocker.patch('build.env.run_subprocess')
-        env.install(['some-package'])
-
-    (install_call,) = run_subprocess.call_args_list
-    assert install_call.kwargs['env']['PIP_KEYRING_PROVIDER'] == 'subprocess'
-
-
-@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
-def test_uv_install_dependencies_passes_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
-
-    with build.env.DefaultIsolatedEnv(installer='uv') as env:
-        run_subprocess = mocker.patch('build.env.run_subprocess')
-        env.install(['some-package'])
-
-    (install_call,) = run_subprocess.call_args_list
-    assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'subprocess'
-
-
-@pytest.mark.skipif(MISSING_UV, reason='uv executable not found')
-def test_uv_install_respects_existing_keyring_env(  # pragma: no cover -- uv tests are skipped on PyPy
+@pytest.mark.parametrize('installer', build.env.INSTALLERS)
+def test_env_install_respects_existing_keyring_env_var(
     mocker: pytest_mock.MockerFixture,
     monkeypatch: pytest.MonkeyPatch,
+    installer: build.env.Installer,
 ) -> None:
-    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
-    monkeypatch.setenv('UV_KEYRING_PROVIDER', 'disabled')
 
-    with build.env.DefaultIsolatedEnv(installer='uv') as env:
+    if installer == 'uv' and MISSING_UV:  # pragma: no cover
+        pytest.skip('uv executable not found')
+
+    mocker.patch('shutil.which', return_value='/usr/bin/keyring')
+    monkeypatch.setenv(f'{installer.upper()}_KEYRING_PROVIDER', 'disabled')
+
+    with build.env.DefaultIsolatedEnv(installer=installer) as env:
         run_subprocess = mocker.patch('build.env.run_subprocess')
         env.install(['some-package'])
 
     (install_call,) = run_subprocess.call_args_list
-    assert install_call.kwargs['env']['UV_KEYRING_PROVIDER'] == 'disabled'
+    assert install_call.kwargs['env'][f'{installer.upper()}_KEYRING_PROVIDER'] == 'disabled'
+
+
+@pytest.mark.usefixtures('local_pip')
+@pytest.mark.parametrize('installer', build.env.INSTALLERS)
+def test_env_install_omits_keyring_env_var_if_no_keyring(
+    mocker: pytest_mock.MockerFixture,
+    installer: build.env.Installer,
+) -> None:
+    mocker.patch('shutil.which', return_value=None)
+
+    with build.env.DefaultIsolatedEnv(installer=installer) as env:
+        run_subprocess = mocker.patch('build.env.run_subprocess')
+        env.install(['some-package'])
+
+    (install_call,) = run_subprocess.call_args_list
+    assert f'{installer.upper()}_KEYRING_PROVIDER' not in install_call.kwargs['env']
 
 
 @pytest.mark.network
@@ -722,9 +715,40 @@ def test_pythonpath_does_not_interfere_with_outer_pip(
     monkeypatch.setenv('PYTHONPATH', str(tmp_path))
 
     with build.env.DefaultIsolatedEnv(installer='pip') as env:
-        env.install({'flit_core'}, _fresh=True)
+        env.install({'flit_core'})
 
         assert subprocess.check_call([env.python_executable, '-c', 'import flit_core']) == 0
+
+
+def test_pip_path_extracted_from_dist_record_with_outer_pip(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    has_dependency = mocker.spy(build.env, '_has_dependency')
+    run_subprocess = mocker.patch('build.env.run_subprocess')
+
+    with build.env.DefaultIsolatedEnv() as env:
+        env.install({'flit_core'})
+
+    script_path = str(has_dependency.spy_return.locate_file('pip/__main__.py'))
+    (install_call,) = run_subprocess.call_args_list
+    assert install_call.args[0][2] == script_path
+
+
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='fallback not available under Python 3.11')
+def test_pip_path_extracted_from_module_spec_with_outer_pip(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    mocker.patch('build.env._has_dependency', autospec=True)
+    find_spec = mocker.spy(importlib.util, 'find_spec')
+    run_subprocess = mocker.patch('build.env.run_subprocess')
+
+    with build.env.DefaultIsolatedEnv() as env:
+        env.install({'flit_core'})
+
+        find_spec.assert_called_with('pip.__main__')
+        script_path = find_spec.spy_return.origin
+        (install_call,) = run_subprocess.call_args_list
+        assert install_call.args[0][2] == script_path
 
 
 @pytest.fixture
