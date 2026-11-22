@@ -1,0 +1,1 @@
+Remove Apple Python venv detection workaround - by :user:`layday`

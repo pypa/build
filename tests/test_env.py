@@ -92,16 +92,6 @@ def test_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
             )
 
 
-@pytest.mark.skipif(sys.platform != 'darwin', reason='workaround for Apple Python')
-def test_can_get_venv_paths_with_conflicting_default_scheme(  # pragma: no cover -- skipped on PyPy and non-darwin
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    get_scheme_names = mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library',))
-    with build.env.DefaultIsolatedEnv():
-        pass
-    assert get_scheme_names.call_count == 1
-
-
 SCHEME_NAMES = sysconfig.get_scheme_names()
 
 
@@ -580,25 +570,6 @@ def test_outer_pip_ignores_pip_module_in_cwd(
 
         assert env.installed_versions(['demo']) == {'demo': '1.0'}
     assert os.listdir(cwd) == ['pip.py']
-
-
-def test_find_executable_osx_framework_scheme(
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    mocker.patch('sysconfig.get_scheme_names', return_value=('osx_framework_library', 'posix_prefix'))
-    get_paths = mocker.patch(
-        'sysconfig.get_paths',
-        return_value={
-            'scripts': '/fake/bin',
-            'purelib': '/fake/lib',
-        },
-    )
-    mocker.patch('os.path.exists', return_value=True)
-
-    _exe, scripts, _purelib = build.env._find_executable_and_scripts('/fake/venv')
-
-    get_paths.assert_called_once_with(scheme='posix_prefix', vars=mocker.ANY)
-    assert scripts == '/fake/bin'
 
 
 def test_find_executable_posix_local_scheme(
