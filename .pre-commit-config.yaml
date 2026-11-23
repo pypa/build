@@ -47,7 +47,7 @@ repos:
         # title must outrank the included CHANGELOG.rst headings
         exclude: ^docs/changelog\.rst$
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 9026c9127e153371d7a78dfcb0c45ae2046a3d10  # frozen: v0.17.6
+    rev: 9026c9127e153371d7a78dfcb0c45ae2046a3d10 # frozen: v0.17.6
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -70,7 +70,7 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: c7d31dc612dffdd4d3b2f2b88b9660d3ab057ee8  # frozen: v1.33.1
+    rev: c7d31dc612dffdd4d3b2f2b88b9660d3ab057ee8 # frozen: v1.33.1
     hooks:
       - id: zizmor
         files: "^\\.github"
