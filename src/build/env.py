@@ -209,8 +209,6 @@ class DefaultIsolatedEnv(IsolatedEnv):
         self,
         requirements: Collection[str],
         constraints_txt_path: _types.StrPath | None = None,
-        *,
-        _fresh: bool = False,  # Used internally by CLI to support preset PYTHONPATH
     ) -> None:
         """
         Install packages from PEP 508 requirements in the isolated build environment.
@@ -237,7 +235,7 @@ class DefaultIsolatedEnv(IsolatedEnv):
             'Installing packages in isolated environment:\n' + '\n'.join(f'- {r}' for r in sorted(requirements)),
             kind=('step',),
         )
-        self._env_backend.install_dependencies(requirements, constraints_txt_path, _fresh=_fresh)
+        self._env_backend.install_dependencies(requirements, constraints_txt_path)
 
 
 def _canonical_requirement_name(requirement: str) -> str | None:
@@ -258,8 +256,6 @@ class _EnvBackend(typing.Protocol):  # pragma: no cover
         self,
         requirements: Collection[str],
         constraints_txt_path: _types.StrPath | None,
-        *,
-        _fresh: bool = False,
     ) -> None: ...
 
     @property
@@ -271,18 +267,12 @@ def _has_keyring_cli() -> bool:
     return shutil.which('keyring') is not None
 
 
-def _pip_env() -> dict[str, str] | None:
-    if 'PIP_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
-        return {**os.environ, 'PIP_KEYRING_PROVIDER': 'subprocess'}
-    return None
-
-
 class _PipBackend(_EnvBackend):
     def __init__(self) -> None:
-        self._create_with_virtualenv = not self._has_valid_outer_pip and self._has_virtualenv
+        self._create_with_virtualenv = not self._outer_pip and self._has_virtualenv
 
     @functools.cached_property
-    def _has_valid_outer_pip(self) -> bool | None:
+    def _outer_pip(self) -> str | None:
         """
         This checks for a valid global pip. Returns None if pip is missing, False
         if pip is too old or debundled, and True if it can be used.
@@ -292,18 +282,22 @@ class _PipBackend(_EnvBackend):
         # `pip install --python` is nonfunctional on Gentoo debundled pip.
         if dist := _has_dependency('pip', '22.3'):  # pragma: no cover
             files = dist.files
-            if files:
-                return any(str(f).startswith('pip/_vendor') for f in files)
-            # The distribution package manager deleted the RECORD file,
-            # generally to force pip to be unable to uninstall itself
+            has_pip_vendor = files and any(str(f).startswith('pip/_vendor') for f in files)
+            if has_pip_vendor:
+                return str(dist.locate_file('pip/__main__.py'))
+
+            # The distribution package manager might have deleted the RECORD file,
+            # generally to force pip to be unable to uninstall itself.
             # Only try this on 3.12+ since it can have side effects before 3.12
             # due to _distutils_hack and pip interacting.
             if sys.version_info >= (3, 12):
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
-                    if importlib.util.find_spec('pip._vendor') is not None:
-                        return True
-            return False
+
+                    has_pip_vendor = importlib.util.find_spec('pip._vendor') is not None
+                    if has_pip_vendor:
+                        pip_main_spec = importlib.util.find_spec('pip.__main__')
+                        return pip_main_spec.origin
 
         return None  # pragma: no cover
 
@@ -335,6 +329,15 @@ class _PipBackend(_EnvBackend):
         # PEP-517 and manylinux1 was first implemented in 19.1
         return '19.1.0'
 
+    def _make_install_environ(self) -> Mapping[str, str]:
+        environ = os.environ | {
+            'PYTHONPATH': '',
+        }
+        if 'PIP_KEYRING_PROVIDER' not in environ and _has_keyring_cli():
+            environ['PIP_KEYRING_PROVIDER'] = 'subprocess'
+
+        return environ
+
     def create(self, path: str) -> None:
         if self._create_with_virtualenv:
             import packaging.version
@@ -363,7 +366,7 @@ class _PipBackend(_EnvBackend):
         else:
             import venv
 
-            with_pip = not self._has_valid_outer_pip
+            with_pip = not self._outer_pip
 
             try:
                 venv.EnvBuilder(symlinks=_USE_SYMLINKS, with_pip=with_pip).create(path)
@@ -383,7 +386,7 @@ class _PipBackend(_EnvBackend):
                 ):
                     run_subprocess(
                         [self.python_executable, '-Im', 'pip', 'install', '--no-input', f'pip>={minimum_pip_version_str}'],
-                        env=_pip_env(),
+                        env=self._make_install_environ(),
                     )
 
                 # Uninstall setuptools from the build env to prevent depending on it implicitly.
@@ -394,31 +397,26 @@ class _PipBackend(_EnvBackend):
                 ):
                     run_subprocess(
                         [self.python_executable, '-Im', 'pip', 'uninstall', '--no-input', '-y', 'setuptools'],
-                        env=_pip_env(),
+                        env=self._make_install_environ(),
                     )
 
     def install_dependencies(
         self,
         requirements: Collection[str],
         constraints_txt_path: _types.StrPath | None,
-        *,
-        _fresh: bool = False,
     ) -> None:
         with contextlib.ExitStack() as exit_stack:
-            if self._has_valid_outer_pip:
-                # -P stops a pip.py in the working directory from shadowing the installed pip. -I would also drop the
-                # user site, where the outer pip may live.
-                cmd = [sys.executable, '-P', '-m', 'pip', '--python', self.python_executable]
+            if self._outer_pip:
+                # `-I` is not (particularly) significant here because pip will reinvoke itself with
+                # the Python from `--python`, without `-I`.  It is kept for consistency.
+                cmd = [sys.executable, '-I', self._outer_pip, '--python', self.python_executable]
             else:
                 cmd = [self.python_executable, '-Im', 'pip']
 
             if (verbosity := _ctx.verbosity) > 1:
                 cmd += [f'-{"v" * (verbosity - 1)}']
 
-            cmd += ['install']
-            if _fresh:
-                cmd += ['--ignore-installed']
-            cmd += ['--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
+            cmd += ['install', '--use-pep517', '--no-warn-script-location', '--no-compile', '--no-input']
 
             # pip does not honour environment markers in command line arguments
             # but it does from requirement files.
@@ -433,7 +431,7 @@ class _PipBackend(_EnvBackend):
             if constraints_txt_path:
                 cmd += ['-c', str(constraints_txt_path)]
 
-            run_subprocess(cmd, env=_pip_env())
+            run_subprocess(cmd, env=self._make_install_environ())
 
     @property
     def display_name(self) -> str:
@@ -443,6 +441,16 @@ class _PipBackend(_EnvBackend):
 class _UvBackend(_EnvBackend):
     _env_path: str
     _uv_bin: str
+
+    def _make_install_environ(self) -> Mapping[str, str]:
+        environ = os.environ | {
+            'PYTHONPATH': '',
+            'VIRTUAL_ENV': self._env_path,
+        }
+        if 'UV_KEYRING_PROVIDER' not in environ and _has_keyring_cli():
+            environ['UV_KEYRING_PROVIDER'] = 'subprocess'
+
+        return environ
 
     def create(self, path: str) -> None:
         import venv
@@ -469,8 +477,6 @@ class _UvBackend(_EnvBackend):
         self,
         requirements: Collection[str],
         constraints_txt_path: _types.StrPath | None,
-        *,
-        _fresh: bool = False,
     ) -> None:
         cmd = [self._uv_bin, 'pip']
 
@@ -482,11 +488,7 @@ class _UvBackend(_EnvBackend):
         if constraints_txt_path:
             cmd += ['-c', str(constraints_txt_path)]
 
-        env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
-        env['VIRTUAL_ENV'] = self._env_path
-        if 'UV_KEYRING_PROVIDER' not in os.environ and _has_keyring_cli():
-            env['UV_KEYRING_PROVIDER'] = 'subprocess'
-        run_subprocess(cmd, env=env)
+        run_subprocess(cmd, env=self._make_install_environ())
 
     @property
     def display_name(self) -> str:

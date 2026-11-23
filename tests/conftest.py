@@ -81,7 +81,7 @@ def pytest_runtest_call(item: pytest.Item) -> None:
 
 @pytest.fixture
 def local_pip(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(build.env._PipBackend, '_has_valid_outer_pip', None)
+    monkeypatch.setattr(build.env._PipBackend, '_outer_pip', None)
 
 
 @pytest.fixture(autouse=True)
