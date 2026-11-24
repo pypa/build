@@ -22,6 +22,21 @@ archive, since the archive already is an sdist.
     :title: python -m build
     :usage_width: 97
 
+*****************************
+ Querying build requirements
+*****************************
+
+Use ``--requires wheel``, ``--requires sdist``, or both to query build requirements without building an artifact:
+
+.. code-block:: console
+
+    $ python -m build --requires wheel --requires sdist
+
+Standard output contains a JSON object. Its ``build-system`` array contains the static requirements from
+``pyproject.toml``, followed by an array of additional requirements from the backend for each requested distribution.
+Each array is sorted. With isolation enabled, build installs only the static requirements to load the backend. With
+``--no-isolation``, the backend must be available in the current environment.
+
 .. _build-isolation:
 
 ********************

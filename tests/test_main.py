@@ -1537,6 +1537,70 @@ def test_main_non_archive_file_treated_as_directory(tmp_path: pathlib.Path, mock
     via_sdist.assert_called_once()
 
 
+@pytest.mark.parametrize('isolation', [True, False])
+def test_requires_reports_dependencies(
+    tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str], mocker: pytest_mock.MockerFixture, isolation: bool
+) -> None:
+    (tmp_path / 'pyproject.toml').write_text(
+        '[build-system]\nrequires = ["example-static>=1"]\nbuild-backend = "backend"\nbackend-path = ["."]\n',
+        encoding='utf-8',
+    )
+    (tmp_path / 'backend.py').write_text(
+        'def get_requires_for_build_wheel(config_settings):\n'
+        '    print("backend diagnostic")\n'
+        '    return ["z-wheel", config_settings["extra"], "z-wheel"]\n'
+        'def get_requires_for_build_sdist(config_settings):\n'
+        '    return ["a-sdist"]\n',
+        encoding='utf-8',
+    )
+
+    def check_install(
+        _env: build.env.DefaultIsolatedEnv, requirements: set[str], *, constraints_txt_path: pathlib.Path | None
+    ) -> None:
+        assert requirements == {'example-static>=1'}
+        assert constraints_txt_path is None
+
+    install = mocker.patch('build.env.DefaultIsolatedEnv.install', autospec=True, side_effect=check_install)
+    args = [str(tmp_path), '-v', '--requires', 'wheel', '--requires', 'sdist', '-Cextra=a-wheel']
+    if not isolation:
+        args.append('--no-isolation')
+
+    build.__main__.main(args)
+
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {
+        'build-system': ['example-static>=1'],
+        'wheel': ['a-wheel', 'z-wheel'],
+        'sdist': ['a-sdist'],
+    }
+    assert 'backend diagnostic' in captured.err
+    assert not (tmp_path / 'dist').exists()
+    if isolation:
+        install.assert_called_once()
+    else:
+        install.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'args',
+    [['--metadata'], ['--wheel'], ['--report', 'report.json'], ['--outdir', 'dist']],
+)
+def test_requires_rejects_build_options(args: list[str], capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc:
+        build.__main__.main(['--requires', 'wheel', *args])
+    assert exc.value.code == 2
+    assert '--requires: not allowed' in capsys.readouterr().err
+
+
+def test_requires_rejects_wheel_input(tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]) -> None:
+    wheel = tmp_path / 'demo-1.0-py3-none-any.whl'
+    wheel.touch()
+    with pytest.raises(SystemExit) as exc:
+        build.__main__.main(['--requires', 'wheel', str(wheel)])
+    assert exc.value.code == 2
+    assert '--requires: requires a source directory or source distribution' in capsys.readouterr().err
+
+
 @pytest.fixture
 def built_dist(tmp_path: pathlib.Path) -> tuple[pathlib.Path, list[str]]:
     outdir = tmp_path / 'dist'

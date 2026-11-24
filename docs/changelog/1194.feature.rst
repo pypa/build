@@ -1,0 +1,1 @@
+Add ``--requires`` to report static and backend-provided build requirements as JSON - by :user:`kunalkshah1`.

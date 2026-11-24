@@ -78,6 +78,7 @@ class _CliArgs:
     outdir: str | None
     distributions: list[Distribution] | None
     metadata: bool
+    requires: list[Distribution] | None
     config_settings: list[str] | None
     config_json: str | None
     installer: _env.Installer
@@ -425,6 +426,15 @@ def build_package_via_sdist(
     return [sdist_name, *built]
 
 
+def _run_backend_with_stderr(
+    cmd: Sequence[StrPath], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None
+) -> None:
+    env = os.environ.copy()
+    if extra_environ:
+        env.update(extra_environ)
+    _ctx.run_subprocess(cmd, cwd, env)
+
+
 def _build_metadata(
     srcdir: StrPath,
     outdir: StrPath,  # noqa: ARG001
@@ -440,12 +450,6 @@ def _build_metadata(
         _print_metadata(_wheel_metadata(srcdir))
         return []
 
-    def run_subprocess(cmd: Sequence[StrPath], cwd: str | None = None, extra_environ: Mapping[str, str] | None = None) -> None:
-        env = os.environ.copy()
-        if extra_environ:
-            env.update(extra_environ)
-        _ctx.run_subprocess(cmd, cwd, env)
-
     with (
         _bootstrap_build_env(
             isolation,
@@ -456,7 +460,7 @@ def _build_metadata(
             dependency_constraints_txt,
             installer,
             env_dir,
-            runner=run_subprocess,
+            runner=_run_backend_with_stderr,
         ) as builder,
         tempfile.TemporaryDirectory() as tempdir,
         open(
@@ -466,6 +470,34 @@ def _build_metadata(
     ):
         _print_metadata(metadata_file.read())
 
+    return []
+
+
+def _build_requirements(
+    srcdir: StrPath,
+    outdir: StrPath,  # noqa: ARG001
+    distributions: Sequence[Distribution],
+    config_settings: ConfigSettings | None,
+    isolation: bool,
+    skip_dependency_check: bool,  # noqa: ARG001
+    dependency_constraints_txt: os.PathLike[str] | None,
+    installer: _env.Installer,
+    env_dir: str | None,
+) -> list[str]:
+    with contextlib.ExitStack() as stack:
+        if isolation:
+            env = stack.enter_context(DefaultIsolatedEnv(installer=installer, path=env_dir))
+            builder = ProjectBuilder.from_isolated_env(env, srcdir, runner=_run_backend_with_stderr)
+            env.install(builder.build_system_requires, constraints_txt_path=dependency_constraints_txt)
+        else:
+            builder = ProjectBuilder(srcdir, runner=_run_backend_with_stderr)
+
+        requirements = {
+            distribution: sorted(builder.get_requires_for_build(distribution, config_settings))
+            for distribution in dict.fromkeys(distributions)
+        }
+
+    sys.stdout.write(json.dumps({'build-system': sorted(builder.build_system_requires), **requirements}, indent=2) + '\n')
     return []
 
 
@@ -612,6 +644,13 @@ def main_parser() -> argparse.ArgumentParser:
         action='store_true',
         help="print out a wheel's metadata in JSON format, building it first unless the source argument is already a "
         '.whl. Cannot be used in conjunction with ``--sdist`` or ``--wheel``',
+    )
+    build_group.add_argument(
+        '--requires',
+        action='append',
+        choices=('sdist', 'wheel'),
+        help='print build-system and backend-reported build requirements as JSON without building distributions. '
+        'Can be repeated to query both sdist and wheel requirements',
     )
     build_group.add_argument(
         '--report',
@@ -810,9 +849,20 @@ def _resolve_config_settings(args: _CliArgs) -> Mapping[str, JSONValue]:
     return {}
 
 
+def _select_requirements(parser: argparse.ArgumentParser, args: _CliArgs, *, wheel_input: bool) -> partial[list[str]]:
+    if args.metadata or args.distributions or args.report is not None or args.outdir is not None:
+        parser.error('--requires: not allowed with --metadata, --sdist, --wheel, --report, or --outdir')
+    if wheel_input:
+        parser.error('--requires: requires a source directory or source distribution')
+    assert args.requires is not None
+    return partial(_build_requirements, distributions=args.requires)
+
+
 def _select_build(
     parser: argparse.ArgumentParser, args: _CliArgs, *, sdist_input: bool, wheel_input: bool
 ) -> partial[list[str]]:
+    if args.requires:
+        return _select_requirements(parser, args, wheel_input=wheel_input)
     if args.report is not None and args.metadata:
         parser.error('--report: not allowed with --metadata')
     if args.outdir is not None and args.metadata:
