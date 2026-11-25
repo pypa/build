@@ -1223,6 +1223,38 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
         cm.__enter__()
 
 
+def test_extract_sdist_rejects_symlink_chain_traversal(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    target = tmp_path / 'outside.txt'
+    target.write_bytes(b'safe\n')
+
+    with tarfile.open(archive, 'w:gz') as tar:
+        pkg_info = tarfile.TarInfo('demo-1.0.0/PKG-INFO')
+        meta = b'Metadata-Version: 2.4\nName: demo\nVersion: 1.0.0\n'
+        pkg_info.size = len(meta)
+        tar.addfile(pkg_info, io.BytesIO(meta))
+
+        self_link = tarfile.TarInfo('demo-1.0.0/self')
+        self_link.type = tarfile.SYMTYPE
+        self_link.linkname = '.'
+        tar.addfile(self_link)
+
+        chain_link = tarfile.TarInfo('demo-1.0.0/' + 'self/' * 30 + 'fsroot')
+        chain_link.type = tarfile.SYMTYPE
+        chain_link.linkname = '/'.join(['..'] * 31)
+        tar.addfile(chain_link)
+
+        payload = tarfile.TarInfo('demo-1.0.0/fsroot' + str(target))
+        payload_data = b'hacked\n'
+        payload.size = len(payload_data)
+        tar.addfile(payload, io.BytesIO(payload_data))
+
+    cm = build.__main__._extract_sdist(str(archive))
+    with pytest.raises(tarfile.TarError):
+        cm.__enter__()
+    assert target.read_bytes() == b'safe\n'
+
+
 @pytest.mark.parametrize('symlink', [False, True], ids=['parent-component', 'symlink-parent-component'])
 def test_extract_sdist_preserves_parent_component_validation(
     tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch, symlink: bool

@@ -1,0 +1,1 @@
+Prevent symlink chain traversal during sdist extraction - by :user:`whysooraj`

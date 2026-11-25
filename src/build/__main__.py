@@ -872,8 +872,7 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
         yield (
             partial(
                 archive.extractall,
-                # We filtered the member list further up so we don't need to do it again.
-                filter='fully_trusted',
+                filter='data',
                 members=safe_members,
             ),
             top_level_dir,
