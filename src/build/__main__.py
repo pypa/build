@@ -872,8 +872,11 @@ def _prepare_sdist_archive(archive_path: StrPath, *, extract_dir: StrPath) -> Ge
         yield (
             partial(
                 archive.extractall,
-                # We filtered the member list further up so we don't need to do it again.
-                filter='fully_trusted',
+                # Filter again while extracting so each member is validated
+                # against the filesystem as it exists at that point. A member
+                # that passed the up front check can still escape through a
+                # symlink created by an earlier member.
+                filter='data',
                 members=safe_members,
             ),
             top_level_dir,

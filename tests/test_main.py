@@ -1223,6 +1223,36 @@ def test_extract_sdist_rejects_absolute_symlink(tmp_path: pathlib.Path) -> None:
         cm.__enter__()
 
 
+def test_extract_sdist_rejects_symlink_chain_escape(tmp_path: pathlib.Path) -> None:
+    archive = tmp_path / 'demo-1.0.0.tar.gz'
+    with tarfile.open(archive, 'w:gz') as tar:
+        body = b'Metadata-Version: 2.2\nName: demo\nVersion: 1.0.0\n'
+        info = tarfile.TarInfo(name='demo-1.0.0/PKG-INFO')
+        info.size = len(body)
+        tar.addfile(info, io.BytesIO(body))
+
+        info = tarfile.TarInfo(name='demo-1.0.0/self')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '.'
+        tar.addfile(info)
+
+        info = tarfile.TarInfo(name='demo-1.0.0/self/escape')
+        info.type = tarfile.SYMTYPE
+        info.linkname = '../..'
+        tar.addfile(info)
+
+        body = b'escaped\n'
+        info = tarfile.TarInfo(name='demo-1.0.0/self/escape/pwned.txt')
+        info.size = len(body)
+        tar.addfile(info, io.BytesIO(body))
+
+    extract_dir = tmp_path / 'extract'
+    cm = build.__main__._extract_sdist(str(archive), extract_dir=str(extract_dir))
+    with pytest.raises(tarfile.TarError):
+        cm.__enter__()
+    assert not (tmp_path / 'pwned.txt').exists()
+
+
 @pytest.mark.parametrize('symlink', [False, True], ids=['parent-component', 'symlink-parent-component'])
 def test_extract_sdist_preserves_parent_component_validation(
     tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch, symlink: bool
