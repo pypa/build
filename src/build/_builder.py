@@ -248,6 +248,22 @@ class ProjectBuilder:
         return self._python_executable
 
     @property
+    def build_backend(self) -> str:
+        """
+        The build backend defined in the ``pyproject.toml``'s
+        ``build-system.build-backend`` field or the default build backend
+        if ``pyproject.toml`` is missing or ``build-backend`` is undefined.
+        """
+        return self._backend
+
+    @property
+    def backend(self) -> str:
+        """
+        The build backend (alias for :attr:`build_backend`).
+        """
+        return self._backend
+
+    @property
     def build_system_requires(self) -> set[str]:
         """
         The dependencies defined in the ``pyproject.toml``'s

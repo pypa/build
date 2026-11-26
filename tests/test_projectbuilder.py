@@ -272,6 +272,8 @@ def test_init(
 
     # correct flit pyproject.toml
     builder = build.ProjectBuilder(package_test_flit)
+    assert builder.build_backend == 'flit_core.buildapi'
+    assert builder.backend == 'flit_core.buildapi'
     mock_buildcaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable=sys.executable, runner=builder._runner
     )
@@ -280,6 +282,8 @@ def test_init(
     # custom python
     builder = build.ProjectBuilder(package_test_flit, python_executable='some-python')
     assert builder.python_executable == 'some-python'
+    assert builder.build_backend == 'flit_core.buildapi'
+    assert builder.backend == 'flit_core.buildapi'
     mock_buildcaller.assert_called_with(
         package_test_flit, 'flit_core.buildapi', backend_path=None, python_executable='some-python', runner=builder._runner
     )
@@ -287,6 +291,8 @@ def test_init(
 
     # FileNotFoundError
     builder = build.ProjectBuilder(package_legacy)
+    assert builder.build_backend == 'setuptools.build_meta:__legacy__'
+    assert builder.backend == 'setuptools.build_meta:__legacy__'
     mock_buildcaller.assert_called_with(
         package_legacy,
         'setuptools.build_meta:__legacy__',
