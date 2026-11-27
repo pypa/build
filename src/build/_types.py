@@ -6,7 +6,7 @@ import os
 import typing
 
 
-__all__ = ['ConfigSettings', 'Distribution', 'JSONValue', 'StrPath', 'SubprocessRunner', 'TOMLValue']
+__all__ = ['BuildSystemTable', 'ConfigSettings', 'Distribution', 'JSONValue', 'StrPath', 'SubprocessRunner', 'TOMLValue']
 
 ConfigSettings = collections.abc.Mapping[str, str | collections.abc.Sequence[str]]
 Distribution = typing.Literal['sdist', 'wheel', 'editable']
@@ -31,6 +31,14 @@ TOMLValue: typing.TypeAlias = (
     | dt.time
     | collections.abc.Sequence['TOMLValue']
     | collections.abc.Mapping[str, 'TOMLValue']
+)
+
+
+# The validated ``[build-system]`` table from ``pyproject.toml``, as produced by
+# :func:`build._builder._parse_build_system_table`. Available as :data:`build.BuildSystemTable`.
+BuildSystemTable = typing.TypedDict(
+    'BuildSystemTable',
+    {'requires': list[str], 'build-backend': str, 'backend-path': typing.NotRequired[list[str]]},
 )
 
 

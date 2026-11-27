@@ -436,6 +436,43 @@ def test_missing_backend(mocker: pytest_mock.MockerFixture, package_test_no_back
     assert builder._build_system == {'requires': [], 'build-backend': DEFAULT_BACKEND['build-backend']}
 
 
+def test_build_system(mocker: pytest_mock.MockerFixture, package_test_flit: str) -> None:
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(package_test_flit)
+
+    assert builder.build_system == {'requires': ['flit_core >=2,<4'], 'build-backend': 'flit_core.buildapi'}
+
+
+def test_build_system_default(mocker: pytest_mock.MockerFixture, package_legacy: str) -> None:
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(package_legacy)
+
+    assert builder.build_system == DEFAULT_BACKEND
+
+
+def test_build_system_with_backend_path(mocker: pytest_mock.MockerFixture, package_inline: str) -> None:
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(package_inline)
+
+    assert builder.build_system == {'requires': [], 'build-backend': 'build', 'backend-path': ['.']}
+
+
+def test_build_system_not_shared(mocker: pytest_mock.MockerFixture, package_inline: str) -> None:
+    # A caller mutating the returned table must not affect the builder.
+    mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
+
+    builder = build.ProjectBuilder(package_inline)
+
+    builder.build_system['requires'].append('mutated')
+    builder.build_system['backend-path'].append('mutated')
+
+    assert builder.build_system == {'requires': [], 'build-backend': 'build', 'backend-path': ['.']}
+    assert builder.build_system_requires == set()
+
+
 def test_missing_requires(mocker: pytest_mock.MockerFixture, package_test_no_requires: str) -> None:
     mocker.patch('pyproject_hooks.BuildBackendHookCaller', autospec=True)
 

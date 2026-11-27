@@ -39,15 +39,9 @@ TYPE_CHECKING = False
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
-    from typing import NotRequired, Self, TypedDict, TypeGuard
+    from typing import Self, TypeGuard
 
-    from ._types import ConfigSettings, Distribution, StrPath, SubprocessRunner, TOMLValue
-
-    # The validated ``[build-system]`` table.
-    BuildSystemTable = TypedDict(
-        'BuildSystemTable',
-        {'requires': list[str], 'build-backend': str, 'backend-path': NotRequired[list[str]]},
-    )
+    from ._types import BuildSystemTable, ConfigSettings, Distribution, StrPath, SubprocessRunner, TOMLValue
 
 
 _DEFAULT_BACKEND: BuildSystemTable = {
@@ -246,6 +240,18 @@ class ProjectBuilder:
         The Python executable used to invoke the backend.
         """
         return self._python_executable
+
+    @property
+    def build_system(self) -> BuildSystemTable:
+        """
+        The ``pyproject.toml``'s ``[build-system]`` table, or the default
+        build system if ``pyproject.toml`` is missing or ``build-system``
+        is undefined. Mutating the returned table does not affect the builder.
+        """
+        table: BuildSystemTable = {**self._build_system, 'requires': list(self._build_system['requires'])}
+        if 'backend-path' in self._build_system:
+            table['backend-path'] = list(self._build_system['backend-path'])
+        return table
 
     @property
     def build_system_requires(self) -> set[str]:

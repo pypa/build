@@ -79,6 +79,10 @@ Accessing build dependencies:
     from build import ProjectBuilder
 
     builder = ProjectBuilder(".")
+
+    # The validated ``[build-system]`` table from ``pyproject.toml``
+    print(f"Build backend: {builder.build_system['build-backend']}")
+
     requires = builder.build_system_requires
     print(f"Build requires: {requires}")
 

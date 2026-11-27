@@ -20,6 +20,7 @@ from ._exceptions import (
     FailedProcessError,
     TypoWarning,
 )
+from ._types import BuildSystemTable
 from ._types import ConfigSettings as ConfigSettingsType
 from ._types import Distribution as DistributionType
 from ._types import SubprocessRunner as RunnerType
@@ -31,6 +32,7 @@ __version__ = '1.6.1'
 __all__ = [
     'BuildBackendException',
     'BuildException',
+    'BuildSystemTable',
     'BuildSystemTableValidationError',
     'ConfigSettingsType',
     'DistributionType',
